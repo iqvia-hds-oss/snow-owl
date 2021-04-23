@@ -70,7 +70,7 @@ public class ClassificationTaskSerializationTest extends BaseRevisionIndexTest {
 				.userId("user@host.domain")
 				.build();
 
-		indexDocument(id, expected);
+		indexDocument(expected);
 
 		final ClassificationTaskDocument actual = rawIndex()
 				.read(r -> r.get(ClassificationTaskDocument.class, id));

@@ -19,6 +19,7 @@ import static com.b2international.index.query.Expressions.exactMatch;
 import static com.b2international.index.query.Expressions.matchAny;
 
 import com.b2international.index.Doc;
+import com.b2international.index.mapping.AutoGenerateID;
 import com.b2international.index.query.Expression;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValueType;
 import com.b2international.snowowl.snomed.reasoner.domain.ChangeNature;
@@ -29,7 +30,8 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 /**
  * @since 7.0
  */
-@Doc(type="relationshipchange")
+@Doc(type = "relationshipchange")
+@AutoGenerateID
 @JsonDeserialize(builder=RelationshipChangeDocument.Builder.class)
 public final class RelationshipChangeDocument {
 

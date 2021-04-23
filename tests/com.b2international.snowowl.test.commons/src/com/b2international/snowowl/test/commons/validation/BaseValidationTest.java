@@ -156,7 +156,7 @@ public abstract class BaseValidationTest extends BaseRevisionIndexTest {
 			while (it.hasNext()) {
 				final ValidationRule rule = it.next();
 				if (ruleId.equals(rule.getId())) {
-					indexDocument(ruleId, rule);
+					indexDocument(rule);
 					return;
 				}
 			}

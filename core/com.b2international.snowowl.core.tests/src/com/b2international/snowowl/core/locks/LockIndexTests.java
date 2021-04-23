@@ -26,7 +26,6 @@ import org.junit.Test;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.WithScore;
-import com.b2international.index.mapping.DocumentMapping;
 import com.b2international.index.mapping.Mappings;
 import com.b2international.index.revision.Revision;
 import com.b2international.index.util.Reflections;
@@ -61,14 +60,14 @@ public class LockIndexTests {
 			.branchPath("branchPath")
 			.build();
 		
-		indexDocument(lockId, lock);
+		indexDocument(lock);
 		final DatastoreLockIndexEntry actual = get(lockId);
 		assertDocEquals(lock, actual);
 	}
 	
-	private void indexDocument(final String id, DatastoreLockIndexEntry doc) {
+	private void indexDocument(DatastoreLockIndexEntry doc) {
 		index.write(writer -> {
-			writer.put(id, doc);
+			writer.put(doc);
 			writer.commit();
 			
 			return null;
@@ -84,7 +83,6 @@ public class LockIndexTests {
 		for (Field f : index.admin().mappings().getMapping(expected.getClass()).getFields()) {
 			if (Revision.Fields.CREATED.equals(f.getName()) 
 					|| Revision.Fields.REVISED.equals(f.getName())
-					|| DocumentMapping._ID.equals(f.getName())
 					|| WithScore.SCORE.equals(f.getName())
 					) {
 				// skip revision fields from equality check

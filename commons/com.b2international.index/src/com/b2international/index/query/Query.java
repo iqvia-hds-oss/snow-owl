@@ -234,10 +234,6 @@ public final class Query<T> {
 		return fields != null && !fields.isEmpty() ? Joiner.on(",").join(fields) : select == from ? "*" : select.toString();
 	}
 
-	public boolean isDocIdOnly() {
-		return getFields().size() == 1 && getFields().contains(DocumentMapping._ID);
-	}
-	
 	public static <T> QueryBuilder<T> select(Class<T> select) {
 		return new DefaultQueryBuilder<>(select);
 	}

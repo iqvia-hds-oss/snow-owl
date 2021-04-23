@@ -19,7 +19,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Lists.newArrayList;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
@@ -41,7 +47,6 @@ import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.core.internal.validation.ValidationRepository;
 import com.b2international.snowowl.core.internal.validation.ValidationThreadPool;
-import com.b2international.snowowl.core.jobs.RemoteJob;
 import com.b2international.snowowl.core.repository.RepositoryCodeSystemProvider;
 import com.b2international.snowowl.core.uri.CodeSystemURI;
 import com.b2international.snowowl.core.uri.ComponentURI;
@@ -54,7 +59,13 @@ import com.b2international.snowowl.core.validation.rule.ValidationRuleSearchRequ
 import com.b2international.snowowl.core.validation.rule.ValidationRules;
 import com.b2international.snowowl.core.validation.whitelist.ValidationWhiteListSearchRequestBuilder;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.*;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
 
 /**
  * @since 6.0
@@ -220,7 +231,7 @@ final class ValidateRequest implements Request<BranchContext, ValidationResult>,
 						final Collection<ValidationIssue> issues = issuesToExtendWithDetailsByToolingId.removeAll(toolingId);
 						extensions.extendIssues(context, issues, ruleParameters);
 						for (ValidationIssue issue : issues) {
-							index.put(issue.getId(), issue);
+							index.put(issue);
 						}
 					}
 					

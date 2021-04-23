@@ -128,10 +128,9 @@ public final class ValidationPlugin extends Plugin {
 				// index all rules from the file, this will update existing rules as well
 				final Set<String> ruleIds = newHashSet();
 				for (ValidationRule rule : availableRules) {
-					writer.put(rule.getId(), rule);
+					writer.put(rule);
 					ruleIds.add(rule.getId());
 				}
-				
 				
 				// delete rules and associated issues
 				Set<String> rulesToDelete = Sets.difference(existingRules.keySet(), ruleIds);

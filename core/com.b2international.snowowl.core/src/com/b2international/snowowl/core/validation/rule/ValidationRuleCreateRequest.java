@@ -30,6 +30,8 @@ import com.b2international.snowowl.core.validation.rule.ValidationRule.Severity;
  */
 final class ValidationRuleCreateRequest implements Request<ServiceProvider, String> {
 
+	private static final long serialVersionUID = 1L;
+
 	private String id;
 	
 	@NotEmpty
@@ -82,7 +84,7 @@ final class ValidationRuleCreateRequest implements Request<ServiceProvider, Stri
 	
 	@Override
 	public String execute(ServiceProvider context) {
-		context.service(ValidationRepository.class).save(id, new ValidationRule(id, toolingId, messageTemplate, severity, checkType,  type, implementation));
+		context.service(ValidationRepository.class).save(new ValidationRule(id, toolingId, messageTemplate, severity, checkType,  type, implementation));
 		return id;
 	}
 

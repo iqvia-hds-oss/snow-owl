@@ -39,8 +39,8 @@ public class NestedDocumentIndexTest extends BaseIndexTest {
 	
 	@Test
 	public void indexNestedDocument() throws Exception {
-		final ParentData data = new ParentData("field1", new NestedData("field2"));
-		indexDocument(KEY1, data);
+		final ParentData data = new ParentData(KEY1, "field1", new NestedData("field2"));
+		indexDocument(data);
 		assertEquals(data, getDocument(ParentData.class, KEY1));
 	}
 	
@@ -62,10 +62,9 @@ public class NestedDocumentIndexTest extends BaseIndexTest {
 	
 	@Test
 	public void searchNestedDocument() throws Exception {
-		final ParentData data = new ParentData("field1", new NestedData("field2"));
-		final ParentData data2 = new ParentData("field1", new NestedData("field2Changed"));
-		indexDocument(KEY1, data);
-		indexDocument(KEY2, data2);
+		final ParentData data = new ParentData(KEY1, "field1", new NestedData("field2"));
+		final ParentData data2 = new ParentData(KEY2, "field1", new NestedData("field2Changed"));
+		indexDocuments(data, data2);
 		
 		final Query<ParentData> query = Query.select(ParentData.class).where(Expressions.nestedMatch("nestedData", Expressions.exactMatch("field2", "field2"))).build();
 		final Iterable<ParentData> matches = search(query);
