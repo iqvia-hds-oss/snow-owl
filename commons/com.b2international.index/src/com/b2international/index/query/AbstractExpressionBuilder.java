@@ -126,7 +126,7 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 			if (expression instanceof BoolExpression) {
 				BoolExpression bool = (BoolExpression) expression;
 				if (bool.isShouldOnly() && bool.minShouldMatch() == 1) {
-					shouldClauses.addAll(bool.filterClauses());
+					shouldClauses.addAll(bool.shouldClauses());
 					shouldClauses.remove(bool);
 				}
 			}
