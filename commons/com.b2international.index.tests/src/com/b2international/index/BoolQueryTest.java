@@ -64,7 +64,7 @@ public class BoolQueryTest extends BaseIndexTest {
 	}
 	
 	@Test
-	public void mergeMultipleSingleTermShouldClauses() throws Exception {
+	public void mergeSingleTermShouldClauses() throws Exception {
 		String id1 = UUID.randomUUID().toString();
 		String id2 = UUID.randomUUID().toString();
 		String id3 = UUID.randomUUID().toString();
@@ -77,7 +77,7 @@ public class BoolQueryTest extends BaseIndexTest {
 	}
 	
 	@Test
-	public void mergeMultipleSingleAndMultiTermShouldClauses() throws Exception {
+	public void mergeSingleAndMultiTermShouldClauses() throws Exception {
 		String id1 = UUID.randomUUID().toString();
 		String id2 = UUID.randomUUID().toString();
 		String id3 = UUID.randomUUID().toString();

@@ -15,12 +15,7 @@
  */
 package com.b2international.index.query;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.SortedSet;
+import java.util.*;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -33,10 +28,10 @@ import com.google.common.collect.Sets;
  */
 public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuilder<B>>{
 
-	protected final List<Expression> mustClauses = newArrayList();
-	protected final List<Expression> mustNotClauses = newArrayList();
-	protected final List<Expression> shouldClauses = newArrayList();
-	protected final List<Expression> filterClauses = newArrayList();
+	protected final List<Expression> mustClauses = new ArrayList<>(1);
+	protected final List<Expression> mustNotClauses = new ArrayList<>(1);
+	protected final List<Expression> shouldClauses = new ArrayList<>(3);
+	protected final List<Expression> filterClauses = new ArrayList<>(3);
 	protected int minShouldMatch = 1;
 	
 	protected AbstractExpressionBuilder() {}
@@ -103,9 +98,15 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 				return shouldClauses.get(0);
 			}
 			
-			final BoolExpression be = new BoolExpression(mustClauses, mustNotClauses, shouldClauses, filterClauses);
-			be.setMinShouldMatch(minShouldMatch);
-			return be;
+			// if after the optimization the resulting bool clauses are empty, then return a MatchNone expression
+			if (mustClauses.isEmpty() && mustNotClauses.isEmpty() && shouldClauses.isEmpty() && filterClauses.isEmpty()) {
+				return Expressions.matchNone();
+			} else {
+				// otherwise create the bool expression as usual
+				final BoolExpression be = new BoolExpression(mustClauses, mustNotClauses, shouldClauses, filterClauses);
+				be.setMinShouldMatch(minShouldMatch);
+				return be;
+			}
 		}
 	}
 
@@ -160,9 +161,10 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 						values.addAll(((SetPredicate<?>) expression).values());
 					}
 				}
-				// replace all clauses with a single expression
-				clauses.add(Expressions.matchAnyObject(field, values));
+				// remove all matching clauses first
 				clauses.removeAll(termExpressions);
+				// add the new merged expression
+				clauses.add(Expressions.matchAnyObject(field, values));
 			}
 		}
 	}
