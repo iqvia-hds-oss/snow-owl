@@ -129,47 +129,10 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 	}
 
 	protected final void mergeTermFilters() {
-		// check each must, mustNot, should and filter clause and merge term/terms queries into a single terms query, targeting the same field
-		mergeTermFilters(mustClauses);
+		// check each "mustNot" and "should" clause list and merge term/terms queries into a single terms query, targeting the same field
+		// "must" and "filter" clauses will be reduced at a later time in EsQueryBuilder#visit(BoolExpression)
 		mergeTermFilters(mustNotClauses);
 		mergeTermFilters(shouldClauses);
-		mergeTermFilters(filterClauses);
-	}
-	
-	private void reduceTermFilters(List<Expression> clauses) {
-		Multimap<String, Expression> termExpressionsByField = HashMultimap.create();
-		for (Expression expression : List.copyOf(clauses)) {
-			if (shouldMergeSingleArgumentPredicate(expression)) {
-				termExpressionsByField.put(((SingleArgumentPredicate<?>) expression).getField(), expression);
-			} else if (shouldMergeSetPredicate(expression)) {
-				termExpressionsByField.put(((SetPredicate<?>) expression).getField(), expression);
-			}
-		}
-		
-		for (String field : Set.copyOf(termExpressionsByField.keySet())) {
-			Collection<Expression> termExpressions = termExpressionsByField.removeAll(field);
-			if (termExpressions.size() > 1) {
-				Set<Object> values = null;
-				for (Expression expression : termExpressions) {
-					if (values != null && values.isEmpty()) {
-						break;
-					}
-					Set<Object> expressionValues;
-					if (expression instanceof SingleArgumentPredicate<?>) {
-						expressionValues = Set.of(((SingleArgumentPredicate<?>) expression).getArgument());
-					} else if (expression instanceof SetPredicate<?>) {
-						expressionValues = Set.copyOf(((SetPredicate<?>) expression).values());
-					} else {
-						throw new IllegalStateException("Invalid clause detected when processing term/terms clauses: " + expression);
-					}
-					values = values == null ? expressionValues : Set.copyOf(Sets.intersection(values, expressionValues));
-				}
-				// remove all matching clauses first
-				clauses.removeAll(termExpressions);
-				// add the new merged expression
-				clauses.add(Expressions.matchAnyObject(field, values));
-			}
-		}
 	}
 
 	private void mergeTermFilters(List<Expression> clauses) {
@@ -200,11 +163,11 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 		}
 	}
 	
-	private boolean shouldMergeSingleArgumentPredicate(Expression expression) {
+	public static boolean shouldMergeSingleArgumentPredicate(Expression expression) {
 		return expression instanceof SingleArgumentPredicate<?> && !(expression instanceof RegexpPredicate);
 	}
 
-	private boolean shouldMergeSetPredicate(Expression expression) {
+	public static boolean shouldMergeSetPredicate(Expression expression) {
 		return expression instanceof SetPredicate<?> && !(expression instanceof PrefixPredicate);
 	}
 	
