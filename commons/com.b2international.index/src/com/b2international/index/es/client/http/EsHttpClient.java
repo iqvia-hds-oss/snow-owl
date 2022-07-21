@@ -124,6 +124,11 @@ public final class EsHttpClient extends EsClientBase {
 	}
 	
 	@Override
+	public String version() throws IOException {
+		return client.info(RequestOptions.DEFAULT).getVersion().getNumber();
+	}
+	
+	@Override
 	protected boolean ping() throws IOException {
 		return client.ping(RequestOptions.DEFAULT);
 	}
