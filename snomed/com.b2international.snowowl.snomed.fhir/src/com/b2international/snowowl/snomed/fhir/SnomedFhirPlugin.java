@@ -23,6 +23,7 @@ import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemLookupConverter;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemResourceConverter;
+import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 
 /**
@@ -40,7 +41,8 @@ public class SnomedFhirPlugin extends Plugin implements TerminologyRepositoryCon
 	public Map<Class<?>, Object> bindAdditionalServices(Environment env) {
 		return Map.of(
 			FhirCodeSystemResourceConverter.class, new SnomedFhirCodeSystemResourceConverter(),
-			FhirCodeSystemLookupConverter.class, new SnomedFhirCodeSystemLookupConverter()
+			FhirCodeSystemLookupConverter.class, new SnomedFhirCodeSystemLookupConverter(),
+			FhirValueSetExpander.class, new SnomedFhirValueSetExpander()
 		);
 	}
 
