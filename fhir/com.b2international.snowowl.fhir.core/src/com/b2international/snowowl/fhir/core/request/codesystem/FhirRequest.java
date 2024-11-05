@@ -15,13 +15,16 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
+import java.util.IllformedLocaleException;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 
-import com.b2international.commons.CompareUtils;
+import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.RepositoryManager;
@@ -29,7 +32,9 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.uri.ResourceURLSchemaSupport;
 import com.b2international.snowowl.fhir.core.Summary;
+import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 
 /**
@@ -120,12 +125,78 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 		return Summary.TRUE;
 	}
 
-	public static final String extractLocales(CodeType displayLanguage) {
-		String locales = displayLanguage != null ? displayLanguage.getCode() : null;
-		if (CompareUtils.isEmpty(locales)) {
-			locales = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER;
+	/**
+	 * Converts a BCP-47 language tag (where the private use extension portions
+	 * are split into at most 8 characters, separated by dashes) into the "compact"
+	 * non-standard representation used in Snow Owl's internal API.
+	 * 
+	 * @param localeAsCode
+	 * @return
+	 */
+	public static final String compactLocale(final CodeType localeAsCode) {
+		final String locale = (localeAsCode != null) ? localeAsCode.getCode() : null;
+		if (StringUtils.isEmpty(locale)) {
+			return AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER;
 		}
-		return locales;
+		
+		return compactLocale(locale);
+	}
+
+	public static String compactLocale(final String locale) {
+		// Parse the input in accordance with BCP-47 grammar (it should be valid)
+		final Locale.Builder builder = new Locale.Builder();
+		try {
+			builder.setLanguageTag(locale);
+		} catch (IllformedLocaleException ex) {
+			throw new BadRequestException(ex.getMessage());
+		}
+		
+		// Remove hyphen separators from the private use extension
+		final Locale parsedLocale = builder.build();
+		final String privateUseExtension = parsedLocale.getExtension(Locale.PRIVATE_USE_EXTENSION);
+		if (StringUtils.isEmpty(privateUseExtension)) {
+			return locale;
+		}
+		
+		/*
+		 * Remove dashes and replace the old private use extension with the compact one
+		 * (using "-x-" as the anchoring prefix -- it should not appear elsewhere in the
+		 * language tag)
+		 */
+		final String separatorsRemovedExtension = privateUseExtension.replace("-", "");
+		return locale.replace("-x-" + privateUseExtension, "-x-" + separatorsRemovedExtension);
+	}
+	
+	/**
+	 * Converts a "compact" locale representation into a BCP-47 language tag by
+	 * splitting the private use extension portions into at most 8 characters,
+	 * separating each section with a dash.
+	 * 
+	 * @param locale
+	 * @return
+	 */
+	public static final String expandLocale(String locale) {
+		if (StringUtils.isEmpty(locale)) {
+			return null;
+		}
+		
+		/*
+		 * XXX: Assuming locales returned by Snow Owl are in the form of eg. "en-US" or
+		 * "en-x-1234567890123456789" (We can not use Java's built-in parser as at this
+		 * point the extension breaks length limits and the language tag is invalid)
+		 */
+		final int privateUseIdx = locale.lastIndexOf("-x-");
+		if (privateUseIdx < 0 || privateUseIdx + 3 >= locale.length()) {
+			return locale;
+		}
+		
+		final String separatorsRemovedExtension = locale.substring(privateUseIdx + 3);
+		final String privateUseExtension = Splitter.fixedLength(8) // split private use portion into 8 character segments
+			.splitToStream(separatorsRemovedExtension)
+			.collect(Collectors.joining("-")); // combine again with hyphens
+		
+		// Replace the old private use extension
+		return locale.replace("-x-" + separatorsRemovedExtension, "-x-" + privateUseExtension);
 	}
 
 	protected abstract R doExecute(ServiceProvider context, CodeSystem codeSystem);
