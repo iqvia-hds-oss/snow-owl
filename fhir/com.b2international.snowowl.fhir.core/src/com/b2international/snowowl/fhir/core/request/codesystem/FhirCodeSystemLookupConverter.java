@@ -53,18 +53,20 @@ public interface FhirCodeSystemLookupConverter {
 	 * @param codeSystem
 	 * @param concept
 	 * @param parameters
-	 * @param acceptLanguage
 	 * @return
 	 */
-	default List<CodeSystemLookupResultParameters.Designation> expandDesignations(ServiceProvider context, CodeSystem codeSystem, Concept concept, CodeSystemLookupParameters parameters, String acceptLanguage) {
-		if (parameters.isPropertyRequested("designation")) {
-			return concept.getDescriptions()
-				.stream()
-				.map(description -> new CodeSystemLookupResultParameters.Designation().setValue(description.getTerm()).setLanguage(description.getLanguage()))
-				.collect(Collectors.toList());
-		} else {
+	default List<CodeSystemLookupResultParameters.Designation> expandDesignations(ServiceProvider context, CodeSystem codeSystem, Concept concept, CodeSystemLookupParameters parameters) {
+		if (!parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
 			return null;
 		}
+		
+		return concept.getDescriptions()
+			.stream()
+			.map(description -> new CodeSystemLookupResultParameters.Designation()
+				.setValue(description.getTerm())
+				// Split private use extension values returned by Snow Owl into sections of at most 8 characters
+				.setLanguage(FhirRequest.expandLocale(description.getLanguage())))
+			.collect(Collectors.toList());
 	}
 
 	/**
