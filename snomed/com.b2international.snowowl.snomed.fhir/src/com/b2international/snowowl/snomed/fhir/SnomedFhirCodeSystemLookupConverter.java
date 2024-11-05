@@ -15,7 +15,12 @@
  */
 package com.b2international.snowowl.snomed.fhir;
 
-import java.util.*;
+import static com.google.common.collect.Lists.newArrayListWithCapacity;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.*;
@@ -26,17 +31,12 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.Concept;
-import com.b2international.snowowl.core.domain.Description;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemLookupConverter;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
-import com.b2international.snowowl.snomed.core.domain.Acceptability;
-import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
-import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
-import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
-import com.b2international.snowowl.snomed.core.request.SnomedConceptSearchRequestEvaluator;
+import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 
 /**
@@ -56,80 +56,85 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 	}
 	
 	@Override
-	public List<CodeSystemLookupResultParameters.Designation> expandDesignations(ServiceProvider context, CodeSystem codeSystem, Concept concept, CodeSystemLookupParameters parameters, String acceptLanguage) {
-		SnomedConcept snomedConcept = concept.getInternalConceptAs();
-		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
-			final SortedSet<Description> alternativeTerms = SnomedConceptSearchRequestEvaluator.generateGenericDescriptions(snomedConcept.getDescriptions());
-			// convert to Designation model
-			final List<CodeSystemLookupResultParameters.Designation> designations = new ArrayList<>(alternativeTerms.size());
-			for (Description description : alternativeTerms) {
-				SnomedDescription snomedDescription = description.getInternalDescription();
-				// use context describes type of description
-				Coding use = new Coding()
-					.setSystem(codeSystem.getUrl())
-					.setCode(snomedDescription.getTypeId())
-					.setDisplay(SnomedDisplayTermType.PT.getLabel(snomedDescription.getType()));
-				
-				Map<String,Acceptability> acceptabilityMap = snomedDescription.getAcceptabilityMap();
-				
-				List<Extension> designationExtensions = new ArrayList<>(acceptabilityMap.size());
-				
-				for (String refsetId : acceptabilityMap.keySet().stream().sorted().toList()) {
-					
-					var acceptability = acceptabilityMap.get(refsetId);
-					
-					Extension useContextExtension = new Extension("http://snomed.info/fhir/StructureDefinition/designation-use-context");
-					
-					// Set code
-					Extension code = new Extension("context");
-					
-					Coding codeCoding = new Coding()
-							.setSystem(SNOMED_SYSTEM_URL)
-							.setCode(refsetId);
-					code.setValue(codeCoding);
-					
-					useContextExtension.addExtension(code);
-					
-					// Set role
-					Extension role = new Extension("role");
-					
-					Coding roleCoding = new Coding()
-							.setSystem(SNOMED_SYSTEM_URL)
-							.setCode(acceptability.getConceptId())
-							.setDisplay(acceptability.name());
-					role.setValue(roleCoding);
-					
-					useContextExtension.addExtension(role);
-					
-					// Set type
-					Extension type = new Extension("type");
-					
-					Coding typeCoding = new Coding()
-							.setSystem(SNOMED_SYSTEM_URL)
-							.setCode(snomedDescription.getTypeId())
-							.setDisplay(SnomedDisplayTermType.PT.getLabel(snomedDescription.getType()));
-					type.setValue(typeCoding);
-					
-					useContextExtension.addExtension(type);
-					
-					designationExtensions.add(useContextExtension);
-				}
-				
-				var designation = new CodeSystemLookupResultParameters.Designation();
-				
-				designation
-					// term and language code comes from the generated alternative term generic model
-					.setValue(description.getTerm())
-					.setLanguage(description.getLanguage())
-					.setUse(use)
-					.setExtension(designationExtensions);
-				
-				designations.add(designation);
-			}
-			return designations;
-		} else {
-			return FhirCodeSystemLookupConverter.super.expandDesignations(context, codeSystem, concept, parameters, acceptLanguage);
+	public List<CodeSystemLookupResultParameters.Designation> expandDesignations(ServiceProvider context, CodeSystem codeSystem, Concept concept, CodeSystemLookupParameters parameters) {
+		if (!parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
+			return null;
 		}
+
+		/*
+		 * According to an example response, we no longer need to create separate "virtual descriptions" for each 
+		 * language code <--> language reference set ID pair; we will consult the native descriptions directly instead.
+		 */
+		final SnomedConcept snomedConcept = concept.getInternalConceptAs();
+		final SnomedDescriptions snomedDescriptions = snomedConcept.getDescriptions();
+		final List<CodeSystemLookupResultParameters.Designation> designations = newArrayListWithCapacity(snomedDescriptions.getItems().size());
+
+		for (final SnomedDescription snomedDescription : snomedDescriptions) {
+
+			/* 
+			 * Convert language reference set ID, acceptability and description type triples into "designation-use-context" extensions
+			 * https://confluence.ihtsdotools.org/display/FHIR/Designation+extension
+			 */
+			final Map<String, Acceptability> acceptabilityMap = snomedDescription.getAcceptabilityMap();
+			final List<Extension> designationExtensions = newArrayListWithCapacity(acceptabilityMap.size());
+			final List<String> languageRefsetIds = acceptabilityMap.keySet()
+				.stream()
+				.sorted()
+				.toList();
+
+			// Extract information about the description type here because it is used both in "designation-use-context" and the converted designation
+			final Coding typeCoding = new Coding()
+				.setSystem(SNOMED_SYSTEM_URL)
+				.setCode(snomedDescription.getTypeId())
+				.setDisplay(SnomedDisplayTermType.PT.getLabel(snomedDescription.getType()));
+
+			for (String languageRefsetId : languageRefsetIds) {
+
+				// Extension "context" encodes the language reference set ID
+				final Coding contextCoding = new Coding()
+					// FIXME: "system" may need to be set to the code system's URL we are calling from
+					.setSystem(SNOMED_SYSTEM_URL)
+					.setCode(languageRefsetId);
+				
+				// Extension "role" encodes the acceptability ID for the language reference set
+				final Acceptability acceptability = acceptabilityMap.get(languageRefsetId);
+				
+				final Coding roleCoding = new Coding()
+					// FIXME: "system" may need to be set to the code system's URL we are calling from
+					.setSystem(SNOMED_SYSTEM_URL)
+					.setCode(acceptability.getConceptId())
+					.setDisplay(acceptability.name());
+				
+				final Extension useContextExtension = new Extension("http://snomed.info/fhir/StructureDefinition/designation-use-context");
+				
+				useContextExtension.addExtension()
+					.setUrl("context")
+					.setValue(contextCoding);
+
+				useContextExtension.addExtension()
+					.setUrl("role")
+					.setValue(roleCoding);
+
+				useContextExtension.addExtension()
+					.setUrl("type")
+					.setValue(typeCoding);
+				
+				designationExtensions.add(useContextExtension);
+			}
+			
+			// Now convert the native SNOMED CT description into a FHIR designation
+			var designation = new CodeSystemLookupResultParameters.Designation();
+			
+			designation
+				.setValue(snomedDescription.getTerm())
+				.setLanguage(snomedDescription.getLanguageCode())
+				.setUse(typeCoding)
+				.setExtension(designationExtensions);
+			
+			designations.add(designation);
+		}
+		
+		return designations;
 	}
 	
 	@Override
