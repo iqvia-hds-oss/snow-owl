@@ -20,6 +20,7 @@ import static com.google.common.collect.Lists.newArrayListWithCapacity;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.Enumerations.FilterOperator;
@@ -43,9 +44,7 @@ import com.b2international.snowowl.fhir.core.request.codesystem.FhirRequest;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
 import com.b2international.snowowl.snomed.core.domain.Acceptability;
-import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
-import com.b2international.snowowl.snomed.core.domain.SnomedDescriptions;
 
 /**
  * @since 9.5.0
@@ -69,11 +68,11 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 			// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
 			.sortBy(!CompareUtils.isEmpty(termFilter) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
 
-		final ValueSetComposeComponent compose = valueSet.getCompose();
 		
-		if (compose == null) {
+		if (!valueSet.hasCompose()) {
 			// do nothing, search all concepts
 		} else {
+			final ValueSetComposeComponent compose = valueSet.getCompose();
 			final ConceptSetComponent firstInclude = compose.getIncludeFirstRep();
 			final ConceptSetFilterComponent firstFilter = firstInclude.getFilterFirstRep();
 			
@@ -118,9 +117,17 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 	}
 
 	private void includeDesignations(final String baseUrl, Concept concept, ValueSetExpansionContainsComponent contains) {
-		final SnomedConcept snomedConcept = concept.getInternalConceptAs();
-		final SnomedDescriptions snomedDescriptions = snomedConcept.getDescriptions();
-
+		/*
+		 * XXX: We create multiple tooling-independent representations in the general
+		 * concept representation, these need to be collapsed back into a single
+		 * internal instance.
+		 */
+		final List<SnomedDescription> snomedDescriptions = concept.getDescriptions()
+			.stream()
+			.map(d -> (SnomedDescription) d.getInternalDescription())
+			.distinct()
+			.toList();
+			
 		for (final SnomedDescription snomedDescription : snomedDescriptions) {
 
 			/* 
@@ -174,12 +181,19 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 				designationExtensions.add(useContextExtension);
 			}
 			
+			/*
+			 * FIXME: Using "en" when the description's languageCode is not available. See also:
+			 * SnomedConceptSearchRequestEvaluator#generateGenericDescriptions(SnomedDescriptions)
+			 * - we are partially repeating/undoing the steps taken there
+			 */
+			final String languageCode = Optional.ofNullable(snomedDescription.getLanguageCode()).orElse("en");
+			
 			// Now convert the native SNOMED CT description into a FHIR designation
 			var designation = new ConceptReferenceDesignationComponent();
 			
 			designation
 				.setValue(snomedDescription.getTerm())
-				.setLanguage(snomedDescription.getLanguageCode())
+				.setLanguage(languageCode)
 				.setUse(typeCoding)
 				.setExtension(designationExtensions);
 			
