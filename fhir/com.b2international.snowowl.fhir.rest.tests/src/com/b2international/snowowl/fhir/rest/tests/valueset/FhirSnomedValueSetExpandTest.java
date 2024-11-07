@@ -27,7 +27,10 @@ import org.junit.Test;
 import com.b2international.commons.json.Json;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
+
+import io.restassured.path.json.JsonPath;
 
 /**
  * @since 8.0
@@ -111,7 +114,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	
 	@Test
 	public void expandSnomedCodeSystemURL_IncludeDesignations() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+		JsonPath jsonPath = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", RestExtensions.encodeQueryParameter(SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=ecl/<!138875005"))
 			.queryParam("includeDesignations", true)
 			.when().get("/ValueSet/$expand")
@@ -125,16 +128,15 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].display", equalTo("Substance (substance)"))
 			.body("expansion.contains[0].designation[0].value", equalTo("Substance"))
 			.body("expansion.contains[0].designation[0].language", equalTo("en"))
-			.body("expansion.contains[0].designation[1].value", equalTo("Substance"))
-			.body("expansion.contains[0].designation[1].language", equalTo("en-x-900000000000508004"))
-			.body("expansion.contains[0].designation[2].value", equalTo("Substance"))
-			.body("expansion.contains[0].designation[2].language", equalTo("en-x-900000000000509007"))
-			.body("expansion.contains[0].designation[3].value", equalTo("Substance (substance)"))
-			.body("expansion.contains[0].designation[3].language", equalTo("en"))
-			.body("expansion.contains[0].designation[4].value", equalTo("Substance (substance)"))
-			.body("expansion.contains[0].designation[4].language", equalTo("en-x-900000000000508004"))
-			.body("expansion.contains[0].designation[5].value", equalTo("Substance (substance)"))
-			.body("expansion.contains[0].designation[5].language", equalTo("en-x-900000000000509007"));
+			.body("expansion.contains[0].designation[1].value", equalTo("Substance (substance)"))
+			.body("expansion.contains[0].designation[1].language", equalTo("en"))
+			.extract()
+			.jsonPath();
+		
+		checkDesignationUseContext(jsonPath, "expansion.contains[0].designation[0].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.SYNONYM);
+		checkDesignationUseContext(jsonPath, "expansion.contains[0].designation[0].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.SYNONYM);
+		checkDesignationUseContext(jsonPath, "expansion.contains[0].designation[1].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.FULLY_SPECIFIED_NAME);
+		checkDesignationUseContext(jsonPath, "expansion.contains[0].designation[1].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.FULLY_SPECIFIED_NAME);
 	}
 	
 	@Test

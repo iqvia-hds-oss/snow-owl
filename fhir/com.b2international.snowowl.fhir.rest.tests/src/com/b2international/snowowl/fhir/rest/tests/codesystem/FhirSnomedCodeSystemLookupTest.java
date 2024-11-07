@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
 import static com.b2international.snowowl.fhir.rest.tests.FhirRestTest.Endpoints.CODESYSTEM_LOOKUP;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -32,6 +33,8 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
+
+import io.restassured.path.json.JsonPath;
 
 /**
  * CodeSystem $lookup operation for FHIR code systems REST end-point test cases
@@ -197,7 +200,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 	
 	@Test
 	public void GET_CodeSystem_$lookup_Designations() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+		JsonPath jsonPath = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("system", SNOMEDCT_URL)
 			.queryParam("code", CLINICAL_FINDING)
 			.queryParam("property", "designation")
@@ -210,30 +213,33 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
 			.body("parameter[1].name", equalTo("display"))
 			.body("parameter[1].valueString", equalTo("Clinical finding"))
-			.body("parameter[2].name", equalTo("designation"))
-			.body("parameter[2].part[0].valueCode", equalTo("en"))
-			.body("parameter[2].part[1].valueCoding.code", equalTo("900000000000013009"))
-			.body("parameter[2].part[2].valueString", equalTo("Clinical finding"))
-			.body("parameter[3].name", equalTo("designation"))
-			.body("parameter[3].part[0].valueCode", equalTo("en-x-" + Concepts.REFSET_LANGUAGE_TYPE_UK))
-			.body("parameter[3].part[1].valueCoding.code", equalTo("900000000000013009"))
-			.body("parameter[3].part[2].valueString", equalTo("Clinical finding"))
-			.body("parameter[4].name", equalTo("designation"))
-			.body("parameter[4].part[0].valueCode", equalTo("en-x-" + Concepts.REFSET_LANGUAGE_TYPE_US))
-			.body("parameter[4].part[1].valueCoding.code", equalTo("900000000000013009"))
-			.body("parameter[4].part[2].valueString", equalTo("Clinical finding"))
-			.body("parameter[5].name", equalTo("designation"))
-			.body("parameter[5].part[0].valueCode", equalTo("en"))
-			.body("parameter[5].part[1].valueCoding.code", equalTo("900000000000003001"))
-			.body("parameter[5].part[2].valueString", equalTo("Clinical finding (finding)"))
-			.body("parameter[6].name", equalTo("designation"))
-			.body("parameter[6].part[0].valueCode", equalTo("en-x-" + Concepts.REFSET_LANGUAGE_TYPE_UK))
-			.body("parameter[6].part[1].valueCoding.code", equalTo("900000000000003001"))
-			.body("parameter[6].part[2].valueString", equalTo("Clinical finding (finding)"))
-			.body("parameter[7].name", equalTo("designation"))
-			.body("parameter[7].part[0].valueCode", equalTo("en-x-" + Concepts.REFSET_LANGUAGE_TYPE_US))
-			.body("parameter[7].part[1].valueCoding.code", equalTo("900000000000003001"))
-			.body("parameter[7].part[2].valueString", equalTo("Clinical finding (finding)"));
+			.extract()
+			.jsonPath();
+		
+		jsonPath.setRootPath("parameter[2]");
+		assertThat(jsonPath.getString("name")).isEqualTo("designation");
+
+		assertThat(jsonPath.getString("part[0].name")).isEqualTo("language");
+		assertThat(jsonPath.getString("part[0].valueCode")).isEqualTo("en");
+		assertThat(jsonPath.getString("part[1].name")).isEqualTo("use");
+		assertThat(jsonPath.getString("part[1].valueCoding.code")).isEqualTo(Concepts.FULLY_SPECIFIED_NAME);
+		assertThat(jsonPath.getString("part[2].name")).isEqualTo("value");
+		assertThat(jsonPath.getString("part[2].valueString")).isEqualTo("Clinical finding (finding)");
+
+		jsonPath.setRootPath("parameter[3]");
+		assertThat(jsonPath.getString("name")).isEqualTo("designation");
+
+		assertThat(jsonPath.getString("part[0].name")).isEqualTo("language");
+		assertThat(jsonPath.getString("part[0].valueCode")).isEqualTo("en");
+		assertThat(jsonPath.getString("part[1].name")).isEqualTo("use");
+		assertThat(jsonPath.getString("part[1].valueCoding.code")).isEqualTo(Concepts.SYNONYM);
+		assertThat(jsonPath.getString("part[2].name")).isEqualTo("value");
+		assertThat(jsonPath.getString("part[2].valueString")).isEqualTo("Clinical finding");
+		
+		checkDesignationUseContext(jsonPath, "parameter[2].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.FULLY_SPECIFIED_NAME);
+		checkDesignationUseContext(jsonPath, "parameter[2].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.FULLY_SPECIFIED_NAME);
+		checkDesignationUseContext(jsonPath, "parameter[3].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.SYNONYM);
+		checkDesignationUseContext(jsonPath, "parameter[3].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.SYNONYM);
 	}
 	
 	@Test
