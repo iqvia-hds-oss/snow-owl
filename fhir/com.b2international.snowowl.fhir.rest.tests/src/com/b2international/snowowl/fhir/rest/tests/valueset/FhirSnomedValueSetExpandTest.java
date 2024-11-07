@@ -169,7 +169,6 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.next", endsWith(FHIR_ROOT_CONTEXT 
 				+ "/ValueSet/$expand"
 				+ "?url=http://snomed.info/sct/900000000000207008?fhir_vs=ecl/<!138875005"
-				+ "&displayLanguage=en-US;q=0.8,en-GB;q=0.6,en;q=0.4"
 				+ "&count=5"
 				+ "&after=AoIpMjU0MjkxMDAwKTI1NDI5MTAwMA=="));
 	}
