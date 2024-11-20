@@ -184,6 +184,8 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 		 * XXX: Assuming locales returned by Snow Owl are in the form of eg. "en-US" or
 		 * "en-x-1234567890123456789" (We can not use Java's built-in parser as at this
 		 * point the extension breaks length limits and the language tag is invalid)
+		 * 
+		 * See FhirLocaleTest#expandSplitPrivateUseExtension for an example.
 		 */
 		final int privateUseIdx = locale.lastIndexOf("-x-");
 		if (privateUseIdx < 0 || privateUseIdx + 3 >= locale.length()) {
