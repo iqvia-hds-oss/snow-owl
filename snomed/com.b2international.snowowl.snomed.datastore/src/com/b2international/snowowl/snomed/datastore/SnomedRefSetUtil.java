@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 B2i Healthcare Pte Ltd, http://b2i.sg
+ * Copyright 2011-2024 B2i Healthcare Pte Ltd, http://b2i.sg
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,18 @@
  */
 package com.b2international.snowowl.snomed.datastore;
 
-import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.COMPLEX_BLOCK_MAP;
-import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.COMPLEX_MAP;
-import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.EXTENDED_MAP;
-import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.SIMPLE_MAP;
-import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.SIMPLE_MAP_TO_SNOMEDCT;
-import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.SIMPLE_MAP_FROM_SNOMEDCT;
-import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.SIMPLE_MAP_WITH_DESCRIPTION;
+import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toMap;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.b2international.commons.BooleanUtils;
+import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -42,13 +34,7 @@ import com.b2international.snowowl.snomed.common.SnomedRF2Folder;
 import com.b2international.snowowl.snomed.core.domain.refset.DataType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 
 /** 
  * Utility class collecting commons operations related to SNOMED CT reference sets. 
@@ -260,8 +246,38 @@ public abstract class SnomedRefSetUtil {
 		}
 	}
 	
+	public static String shortenAssociationRefSetName(String refsetName) {
+		if (StringUtils.isEmpty(refsetName)) {
+			return refsetName;
+		}
+		
+		// Remove various suffixes to shorten the label
+		refsetName = removeSuffix(refsetName, " reference set");
+		refsetName = removeSuffix(refsetName, " association type");
+		refsetName = removeSuffix(refsetName, " association");
+		refsetName = removeSuffix(refsetName, " concept");
+				
+		if (refsetName.chars().allMatch(ch -> Character.isUpperCase(ch) || Character.isWhitespace(ch))) {
+			// All-caps terms "POSSIBLY EQUIVALENT TO" are modified by changing letters to lower case, then title-casing the first letter
+			return StringUtils.capitalizeFirstLetter(refsetName.toLowerCase(Locale.ENGLISH));
+		}
+		
+		return refsetName;
+	}
+
+	private static String removeSuffix(String s, String suffix) {
+		if (StringUtils.isEmpty(s) || StringUtils.isEmpty(suffix)) {
+			return s;
+		}
+		
+		if (s.endsWith(suffix)) {
+			return s.substring(0, s.length() - suffix.length());
+		}
+		
+		return s;
+	}
+	
 	private SnomedRefSetUtil() {
 		// Suppress instantiation
 	}
-
 }
