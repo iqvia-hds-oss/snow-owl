@@ -72,6 +72,8 @@ import com.b2international.snowowl.snomed.validation.SnomedQueryValidationRuleEv
 	// OWL expression conversion tests
 	SnomedOWLExpressionConverterTest.class,	
 	SnomedOWLRelationshipConverterTest.class,
+	//
+	SnomedRefSetUtilTest.class,
 })
 public class AllSnomedDatastoreTests {
 
