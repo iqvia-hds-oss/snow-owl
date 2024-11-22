@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.User;
-import com.b2international.snowowl.core.identity.request.UserRequests;
 import com.b2international.snowowl.core.status.Statuses;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Predicate;
@@ -51,19 +50,19 @@ public final class RemoteJob extends Job {
 	
 	private final String id;
 	private final String key;
+	private final User user;
 	private final String description;
 	private final ServiceProvider context;
 	private final Request<ServiceProvider, ?> request;
 	
 	private String response;
-	private String user;
 	private boolean autoClean;
 	
 	public RemoteJob(
 			final String id,
 			final String key, 
 			final String description, 
-			final String user, 
+			final User user, 
 			final ServiceProvider context, 
 			final Request<ServiceProvider, ?> request,
 			final boolean autoClean) {
@@ -82,14 +81,6 @@ public final class RemoteJob extends Job {
 		final ObjectMapper mapper = this.context.service(ObjectMapper.class);
 		final IProgressMonitor trackerMonitor = this.context.service(RemoteJobTracker.class).createMonitor(id, monitor);
 		try {
-			// override user when necessary
-			User user = context.service(User.class);
-			if (User.isSystem(this.user)) {
-				user = User.SYSTEM;
-			} else if (!user.getUserId().equals(this.user)) {
-				user = UserRequests.prepareGet(this.user).build().execute(this.context);
-			}
-			
 			// seed the monitor instance into the current context, so the request can use it for progress reporting
 			final ServiceProvider context = this.context.inject()
 					.bind(IProgressMonitor.class, trackerMonitor)
@@ -166,7 +157,7 @@ public final class RemoteJob extends Job {
 	}
 	
 	public String getUser() {
-		return user;
+		return user.getUserId();
 	}
 	
 	String getResponse() {
