@@ -62,7 +62,7 @@ import com.google.common.collect.Lists;
 @RunWith(Parameterized.class)
 public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 	
-	//@Test
+	@Test
 	public void affectedComponentURI() throws Exception {
 		final String ruleId = "45a";
 		indexRule(ruleId);
@@ -81,7 +81,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 	}
 
 	
-	//@Test
+	@Test
 	public void rule34() throws Exception {
 		// Relationships must be unique within a relationship group
 		final String ruleId = "34";
@@ -117,7 +117,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, concreteValue2.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule38a() throws Exception {
 		// Active concepts should have at least one active inferred parent.
 		final String ruleId = "38a";
@@ -141,7 +141,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 					ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, inactiveConceptWithoutInferredParent.getId())));
 	}
 	
-	//@Test
+	@Test
 	public void rule38b() throws Exception {
 		// Active concepts should have at least one active stated parent
 		final String ruleId = "38b";
@@ -165,7 +165,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 					ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, inactiveConceptWithoutStatedParent.getId())));
 	}
 	
-	//@Test
+	@Test
 	public void rule45a() throws Exception {
 		final String ruleId = "45a";
 		indexRule(ruleId);
@@ -181,7 +181,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, relationship.getId()));
 	}
 
-	//@Test
+	@Test
 	public void rule45b() throws Exception {
 		final String ruleId = "45b";
 		indexRule(ruleId);
@@ -198,7 +198,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, relationship.getId()));
 	}
 
-	//@Test
+	@Test
 	public void rule45c() throws Exception {
 		final String ruleId = "45c";
 		indexRule(ruleId);
@@ -228,7 +228,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(RELATIONSHIP_NUMBER, relationshipInGroup2.getId())));		
 	}
 	
-	//@Test
+	@Test
 	public void rule54() throws Exception {
 		final String ruleId = "54";
 		indexRule(ruleId);
@@ -250,7 +250,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, description.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule55() throws Exception {
 		final String ruleId = "55";
 		indexRule(ruleId);
@@ -300,7 +300,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		);
 	}
 	
-	//@Test
+	@Test
 	public void rule74() throws Exception {
 		final String ruleId = "74";
 		indexRule(ruleId);
@@ -328,7 +328,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, description1.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule75() throws Exception {
 		// Message: Relationships in group 0 should not be duplicated in any other group.
 		final String ruleId = "75";
@@ -360,7 +360,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				);
 	}
 	
-	//@Test
+	@Test
 	public void rule80() throws Exception {
 		final String ruleId = "80";
 		indexRule(ruleId);
@@ -394,7 +394,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 					ComponentIdentifier.of(CONCEPT_NUMBER, validConcept2.getId())));
 	}
 	
-	//@Test
+	@Test
 	public void rule84() throws Exception {
 		final String ruleId = "84";
 		indexRule(ruleId);
@@ -424,7 +424,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		);
   }
   
-	//@Test
+	@Test
 	public void rule83() throws Exception {
 		final String ruleId = "83";
 		indexRule(ruleId);
@@ -448,7 +448,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, description2.getId()));
 	}
 	
-	//@Test	
+	@Test	
 	public void rule110() throws Exception {	
 		// Subsets should not contain retired concepts	
 		final String ruleId = "110";	
@@ -494,7 +494,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		);	
 	}
   
-  //@Test
+  @Test
   	public void rule115a() throws Exception {
 		// Reference Sets should not contain retired concepts
 		final String ruleId = "115a";
@@ -523,7 +523,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(CONCEPT_NUMBER, badConcept.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule115b() throws Exception {
 		// Reference Sets should not contain retired descriptions
 		final String ruleId = "115b";
@@ -552,7 +552,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, badDesc.getId()));
   }
 	
-	//@Test
+	@Test
 	public void rule266() throws Exception {
 		final String ruleId = "266";
 		indexRule(ruleId);
@@ -595,7 +595,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		);
 	}
 	
-	//@Test
+	@Test
 	public void rule326() throws Exception {
 		final String ruleId = "326";
 		indexRule(ruleId);
@@ -621,7 +621,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, description3.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule327() throws Exception {
 		final String ruleId = "327";
 		indexRule(ruleId);
@@ -649,7 +649,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, description3.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule328() throws Exception {
 		final String ruleId = "328";
 		indexRule(ruleId);
@@ -676,7 +676,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, description3.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule482() throws Exception {
 		// Brackets in active terms should balance and be sequentially valid
 		final String ruleId = "482";
@@ -707,22 +707,22 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		);
 	}
 	
-	//@Test
+	@Test
 	public void rule532a_pharmacy_1() throws Exception {
 		rule532("532a", Concepts.FULLY_SPECIFIED_NAME, Concepts.MODULE_B2I_EXTENSION);
 	}
 
-	//@Test
+	@Test
 	public void rule532a_pharmacy_2() throws Exception {
 		rule532("532a", Concepts.FULLY_SPECIFIED_NAME, Concepts.MODULE_B2I_EXTENSION);
 	}
 	
-	//@Test
+	@Test
 	public void rule532b_pharmacy_1() throws Exception {
 		rule532("532b", Concepts.SYNONYM, Concepts.MODULE_B2I_EXTENSION);
 	}
 
-	//@Test
+	@Test
 	public void rule532b_pharmacy_2() throws Exception {
 		rule532("532b", Concepts.SYNONYM, Concepts.MODULE_B2I_EXTENSION);
 	}
@@ -804,7 +804,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		);
 	}
 	
-	//@Test
+	@Test
 	public void rule663() throws Exception {
 		final String ruleId = "663";
 		indexRule(ruleId);
@@ -836,7 +836,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, invalidTypeRelationship.getId()));
 	}
 
-	//@Test
+	@Test
 	public void rule664() throws Exception {
 		final String ruleId = "664";
 		indexRule(ruleId);
@@ -866,7 +866,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, d2.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule665() throws Exception {
 		final String ruleId = "665";
 		indexRule(ruleId);
@@ -914,7 +914,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 
 	}
 	
-	//@Test
+	@Test
 	public void rule666() throws Exception {
 		final String ruleId = "666";
 		indexRule(ruleId);
@@ -982,7 +982,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, c2.getId()));
 	}
 
-	//@Test
+	@Test
 	public void rule667() throws Exception {
 		final String ruleId = "667";
 		indexRule(ruleId);
@@ -1035,7 +1035,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, newIncorrectDescriptionTypedDesc.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule668() throws Exception {
 		final String ruleId = "668";
 		indexRule(ruleId);
@@ -1094,7 +1094,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.REFSET_MEMBER_NUMBER, invalidTypeAxiomMember.getId()));
 	}
 	
-	//@Test
+	@Test
 	public void rule669() throws Exception {
 		final String ruleId = "669";
 		indexRule(ruleId);
@@ -1131,7 +1131,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, Concepts.ATTRIBUTE));
 	}
 	
-	//@Test
+	@Test
 	public void rule670() throws Exception {
 		final String ruleId = "670";
 		indexRule(ruleId);
@@ -1148,7 +1148,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, Concepts.IS_A));
 	}
 
-	//@Test
+	@Test
 	public void rule671() throws Exception {
 		final String ruleId = "671";
 		indexRule(ruleId);
