@@ -35,6 +35,9 @@ Set<ComponentIdentifier> issues = Sets.newHashSet();
 final String integerTypeRangePrefix = "int";
 final String decimalTypeRangePrefix = "dec";
 
+Set<String> unsupportedAxiomMarkers = [ "TransitiveObjectProperty", "ReflexiveObjectProperty",
+	"SubDataPropertyOf", "SubObjectPropertyOf", "SubAnnotationPropertyOf", "ObjectPropertyChain"];
+   
 Map<String, String> allowedRanges = Maps.newHashMap();
 
 List<String> moduleIds = SnomedRequests.prepareSearchConcept()
@@ -255,32 +258,31 @@ for (String typeId : allowedRanges.keySet()) {
 	final ExpressionBuilder owlMemberExpressionBuilder = Expressions.bool()
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
-		.filter(Expressions.bool()
-			.should(nestedMatch("classAxiomRelationships", Expressions.bool()
+		.filter(nestedMatch("classAxiomRelationships", Expressions.bool()
 				.filter(matchAny("typeId", [typeId]))
 				.filter(matchAny("destinationId", incorrectDestinationIds))
-				.build()))
-			.should(nestedMatch("gciAxiomRelationships", Expressions.bool()
-				.filter(matchAny("typeId", [typeId]))
-				.filter(matchAny("destinationId", incorrectDestinationIds))
-				.build()))
-			.build()
-			);
+				.build()));
 	
 	if (params.isUnpublishedOnly) {
 		owlMemberExpressionBuilder.filter(SnomedRefSetMemberIndexEntry.Expressions.effectiveTime(EffectiveTimes.UNSET_EFFECTIVE_TIME))
 	}
 	
-	final Query<String> owlMemberQuery = Query.select(String.class)
+	final Query<String[]> owlMemberQuery = Query.select(String[].class)
 		.from(SnomedRefSetMemberIndexEntry.class)
-		.fields(SnomedRefSetMemberIndexEntry.Fields.ID)
+		.fields(SnomedRefSetMemberIndexEntry.Fields.ID, SnomedRf2Headers.FIELD_OWL_EXPRESSION)
 		.where(owlMemberExpressionBuilder.build())
 		.limit(pageSize)
 		.build();
 	
 	searcher.stream(owlMemberQuery).forEach({ hits ->
-		hits.forEach({ id ->
-			issues.add(ComponentIdentifier.of(SnomedReferenceSetMember.TYPE, id))
+		hits.forEach({ hit ->
+			def id = hit[0]
+			def expression = hit[1]
+			def shouldValidate = unsupportedAxiomMarkers.stream().noneMatch({ expression.contains(it) })
+			
+			if (shouldValidate) {
+				issues.add(ComponentIdentifier.of(SnomedReferenceSetMember.TYPE, id))				
+			}
 		})
 	})
 }

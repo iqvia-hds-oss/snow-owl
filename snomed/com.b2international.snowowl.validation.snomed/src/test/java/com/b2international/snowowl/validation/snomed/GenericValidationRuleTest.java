@@ -1291,9 +1291,15 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
+		SnomedRefSetMemberIndexEntry axiomMember4 = member(Concepts.ROOT_CONCEPT, Concepts.REFSET_OWL_AXIOM)
+				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.owlExpression(String.format("TransitiveObjectProperty(:%s)", Concepts.ROOT_CONCEPT))
+				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
+				.build();
+		
 		indexRevision(MAIN, mrcmRangeMember1, mrcmRangeMember2, mrcmRangeMember3, mrcmRangeMember4,
 				relationship1, relationship2, relationship3, relationship4, relationship5,
-				axiomMember1, axiomMember2, axiomMember3);
+				axiomMember1, axiomMember2, axiomMember3, axiomMember4);
 		
 		ValidationIssues issues = validate(ruleId);
 		assertAffectedComponents(issues, 
@@ -1374,9 +1380,16 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE))
 				.build();
 		
+		SnomedRefSetMemberIndexEntry axiomMember4 = member(Concepts.CONCEPT_MODEL_ATTRIBUTE, Concepts.REFSET_OWL_AXIOM)
+				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
+				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE))
+				.owlExpression(String.format("ReflexiveObjectProperty(:%s)", Concepts.ROOT_CONCEPT))
+				.build();
+		
 		indexRevision(MAIN, mrcmDomainMember1, mrcmAttributeDomainMember1, mrcmDomainMember2, mrcmAttributeDomainMember2,
 			relationship1, relationship2, relationship3, relationship4, relationship5, relationship6, relationship7, relationship8,
-			axiomMember1, axiomMember2,	axiomMember3);
+			axiomMember1, axiomMember2,	axiomMember3, axiomMember4);
 		
 		ValidationIssues issues = validate(ruleId);
 		Assertions.assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet()))
@@ -1387,13 +1400,6 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship4.getId()),
 				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship7.getId()),
 				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship8.getId())
-			)
-			.doesNotContain(ComponentIdentifier.of(SnomedReferenceSetMember.TYPE, axiomMember1.getId()),
-				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship1.getId()),
-				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship2.getId()),
-				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship5.getId()),
-				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship5.getId()),
-				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship6.getId())
 			);
 	}
 	
