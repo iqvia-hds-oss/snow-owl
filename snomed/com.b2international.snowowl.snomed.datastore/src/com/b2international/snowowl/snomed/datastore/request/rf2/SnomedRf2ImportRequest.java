@@ -260,7 +260,11 @@ final class SnomedRf2ImportRequest implements Request<BranchContext, ImportRespo
 				updateLocales(context, codeSystemUri.getCodeSystem());
 			}
 			
-			return ImportResponse.success(visitedComponents.build(), reporter.getDefects());
+			if (Rf2ReleaseType.FULL == releaseType) {
+				return ImportResponse.success(Set.of(), reporter.getDefects());
+			} else {
+				return ImportResponse.success(visitedComponents.build(), reporter.getDefects());
+			}
 		}
 	}
 
