@@ -29,6 +29,7 @@ import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.jobs.JobRequests;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
+import com.b2international.snowowl.core.request.io.ImportResponse;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
@@ -38,6 +39,7 @@ import com.b2international.snowowl.test.commons.Resources;
 import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * @since 8.0
@@ -68,6 +70,9 @@ public class SnomedRf2NextReleaseImportTest extends AbstractSnomedApiTest {
 			.getSync(1, TimeUnit.MINUTES);
 		RemoteJobEntry job = JobRequests.waitForJob(Services.bus(), jobId, 2000 /* 2 seconds */);
 		assertTrue("Failed to import RF2 archive", job.isSuccessful());
+		ImportResponse response = job.getResultAs(Services.context().service(ObjectMapper.class),  ImportResponse.class);
+		//assert that the previous import job didn't store all visited components
+		assertTrue("Import result of full import includes visited components", response.getVisitedComponents().isEmpty());
 		// assert that the version for importUntil is present in the system
 		Version latestVersion = CodeSystemVersionRestRequests.getLatestVersion(SnomedContentRule.SNOMEDCT_ID).get();
 		assertEquals(importUntil, EffectiveTimes.format(latestVersion.getEffectiveTime(), DateFormats.SHORT));
