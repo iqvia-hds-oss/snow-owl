@@ -10,6 +10,7 @@ import com.b2international.index.query.Expressions.ExpressionBuilder
 import com.b2international.index.revision.RevisionSearcher
 import com.b2international.snowowl.core.ComponentIdentifier
 import com.b2international.snowowl.core.date.EffectiveTimes
+import com.b2international.snowowl.snomed.common.SnomedRf2Headers
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship
@@ -37,6 +38,9 @@ import com.google.common.collect.Sets
 RevisionSearcher searcher = ctx.service(RevisionSearcher.class)
 Set<ComponentIdentifier> issues = Sets.newHashSet()
 
+Set<String> unsupportedAxiomMarkers = [ "TransitiveObjectProperty", "ReflexiveObjectProperty",
+	"SubDataPropertyOf", "SubObjectPropertyOf", "ObjectPropertyChain", "SubAnnotationPropertyOf"];
+   
 def getInnerPredicate = { SnomedPredicate predicate ->
 	if (predicate instanceof SnomedCardinalityPredicate) {
 		return predicate.getPredicate()
@@ -187,11 +191,17 @@ if (params.isUnpublishedOnly) {
 		.execute(ctx)
 	
 	for (SnomedReferenceSetMember owlAxiomMember : owlAxiomMembers) {
-		def sourceId = owlAxiomMember.getReferencedComponent().getId()
-		for (SnomedOWLRelationshipDocument relationship : getOWLRelationships(owlAxiomMember)) {
-			def typeId = relationship.getTypeId()
-			if (!typeId.equals(Concepts.IS_A) && getApplicableRules(sourceId, typeId, true).isEmpty()) {
-				issues.add(ComponentIdentifier.of(SnomedTerminologyComponentConstants.REFSET_MEMBER_NUMBER, owlAxiomMember.getId()))
+		
+		String owlExpression = owlAxiomMember.getProperties().get(SnomedRf2Headers.FIELD_OWL_EXPRESSION)
+		boolean shouldValidate = unsupportedAxiomMarkers.stream().noneMatch({ marker -> owlExpression.contains(marker)});
+		
+		if (shouldValidate) {
+			def sourceId = owlAxiomMember.getReferencedComponent().getId()
+			for (SnomedOWLRelationshipDocument relationship : getOWLRelationships(owlAxiomMember)) {
+				def typeId = relationship.getTypeId()
+				if (!typeId.equals(Concepts.IS_A) && getApplicableRules(sourceId, typeId, true).isEmpty()) {
+					issues.add(ComponentIdentifier.of(SnomedTerminologyComponentConstants.REFSET_MEMBER_NUMBER, owlAxiomMember.getId()))
+				}
 			}
 		}
 	}
@@ -296,22 +306,30 @@ if (params.isUnpublishedOnly) {
 		
 	allowedTypeIdsForOwlRelationships.add(Concepts.IS_A)
 	
+	final ExpressionBuilder nestedBuilder = Expressions.builder()
+		.mustNot(SnomedRelationshipIndexEntry.Expressions.typeIds(allowedTypeIdsForOwlRelationships))
+	
 	final ExpressionBuilder owlMemberExpressionBuilder = Expressions.builder()
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
-		.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionType(allowedTypeIdsForOwlRelationships))
+		.should(Expressions.nestedMatch(SnomedRefSetMemberIndexEntry.Fields.CLASS_AXIOM_RELATIONSHIP, nestedBuilder.build()))
 	
-	final Query<String> owlMemberQuery = Query.select(String.class)
+	final Query<String[]> owlMemberQuery = Query.select(String[].class)
 		.from(SnomedRefSetMemberIndexEntry.class)
-		.fields(SnomedRefSetMemberIndexEntry.Fields.ID)
+		.fields(SnomedRefSetMemberIndexEntry.Fields.ID, SnomedRf2Headers.FIELD_OWL_EXPRESSION)
 		.where(owlMemberExpressionBuilder.build())
 		.limit(10_000)
 		.scroll("2m")
 		.build()
 	
 	searcher.scroll(owlMemberQuery).forEach({ hits ->
-		hits.forEach({ id ->
-			issues.add(ComponentIdentifier.of(SnomedTerminologyComponentConstants.REFSET_MEMBER_NUMBER, id))
+		hits.forEach({ hit ->
+			def id = hit[0]
+			def owlExpression = hit[1]
+			def shouldValidate = unsupportedAxiomMarkers.stream().noneMatch({ marker -> owlExpression.contains(marker)});
+			if (shouldValidate) {
+				issues.add(ComponentIdentifier.of(SnomedTerminologyComponentConstants.REFSET_MEMBER_NUMBER, id))				
+			}
 		})
 	})
 }
