@@ -1258,7 +1258,13 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
-		indexRevision(MAIN, relationship1, relationship2, relationship3, axiomMember1, axiomMember2, axiomMember3, axiomMember4);
+		SnomedRefSetMemberIndexEntry axiomMember5 = member(Concepts.ROOT_CONCEPT, Concepts.REFSET_OWL_AXIOM)
+				.gciAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE))
+				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
+				.build();
+		
+		indexRevision(MAIN, relationship1, relationship2, relationship3, axiomMember1, axiomMember2, axiomMember3, axiomMember4, axiomMember5);
 		
 		ValidationIssues issues = validate(ruleId);
 		assertAffectedComponents(issues, 
@@ -1336,9 +1342,15 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.owlExpression(String.format("ReflexiveObjectProperty(:%s)", Concepts.ROOT_CONCEPT))
 				.build();
 		
+		SnomedRefSetMemberIndexEntry axiomMember5 = member(Concepts.PHYSICAL_OBJECT, Concepts.REFSET_OWL_AXIOM)
+				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
+				.gciAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT, 0)))
+				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT))
+				.build();
+		
 		indexRevision(MAIN, attributeConstraint1, attributeConstraint2, attributeConstraint3,
 			relationship1, relationship2, relationship3, relationship4, relationship5, relationship6, relationship7, relationship8,
-			axiomMember1, axiomMember2,	axiomMember3, axiomMember4);
+			axiomMember1, axiomMember2,	axiomMember3, axiomMember4, axiomMember5);
 		
 		ValidationIssues issues = validate(ruleId);
 		assertAffectedComponents(issues, 
