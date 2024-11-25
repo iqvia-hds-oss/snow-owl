@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.b2international.snowowl.core.request;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,25 +43,52 @@ public abstract class SearchPageableCollectionResourceRequestBuilder<B extends S
 		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> builder.build().execute(context)));
 	}
 
-	public final Stream<R> stream(ServiceProvider context, Function<B, AsyncRequest<R>> build) {
-		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> build.apply(builder).getRequest().execute(context)));
+	public final Stream<R> stream(ServiceProvider context, Function<B, AsyncRequest<R>> req) {
+		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> req.apply(builder).getRequest().execute(context)));
 	}
 
-	public final Stream<R> streamAsync(ServiceProvider context, Function<B, AsyncRequest<R>> build) {
-		return streamAsync(context.service(IEventBus.class), build);
+	public final Stream<R> streamAsync(ServiceProvider context, Function<B, AsyncRequest<R>> req) {
+		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> req.apply(builder).withContext(context).execute(context.service(IEventBus.class)).getSync(3, TimeUnit.MINUTES)));
 	}
 
-	public final Stream<R> streamAsync(IEventBus bus, Function<B, AsyncRequest<R>> build) {
-		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> build.apply(builder).execute(bus).getSync(3, TimeUnit.MINUTES)));
-	}
-
-	public final <T> Promise<Collection<T>> transformAsync(ServiceProvider context, Function<B, AsyncRequest<R>> build, Function<R, Stream<T>> transform) {
-		return transformAsync(context.service(IEventBus.class), build, transform);
+	/**
+	 * @param bus
+	 * @param req
+	 * @return
+	 * @deprecated - ensure you are using the alternative where you supply request headers if you are calling these from server environments. See referenced methods.
+	 * @see #streamAsync(IEventBus, Map, Function)
+	 */
+	public final Stream<R> streamAsync(IEventBus bus, Function<B, AsyncRequest<R>> req) {
+		return streamAsync(bus, Map.of(), req);
 	}
 	
-	public final <T> Promise<Collection<T>> transformAsync(IEventBus bus, Function<B, AsyncRequest<R>> build, Function<R, Stream<T>> transform) {
+	public final Stream<R> streamAsync(IEventBus bus, Map<String, String> headers, Function<B, AsyncRequest<R>> req) {
+		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> req.apply(builder).withHeaders(headers).execute(bus).getSync(3, TimeUnit.MINUTES)));
+	}
+
+	public final <T> Promise<Collection<T>> transformAsync(ServiceProvider context, Function<B, AsyncRequest<R>> req, Function<R, Stream<T>> transform) {
 		return Promise.wrap(() -> {
-			return streamAsync(bus, build)
+			return streamAsync(context, req)
+					.map(transform)
+					.flatMap(t -> t)
+					.collect(Collectors.toList());
+		});
+	}
+	
+	/**
+	 * @param bus
+	 * @param req
+	 * @return
+	 * @deprecated - ensure you are using the alternative where you supply request headers if you are calling these from server environments. See referenced methods.
+	 * @see #transformAsync(IEventBus, Map, Function, Function)
+	 */
+	public final <T> Promise<Collection<T>> transformAsync(IEventBus bus, Function<B, AsyncRequest<R>> req, Function<R, Stream<T>> transform) {
+		return transformAsync(bus, Map.of(), req, transform);
+	}
+	
+	public final <T> Promise<Collection<T>> transformAsync(IEventBus bus, Map<String, String> headers, Function<B, AsyncRequest<R>> req, Function<R, Stream<T>> transform) {
+		return Promise.wrap(() -> {
+			return streamAsync(bus, headers, req)
 					.map(transform)
 					.flatMap(t -> t)
 					.collect(Collectors.toList());
