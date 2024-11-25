@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2023-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,26 @@
  */
 package com.b2international.snowowl.fhir.rest;
 
+import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
+
 import java.io.InputStream;
-import java.text.ParseException;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.b2international.commons.http.AcceptLanguageHeader;
+import com.b2international.fhir.operations.OperationParametersFactory;
+import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.FhirApiConfig;
-import com.b2international.snowowl.fhir.core.model.codesystem.LookupRequest;
-import com.b2international.snowowl.fhir.core.model.converter.CodeSystemConverter_50;
+import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -65,8 +66,6 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 	 * @param _format
 	 * @param _pretty
 	 * @return
-	 * 
-	 * @throws ParseException
 	 */
 	@Operation(
 		summary = "Concept lookup and decomposition",
@@ -76,12 +75,19 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 	@ApiResponse(responseCode = "400", description = "Bad request")
 	@ApiResponse(responseCode = "404", description = "Code system not found")
 	@GetMapping(value = "/$lookup", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public Promise<ResponseEntity<byte[]>> lookup(
 		
@@ -94,11 +100,11 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 		final String system,
 		
 		@Parameter(description = "The code system version") 
-		@RequestParam(value = "version") 
+		@RequestParam(value = "version", required = false) 
 		final Optional<String> version,
 		
 		@Parameter(description = "Lookup date in datetime format") 
-		@RequestParam(value = "date") 
+		@RequestParam(value = "date", required = false) 
 		final Optional<String> date,
 		
 		@Parameter(description = "Language code for display") 
@@ -107,20 +113,27 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 		
 		@Parameter(description = "Properties to return in the output") 
 		@RequestParam(value = "property", required = false) 
-		final Set<String> properties,
+		final List<String> properties,
 		
 		@Parameter(hidden = true)
-		@RequestHeader(value = HttpHeaders.ACCEPT)
+		@RequestHeader(value = HttpHeaders.ACCEPT, required = false)
 		final String accept,
-
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -130,27 +143,19 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 
 	) {
 		
-		LookupRequest.Builder builder = LookupRequest.builder()
-			.code(code)
-			.system(system);
+		var request = new CodeSystemLookupParameters()
+			.setCode(code)
+			.setSystem(system);
 		
-		if (version.isPresent()) {
-			builder.version(version.get());
-		}
+		version.ifPresent(request::setVersion);
+		date.ifPresent(request::setDate);
+		displayLanguage.ifPresent(request::setDisplayLanguage);
 		
-		if (date.isPresent()) {
-			builder.date(date.get());
-		}
-
-		if (displayLanguage.isPresent()) {
-			builder.displayLanguage(displayLanguage.get());
-		}
-
 		if (properties != null && !properties.isEmpty()) {
-			builder.properties(properties);
+			request.setProperty(properties);
 		}
 		
-		return lookup(builder.build(), accept, _format, _pretty);
+		return lookup(request, accept, _format, _pretty);
 	}
 	
 	/**
@@ -178,27 +183,52 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 	@PostMapping(
 		value = "/$lookup", 
 		consumes = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
 		},
 		produces = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
 		}
 	)
 	public Promise<ResponseEntity<byte[]>> lookup(
 			
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The operation's input parameters", content = { 
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object"))
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
 		})
 		final InputStream requestBody,
 		
@@ -209,15 +239,29 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Prefer header", schema = @Schema(
+			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
+			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
+		))
+		@RequestHeader(value = PreferHandlingInterceptor.PREFER_HEADER, required = false)
+		final String prefer,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -227,25 +271,23 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 
 	) {
 		
-		final var fhirParameters = toFhirParameters(requestBody, contentType);
-		final LookupRequest request = CodeSystemConverter_50.INSTANCE.toLookupRequest(fhirParameters);
+		final CodeSystemLookupParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.CodeSystemLookupParametersFactory.INSTANCE);
 		
-		return lookup(request, accept, _format, _pretty);
+		return lookup(parameters, accept, _format, _pretty);
 	}
 
 	private Promise<ResponseEntity<byte[]>> lookup(
-		final LookupRequest lookupRequest, 
+		final CodeSystemLookupParameters parameters, 
 		final String accept, 
 		final String _format, 
 		final Boolean _pretty
 	) {
 		return FhirRequests.codeSystems().prepareLookup()
-			.setRequest(lookupRequest)
+			.setParameters(parameters)
 			.buildAsync()
 			.execute(getBus())
-			.then(soLookupResult -> {
-				var fhirLookupResult = CodeSystemConverter_50.INSTANCE.fromLookupResult(soLookupResult);
-				return toResponseEntity(fhirLookupResult, accept, _format, _pretty);
+			.then(result -> {
+				return toResponseEntity(result, accept, _format, _pretty);
 			});
 	}
 }

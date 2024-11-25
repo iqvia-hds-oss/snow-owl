@@ -15,13 +15,11 @@
  */
 package com.b2international.snowowl.core.jobs;
 
+import java.util.Objects;
 import java.util.Optional;
-
-import jakarta.validation.constraints.NotNull;
 
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.core.runtime.jobs.Job;
-import jakarta.validation.constraints.NotEmpty;
 
 import com.b2international.commons.exceptions.AlreadyExistsException;
 import com.b2international.commons.exceptions.BadRequestException;
@@ -30,8 +28,12 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.identity.User;
+import com.b2international.snowowl.core.identity.request.UserRequests;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 5.7
@@ -122,9 +124,20 @@ final class ScheduleJobRequest implements Request<ServiceProvider, String> {
 				}
 			}
 			
-			final String userId = !Strings.isNullOrEmpty(user) ? user : context.service(User.class).getUserId();
+			User user;
 			
-			RemoteJob job = new RemoteJob(id, key, description, userId, context, request, autoClean);
+			// override user if requested
+			if (User.isSystem(this.user)) {
+				// hidden system jobs
+				user = User.SYSTEM;
+			} else if (!Strings.isNullOrEmpty(this.user) && !Objects.equals(this.user, context.service(User.class).getUserId())) {
+				// run jobs on behalf of others
+				user = UserRequests.prepareGet(this.user).build().execute(context);
+			} else {
+				user = context.service(User.class);
+			}
+			
+			RemoteJob job = new RemoteJob(id, key, description, user, context, request, autoClean);
 			job.setSystem(true);
 			if (schedulingRule != null) {
 				job.setRule(schedulingRule);

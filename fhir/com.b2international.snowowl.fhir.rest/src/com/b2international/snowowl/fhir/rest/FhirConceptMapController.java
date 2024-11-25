@@ -16,11 +16,13 @@
 package com.b2international.snowowl.fhir.rest;
 
 import static com.b2international.snowowl.core.rest.OpenAPIExtensions.*;
+import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 
 import java.io.InputStream;
 import java.net.URI;
 import java.time.LocalDate;
 
+import org.hl7.fhir.r5.model.ConceptMap;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -36,9 +38,8 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
+import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.model.conceptmap.ConceptMap;
-import com.b2international.snowowl.fhir.core.model.converter.ConceptMapConverter_50;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 
@@ -46,7 +47,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -97,18 +97,36 @@ public class FhirConceptMapController extends AbstractFhirController {
 	@ApiResponse(responseCode = "201", description = "Resource created")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PostMapping(consumes =	{
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public ResponseEntity<Void> create(
 			
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The concept map resource", content = { 
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object"))
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
 		})
 		final InputStream requestBody,
 		
@@ -146,43 +164,13 @@ public class FhirConceptMapController extends AbstractFhirController {
 		
 	) {
 		
-		final var fhirConceptMap = toFhirResource(requestBody, contentType, org.linuxforhealth.fhir.model.r5.resource.ConceptMap.class);
-		final ConceptMap soConceptMap = ConceptMapConverter_50.INSTANCE.toInternal(fhirConceptMap);
+		final var conceptMap = toFhirResource(requestBody, contentType, ConceptMap.class);
 
 		// Ignore the input identifier on purpose and assign one locally
 		final String generatedId = IDs.base62UUID();
-		final ConceptMap soConceptMapWithId = ConceptMap.builder(generatedId)
-			.contacts(soConceptMap.getContacts())
-			.copyright(soConceptMap.getCopyright())
-			.date(soConceptMap.getDate())
-			.description(soConceptMap.getDescription())
-			.experimental(soConceptMap.getExperimental())
-			.extensions(soConceptMap.getExtensions())
-			.groups(soConceptMap.getGroups())
-			.identifiers(soConceptMap.getIdentifiers())
-			.implicitRules(soConceptMap.getImplicitRules())
-			.jurisdictions(soConceptMap.getJurisdictions())
-			.language(soConceptMap.getLanguage())
-			.meta(soConceptMap.getMeta())
-			.name(soConceptMap.getName())
-			// .narrative(...) is a special version of .text(...)
-			.publisher(soConceptMap.getPublisher())
-			.purpose(soConceptMap.getPurpose())
-			.resourceType(soConceptMap.getResourceType())
-			.sourceCanonical(soConceptMap.getSourceCanonical())
-			.sourceUri(soConceptMap.getSourceUri())
-			.status(soConceptMap.getStatus())
-			.targetCanonical(soConceptMap.getTargetCanonical())
-			.targetUri(soConceptMap.getTargetUri())
-			.text(soConceptMap.getText())
-			.title(soConceptMap.getTitle())
-			// .toolingId(...) is ignored, we will not see it on the input side
-			.url(soConceptMap.getUrl())
-			.usageContexts(soConceptMap.getUsageContexts())
-			.version(soConceptMap.getVersion())
-			.build();
+		conceptMap.setId(generatedId);
 		
-		return createOrUpdate(generatedId, soConceptMapWithId, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		return createOrUpdate(generatedId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 	}
 
 	/**
@@ -214,12 +202,19 @@ public class FhirConceptMapController extends AbstractFhirController {
 	@ApiResponse(responseCode = "201", description = "Resource created")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PutMapping(value = "/{id:**}", consumes = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public ResponseEntity<Void> update(
 			
@@ -229,8 +224,19 @@ public class FhirConceptMapController extends AbstractFhirController {
 		final String id,
 		
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The concept map resource", content = { 
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object"))
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
 		})
 		final InputStream requestBody,
 
@@ -268,10 +274,9 @@ public class FhirConceptMapController extends AbstractFhirController {
 		
 	) {
 		
-		final var fhirConceptMap = toFhirResource(requestBody, contentType, org.linuxforhealth.fhir.model.r5.resource.ConceptMap.class);
-		final ConceptMap soConceptMap = ConceptMapConverter_50.INSTANCE.toInternal(fhirConceptMap);
+		final var conceptMap = toFhirResource(requestBody, contentType, ConceptMap.class);
 		
-		return createOrUpdate(id, soConceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		return createOrUpdate(id, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 	}
 	
 	private ResponseEntity<Void> createOrUpdate(
@@ -288,7 +293,7 @@ public class FhirConceptMapController extends AbstractFhirController {
 			throw new BadRequestException("Concept map resource did not contain an id element.");
 		}
 		
-		final String idInResource = soConceptMap.getId().getIdValue();
+		final String idInResource = soConceptMap.getId();
 		if (!id.equals(idInResource)) {
 			throw new BadRequestException("Concept map resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
 		}
@@ -344,12 +349,19 @@ public class FhirConceptMapController extends AbstractFhirController {
 	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@GetMapping(produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public Promise<ResponseEntity<byte[]>> getConceptMaps(
 			
@@ -360,14 +372,21 @@ public class FhirConceptMapController extends AbstractFhirController {
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -377,9 +396,15 @@ public class FhirConceptMapController extends AbstractFhirController {
 
 		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
 		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
-		final String acceptLanguage
+		final String acceptLanguage,
+
+		@Parameter(description = "Prefer header", schema = @Schema(
+			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
+			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
+		))
+		@RequestHeader(value = PreferHandlingInterceptor.PREFER_HEADER, required = false)
+		final String prefer
 	) {
-			
 		// XXX: We are using "{id}" as the placeholder for the "id" path parameter and expand it later
 		final UriComponentsBuilder fullUrlBuilder = MvcUriComponentsBuilder.fromMethodName(FhirConceptMapController.class, "getConceptMap", 
 			"{id}", 
@@ -437,12 +462,19 @@ public class FhirConceptMapController extends AbstractFhirController {
 	@ApiResponse(responseCode = "400", description = "Bad request")
 	@ApiResponse(responseCode = "404", description = "Concept map not found")
 	@GetMapping(value = "/{id:**}", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public Promise<ResponseEntity<byte[]>> getConceptMap(
 			
@@ -458,14 +490,21 @@ public class FhirConceptMapController extends AbstractFhirController {
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -486,9 +525,8 @@ public class FhirConceptMapController extends AbstractFhirController {
 			.setLocales(acceptLanguage)
 			.buildAsync()
 			.execute(getBus())
-			.then(soConceptMap -> {
-				var fhirConceptMap = ConceptMapConverter_50.INSTANCE.fromInternal(soConceptMap);
-				return toResponseEntity(fhirConceptMap, accept, _format, _pretty);
+			.then(conceptMap -> {
+				return toResponseEntity(conceptMap, accept, _format, _pretty);
 			});
 	}
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.b2international.snowowl.snomed.fhir;
 import java.time.LocalDate;
 import java.util.StringTokenizer;
 
+import org.hl7.fhir.r5.model.UriType;
+
 import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.model.dt.Uri;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 
@@ -40,8 +41,8 @@ public class SnomedUri {
 	
 	public static final String VERSION_PATH_SEGMENT = "version"; //$NON-NLS-N$
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct"; //$NON-NLS-N$
-	public static final Uri SNOMED_BASE_URI = new Uri(SNOMED_BASE_URI_STRING);
-	public static final Uri SNOMED_INT_CORE_MODULE_URI = new Uri(SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE );
+	public static final UriType SNOMED_BASE_URI = new UriType(SNOMED_BASE_URI_STRING);
+	public static final UriType SNOMED_INT_CORE_MODULE_URI = new UriType(SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE );
 	
 	public enum QueryPartDefinition {
 		
@@ -365,8 +366,8 @@ public class SnomedUri {
 	 * Returns the standard FHIR URI for this SNOMED CT URI
 	 * @return
 	 */
-	public Uri toUri() {
-		return new Uri(toString());
+	public UriType toUri() {
+		return new UriType(toString());
 	}
 	
 }

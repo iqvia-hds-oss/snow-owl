@@ -16,11 +16,13 @@
 package com.b2international.snowowl.fhir.rest;
 
 import static com.b2international.snowowl.core.rest.OpenAPIExtensions.*;
+import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 
 import java.io.InputStream;
 import java.net.URI;
 import java.time.LocalDate;
 
+import org.hl7.fhir.r5.model.CodeSystem;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -36,9 +38,8 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
+import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.model.codesystem.CodeSystem;
-import com.b2international.snowowl.fhir.core.model.converter.CodeSystemConverter_50;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 
@@ -46,7 +47,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -97,18 +97,36 @@ public class FhirCodeSystemController extends AbstractFhirController {
 	@ApiResponse(responseCode = "201", description = "Resource created")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PostMapping(consumes =	{
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public ResponseEntity<Void> create(
 			
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The code system resource", content = { 
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object"))
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
 		})
 		final InputStream requestBody,
 		
@@ -146,49 +164,13 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		
 	) {
 		
-		final var fhirCodeSystem = toFhirResource(requestBody, contentType, org.linuxforhealth.fhir.model.r5.resource.CodeSystem.class);
-		final CodeSystem soCodeSystem = CodeSystemConverter_50.INSTANCE.toInternal(fhirCodeSystem);
+		final var codeSystem = toFhirResource(requestBody, contentType, CodeSystem.class);
 
 		// Ignore the input identifier on purpose and assign one locally
 		final String generatedId = IDs.base62UUID();
-		final CodeSystem soCodeSystemWithId = CodeSystem.builder(generatedId)
-			.caseSensitive(soCodeSystem.getCaseSensitive())
-			.compositional(soCodeSystem.getCompositional())
-			.concepts(soCodeSystem.getConcepts())
-			.contacts(soCodeSystem.getContacts())
-			.content(soCodeSystem.getContent())
-			.copyright(soCodeSystem.getCopyright())
-			.count(soCodeSystem.getCount())
-			.date(soCodeSystem.getDate())
-			.description(soCodeSystem.getDescription())
-			.experimental(soCodeSystem.getExperimental())
-			.extensions(soCodeSystem.getExtensions())
-			.filters(soCodeSystem.getFilters())
-			.hierarchyMeaning(soCodeSystem.getHierarchyMeaning())
-			.identifiers(soCodeSystem.getIdentifiers())
-			.implicitRules(soCodeSystem.getImplicitRules())
-			.jurisdictions(soCodeSystem.getJurisdictions())
-			.language(soCodeSystem.getLanguage())
-			.meta(soCodeSystem.getMeta())
-			.name(soCodeSystem.getName())
-			// .narrative(...) is a special version of .text(...)
-			.properties(soCodeSystem.getProperties())
-			.publisher(soCodeSystem.getPublisher())
-			.purpose(soCodeSystem.getPurpose())
-			.resourceType(soCodeSystem.getResourceType())
-			.status(soCodeSystem.getStatus())
-			.supplements(soCodeSystem.getSupplements())
-			.text(soCodeSystem.getText())
-			.title(soCodeSystem.getTitle())
-			// .toolingId(...) is ignored, we will not see it on the input side
-			.url(soCodeSystem.getUrl())
-			.usageContexts(soCodeSystem.getUsageContexts())
-			.valueSet(soCodeSystem.getValueSet())
-			.version(soCodeSystem.getVersion())
-			.versionNeeded(soCodeSystem.getVersionNeeded())
-			.build();
+		codeSystem.setId(generatedId);
 		
-		return createOrUpdate(generatedId, soCodeSystemWithId, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		return createOrUpdate(generatedId, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 	}
 
 	/**
@@ -220,12 +202,19 @@ public class FhirCodeSystemController extends AbstractFhirController {
 	@ApiResponse(responseCode = "201", description = "Resource created")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PutMapping(value = "/{id:**}", consumes = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public ResponseEntity<Void> update(
 			
@@ -235,8 +224,19 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		final String id,
 		
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The code system resource", content = { 
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object"))
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
 		})
 		final InputStream requestBody,
 		
@@ -274,15 +274,14 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		
 	) {
 		
-		final var fhirCodeSystem = toFhirResource(requestBody, contentType, org.linuxforhealth.fhir.model.r5.resource.CodeSystem.class);
-		final CodeSystem soCodeSystem = CodeSystemConverter_50.INSTANCE.toInternal(fhirCodeSystem);
+		final var fhirCodeSystem = toFhirResource(requestBody, contentType, CodeSystem.class);
 		
-		return createOrUpdate(id, soCodeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		return createOrUpdate(id, fhirCodeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 	}
 	
 	private ResponseEntity<Void> createOrUpdate(
 		String id, 
-		CodeSystem soCodeSystem, 
+		CodeSystem codeSystem, 
 		LocalDate defaultEffectiveDate, 
 		String author, 
 		String owner, 
@@ -290,18 +289,18 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		String bundleId
 	) {
 		
-		if (soCodeSystem.getId() == null) {
+		if (codeSystem.getId() == null) {
 			throw new BadRequestException("Code system resource did not contain an id element.");
 		}
 		
-		final String idInResource = soCodeSystem.getId().getIdValue();
+		final String idInResource = codeSystem.getId();
 		if (!id.equals(idInResource)) {
 			throw new BadRequestException("Code system resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
 		}
 		
 		final FhirResourceUpdateResult updateResult = FhirRequests.codeSystems()
 			.prepareUpdate()
-			.setFhirCodeSystem(soCodeSystem)
+			.setFhirCodeSystem(codeSystem)
 			.setAuthor(author)
 			.setOwner(owner)
 			.setOwnerProfileName(ownerProfileName)
@@ -349,12 +348,19 @@ public class FhirCodeSystemController extends AbstractFhirController {
 	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@GetMapping(produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public Promise<ResponseEntity<byte[]>> getCodeSystems(
 			
@@ -365,14 +371,21 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -382,9 +395,15 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		
 		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
 		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
-		final String acceptLanguage
+		final String acceptLanguage,
+
+		@Parameter(description = "Prefer header", schema = @Schema(
+			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
+			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
+		))
+		@RequestHeader(value = PreferHandlingInterceptor.PREFER_HEADER, required = false)
+		final String prefer
 	) {
-			
 		// XXX: We are using "{id}" as the placeholder for the "id" path parameter and expand it later
 		final UriComponentsBuilder fullUrlBuilder = MvcUriComponentsBuilder.fromMethodName(FhirCodeSystemController.class, "getCodeSystem", 
 			"{id}", 
@@ -442,12 +461,19 @@ public class FhirCodeSystemController extends AbstractFhirController {
 	@ApiResponse(responseCode = "400", description = "Bad request")
 	@ApiResponse(responseCode = "404", description = "Code system not found")
 	@GetMapping(value = "/{id:**}", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public Promise<ResponseEntity<byte[]>> getCodeSystem(
 			
@@ -463,14 +489,21 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -491,9 +524,8 @@ public class FhirCodeSystemController extends AbstractFhirController {
 			.setLocales(acceptLanguage)
 			.buildAsync()
 			.execute(getBus())
-			.then(soCodeSystem -> {
-				var fhirCodeSystem = CodeSystemConverter_50.INSTANCE.fromInternal(soCodeSystem);
-				return toResponseEntity(fhirCodeSystem, accept, _format, _pretty);
+			.then(codeSystem -> {
+				return toResponseEntity(codeSystem, accept, _format, _pretty);
 			});
 	}
 	

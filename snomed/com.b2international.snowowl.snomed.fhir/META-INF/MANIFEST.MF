@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Snow Owl SNOMED CT FHIR support
 Bundle-SymbolicName: com.b2international.snowowl.snomed.fhir;singleton:=true
-Bundle-Version: 9.2.4.qualifier
+Bundle-Version: 9.4.2.qualifier
 Bundle-Vendor: B2i Healthcare
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
@@ -10,5 +10,7 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  com.b2international.commons,
  com.b2international.snowowl.snomed.datastore
 Export-Package: com.b2international.snowowl.snomed.fhir
+Import-Package: com.b2international.fhir.r5.operations;version="0.1.0",
+ org.hl7.fhir.r5.model;version="6.3.25"
 Bundle-ActivationPolicy: lazy
 Automatic-Module-Name: com.b2international.snowowl.snomed.fhir

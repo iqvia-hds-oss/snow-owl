@@ -15,8 +15,11 @@
  */
 package com.b2international.snowowl.fhir.rest;
 
+import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
+
 import java.io.InputStream;
 
+import org.hl7.fhir.r5.model.ValueSet;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,20 +27,17 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.b2international.commons.http.AcceptLanguageHeader;
+import com.b2international.fhir.operations.OperationParametersFactory;
+import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.FhirApiConfig;
+import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.model.converter.ValueSetConverter_50;
-import com.b2international.snowowl.fhir.core.model.dt.Code;
-import com.b2international.snowowl.fhir.core.model.dt.Uri;
-import com.b2international.snowowl.fhir.core.model.valueset.ExpandValueSetRequest;
-import com.b2international.snowowl.fhir.core.model.valueset.ValueSet;
-import com.b2international.snowowl.fhir.core.model.valueset.expansion.Expansion;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
+import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -76,12 +76,19 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 	@ApiResponse(responseCode = "400", description = "Bad request")
 	@ApiResponse(responseCode = "404", description = "Value set not found")
 	@GetMapping(value = "/$expand", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public Promise<ResponseEntity<byte[]>> expandType(
 
@@ -121,14 +128,21 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -151,18 +165,17 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			_format,
 			_pretty);
 		
-		final ExpandValueSetRequest expandRequest = ExpandValueSetRequest.builder()
-			.url(url)
-			.filter(filter)
-			.after(after)
-			.activeOnly(activeOnly)
-			.count(count)
-			.displayLanguage(displayLanguage == null ? null : new Code(displayLanguage))
-			.withHistorySupplements(withHistorySupplements)
-			.includeDesignations(includeDesignations)
-			.build();
+		final var parameters = new ValueSetExpandParameters()
+			.setUrl(url)
+			.setFilter(filter)
+			.setAfter(after)
+			.setActiveOnly(activeOnly)
+			.setCount(count)
+			.setDisplayLanguage(displayLanguage)
+			.setWithHistorySupplements(withHistorySupplements)
+			.setIncludeDesignations(includeDesignations);
 		
-		return expand(expandRequest, nextUriBuilder, accept, _format, _pretty);
+		return expand(parameters, nextUriBuilder, accept, _format, _pretty);
 	}
 	
 	/**
@@ -185,27 +198,52 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 	@PostMapping(
 		value="/$expand", 
 		consumes = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
 		},
 		produces = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
 		}
 	)
 	public Promise<ResponseEntity<byte[]>> expand(
 			
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The operation's input parameters", content = { 
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
-			@Content(mediaType = AbstractFhirController.APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object"))
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
 		})
 		final InputStream requestBody,
 		
@@ -216,15 +254,29 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Prefer header", schema = @Schema(
+			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
+			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
+		))
+		@RequestHeader(value = PreferHandlingInterceptor.PREFER_HEADER, required = false)
+		final String prefer,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -234,41 +286,39 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			
 	) {
 		
-		final var fhirParameters = toFhirParameters(requestBody, contentType);
-		final ExpandValueSetRequest request = ValueSetConverter_50.INSTANCE.toExpandRequest(fhirParameters);
+		final ValueSetExpandParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.ValueSetExpandParametersFactory.INSTANCE);
 		
-		if (request.getUrl() == null && request.getValueSet() == null) {
+		if (parameters.getUrl() == null && parameters.getValueSet() == null) {
 			throw new BadRequestException("Both URL and ValueSet parameters are null.", "ExpandValueSetRequest");
 		}
 
-		if (request.getUrl() == null || request.getUrl().getUriValue() == null) {
+		if (parameters.getUrl() == null) {
 			throw new BadRequestException("Expand request URL is not defined.", "ExpandValueSetRequest");
 		}
 		
-		if (request.getUrl() != null && 
-			request.getValueSet() != null && 
-			request.getUrl().getUriValue() != null &&
-			request.getValueSet().getUrl().getUriValue() != null &&
-			!request.getUrl().getUriValue().equals(request.getValueSet().getUrl().getUriValue())) {
+		if (parameters.getUrl() != null && 
+			parameters.getValueSet() != null && 
+			parameters.getValueSet().getUrl() != null &&
+			!parameters.getUrl().equals(parameters.getValueSet().getUrl())) {
 			
 			throw new BadRequestException("URL and ValueSet.URL parameters are different.", "ExpandValueSetRequest");
 		}
 		
 		// The "next" parameter will re-use request parameters in query parameter form
 		final UriComponentsBuilder nextUriBuilder = MvcUriComponentsBuilder.fromMethodName(FhirValueSetExpandOperationController.class, "expandType", 
-			request.getUrl().getUriValue(), 
-			request.getFilter(), 
-			request.getActiveOnly(), 
-			request.getDisplayLanguage() == null ? null : request.getDisplayLanguage().getCodeValue(), 
-			request.getIncludeDesignations(), 
-			request.getWithHistorySupplements(), 
-			request.getCount(), 
-			request.getAfter(),
+			parameters.getUrl() == null ? null : parameters.getUrl().getValue(), 
+			parameters.getFilter() == null ? null : parameters.getFilter().getValue(), 
+			parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue(), 
+			parameters.getDisplayLanguage() == null ? null : parameters.getDisplayLanguage(), 
+			parameters.getIncludeDesignations() == null ? null : parameters.getIncludeDefinition().getValue(), 
+			parameters.getWithHistorySupplements() == null ? null : parameters.getWithHistorySupplements().getValue(), 
+			parameters.getCount() == null ? null : parameters.getCount().getValue(), 
+			parameters.getAfter() == null ? null : parameters.getAfter().getValue(),
 			accept,
 			_format,
 			_pretty);
 
-		return expand(request, nextUriBuilder, accept, _format, _pretty);
+		return expand(parameters, nextUriBuilder, accept, _format, _pretty);
 	}
 
 	/**
@@ -295,12 +345,19 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@ApiResponse(responseCode = "404", description = "Not Found")
 	@GetMapping(value = "/{id:**}/$expand", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
-		APPLICATION_FHIR_XML_VALUE,
-		TEXT_JSON_VALUE,
-		TEXT_XML_VALUE,
 		APPLICATION_JSON_VALUE,
-		APPLICATION_XML_VALUE
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
 	})
 	public Promise<ResponseEntity<byte[]>> expandInstance(
 			
@@ -340,14 +397,21 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 
-		@Parameter(description = "Alternative response format", array = @ArraySchema(schema = @Schema(allowableValues = {
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
-			APPLICATION_FHIR_XML_VALUE,
-			TEXT_JSON_VALUE,
-			TEXT_XML_VALUE,
 			APPLICATION_JSON_VALUE,
-			APPLICATION_XML_VALUE
-		})))
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
 		@RequestParam(value = "_format", required = false)
 		final String _format,
 		
@@ -370,46 +434,43 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			_format,
 			_pretty);
 		
-		final ExpandValueSetRequest expandRequest = ExpandValueSetRequest.builder()
+		var expandRequest = new ValueSetExpandParameters()
 			// XXX: We use the resource IDs as the URL here 
-			.url(id)
-			.filter(filter)
-			.after(after)
-			.activeOnly(activeOnly)
-			.count(count)
-			.displayLanguage(displayLanguage == null ? null : new Code(displayLanguage))
-			.withHistorySupplements(withHistorySupplements)
-			.includeDesignations(includeDesignations)
-			.build();
+			.setUrl(id)
+			.setFilter(filter)
+			.setAfter(after)
+			.setActiveOnly(activeOnly)
+			.setCount(count)
+			.setDisplayLanguage(displayLanguage)
+			.setWithHistorySupplements(withHistorySupplements)
+			.setIncludeDesignations(includeDesignations);
 		
 		return expand(expandRequest, nextUriBuilder, accept, _format, _pretty);
 	}
 
 	private Promise<ResponseEntity<byte[]>> expand(
-		final ExpandValueSetRequest expandRequest, 
+		final ValueSetExpandParameters parameters, 
 		final UriComponentsBuilder nextUriBuilder,
 		final String accept,
 		final String _format,
 		final Boolean _pretty
 	) {
 		return FhirRequests.valueSets().prepareExpand()
-			.setRequest(expandRequest)
+			.setParameters(parameters)
 			.buildAsync()
 			.execute(getBus())
-			.then(soValueSet -> {
+			.then(valueSet -> {
 				
-				final Expansion soExpansion = soValueSet.getExpansion();
-				final Expansion soExpansionWithNext = soExpansion.withNext(searchAfter -> {
-					final String next = nextUriBuilder.replaceQueryParam("after", searchAfter)
+				final ValueSet.ValueSetExpansionComponent expansion = valueSet.getExpansion();
+				
+				// update next variable with new after value
+				final String searchAfter = (String) expansion.getExtensionString(FhirValueSetExpander.EXTENSION_AFTER_PROPERTY_URL);
+				final String next = nextUriBuilder.replaceQueryParam("after", searchAfter)
 						.build()
 						.toString();
-					
-					return new Uri(next);
-				});
+				expansion.setNext(next);
 				
-				final ValueSet soValueSetWithNext = soValueSet.withExpansion(soExpansionWithNext);
-				var fhirValueSet = ValueSetConverter_50.INSTANCE.fromInternal(soValueSetWithNext);
-				return toResponseEntity(fhirValueSet, accept, _format, _pretty);
+				return toResponseEntity(valueSet, accept, _format, _pretty);
 			});
 	}
 }

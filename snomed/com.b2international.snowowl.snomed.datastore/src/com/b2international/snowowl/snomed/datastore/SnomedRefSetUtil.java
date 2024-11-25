@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,11 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toMap;
 
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.b2international.commons.BooleanUtils;
+import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -241,8 +239,38 @@ public abstract class SnomedRefSetUtil {
 		}
 	}
 	
+	public static String shortenAssociationRefSetName(String refsetName) {
+		if (StringUtils.isEmpty(refsetName)) {
+			return refsetName;
+		}
+		
+		// Remove various suffixes to shorten the label
+		refsetName = removeSuffix(refsetName, " reference set");
+		refsetName = removeSuffix(refsetName, " association type");
+		refsetName = removeSuffix(refsetName, " association");
+		refsetName = removeSuffix(refsetName, " concept");
+				
+		if (refsetName.chars().allMatch(ch -> Character.isUpperCase(ch) || Character.isWhitespace(ch))) {
+			// All-caps terms "POSSIBLY EQUIVALENT TO" are modified by changing letters to lower case, then title-casing the first letter
+			return StringUtils.capitalizeFirstLetter(refsetName.toLowerCase(Locale.ENGLISH));
+		}
+		
+		return refsetName;
+	}
+
+	private static String removeSuffix(String s, String suffix) {
+		if (StringUtils.isEmpty(s) || StringUtils.isEmpty(suffix)) {
+			return s;
+		}
+		
+		if (s.endsWith(suffix)) {
+			return s.substring(0, s.length() - suffix.length());
+		}
+		
+		return s;
+	}
+	
 	private SnomedRefSetUtil() {
 		// Suppress instantiation
 	}
-
 }

@@ -21,12 +21,14 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
-import com.b2international.snowowl.fhir.rest.tests.capabilitystatement.CapabilityStatementRestTest;
+import com.b2international.snowowl.fhir.rest.tests.capabilitystatement.CapabilityStatementApiTest;
 import com.b2international.snowowl.fhir.rest.tests.codesystem.FhirCodeSystemApiTest;
-import com.b2international.snowowl.fhir.rest.tests.codesystem.FhirCodeSystemLookupOperationTest;
-import com.b2international.snowowl.fhir.rest.tests.codesystem.FhirCodeSystemSubsumesOperationTest;
-import com.b2international.snowowl.fhir.rest.tests.codesystem.FhirCodeSystemValidateCodeOperationTest;
-import com.b2international.snowowl.fhir.rest.tests.valueset.FhirValueSetSnomedExpandTest;
+import com.b2international.snowowl.fhir.rest.tests.codesystem.FhirSnomedCodeSystemLookupTest;
+import com.b2international.snowowl.fhir.rest.tests.codesystem.FhirSnomedCodeSystemSubsumesTest;
+import com.b2international.snowowl.fhir.rest.tests.codesystem.FhirSnomedCodeSystemValidateCodeTest;
+import com.b2international.snowowl.fhir.rest.tests.conceptmap.FhirConceptMapApiTest;
+import com.b2international.snowowl.fhir.rest.tests.valueset.FhirSnomedValueSetExpandTest;
+import com.b2international.snowowl.fhir.rest.tests.valueset.FhirValueSetApiTest;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.test.commons.Resources;
 import com.b2international.snowowl.test.commons.SnomedContentRule;
@@ -37,26 +39,25 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
  * @since 6.6
  */
 @RunWith(Suite.class)
-@SuiteClasses({ 
-	// CodeSystem API
+@SuiteClasses({
+	// Helpers
+	SnomedUriParsingTest.class,
 	
+	// Resource types
 	FhirCodeSystemApiTest.class,
-	FhirCodeSystemLookupOperationTest.class,
-	FhirCodeSystemSubsumesOperationTest.class,
-	FhirCodeSystemValidateCodeOperationTest.class,
+	FhirValueSetApiTest.class,
+//	FhirConceptMapApiTest.class,
 	
-	// ValueSet API
-	FhirValueSetSnomedExpandTest.class,
+	// SNOMED on FHIR tests
+	FhirSnomedCodeSystemLookupTest.class,
+	FhirSnomedCodeSystemValidateCodeTest.class,
+	FhirSnomedCodeSystemSubsumesTest.class,
+	FhirSnomedValueSetExpandTest.class,
+	// TODO enable ConceptMap test cases
+//	FhirSnomedConceptMapTranslateTest.class,
 	
-	// ConceptMap API
-//	SnomedConceptMapRestTest.class,
-//	TranslateSnomedConceptMapRestTest.class,
-	
-	//Batch
-//	FhirBatchApiRestTest.class,
-	
-	//CapabilityStatement
-	CapabilityStatementRestTest.class
+	// CapabilityStatement
+	CapabilityStatementApiTest.class
 	
 })
 public class AllFhirRestTests {

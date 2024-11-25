@@ -132,8 +132,6 @@ def getDomainConstraint = { String domain ->
 	final String domainConstraint = getConstraint(domain);
 	if (childDomains.containsKey(domain)) {
 		List<String> childDomainConstraints = childDomains.get(domain).collect({ String domainId -> "(${getConstraint(domainId)})" });
-		String openBrace = childDomainConstraints.size() == 1 ? "" : "(";
-		String closeBrace = childDomainConstraints.size() == 1 ? "" : ")";
 		return "${domainConstraint} MINUS (${Joiner.on(" OR ").join(childDomainConstraints)})"
 	}
 	return domainConstraint;
@@ -163,6 +161,7 @@ def searchRelationships = { boolean isValidationRun ->
 		//Find relationships that have no applicable MRCM rules for their types
 		ExpressionBuilder relationshipQueryBuilder = Expressions.bool()
 				.filter(SnomedRelationshipIndexEntry.Expressions.active())
+				.filter(SnomedRelationshipIndexEntry.Expressions.modules(moduleIds))
 				.filter(SnomedRelationshipIndexEntry.Expressions.sourceIds(domainConcepts));
 
 		if (isValidationRun) {
@@ -200,6 +199,7 @@ def searchRelationships = { boolean isValidationRun ->
 		//Find OWL axiom members with relationships that have no applicable MRCM rules for their types
 		final ExpressionBuilder owlMemberExpressionBuilder = Expressions.bool()
 			.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
+			.filter(SnomedRefSetMemberIndexEntry.Expressions.modules(moduleIds))
 			.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
 			.filter(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(domainConcepts));
 
@@ -243,6 +243,7 @@ def searchRelationshipsWithUnregulatedTypeIds =  {
 	//Find relationships that have no MRCM rules with this type
 	ExpressionBuilder relationshipQueryBuilder = Expressions.bool()
 			.filter(SnomedRelationshipIndexEntry.Expressions.active())
+			.filter(SnomedRelationshipIndexEntry.Expressions.modules(moduleIds))
 			.mustNot(SnomedRelationshipIndexEntry.Expressions.typeIds(typeIdsInMrcmRules));
 	
 	if (params.isUnpublishedOnly) {
@@ -263,6 +264,7 @@ def searchRelationshipsWithUnregulatedTypeIds =  {
 	//Find OWL Axiom relationships that have no MRCM rules with this type
 	final ExpressionBuilder owlMemberExpressionBuilder = Expressions.bool()
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
+		.filter(SnomedRefSetMemberIndexEntry.Expressions.modules(moduleIds))
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
 		.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionTypeInClassAxiom(typeIdsInMrcmRules));
 	
@@ -299,6 +301,7 @@ def searchRelationshipsInUnregulatedDomains =  {
 	//Find non-IsA relationships in domains where no MRCM rule is defined
 	ExpressionBuilder relationshipQueryBuilder = Expressions.bool()
 			.filter(SnomedRelationshipIndexEntry.Expressions.active())
+			.filter(SnomedRelationshipIndexEntry.Expressions.modules(moduleIds))	
 			.filter(SnomedRelationshipIndexEntry.Expressions.sourceIds(unregulatedDomainSpace))
 			.mustNot(SnomedRelationshipIndexEntry.Expressions.typeId(Concepts.IS_A));
 	
@@ -320,6 +323,7 @@ def searchRelationshipsInUnregulatedDomains =  {
 	//Find OWL Axiom relationships that have no MRCM rules with this type
 	final ExpressionBuilder owlMemberExpressionBuilder = Expressions.bool()
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
+		.filter(SnomedRefSetMemberIndexEntry.Expressions.modules(moduleIds))
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(unregulatedDomainSpace))
 		.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionTypeInClassAxiom([Concepts.IS_A]))

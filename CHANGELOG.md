@@ -1,6 +1,62 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.4.0
+
+### FHIR
+- Complete support for R4, R4B and R5 formats (#1323, #1332)
+  * Implementation is now based on the official HL7 Java model libraries and convertors through a thin wrapper (https://github.com/b2ihealthcare/fhir-core)
+  * New `GET CapabilityStatement$versions` operations endpoint to list the available supported FHIR versions
+  * Support for `fhirVersion=4.0.1|4.3.0|5.0.0` mime-type parameter in `Accept`, `Content-Type` headers
+  * Support all accepted mime-type variants in the `_format` query parameter as well (including versioned forms)
+  * Default format is R5 for all media types
+- SNOMED CT concept lookups now include a Designation extension that describes additional contexts where the Designation can be used (#1334)
+  * Define in https://confluence.ihtsdotools.org/display/FHIR/Designation+extension
+
+### SNOMED CT
+- Upgrade ECL to 2.2 (#1331)
+  - Support the complete ECL 2.2 syntax
+  - Support evaluation of Top and Bottom operators
+
+### Security
+- Replace CRA with Vite to mitigate all API site security vulnerabilities (df334fe)
+- Mitigate CVE-2024-43788, CVE-2024-4067, CVE-2024-38816, CVE-2024-45296, CVE-2024-43796, CVE-2024-45590, CVE-2024-43800, CVE-2024-43799, CVE-2024-47068, CVE-2022-22978
+
+### Bugs/Improvements
+- [fhir] generate correct FHIR CapabilityStatement operation definition resources (12ab565)
+- [mrcm] validation rule evaluation now properly considers the current set of modules (#1333)
+
+### Dependencies
+- Upgrade Spring to 6.1.3
+- Upgrade Spring Security to 6.3.3
+- Upgrade Rapidoc libraries to 9.3.6
+
+## 9.3.0
+
+### Core
+- Introduce 'sourceOf' dependency scope (#1327)
+  * Special scope marker to indicate that a resource is used as a source of another
+  * When versioning a resource, all sourceOf dependencies will be versioned with it at the same time
+
+### SNOMED CT
+- Introduce `snomed.mrcm.allowedDataAttributesExpression` and `snomed.mrcm.allowedObjectAttributesExpression` configurations (#1325)
+  * By default they use the corresponding attribute concept's descendants from SNOMED CT International Edition
+  * They can be changed to accommodate additional requirements (e.g. allow additional hierarchies to be used as relationship types)
+
+### Validation
+- Validation threading changes (#1320)
+  * Introduce `validation.workerPoolSize` configuration setting
+  * Deprecate `validation.numberOfValidationThreads` configuration setting
+  * Increased allowed maximum pool size to `99`
+  * A more reasonable default pool size is computed based on the available resources on the current node
+
+### Bugs/Improvements
+- [core] improve detection of non-connected cycles in SimpleTaxonomyGraph (#1322)
+- [api] fixed an issue where retrieving validation results could result in a server error (#1310)
+- [snomed] ensure that concrete data type reference sets can be created for concept component types (e4525b1)
+- [snomed] fixen an issue where language configuration merging could result in serialization error (796f1f4)
+- [classification] increase page size when gathering information for classification runs (ac34e31)
+
 ## 9.2.3
 
 ### Bugs/Improvements
