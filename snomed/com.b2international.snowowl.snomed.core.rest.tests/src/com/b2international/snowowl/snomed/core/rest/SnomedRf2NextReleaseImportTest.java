@@ -70,7 +70,7 @@ public class SnomedRf2NextReleaseImportTest extends AbstractSnomedApiTest {
 		assertTrue("Failed to import RF2 archive", job.isSuccessful());
 		ImportResponse response = job.getResultAs(Services.context().service(ObjectMapper.class),  ImportResponse.class);
 		//assert that the previous import job didn't store all visited components
-		assertTrue("Import result of full import includes visited components", response.getVisitedComponents().isEmpty());
+		assertTrue("Import result of FULL RF2 import should NOT include any visited components", response.getVisitedComponents().isEmpty());
 		// assert that the version for importUntil is present in the system
 		String latestImportedEffectiveTime = CodeSystemVersionRestRequests.getLatestVersion(SnomedTerminologyComponentConstants.SNOMED_SHORT_NAME).getEffectiveDate();
 		assertEquals(importUntil, latestImportedEffectiveTime);
