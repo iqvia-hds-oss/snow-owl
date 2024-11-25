@@ -25,7 +25,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
 import com.b2international.snowowl.core.events.util.Promise;
@@ -108,7 +107,7 @@ public class FhirCodeSystemLookupController extends AbstractFhirController {
 		final Optional<String> date,
 		
 		@Parameter(description = "Language code for display") 
-		@RequestParam(value = "displayLanguage", defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		@RequestParam(value = "displayLanguage", required = false) 
 		final Optional<String> displayLanguage,
 		
 		@Parameter(description = "Properties to return in the output") 

@@ -62,7 +62,7 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 	protected CodeSystemLookupResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
 		validateRequestedProperties(codeSystem);
 		
-		final String acceptLanguage = extractLocales(parameters.getDisplayLanguage());
+		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
 
 		FhirCodeSystemLookupConverter converter = context.service(RepositoryManager.class).get(codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID))
 				.optionalService(FhirCodeSystemLookupConverter.class)
@@ -75,7 +75,7 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 			.one()
 			.filterByCodeSystemUri(resourceUri)
 			.filterById(parameters.extractCode())
-			.setLocales(acceptLanguage)
+			.setLocales(displayLanguage)
 			.setExpand(conceptExpand)
 			.buildAsync()
 			.execute(context)
@@ -87,7 +87,7 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 		result.setName(codeSystem.getName());
 		result.setDisplay(concept.getTerm());
 		result.setVersion(codeSystem.getVersion());
-		result.setDesignation(converter.expandDesignations(context, codeSystem, concept, parameters, acceptLanguage));
+		result.setDesignation(converter.expandDesignations(context, codeSystem, concept, parameters));
 		result.setProperty(converter.expandProperties(context, codeSystem, concept, parameters));
 		
 		return result;
@@ -97,7 +97,7 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 		final Set<String> requestedProperties = Set.copyOf(parameters.getPropertyValues());
 		// first check if any of the properties are lookup request properties
 		final Set<String> nonLookupProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);
-		
+
 		// second check if the remaining unsupported properties supported by the CodeSystem either via full URL
 		final Set<String> supportedProperties = codeSystem.getProperty() == null 
 				? Collections.emptySet() 

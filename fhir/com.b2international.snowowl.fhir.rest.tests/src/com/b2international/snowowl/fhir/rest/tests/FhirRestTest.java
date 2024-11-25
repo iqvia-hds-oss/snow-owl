@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.fhir.rest.tests;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,8 +25,11 @@ import org.junit.Before;
 import org.junit.Rule;
 
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.test.commons.TestMethodNameRule;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
+
+import io.restassured.path.json.JsonPath;
 
 /**
  * Superclass for common REST-related test functionality. All tests receive a single Code System to test/verify/use as test fixture. The CodeSystemId
@@ -84,4 +89,15 @@ public abstract class FhirRestTest extends FhirTest {
 		return CodeSystemRestRequests.getSnomedIntUrl(getTestCodeSystemId());
 	}
 
+	protected final static void checkDesignationUseContext(JsonPath jsonPath, String rootPath, String refsetId, String typeId) {
+		jsonPath.setRootPath(rootPath);
+		assertThat(jsonPath.getString("url")).isEqualTo("http://snomed.info/fhir/StructureDefinition/designation-use-context");
+		
+		assertThat(jsonPath.getString("extension[0].url")).isEqualTo("context");
+		assertThat(jsonPath.getString("extension[0].valueCoding.code")).isEqualTo(refsetId);
+		assertThat(jsonPath.getString("extension[1].url")).isEqualTo("role");
+		assertThat(jsonPath.getString("extension[1].valueCoding.code")).isEqualTo(Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_PREFERRED);
+		assertThat(jsonPath.getString("extension[2].url")).isEqualTo("type");
+		assertThat(jsonPath.getString("extension[2].valueCoding.code")).isEqualTo(typeId);
+	}
 }

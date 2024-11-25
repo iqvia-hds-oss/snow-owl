@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.events.util.Promise;
@@ -105,7 +104,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		final Boolean activeOnly,
 		
 		@Parameter(description = "Specify the display language for the returned codes") 
-		@RequestParam(value = "displayLanguage", defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false)
+		@RequestParam(value = "displayLanguage", required = false)
 		final String displayLanguage,
 		
 		@Parameter(description = "Controls whether concept designations are to be included or excluded in value set expansions") 
@@ -374,7 +373,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		final Boolean activeOnly,
 		
 		@Parameter(description = "Specify the display language for the returned codes") 
-		@RequestParam(value = "displayLanguage", defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false)
+		@RequestParam(value = "displayLanguage", required = false)
 		final String displayLanguage,
 		
 		@Parameter(description = "Controls whether concept designations are to be included or excluded in value set expansions") 

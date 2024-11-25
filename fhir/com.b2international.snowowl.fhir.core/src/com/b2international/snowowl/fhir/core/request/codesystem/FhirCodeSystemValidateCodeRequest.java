@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.model.Coding;
 
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeResultParameters;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
@@ -58,46 +59,50 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 
 	@Override
 	public CodeSystemValidateCodeResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
-		Set<Coding> codings = collectCodingsToValidate(parameters);
-		Map<String, Coding> codingsById = codings.stream().collect(Collectors.toMap(Coding::getCode, c -> c));
+		final Set<Coding> codings = collectCodingsToValidate(parameters);
+		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
+		final ResourceURI codeSystemUri = FhirModelHelpers.resourceUriFrom(codeSystem);
+
+		final Map<String, Coding> codingsById = codings.stream()
+			.collect(Collectors.toMap(
+				c -> c.getCode(), 
+				c -> c));
+
+		final Map<String, Concept> conceptsById = CodeSystemRequests.prepareSearchConcepts()
+			.setLimit(codingsById.keySet().size())
+			.filterByCodeSystemUri(codeSystemUri)
+			.filterByIds(codingsById.keySet())
+			.setLocales(displayLanguage)
+			.buildAsync()
+			.execute(context)
+			.stream()
+			.collect(Collectors.toMap(
+				c -> c.getId(), 
+				c -> c));
 		
-		// extract locales from the request
-		Map<String, Concept> conceptsById = CodeSystemRequests.prepareSearchConcepts()
-				.setLimit(codingsById.keySet().size())
-				.filterByCodeSystemUri(FhirModelHelpers.resourceUriFrom(codeSystem))
-				.filterByIds(codingsById.keySet())
-				.setLocales(extractLocales(parameters.getDisplayLanguage()))
-				.buildAsync()
-				.execute(context)
-				.stream()
-				.collect(Collectors.toMap(Concept::getId, c -> c));
-		
-		// check if both Maps have the same keys and report if not
-		
+		// Check if both Maps have the same keys and report if not
 		Set<String> missingConceptIds = Sets.difference(codingsById.keySet(), conceptsById.keySet());
 		
 		if (!missingConceptIds.isEmpty()) {
 			return new CodeSystemValidateCodeResultParameters()
-					.setResult(false)
-					.setMessage(String.format("Could not find code%s '%s'.", missingConceptIds.size() == 1 ? "" : "s", ImmutableSortedSet.copyOf(missingConceptIds)));
+				.setResult(false)
+				.setMessage(String.format("Could not find code%s '%s'.", missingConceptIds.size() == 1 ? "" : "s", ImmutableSortedSet.copyOf(missingConceptIds)));
 		}
 		
-		// iterate over requested IDs to detect if one does not have any concept returned
-		// XXX it would be great to have support for multiple messages/validation results in a single request
-		for (String id : codingsById.keySet()) {
-			// check display if provided
-			Coding providedCoding = codingsById.get(id);
-			if (providedCoding.getDisplay() != null) {
+		// TODO: add more validation functionality that is checked for each coding (eg. alternative terms)
+		for (final String id : codingsById.keySet()) {
+			final Coding coding = codingsById.get(id);
+			final String expectedDisplay = coding.getDisplay();
+			
+			if (expectedDisplay != null) {
+				final Concept actualConcept = conceptsById.get(id);
+				final String actualDisplay = actualConcept.getTerm();
 				
-				Concept concept = conceptsById.get(id);
-				
-				// TODO what about alternative terms?
-				
-				if (!providedCoding.getDisplay().equals(concept.getTerm())) {
+				if (!expectedDisplay.equals(actualDisplay)) {
 					return new CodeSystemValidateCodeResultParameters()
-							.setResult(false)
-							.setMessage(String.format("Incorrect display '%s' for code '%s'.", providedCoding.getDisplay(), providedCoding.getCode())) 
-							.setDisplay(concept.getTerm());
+						.setResult(false)
+						.setMessage(String.format("Incorrect display '%s' for code '%s'.", expectedDisplay, coding.getCode())) 
+						.setDisplay(actualDisplay);
 				}
 			}
 		}
@@ -110,8 +115,8 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 				
 		if (parameters.getCode() != null) {
 			Coding coding = new Coding()
-					.setCode(parameters.getCode().getValue())
-					.setDisplay(parameters.getDisplay() != null ? parameters.getDisplay().getValue() : null);
+				.setCode(parameters.getCode().getValue())
+				.setDisplay(parameters.getDisplay() != null ? parameters.getDisplay().getValue() : null);
 			
 			codings.add(coding);
 		}
@@ -124,7 +129,7 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 		if (codeableConcept != null && codeableConcept.getCoding() != null) {
 			codeableConcept.getCoding().forEach(codings::add);
 		}
+		
 		return codings;
 	}
-	
 }
