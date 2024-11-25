@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.snomed.datastore.request.rf2;
 
+import static com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType.FULL;
+import static com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType.SNAPSHOT;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -252,19 +255,16 @@ final class SnomedRf2ImportRequest implements Request<BranchContext, ImportRespo
 			// if not a dryRun, perform import
 			if (!dryRun) {
 				// Import effective time slices in chronological order
+				boolean collectVisitedComponents = FULL == releaseType || SNAPSHOT == releaseType; 
 				for (Rf2EffectiveTimeSlice slice : orderedEffectiveTimeSlices) {
-					slice.doImport(context, codeSystemUri, importconfig, visitedComponents);
+					slice.doImport(context, codeSystemUri, importconfig, visitedComponents, collectVisitedComponents);
 				}
 					
 			    // Update locales registered on the code system
 				updateLocales(context, codeSystemUri.getCodeSystem());
 			}
 			
-			if (Rf2ReleaseType.FULL == releaseType) {
-				return ImportResponse.success(Set.of(), reporter.getDefects());
-			} else {
-				return ImportResponse.success(visitedComponents.build(), reporter.getDefects());
-			}
+			return ImportResponse.success(visitedComponents.build(), reporter.getDefects());
 		}
 	}
 
