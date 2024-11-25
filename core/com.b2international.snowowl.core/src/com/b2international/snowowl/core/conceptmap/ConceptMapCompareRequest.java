@@ -84,7 +84,7 @@ final class ConceptMapCompareRequest extends ResourceRequest<RepositoryContext, 
 			.setLocales(locales())
 			.setPreferredDisplay(preferredDisplay)
 			.setLimit(context.getPageSize())
-			.streamAsync(context.service(IEventBus.class), req -> req.buildAsync())
+			.streamAsync(context, req -> req.buildAsync())
 			.flatMap(ConceptMapMappings::stream)
 			.collect(Collectors.toList());
 	}
