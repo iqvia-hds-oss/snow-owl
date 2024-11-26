@@ -76,7 +76,7 @@ final class IgnoredRf2EffectiveTimeSlice extends BaseRf2EffectiveTimeSlice {
 	}
 
 	@Override
-	public void doImport(BranchContext context, CodeSystemURI codeSystemUri, Rf2ImportConfiguration importConfig, Builder<ComponentURI> visitedComponents) throws Exception {
+	public void doImport(BranchContext context, CodeSystemURI codeSystemUri, Rf2ImportConfiguration importConfig, Builder<ComponentURI> visitedComponents, boolean collectVisitedComponents) throws Exception {
 		context.log().info(message);
 	}
 

@@ -51,6 +51,6 @@ public interface Rf2EffectiveTimeSlice {
 
 	LongKeyMap<Set<String>> getMembersByReferencedComponent();
 
-	void doImport(BranchContext context, CodeSystemURI codeSystemUri, Rf2ImportConfiguration importConfig, Builder<ComponentURI> visitedComponents) throws Exception;
+	void doImport(BranchContext context, CodeSystemURI codeSystemUri, Rf2ImportConfiguration importConfig, Builder<ComponentURI> visitedComponents, boolean collectVisitedComponents) throws Exception;
 	
 }

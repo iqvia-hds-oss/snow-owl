@@ -252,8 +252,9 @@ final class SnomedRf2ImportRequest implements Request<BranchContext, ImportRespo
 			// if not a dryRun, perform import
 			if (!dryRun) {
 				// Import effective time slices in chronological order
+				boolean collectVisitedComponents = Rf2ReleaseType.DELTA == releaseType; 
 				for (Rf2EffectiveTimeSlice slice : orderedEffectiveTimeSlices) {
-					slice.doImport(context, codeSystemUri, importconfig, visitedComponents);
+					slice.doImport(context, codeSystemUri, importconfig, visitedComponents, collectVisitedComponents);
 				}
 					
 			    // Update locales registered on the code system
