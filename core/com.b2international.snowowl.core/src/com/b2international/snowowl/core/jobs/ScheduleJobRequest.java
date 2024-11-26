@@ -93,6 +93,7 @@ final class ScheduleJobRequest implements Request<ServiceProvider, String> {
 			final Optional<RemoteJobEntry> existingJob = JobRequests.prepareSearch()
 					.one()
 					.filterById(id)
+					.setFields(RemoteJobEntry.Fields.ID, RemoteJobEntry.Fields.DELETED, RemoteJobEntry.Fields.STATE)
 					.build()
 					.execute(context)
 					.first();

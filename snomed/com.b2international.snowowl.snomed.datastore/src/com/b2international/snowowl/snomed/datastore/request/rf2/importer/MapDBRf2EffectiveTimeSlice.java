@@ -175,7 +175,8 @@ final class MapDBRf2EffectiveTimeSlice extends BaseRf2EffectiveTimeSlice {
 			final BranchContext context, 
 			final ResourceURI codeSystemUri, 
 			final Rf2ImportConfiguration importConfig, 
-			final ImmutableSet.Builder<ComponentURI> visitedComponents) throws Exception {
+			final ImmutableSet.Builder<ComponentURI> visitedComponents,
+			boolean collectVisitedComponents) throws Exception {
 		
 		final Stopwatch w = Stopwatch.createStarted();
 		final String importingMessage = isUnpublishedSlice() ? "Importing unpublished components" : String.format("Importing components from %s", getEffectiveTime());
@@ -213,7 +214,7 @@ final class MapDBRf2EffectiveTimeSlice extends BaseRf2EffectiveTimeSlice {
 						
 						// Register container concept as visited component 
 						final String conceptId = getConceptId(component); 
-						visitedComponents.add(ComponentURI.of(codeSystemUri, SnomedConcept.TYPE, conceptId));
+						addVisitedComponent(visitedComponents, ComponentURI.of(codeSystemUri, SnomedConcept.TYPE, conceptId), collectVisitedComponents);
 					}
 					// add all members of this component to this batch as well
 					final Set<String> containerComponents = membersByReferencedComponent.remove(componentToImportL);
@@ -225,7 +226,7 @@ final class MapDBRf2EffectiveTimeSlice extends BaseRf2EffectiveTimeSlice {
 								
 								// Register reference set as visited component
 								final String refSetId = containedComponent.getRefsetId();
-								visitedComponents.add(ComponentURI.of(codeSystemUri, SnomedConcept.REFSET_TYPE, refSetId));
+								addVisitedComponent(visitedComponents, ComponentURI.of(codeSystemUri, SnomedConcept.REFSET_TYPE, refSetId), collectVisitedComponents);
 							}
 						}
 					}
@@ -260,6 +261,12 @@ final class MapDBRf2EffectiveTimeSlice extends BaseRf2EffectiveTimeSlice {
 	private TransactionContext openTransaction(final BranchContext context, final String author) {
 		// The default commit comment will not be used
 		return context.openTransaction(context, author, null, DatastoreLockContextDescriptions.IMPORT);
+	}
+	
+	private void addVisitedComponent(ImmutableSet.Builder<ComponentURI> visitedComponents, ComponentURI component, boolean collectVisitedComponents) {
+		if (collectVisitedComponents) {
+			visitedComponents.add(component);			
+		}
 	}
 
 	private LongSet collectAttributesWithRangeConstraint(final BranchContext context, final String rangeConstraint) {
