@@ -492,6 +492,12 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 			return query.build();
 		}
 		
+		public static Expression owlExpressionTypeInClassAxiom(Iterable<String> typeIds) {
+			final ExpressionBuilder query = com.b2international.index.query.Expressions.bool();
+			query.should(nestedMatch("classAxiomRelationships", matchAny("typeId", typeIds)));
+			return query.build();
+		}
+		
 		public static Expression owlExpression(String owlExpression) {
 			return exactMatch(SnomedRf2Headers.FIELD_OWL_EXPRESSION, owlExpression);
 		}

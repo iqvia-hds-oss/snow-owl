@@ -1,5 +1,6 @@
 package scripts
 
+import java.beans.Expression
 import java.util.concurrent.TimeUnit
 
 import com.b2international.index.query.Expressions
@@ -37,7 +38,7 @@ Set<ComponentIdentifier> potentialIssues = Sets.newHashSet();
 
 //No OWL axiom relationship produced by axioms containing the below phrases, nothing to validate in such cases
 Set<String> unsupportedAxiomMarkers = [ "TransitiveObjectProperty", "ReflexiveObjectProperty",
- "SubDataPropertyOf", "SubObjectPropertyOf", "ObjectPropertyChain"];
+ "SubDataPropertyOf", "SubObjectPropertyOf", "SubAnnotationPropertyOf", "ObjectPropertyChain"];
 
 List<String> moduleIds = SnomedRequests.prepareSearchConcept()
 	.filterByEcl(params.modules)
@@ -204,11 +205,11 @@ def searchRelationships = { boolean isValidationRun ->
 
 		if (isValidationRun) {
 			owlMemberExpressionBuilder
-				.filter(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionType(attributes))
+				.filter(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionTypeInClassAxiom(attributes))
 				.filter(SnomedRefSetMemberIndexEntry.Expressions.ids(reportedRelationshipIds));
 		} else {
 			owlMemberExpressionBuilder
-				.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionType(attributes));
+				.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionTypeInClassAxiom(attributes));
 		}
 
 		if (params.isUnpublishedOnly) {
@@ -265,7 +266,7 @@ def searchRelationshipsWithUnregulatedTypeIds =  {
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.modules(moduleIds))
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
-		.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionType(typeIdsInMrcmRules));
+		.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionTypeInClassAxiom(typeIdsInMrcmRules));
 	
 	if (params.isUnpublishedOnly) {
 		owlMemberExpressionBuilder.filter(SnomedRefSetMemberIndexEntry.Expressions.effectiveTime(EffectiveTimes.UNSET_EFFECTIVE_TIME))
@@ -325,7 +326,7 @@ def searchRelationshipsInUnregulatedDomains =  {
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.modules(moduleIds))
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(unregulatedDomainSpace))
-		.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionType([Concepts.IS_A]));
+		.mustNot(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionTypeInClassAxiom([Concepts.IS_A]))
 	
 	if (params.isUnpublishedOnly) {
 		owlMemberExpressionBuilder.filter(SnomedRefSetMemberIndexEntry.Expressions.effectiveTime(EffectiveTimes.UNSET_EFFECTIVE_TIME))
