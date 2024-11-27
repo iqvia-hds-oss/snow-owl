@@ -16,7 +16,7 @@
 package com.b2international.snowowl.snomed.datastore.request.dsv;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
+import static com.google.common.collect.Maps.newTreeMap;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -197,7 +197,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	 */
 	private void computeHeader() {
 		descriptionCount = HashMultiset.create();
-		propertyCountByGroup = newHashMap();
+		propertyCountByGroup = newTreeMap();
 		getConceptStream(HEADER_EXPAND).forEachOrdered(this::computeHeader);
 	}
 	
@@ -592,16 +592,17 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 								.collect(Multimaps.toMultimap(
 									m -> "",
 									m -> {
-										final String value = (String) m.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
+										final String serializedValue = (String) m.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
 										if (datatypeItem.isBooleanDatatype()) {
-											return "1".equals(value) ? "Yes" : "No";
+											return "1".equals(serializedValue) ? "Yes" : "No";
 										} else {
-											return value;
+											return serializedValue;
 										}
 									},
 									ArrayListMultimap::create
 								));
 							
+							// "Destination IDs" are never included for CD members
 							addCells(dataRow, occurrences, false, valuesById);
 						}
 						
