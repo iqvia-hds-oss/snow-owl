@@ -205,6 +205,68 @@ public class SnomedSimpleTypeRefSetDSVExporterTest {
 
 		exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
 		exportContents = getContentsAndDelete(exporter);
-		assertEquals("Export file should have a header and a data row with PT SCTID and term", String.join(LS, expectedHeader, expectedDetails, expectedData) + LS, exportContents);
+		assertEquals("Export file should have a header and a data row with FSN SCTID and term", String.join(LS, expectedHeader, expectedDetails, expectedData) + LS, exportContents);
+	}	
+	
+	@Test
+	public void exportTwoConceptsFsn() throws IOException {
+		SnomedDescription fsn1 = new SnomedDescription("d1");
+		fsn1.setTerm("FSN term 1");
+		fsn1.setTypeId(Concepts.FULLY_SPECIFIED_NAME);
+		
+		SnomedDescription decoy1 = new SnomedDescription("d2");
+		decoy1.setTerm("Should not appear in the output");
+		decoy1.setTypeId(Concepts.SYNONYM);
+		
+		SnomedConcept concept1 = new SnomedConcept("c1");
+		concept1.setDescriptions(new SnomedDescriptions(List.of(fsn1, decoy1), null, 2, 2));
+		
+		// ------------------------------------
+		
+		SnomedDescription fsn2 = new SnomedDescription("d3");
+		fsn2.setTerm("FSN term 2.1");
+		fsn2.setTypeId(Concepts.FULLY_SPECIFIED_NAME);
+		
+		SnomedDescription fsn3 = new SnomedDescription("d4");
+		fsn3.setTerm("FSN term 2.2");
+		fsn3.setTypeId(Concepts.FULLY_SPECIFIED_NAME);
+		
+		SnomedDescription decoy2 = new SnomedDescription("d5");
+		decoy2.setTerm("Should not appear in the output either");
+		decoy2.setTypeId(Concepts.SYNONYM);
+		
+		SnomedConcept concept2 = new SnomedConcept("c2");
+		concept2.setDescriptions(new SnomedDescriptions(List.of(fsn2, fsn3, decoy2), null, 3, 3));
+		
+		SnomedConcepts chunk = new SnomedConcepts(List.of(concept1, concept2), null, 2, 2);
+		ConceptStreamFactory conceptStreamFactory = (expand, locales, context, includeInactiveMembers, refSetId) -> Stream.of(chunk);
+		AncestorCollector ancestorCollector = (locales, ancestorId, context) -> new SnomedConcepts(0, 0);
+		
+		SnomedRefSetDSVExportModel exportSetting = new SnomedRefSetDSVExportModel();
+		exportSetting.setDelimiter("\t");
+		exportSetting.addExportItem(new SimpleSnomedDsvExportItem(SnomedDsvExportItemType.CONCEPT_ID));
+		exportSetting.addExportItem(new ComponentIdSnomedDsvExportItem(SnomedDsvExportItemType.DESCRIPTION, Concepts.FULLY_SPECIFIED_NAME, "Fully specified name"));
+		
+		// We get numbered columns because c2 has two FSNs
+		String expectedHeader = String.join(exportSetting.getDelimiter(), "Concept ID", "Fully specified name (1)", "Fully specified name (2)");
+		String expectedData1 = String.join(exportSetting.getDelimiter(), concept1.getId(), fsn1.getTerm(), "");
+		String expectedData2 = String.join(exportSetting.getDelimiter(), concept2.getId(), fsn2.getTerm(), fsn3.getTerm());
+		
+		var exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
+		String exportContents = getContentsAndDelete(exporter);
+		assertEquals("Export file should have a header and two data rows with FSN terms", String.join(LS, expectedHeader, expectedData1, expectedData2) + LS, exportContents);
+		
+		// Second run: include the SCTID for the FSN
+		exportSetting.setIncludeDescriptionId(true);
+		
+		// As a result of the above setting, "Fully specified name" appears four times in the header (once for the ID and once for the description term)
+		expectedHeader = String.join(exportSetting.getDelimiter(), "Concept ID", "Fully specified name (1)", "Fully specified name (1)", "Fully specified name (2)", "Fully specified name (2)");
+		String expectedDetails = String.join(exportSetting.getDelimiter(), "", "ID", "Term", "ID", "Term");
+		expectedData1 = String.join(exportSetting.getDelimiter(), concept1.getId(), fsn1.getId(), fsn1.getTerm(), "", "");
+		expectedData2 = String.join(exportSetting.getDelimiter(), concept2.getId(), fsn2.getId(), fsn2.getTerm(), fsn3.getId(), fsn3.getTerm());
+
+		exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
+		exportContents = getContentsAndDelete(exporter);
+		assertEquals("Export file should have a header and two data rows with FSN SCTIDs and terms", String.join(LS, expectedHeader, expectedDetails, expectedData1, expectedData2) + LS, exportContents);
 	}	
 }
