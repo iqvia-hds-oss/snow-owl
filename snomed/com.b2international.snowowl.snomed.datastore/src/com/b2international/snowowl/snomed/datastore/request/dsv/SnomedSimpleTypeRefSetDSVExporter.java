@@ -539,7 +539,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 
 							// Destination ID keys, destination concept terms for values
 							// - OR -
-							// Relationship value as keys, empty strings for values
+							// Empty string as key, relationships value literals for values
 							final Multimap<String, String> destinationsById = concept.getRelationships()
 								.stream()
 								.filter(r -> {
@@ -553,8 +553,8 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 											|| (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId) && relationshipGroup == 0));
 								})
 								.collect(Multimaps.toMultimap(
-									r -> r.hasValue() ? r.getValue() : r.getDestinationId(),
-									r -> r.hasValue() ? "" : getPreferredTerm(r.getDestination()),
+									r -> r.hasValue() ? "" : r.getDestinationId(),
+									r -> r.hasValue() ? r.getValue() : getPreferredTerm(r.getDestination()),
 									ArrayListMultimap::create
 								));
 							
