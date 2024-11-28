@@ -534,6 +534,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 							final int occurrences = groupOccurrences.count(typeId);
 							
 							if (occurrences < 1) {
+								// No header has been allocated for this attribute group-type ID pair, skip
 								break;
 							}
 
@@ -573,6 +574,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 							final int occurrences = groupOccurrences.count(typeId);
 							
 							if (occurrences < 1) {
+								// No header has been allocated for this attribute group-type ID pair, skip
 								break;
 							}
 							
