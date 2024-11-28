@@ -22,9 +22,8 @@ import java.util.stream.Collectors;
 
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.BranchContext;
-import com.b2international.snowowl.core.domain.IComponent;
-import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSet;
 
 /**
  * Fetches and memoizes SNOMED CT Association Reference Set IDs.
@@ -43,14 +42,15 @@ public final class SnomedAssociationReferenceSets {
 	
 	public Set<String> get() {
 		if (associationReferenceSets == null) {
-			associationReferenceSets = SnomedRequests.prepareSearchConcept()
+			associationReferenceSets = SnomedRequests.prepareSearchRefSet()
 					.all()
-					.filterByAncestor(Concepts.REFSET_ASSOCIATION_TYPE)
-					.setFields(SnomedConceptDocument.Fields.ID)
+					.filterByActive(true)
+					.filterByType(SnomedRefSetType.ASSOCIATION)
+					.setFields(SnomedReferenceSet.Fields.ID)
 					.build()
 					.execute(context)
 					.stream()
-					.map(IComponent::getId)
+					.map(SnomedReferenceSet::getId)
 					.collect(Collectors.toSet());
 		}
 		return associationReferenceSets;
