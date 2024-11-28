@@ -31,6 +31,7 @@ import com.b2international.snowowl.snomed.datastore.internal.id.reservations.Res
 import com.b2international.snowowl.snomed.datastore.internal.id.reservations.SnomedIdentifierReservationServiceImplTest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedOWLExpressionConverterTest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedOWLRelationshipConverterTest;
+import com.b2international.snowowl.snomed.datastore.request.dsv.SnomedSimpleTypeRefSetDSVExporterTest;
 import com.b2international.snowowl.snomed.validation.SnomedQueryValidationRuleEvaluatorTest;
 
 /**
@@ -74,6 +75,8 @@ import com.b2international.snowowl.snomed.validation.SnomedQueryValidationRuleEv
 	SnomedOWLRelationshipConverterTest.class,
 	//
 	SnomedRefSetUtilTest.class,
+	//
+	SnomedSimpleTypeRefSetDSVExporterTest.class,
 })
 public class AllSnomedDatastoreTests {
 
