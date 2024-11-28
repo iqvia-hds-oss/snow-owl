@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,9 +109,11 @@ public final class SnomedPlugin extends TerminologyRepositoryPlugin {
 				// enhance all branch context by attaching the Synonyms cache to it
 				if (context instanceof BranchContext) {
 					BranchContext branchContext = (BranchContext) context;
-					branchContext.bind(Synonyms.class, new Synonyms(branchContext));
 					branchContext.bind(ModuleIdProvider.class, c -> c.getModuleId());
 					branchContext.bind(NamespaceIdProvider.class, NamespaceIdProvider.DEFAULT);
+					// bind request scoped content caches
+					branchContext.bind(Synonyms.class, new Synonyms(branchContext));
+					branchContext.bind(SnomedAssociationReferenceSets.class, new SnomedAssociationReferenceSets(branchContext));
 					return (C) branchContext;
 				} else {
 					return context;

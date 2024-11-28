@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@ package com.b2international.snowowl.snomed.datastore.request;
 
 import static com.google.common.collect.Lists.newArrayList;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.b2international.snowowl.core.domain.TransactionContext;
-import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.core.store.SnomedComponents;
@@ -35,6 +36,7 @@ import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemb
 import com.b2international.snowowl.snomed.datastore.request.ModuleRequest.ModuleIdProvider;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 
 /**
  * Updates association reference set members on a core component specified by identifier.
@@ -97,14 +99,7 @@ final class SnomedAssociationTargetUpdateRequest extends BaseComponentMemberUpda
 	
 	@Override
 	protected void doExecute(TransactionContext context, SnomedComponentDocument componentToUpdate) {
-		final List<SnomedReferenceSetMember> existingMembers = newArrayList(
-			SnomedRequests.prepareSearchMember()
-				.all()
-				.filterByReferencedComponent(componentToUpdate.getId())
-				.filterByRefSet("<" + Concepts.REFSET_ASSOCIATION_TYPE)
-				.build()
-				.execute(context)
-		);
+		final List<SnomedReferenceSetMember> existingMembers = fetchExistingMembers(context, componentToUpdate);
 		final Multimap<String, String> newAssociationTargetsToCreate = HashMultimap.create(newAssociationTargets);
 		final ModuleIdProvider moduleIdFunction = context.service(ModuleIdProvider.class);
 		final Iterator<SnomedReferenceSetMember> memberIterator = existingMembers.iterator();
@@ -180,6 +175,34 @@ final class SnomedAssociationTargetUpdateRequest extends BaseComponentMemberUpda
 					.withModuleId(moduleIdFunction.apply(componentToUpdate))
 					.addTo(context);
 		}
+	}
+
+	private List<SnomedReferenceSetMember> fetchExistingMembers(TransactionContext context, SnomedComponentDocument componentToUpdate) {
+		final Set<String> memberOf = new HashSet<>();
+		if (componentToUpdate.getMemberOf() != null) {
+			memberOf.addAll(componentToUpdate.getMemberOf());
+		}
+		if (componentToUpdate.getActiveMemberOf() != null) {
+			memberOf.addAll(componentToUpdate.getActiveMemberOf());
+		}
+		
+		if (memberOf.isEmpty()) {
+			return List.of();
+		}
+		
+		Set<String> associationReferenceSetIds = context.service(SnomedAssociationReferenceSets.class).get();
+		if (Sets.intersection(memberOf, associationReferenceSetIds).isEmpty()) {
+			return List.of();
+		}
+		
+		return newArrayList(
+			SnomedRequests.prepareSearchMember()
+				.all()
+				.filterByReferencedComponent(componentToUpdate.getId())
+				.filterByRefSet(associationReferenceSetIds)
+				.build()
+				.execute(context)
+		);
 	}
 	
 }
