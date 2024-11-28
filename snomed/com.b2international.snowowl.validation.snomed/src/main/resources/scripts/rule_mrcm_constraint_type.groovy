@@ -1,5 +1,9 @@
 package scripts
 
+import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry.Fields.CLASS_AXIOM_RELATIONSHIP
+import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry.Expressions.typeIds
+import static com.b2international.index.query.Expressions.nestedMatch
+
 import java.util.stream.Collectors
 
 import com.b2international.index.Hits
@@ -275,8 +279,8 @@ if (params.isUnpublishedOnly) {
 		
 		final ExpressionBuilder owlMemberExpressionBuilder = Expressions.builder()
 				.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
-				.filter(SnomedRefSetMemberIndexEntry.Expressions.owlExpressionType(Collections.singleton(typeExpression)))
-				.mustNot(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(getCachedApplicableConcepts(domainExpression)))
+				.filter(nestedMatch(CLASS_AXIOM_RELATIONSHIP, typeIds(Collections.singleton(typeExpression))))
+				.mustNot(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(getCachedApplicableConcepts(domainExpression)));
 		
 		final Query<String> owlMemberQuery = Query.select(String.class)
 				.from(SnomedRefSetMemberIndexEntry.class)
@@ -312,7 +316,7 @@ if (params.isUnpublishedOnly) {
 	final ExpressionBuilder owlMemberExpressionBuilder = Expressions.builder()
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
 		.filter(SnomedRefSetMemberIndexEntry.Expressions.refSetTypes([SnomedRefSetType.OWL_AXIOM]))
-		.should(Expressions.nestedMatch(SnomedRefSetMemberIndexEntry.Fields.CLASS_AXIOM_RELATIONSHIP, nestedBuilder.build()))
+		.should(nestedMatch(CLASS_AXIOM_RELATIONSHIP, nestedBuilder.build()))
 	
 	final Query<String[]> owlMemberQuery = Query.select(String[].class)
 		.from(SnomedRefSetMemberIndexEntry.class)
