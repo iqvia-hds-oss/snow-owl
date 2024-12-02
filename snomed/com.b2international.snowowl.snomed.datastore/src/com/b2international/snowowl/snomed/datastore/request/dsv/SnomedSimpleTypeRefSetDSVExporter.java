@@ -44,6 +44,7 @@ import com.b2international.snowowl.snomed.datastore.internal.rf2.AbstractSnomedD
 import com.b2international.snowowl.snomed.datastore.internal.rf2.ComponentIdSnomedDsvExportItem;
 import com.b2international.snowowl.snomed.datastore.internal.rf2.DatatypeSnomedDsvExportItem;
 import com.b2international.snowowl.snomed.datastore.internal.rf2.SnomedRefSetDSVExportModel;
+import com.b2international.snowowl.snomed.datastore.request.SnomedConceptRequestCache;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptSearchRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.google.common.annotations.VisibleForTesting;
@@ -489,6 +490,8 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	private void writeValues(IProgressMonitor monitor, BufferedWriter writer) throws IOException {
 		final Iterable<SnomedConcepts> chunks = () -> getConceptStream(DATA_EXPAND).iterator();
 		for (SnomedConcepts chunk : chunks) {
+			// make sure we compute all requested expansions before we move forward
+			context.service(SnomedConceptRequestCache.class).compute(context);
 			writeValues(writer, chunk);
 			monitor.worked(chunk.getItems().size());
 		}
