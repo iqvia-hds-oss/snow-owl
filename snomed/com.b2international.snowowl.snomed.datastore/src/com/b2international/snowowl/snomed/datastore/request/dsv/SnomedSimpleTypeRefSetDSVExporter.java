@@ -23,10 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -44,6 +41,7 @@ import com.b2international.snowowl.snomed.datastore.internal.rf2.AbstractSnomedD
 import com.b2international.snowowl.snomed.datastore.internal.rf2.ComponentIdSnomedDsvExportItem;
 import com.b2international.snowowl.snomed.datastore.internal.rf2.DatatypeSnomedDsvExportItem;
 import com.b2international.snowowl.snomed.datastore.internal.rf2.SnomedRefSetDSVExportModel;
+import com.b2international.snowowl.snomed.datastore.request.SnomedConceptRequestCache;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptSearchRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.google.common.annotations.VisibleForTesting;
@@ -488,7 +486,12 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 
 	private void writeValues(IProgressMonitor monitor, BufferedWriter writer) throws IOException {
 		final Iterable<SnomedConcepts> chunks = () -> getConceptStream(DATA_EXPAND).iterator();
+		final Optional<SnomedConceptRequestCache> cache = Optional.ofNullable(context)
+			.flatMap(v -> v.optionalService(SnomedConceptRequestCache.class));
+		
 		for (SnomedConcepts chunk : chunks) {
+			// make sure we compute all requested expansions before we move forward
+			cache.ifPresent(service -> service.compute(context));
 			writeValues(writer, chunk);
 			monitor.worked(chunk.getItems().size());
 		}
