@@ -23,10 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.SortedSet;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -489,9 +486,12 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 
 	private void writeValues(IProgressMonitor monitor, BufferedWriter writer) throws IOException {
 		final Iterable<SnomedConcepts> chunks = () -> getConceptStream(DATA_EXPAND).iterator();
+		final Optional<SnomedConceptRequestCache> cache = Optional.ofNullable(context)
+			.flatMap(v -> v.optionalService(SnomedConceptRequestCache.class));
+		
 		for (SnomedConcepts chunk : chunks) {
 			// make sure we compute all requested expansions before we move forward
-			context.service(SnomedConceptRequestCache.class).compute(context);
+			cache.ifPresent(service -> service.compute(context));
 			writeValues(writer, chunk);
 			monitor.worked(chunk.getItems().size());
 		}
