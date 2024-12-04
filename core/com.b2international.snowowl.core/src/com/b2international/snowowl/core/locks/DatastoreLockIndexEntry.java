@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,31 @@ package com.b2international.snowowl.core.locks;
 
 import static com.b2international.index.query.Expressions.exactMatch;
 import static com.b2international.index.query.Expressions.matchAny;
+import static com.google.common.collect.Lists.newArrayList;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 import com.b2international.index.Doc;
 import com.b2international.index.ID;
+import com.b2international.index.migrate.DocumentMappingMigrationStrategy;
+import com.b2international.index.migrate.SchemaRevision;
 import com.b2international.index.query.Expression;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 
 /**
  * @since 7.1.0
  */
 @Doc(type = "lock")
-@JsonDeserialize(builder=DatastoreLockIndexEntry.Builder.class)
+@JsonDeserialize(builder = DatastoreLockIndexEntry.Builder.class)
+@SchemaRevision(version = 2L, description = "Introduce contexts field", strategy = DocumentMappingMigrationStrategy.NO_REINDEX)
 public final class DatastoreLockIndexEntry implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
@@ -43,10 +49,10 @@ public final class DatastoreLockIndexEntry implements Serializable {
 	public static final class Fields {
 		public static final String ID = "id";
 		public static final String USER_ID = "userId";
-		public static final String DESCRIPTION = "description";
-		public static final String PARENT_DESCRIPTION = "parentDescription";
-		public static final String REPOSITORY_ID= "repositoryId";
-		public static final String BRANCHPATH = "branchPath";
+		public static final String CONTEXTS = "contexts";
+		public static final String REPOSITORY_ID = "repositoryId";
+		public static final String BRANCH_PATH = "branchPath";
+		public static final String TIMESTAMP = "timestamp";
 	}
 	
 	public static class Expressions {
@@ -63,32 +69,23 @@ public final class DatastoreLockIndexEntry implements Serializable {
 			return exactMatch(Fields.USER_ID, userId);
 		}
 		
-		public static Expression description(final String description) {
-			return exactMatch(Fields.DESCRIPTION, description);
-		}
-		
-		public static Expression parentDescription(final String parentDescription) {
-			return exactMatch(Fields.PARENT_DESCRIPTION, parentDescription);
-		}
-		
 		public static Expression repositoryId(final String repositoryId) {
 			return exactMatch(Fields.REPOSITORY_ID, repositoryId);
 		}
 		
 		public static Expression branchPath(final String branchPath) {
-			return exactMatch(Fields.BRANCHPATH, branchPath);
+			return exactMatch(Fields.BRANCH_PATH, branchPath);
 		}
-		
 	}
 	 
 	public static DatastoreLockIndexEntry.Builder from(DatastoreLockIndexEntry source) {
 		return builder()
-				.id(source.getId())
-				.userId(source.getUserId())
-				.description(source.getDescription())
-				.parentDescription(source.getParentDescription())
-				.repositoryId(source.getRepositoryId())
-				.branchPath(source.getBranchPath());
+			.id(source.getId())
+			.userId(source.getUserId())
+			.contexts(source.getContexts())
+			.repositoryId(source.getRepositoryId())
+			.branchPath(source.getBranchPath())
+			.timestamp(source.getTimestamp());
 	}
 	
 	public static DatastoreLockIndexEntry.Builder builder() {
@@ -100,10 +97,10 @@ public final class DatastoreLockIndexEntry implements Serializable {
 		
 		private String id;
 		private String userId;
-		private String description;
-		private String parentDescription;
+		private List<String> contexts = newArrayList();
 		private String repositoryId;
 		private String branchPath;
+		private Long timestamp;
 		
 		@JsonCreator
 		private Builder() {
@@ -119,13 +116,14 @@ public final class DatastoreLockIndexEntry implements Serializable {
 			return this;
 		}
 		
-		public Builder parentDescription(final String parentDescription) {
-			this.parentDescription = parentDescription;
+		public Builder contexts(final Collection<String> contexts) {
+			this.contexts.clear();
+			this.contexts.addAll(contexts);
 			return this;
 		}
 		
-		public Builder description(final String description) {
-			this.description = description;
+		public Builder addContext(final String context) {
+			this.contexts.add(context);
 			return this;
 		}
 		
@@ -140,26 +138,47 @@ public final class DatastoreLockIndexEntry implements Serializable {
 			return this;
 		}
 		
+		public Builder timestamp(final Long timestamp) {
+			this.timestamp = timestamp;
+			return this;
+		}
+		
 		public DatastoreLockIndexEntry build() {
-			return new DatastoreLockIndexEntry(id, userId, description, parentDescription, repositoryId, branchPath);
+			return new DatastoreLockIndexEntry(id, userId, contexts, repositoryId, branchPath, timestamp);
 		}
 	}
 	
 	@ID
 	private final String id;
 	private final String userId;
-	private final String description;
-	private final String parentDescription;
 	private final String repositoryId;
 	private final String branchPath;
+	private final Long timestamp;
+	private final List<String> contexts;
+
+	// Only left in for backwards compatibility reasons
+	@Deprecated
+	private final String description = null;
+
+	// Only left in for backwards compatibility reasons
+	@Deprecated
+	private final String parentDescription = null;
 	
-	private DatastoreLockIndexEntry(final String id, final String userId, final String description, final String parentDescription, final String repositoryId, final String branchPath) {
+	
+	private DatastoreLockIndexEntry(
+		final String id, 
+		final String userId, 
+		final List<String> contexts, 
+		final String repositoryId, 
+		final String branchPath, 
+		final Long timestamp
+	) {
 		this.id = id;
 		this.userId = userId;
-		this.description = description;
-		this.parentDescription = parentDescription;
+		this.contexts = ImmutableList.copyOf(contexts);
 		this.repositoryId = repositoryId;
 		this.branchPath = branchPath;
+		this.timestamp = timestamp;
 	}
 	
 	public String getId() {
@@ -170,12 +189,8 @@ public final class DatastoreLockIndexEntry implements Serializable {
 		return userId;
 	}
 	
-	public String getDescription() {
-		return description;
-	}
-	
-	public String getParentDescription() {
-		return parentDescription;
+	public List<String> getContexts() {
+		return contexts;
 	}
 	
 	public String getRepositoryId() {
@@ -186,9 +201,13 @@ public final class DatastoreLockIndexEntry implements Serializable {
 		return branchPath;
 	}
 	
+	public Long getTimestamp() {
+		return timestamp;
+	}
+	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id, description, parentDescription, branchPath, repositoryId, userId);
+		return Objects.hash(id, contexts, branchPath, repositoryId, userId, timestamp);
 	}
 	
 	@Override
@@ -207,24 +226,22 @@ public final class DatastoreLockIndexEntry implements Serializable {
 		
 		final DatastoreLockIndexEntry otherEntry = (DatastoreLockIndexEntry) other;
 		return Objects.equals(id, otherEntry.getId()) 
-				&& Objects.equals(userId, otherEntry.getUserId())
-				&& Objects.equals(description, otherEntry.getDescription())
-				&& Objects.equals(parentDescription, otherEntry.getParentDescription())
-				&& Objects.equals(repositoryId, otherEntry.getRepositoryId())
-				&& Objects.equals(branchPath, otherEntry.getBranchPath());
+			&& Objects.equals(userId, otherEntry.getUserId())
+			&& Objects.equals(contexts, otherEntry.getContexts())
+			&& Objects.equals(repositoryId, otherEntry.getRepositoryId())
+			&& Objects.equals(branchPath, otherEntry.getBranchPath())
+			&& Objects.equals(timestamp, otherEntry.getTimestamp());
 	}
 	
 	@Override
 	public String toString() {
 		return MoreObjects.toStringHelper(this)
-				.add("id", id)
-				.add("userId", userId)
-				.add("description", description)
-				.add("parentDescription", parentDescription)
-				.add("repositoryId", repositoryId)
-				.add("branchPath", branchPath)
-				.toString();
+			.add("id", id)
+			.add("userId", userId)
+			.add("contexts", contexts)
+			.add("repositoryId", repositoryId)
+			.add("branchPath", branchPath)
+			.add("timestamp", timestamp)
+			.toString();
 	}
-	
- 
 }

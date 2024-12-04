@@ -55,7 +55,7 @@ public class LockIndexTests {
 		final DatastoreLockIndexEntry lock = DatastoreLockIndexEntry.builder()
 			.id(lockId)
 			.userId(USER)
-			.description(DatastoreLockContextDescriptions.CLASSIFY)
+			.addContext(DatastoreLockContextDescriptions.CLASSIFY)
 			.repositoryId("repositoryUuid")
 			.branchPath("branchPath")
 			.build();
