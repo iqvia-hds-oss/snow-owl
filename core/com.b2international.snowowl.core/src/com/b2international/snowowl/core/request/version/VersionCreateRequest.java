@@ -42,6 +42,7 @@ import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.core.identity.User;
+import com.b2international.snowowl.core.internal.locks.DatastoreLockContextDescriptions;
 import com.b2international.snowowl.core.locks.Locks;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.request.*;
@@ -219,6 +220,7 @@ public final class VersionCreateRequest implements Request<RepositoryContext, Bo
 						});
 						return Boolean.TRUE;
 					})
+					.setParentContextDescription(DatastoreLockContextDescriptions.ROOT) // don't use "creating a version" for the parent context, explicitly set root
 					.setCommitComment(CompareUtils.isEmpty(commitComment)? String.format("Version '%s' as of '%s'", resource, version) : commitComment)
 					.setAuthor(author)
 					.build()
