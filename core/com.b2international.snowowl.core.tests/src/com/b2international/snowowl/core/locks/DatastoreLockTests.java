@@ -17,6 +17,8 @@ package com.b2international.snowowl.core.locks;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -109,7 +111,7 @@ public class DatastoreLockTests {
 	private void checkIfLockExists(DatastoreLockContext context,  boolean expected, Lockable...targets) {
 		for (int i = 0; i < targets.length; i++) {
 			final Lockable target = targets[i];
-			final OperationLock operationLock = new OperationLock(i, target);
+			final OperationLock operationLock = new OperationLock(i, new Date(), target);
 			operationLock.acquire(context);
 			final OperationLockInfo info = new OperationLockInfo(i, operationLock.getLevel(), operationLock.getCreationDate(), target, context);
 			assertTrue(expected == manager.getLocks().contains(info));

@@ -35,7 +35,7 @@ public abstract class AbstractOperationLock implements IOperationLock {
 	private static final String CONTEXT_NOT_IN_STACK_MESSAGE = "Context is not registered as a lock owner.";
 	
 	private final int id;
-	private final Date creationDate = new Date();
+	private final Date creationDate;
 	private final List<DatastoreLockContext> contexts = newArrayList(); 
 	private final Lockable target;
 
@@ -43,12 +43,15 @@ public abstract class AbstractOperationLock implements IOperationLock {
 	 * Creates a new abstract lock instance.
 	 * 
 	 * @param id the lock identifier
+	 * @param creationDate the lock creation date (may not be {@code null})
 	 * @param target the lock target (may not be {@code null})
 	 */
-	protected AbstractOperationLock(final int id, final Lockable target) {
+	protected AbstractOperationLock(final int id, final Date creationDate, final Lockable target) {
 		Preconditions.checkNotNull(target, "Lock target may not be null.");
+		Preconditions.checkNotNull(creationDate, "Creation date may not be null.");
 		
 		this.id = id;
+		this.creationDate = creationDate;
 		this.target = target; 
 	}
 
