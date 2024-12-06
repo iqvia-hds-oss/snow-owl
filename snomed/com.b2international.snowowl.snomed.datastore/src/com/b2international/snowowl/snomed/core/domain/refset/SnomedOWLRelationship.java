@@ -23,6 +23,10 @@ import java.util.Objects;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
+import com.b2international.snowowl.snomed.datastore.StatementFragment;
+import com.b2international.snowowl.snomed.datastore.StatementFragmentWithDestination;
+import com.b2international.snowowl.snomed.datastore.StatementFragmentWithValue;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedOWLRelationshipDocument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -204,6 +208,14 @@ public final class SnomedOWLRelationship implements OwlRelationship, Serializabl
 		}
 	}
 	
+	public static SnomedOWLRelationship createFrom(final SnomedOWLRelationshipDocument r) {
+		if (r.hasValue()) {
+			return create(r.getTypeId(), r.getValueAsObject(), r.getRelationshipGroup());
+		} else {
+			return create(r.getTypeId(), r.getDestinationId(), r.getRelationshipGroup());
+		}
+	}
+	
 	public static SnomedOWLRelationship create(final String typeId, final String destinationId, final int relationshipGroup) {
 		SnomedOWLRelationship owlRelationship = new SnomedOWLRelationship();
 		
@@ -224,4 +236,38 @@ public final class SnomedOWLRelationship implements OwlRelationship, Serializabl
 		return owlRelationship;
 	}
 	
+	@JsonIgnore
+	public StatementFragment toStatementFragment(final int groupOffset) {
+		final int adjustedGroup;
+		if (relationshipGroup == 0) {
+			adjustedGroup = relationshipGroup;
+		} else {
+			adjustedGroup = relationshipGroup + groupOffset;
+		}
+
+		if (getDestinationId() != null) {
+			return new StatementFragmentWithDestination(
+				Long.parseLong(getTypeId()),         // typeId        
+				adjustedGroup,                  // adjustedGroup
+				0,                              // unionGroup   
+				false,                          // universal    
+				-1L,                            // statementId  
+				-1L,                            // moduleId     
+				false,                          // released     
+				Long.parseLong(getDestinationId()),  // destinationId
+				false);                         // destinationNegated	
+		} else {
+			return new StatementFragmentWithValue(
+				Long.parseLong(getTypeId()),          // typeId        
+				adjustedGroup,                   // adjustedGroup
+				0,                               // unionGroup   
+				false,                           // universal    
+				-1L,                             // statementId  
+				-1L,                             // moduleId     
+				false,                           // released
+				value.type(),                       // valueType
+				value.toRawValue());                  // rawValue
+		}
+	}
+
 }
