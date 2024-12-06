@@ -356,19 +356,31 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 	}
 
 	private void reconstructContexts(final DatastoreLockIndexEntry lockDocument, final IOperationLock lock) {
-		String parentDescription = DatastoreLockContextDescriptions.ROOT;
+		String parentDescription = null;
 		
 		for (final String description : lockDocument.getContexts()) {
+			if (parentDescription == null) {
+				// Consume the first item as it is the parent description
+				parentDescription = description;
+				continue;
+			}
+			
 			lock.acquire(new DatastoreLockContext(lockDocument.getUserId(), description, parentDescription));
 			parentDescription = description;
 		}
 	}
 
 	private void updateLock(final IOperationLock existingLock) {
-		final List<String> contextDescriptions = existingLock.getAllContexts()
-			.stream()
+		final List<DatastoreLockContext> allContexts = existingLock.getAllContexts();
+		
+		final List<String> contextDescriptions = allContexts.stream()
 			.map(c -> c.getDescription())
-			.toList();
+			.collect(Collectors.toList());
+		
+		if (!allContexts.isEmpty()) {
+			// Start the list with the first context's parent description (this will not always be "<<root>>")
+			contextDescriptions.add(0, allContexts.get(0).getParentDescription());
+		}
 		
 		final DatastoreLockIndexEntry entry = DatastoreLockIndexEntry.builder()
 			.id(Integer.toString(existingLock.getId()))

@@ -15,9 +15,10 @@
  */
 package com.b2international.snowowl.core.locks;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
-import java.util.Date;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,9 +38,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class DatastoreLockTests {
 
-	private static final long TIMEOUT = 10_000L;
+	private static final String USER1 = "user1@b2ihealthcare.com";
+	private static final String USER2 = "user2@b2ihealthcare.com";
 
-		private static final String USER = "snowowl";
+	private static final DatastoreLockContext CONTEXT_GRANTED = new DatastoreLockContext(
+		USER1, 
+		DatastoreLockContextDescriptions.MAINTENANCE
+	);
+	
+	private static final DatastoreLockContext CONTEXT_DIFFERENT_USER = new DatastoreLockContext(
+		USER2, 
+		DatastoreLockContextDescriptions.MAINTENANCE
+	);
+	
+	private static final DatastoreLockContext CONTEXT_NESTED = new DatastoreLockContext(
+		USER1, 
+		DatastoreLockContextDescriptions.COMMIT, 
+		DatastoreLockContextDescriptions.MAINTENANCE
+	);
+	
+	private static final Lockable TARGET_ALL = Lockable.ALL;
+	private static final Lockable TARGET_REPOSITORY = new Lockable("snomed", null);
+	private static final Lockable TARGET_REPOSITORY_BRANCH = new Lockable("snomed", "MAIN/a/b");
+
+	private static final long TIMEOUT = 100L;
 	
 	private DefaultOperationLockManager manager;
 
@@ -47,74 +69,72 @@ public class DatastoreLockTests {
 	public void setup() {
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
 		final Index index = Indexes.createIndex("locks", mapper, new Mappings(DatastoreLockIndexEntry.class));
+		
 		manager = new DefaultOperationLockManager(index);
 		manager.addLockTargetListener(new Slf4jOperationLockTargetListener());
 		manager.unlockAll();
 	}
 	
-	@Test
-	public void testLockAll() {
-		final DatastoreLockContext context = createContext(USER, DatastoreLockContextDescriptions.MAINTENANCE);
-		final Lockable allLockTarget = Lockable.ALL;
+	private void testLock(Lockable target) {
+		// Take the lock
+		manager.lock(CONTEXT_GRANTED, TIMEOUT, target);
+		checkIfLockExists(CONTEXT_GRANTED, true, target);
 		
-		manager.lock(context, TIMEOUT, allLockTarget);
-		checkIfLockExists(context, true, allLockTarget);
-		manager.unlockAll();
-	}
-	
-	@Test
-	public void testUnlock() {
-		final DatastoreLockContext context = createContext(USER, DatastoreLockContextDescriptions.MAINTENANCE);
-		final Lockable target = new Lockable("snomedStore", "MAIN");
+		// Different user, same target is rejected
+		assertThrows(LockedException.class, () -> manager.lock(CONTEXT_DIFFERENT_USER, TIMEOUT, target));
+		checkIfLockExists(CONTEXT_DIFFERENT_USER, false, target);
 		
-		manager.lock(context, TIMEOUT, target);
-		checkIfLockExists(context, true, target);
-
-		manager.unlock(context, target);
-		checkIfLockExists(context, false, target);
-	}
-	
-	@Test
-	public void testUnlockAll() {
-		final DatastoreLockContext context = createContext(USER, DatastoreLockContextDescriptions.MAINTENANCE);
-		final Lockable target1 = new Lockable("snomedStore", "MAIN");
-		final Lockable target2 = new Lockable("loincStore", "MAIN");
+		// Same user, improper nesting (same parent description) is also rejected
+		assertThrows(LockedException.class, () -> manager.lock(CONTEXT_GRANTED, TIMEOUT, target));
 		
-		manager.lock(context, TIMEOUT, target1, target2);
-		checkIfLockExists(context, true, target1, target2);
+		// Same user, proper nesting, same target is allowed
+		manager.lock(CONTEXT_NESTED, TIMEOUT, TARGET_ALL);
+		checkIfLockExists(CONTEXT_NESTED, true, TARGET_ALL);
+		manager.unlock(CONTEXT_NESTED, TARGET_ALL);
+		checkIfLockExists(CONTEXT_NESTED, false, TARGET_ALL);
 		
-		manager.unlockAll();
-		checkIfLockExists(context, false, target1, target2);
-	}
-	
-	@Test(expected = LockedException.class)
-	public void testLockAllNotAbleToLockAnother() {
-		final DatastoreLockContext context = createContext(USER, DatastoreLockContextDescriptions.MAINTENANCE);
-		final Lockable allLockTarget = Lockable.ALL;
-
-		manager.lock(context, 1_000L, allLockTarget);
-		manager.lock(context, 1_000L, allLockTarget);
+		// Same user, proper nesting, repository target is also allowed
+		manager.lock(CONTEXT_NESTED, TIMEOUT, TARGET_REPOSITORY);
+		checkIfLockExists(CONTEXT_NESTED, true, TARGET_REPOSITORY);
+		manager.unlock(CONTEXT_NESTED, TARGET_REPOSITORY);
+		checkIfLockExists(CONTEXT_NESTED, false, TARGET_REPOSITORY);
+		
+		// Same user, proper nesting, repository + branch target is, yet again, allowed
+		manager.lock(CONTEXT_NESTED, TIMEOUT, TARGET_REPOSITORY_BRANCH);
+		checkIfLockExists(CONTEXT_NESTED, true, TARGET_REPOSITORY_BRANCH);
+		manager.unlock(CONTEXT_NESTED, TARGET_REPOSITORY_BRANCH);
+		checkIfLockExists(CONTEXT_NESTED, false, TARGET_REPOSITORY_BRANCH);
+		
+		// Release the first lock
+		manager.unlock(CONTEXT_GRANTED, target);
+		checkIfLockExists(CONTEXT_GRANTED, false, target);
 	}
 	
 	@Test
-	public void testLockBranchAndRepository() {
-		final DatastoreLockContext context = createContext(USER, DatastoreLockContextDescriptions.CREATE_VERSION);
-		final Lockable target = new Lockable("snomedStore", "MAIN");
-		manager.lock(context, 10_000L, target);
-		checkIfLockExists(context, true, target);
+	public void testLockAll() {
+		testLock(TARGET_ALL);
 	}
 	
-	private DatastoreLockContext createContext(final String user, final String description) {
-		return new DatastoreLockContext(user, description);
+	@Test
+	public void testLockRepository() {
+		testLock(TARGET_REPOSITORY);
 	}
 	
-	private void checkIfLockExists(DatastoreLockContext context,  boolean expected, Lockable...targets) {
-		for (int i = 0; i < targets.length; i++) {
-			final Lockable target = targets[i];
-			final OperationLock operationLock = new OperationLock(i, new Date(), target);
-			operationLock.acquire(context);
-			final OperationLockInfo info = new OperationLockInfo(i, operationLock.getLevel(), operationLock.getCreationDate(), target, context);
-			assertTrue(expected == manager.getLocks().contains(info));
+	@Test
+	public void testLockRepositoryBranch() {
+		testLock(TARGET_REPOSITORY_BRANCH);
+	}
+	
+	private void checkIfLockExists(DatastoreLockContext context, boolean expected, Lockable...targets) {
+		final List<OperationLockInfo> locks = manager.getLocks();
+		
+		for (final Lockable target : targets) {
+			final boolean lockExists = locks.stream()
+				.filter(info -> info.getTarget().equals(target) && info.getContext().equals(context))
+				.findFirst()
+				.isPresent();
+			
+			assertEquals(expected, lockExists);
 		}
 	}
 	
