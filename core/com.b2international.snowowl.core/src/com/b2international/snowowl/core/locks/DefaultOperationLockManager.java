@@ -254,7 +254,15 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 		if (!isDisposed()) {
 			for (final Lockable newTarget : targets) {
 				for (final IOperationLock existingLock : getExistingLocks()) {
-					if (existingLock.targetConflicts(newTarget) || !canContextLock(context, existingLock)) {
+					/*
+					 * Conflicting targets _are_ allowed provided the contexts are nested properly.
+					 * For example, the following sequence is allowed:
+					 * 
+					 * - first lock locks all content with description "maintenance" 
+					 * - second lock locks a single repository with description "commit", 
+					 *   parent description "maintenance", same user
+					 */
+					if (existingLock.targetConflicts(newTarget) && !canContextLock(context, existingLock)) {
 						alreadyLockedTargets.put(newTarget, existingLock.getContext());
 					}
 				}
