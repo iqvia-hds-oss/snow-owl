@@ -94,7 +94,7 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 					
 					if (alreadyLockedTargets.isEmpty()) {
 						for (final Lockable newTarget : targets) {
-							final IOperationLock existingLock = getOrCreateLock(context, newTarget);
+							final IOperationLock existingLock = getOrCreateLock(newTarget);
 							
 							try {
 								existingLock.acquire(context);
@@ -151,7 +151,7 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 			}
 
 			for (final Lockable targetToUnlock : targets) {
-				final IOperationLock existingLock = getOrCreateLock(context, targetToUnlock);
+				final IOperationLock existingLock = getOrCreateLock(targetToUnlock);
 				
 				try {
 					existingLock.release(context);
@@ -318,7 +318,7 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 		return System.nanoTime() / (1000L * 1000L);
 	}
 
-	private IOperationLock getOrCreateLock(DatastoreLockContext context, final Lockable target) {
+	private IOperationLock getOrCreateLock(final Lockable target) {
 		synchronized (syncObject) {
 			final String repositoryId = target.repositoryId();
 			final String branchPath = target.branchPath();
