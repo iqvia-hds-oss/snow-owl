@@ -39,11 +39,21 @@ public record Lockable(String repositoryId, String branchPath) implements Serial
 			return true;
 		}
 		
-		if (branchPath().equals(_ALL) || other.branchPath().equals(_ALL)) {
+		if (_ALL.equals(branchPath()) || _ALL.equals(other.branchPath())) {
 			return repositoryId().equals(other.repositoryId());
 		}
 		
 		return equals(other);
 	}
 	
+	@Override
+	public String toString() {
+		if (ALL.equals(this)) {
+			return "all repositories";
+		} else if (_ALL.equals(branchPath)) {
+			return "repository '" + repositoryId + "'";
+		} else {
+			return "repository '" + repositoryId + "' and branch '" + branchPath + "'";
+		}
+	}
 }
