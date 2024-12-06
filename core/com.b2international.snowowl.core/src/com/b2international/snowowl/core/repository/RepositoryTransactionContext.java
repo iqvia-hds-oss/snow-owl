@@ -265,8 +265,11 @@ public final class RepositoryTransactionContext extends DelegatingBranchContext 
 		final Lockable lockTarget = new Lockable(info().id(), path());
 		IOperationLockManager locks = service(IOperationLockManager.class);
 		Commit commit = null;
+		
+		// Commit can be attempted later if an exception is thrown from this call
+		locks.lock(lockContext, 1000L, lockTarget);
+		
 		try {
-			locks.lock(lockContext, 1000L, lockTarget);
 			final long timestamp = service(TimestampProvider.class).getTimestamp();
 			log().info("Checking transaction content before commit to {}@{}", path(), timestamp);
 			checkTransaction();
