@@ -254,7 +254,7 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 		if (!isDisposed()) {
 			for (final Lockable newTarget : targets) {
 				for (final IOperationLock existingLock : getExistingLocks()) {
-					if (existingLock.targetConflicts(newTarget) && !canContextLock(context, existingLock)) {
+					if (existingLock.targetConflicts(newTarget) || !canContextLock(context, existingLock)) {
 						alreadyLockedTargets.put(newTarget, existingLock.getContext());
 					}
 				}
