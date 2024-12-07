@@ -39,12 +39,13 @@ import com.google.common.collect.ImmutableList;
 /**
  * @since 7.1.0
  */
-@Doc(type = "lock")
+@Doc(type = "lock", revisions = {
+	@SchemaRevision(version = 2L, description = "Introduce contexts and timestamp field", strategy = DocumentMappingMigrationStrategy.NO_REINDEX)
+})
 @JsonDeserialize(builder = DatastoreLockIndexEntry.Builder.class)
-@SchemaRevision(version = 2L, description = "Introduce contexts field", strategy = DocumentMappingMigrationStrategy.NO_REINDEX)
 public final class DatastoreLockIndexEntry implements Serializable {
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 	
 	public static final class Fields {
 		public static final String ID = "id";
