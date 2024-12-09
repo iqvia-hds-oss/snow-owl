@@ -17,9 +17,9 @@ package com.b2international.snowowl.core.locks;
 
 import static com.b2international.index.query.Expressions.exactMatch;
 import static com.b2international.index.query.Expressions.matchAny;
-import static com.google.common.collect.Lists.newArrayList;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -30,6 +30,7 @@ import com.b2international.index.migrate.DocumentMappingMigrationStrategy;
 import com.b2international.index.migrate.SchemaRevision;
 import com.b2international.index.query.Expression;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.google.common.base.MoreObjects;
@@ -98,7 +99,7 @@ public final class DatastoreLockIndexEntry implements Serializable {
 		
 		private String id;
 		private String userId;
-		private List<String> contexts = newArrayList();
+		private List<String> contexts = new ArrayList<>(2);
 		private String repositoryId;
 		private String branchPath;
 		private Long timestamp;
@@ -141,6 +142,20 @@ public final class DatastoreLockIndexEntry implements Serializable {
 		
 		public Builder timestamp(final Long timestamp) {
 			this.timestamp = timestamp;
+			return this;
+		}
+	
+		@JsonSetter
+		Builder description(final String description) {
+			// lock documents with description value should propagate their values to contexts
+			addContext(description);
+			return this;
+		}
+		
+		@JsonSetter
+		Builder parentDescription(final String parentDescription) {
+			// lock documents with a parentDescription value should propagate their values to contexts
+			addContext(parentDescription);
 			return this;
 		}
 		
