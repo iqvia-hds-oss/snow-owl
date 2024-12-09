@@ -38,9 +38,7 @@ import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.internal.locks.DatastoreLockContext;
 import com.b2international.snowowl.core.internal.locks.DatastoreLockContextDescriptions;
-import com.b2international.snowowl.core.locks.DatastoreLockIndexEntry.Builder;
 import com.google.common.base.Optional;
-import com.google.common.base.Strings;
 import com.google.common.collect.*;
 
 /**
@@ -96,8 +94,14 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 					
 					if (alreadyLockedTargets.isEmpty()) {
 						for (final Lockable newTarget : targets) {
-							final IOperationLock existingLock = getOrCreateLock(context, newTarget);
-							fireTargetAcquired(existingLock.getTarget(), context);
+							final IOperationLock existingLock = getOrCreateLock(newTarget);
+							
+							try {
+								existingLock.acquire(context);
+								fireTargetAcquired(existingLock.getTarget(), context);
+							} finally {
+								updateLock(existingLock);
+							}
 						}
 						
 						syncObject.notifyAll();
@@ -147,8 +151,7 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 			}
 
 			for (final Lockable targetToUnlock : targets) {
-				
-				final IOperationLock existingLock = getOrCreateLock(context, targetToUnlock);
+				final IOperationLock existingLock = getOrCreateLock(targetToUnlock);
 				
 				try {
 					existingLock.release(context);
@@ -156,6 +159,8 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 				} finally {
 					if (!existingLock.isLocked()) {
 						removeLock(existingLock);
+					} else {
+						updateLock(existingLock);
 					}
 				}
 			}
@@ -249,13 +254,21 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 		if (!isDisposed()) {
 			for (final Lockable newTarget : targets) {
 				for (final IOperationLock existingLock : getExistingLocks()) {
+					/*
+					 * Conflicting targets _are_ allowed provided the contexts are nested properly.
+					 * For example, the following sequence is allowed:
+					 * 
+					 * - first lock locks all content with description "maintenance" 
+					 * - second lock locks a single repository with description "commit", 
+					 *   parent description "maintenance", same user
+					 */
 					if (existingLock.targetConflicts(newTarget) && !canContextLock(context, existingLock)) {
 						alreadyLockedTargets.put(newTarget, existingLock.getContext());
 					}
 				}
 			}
 		} else {
-			final DatastoreLockContext disposedContext = createLockContext(User.SYSTEM.getUserId(), DatastoreLockContextDescriptions.DISPOSE_LOCK_MANAGER, null);
+			final DatastoreLockContext disposedContext = new DatastoreLockContext(User.SYSTEM.getUserId(), DatastoreLockContextDescriptions.DISPOSE_LOCK_MANAGER);
 			for (final Lockable target : targets) {
 				alreadyLockedTargets.put(target, disposedContext);
 			}
@@ -305,55 +318,82 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 		return System.nanoTime() / (1000L * 1000L);
 	}
 
-	private IOperationLock getOrCreateLock(DatastoreLockContext context, final Lockable target) {
+	private IOperationLock getOrCreateLock(final Lockable target) {
 		synchronized (syncObject) {
 			final String repositoryId = target.repositoryId();
 			final String branchPath = target.branchPath();
 			
 			final Expression searchExpression = Expressions.bool()
-					.filter(DatastoreLockIndexEntry.Expressions.repositoryId(repositoryId))
-					.filter(DatastoreLockIndexEntry.Expressions.branchPath(branchPath))
-					.build();
+				.filter(DatastoreLockIndexEntry.Expressions.repositoryId(repositoryId))
+				.filter(DatastoreLockIndexEntry.Expressions.branchPath(branchPath))
+				.build();
 			
 			final DatastoreLockIndexEntry existingLockEntry = Iterables.getOnlyElement(search(searchExpression, 2), null);
 			final IOperationLock lock;
+			
 			if (existingLockEntry == null) {
 				lastAssignedId = assignedIds.nextClearBit(lastAssignedId);
-				final String lockId = Integer.toString(lastAssignedId);
 				lock = createLock(lastAssignedId, target);
-				final DatastoreLockIndexEntry newEntry = buildIndexEntry(lockId, branchPath, repositoryId, context);
-				put(newEntry);
 				
-				assignedIds.set(lastAssignedId);
 				/* 
 				 * XXX (apeteri): this makes the lock manager revisit low IDs after every 128 issued locks, but 
 				 * it can still assign a number over 128 if all of the early ones are in use, since the BitSet grows unbounded. 
 				 */
+				assignedIds.set(lastAssignedId);
 				lastAssignedId = lastAssignedId % EXPECTED_LOCKS;
 			} else {
-				lock = new OperationLock(Integer.parseInt(existingLockEntry.getId()), target);
+				lock = new OperationLock(
+					Integer.parseInt(existingLockEntry.getId()), 
+					new Date(existingLockEntry.getTimestamp()),
+					target
+				);
+				
+				reconstructContexts(existingLockEntry, lock);
 			}
-			
-			lock.acquire(context);
+
 			return lock;
 		}
 	}
 
-	private DatastoreLockIndexEntry buildIndexEntry(final String lockId, final String branchPath, final String repositoryId, final DatastoreLockContext context) {
-		final Builder entryBuilder = DatastoreLockIndexEntry.builder()
-			.id(lockId)
-			.userId(context.getUserId())
-			.description(context.getDescription())
-			.parentDescription(context.getParentDescription())
-			.repositoryId(repositoryId);
+	private void reconstructContexts(final DatastoreLockIndexEntry lockDocument, final IOperationLock lock) {
+		String parentDescription = null;
 		
-		if (!Strings.isNullOrEmpty(branchPath)) {
-			entryBuilder.branchPath(branchPath);
+		for (final String description : lockDocument.getContexts()) {
+			if (parentDescription == null) {
+				// Consume the first item as it is the parent description
+				parentDescription = description;
+				continue;
+			}
+			
+			lock.acquire(new DatastoreLockContext(lockDocument.getUserId(), description, parentDescription));
+			parentDescription = description;
 		}
-		
-		return entryBuilder.build();
 	}
 
+	private void updateLock(final IOperationLock existingLock) {
+		final List<DatastoreLockContext> allContexts = existingLock.getAllContexts();
+		
+		final List<String> contextDescriptions = allContexts.stream()
+			.map(c -> c.getDescription())
+			.collect(Collectors.toList());
+		
+		if (!allContexts.isEmpty()) {
+			// Start the list with the first context's parent description (this will not always be "<<root>>")
+			contextDescriptions.add(0, allContexts.get(0).getParentDescription());
+		}
+		
+		final DatastoreLockIndexEntry entry = DatastoreLockIndexEntry.builder()
+			.id(Integer.toString(existingLock.getId()))
+			.userId(existingLock.getContext().getUserId()) // using the most recently pushed context's user
+			.contexts(contextDescriptions)
+			.repositoryId(existingLock.getTarget().repositoryId())
+			.branchPath(existingLock.getTarget().branchPath())
+			.timestamp(existingLock.getCreationDate().getTime())
+			.build();
+		
+		put(entry);
+	}
+	
 	private void removeLock(final IOperationLock existingLock) {
 		final DatastoreLockIndexEntry entry = Iterables.getOnlyElement(search(DatastoreLockIndexEntry.Expressions.id(Integer.toString(existingLock.getId())), 2), null);
 		if (entry != null) {
@@ -376,7 +416,7 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 	}
 	
 	private OperationLock createLock(final int id, final Lockable target) {
-		return new OperationLock(id, target);
+		return new OperationLock(id, new Date(), target);
 	}
 
 	private OperationLockInfo createLockInfo(final IOperationLock existingLock) {
@@ -386,19 +426,15 @@ public final class DefaultOperationLockManager implements IOperationLockManager,
 	
 	private Collection<IOperationLock> getExistingLocks() {
 		return search(Expressions.matchAll(), Integer.MAX_VALUE).stream().map(entry -> {
-			final DatastoreLockContext context = createLockContext(entry.getUserId(), entry.getDescription(), entry.getParentDescription());
-			final OperationLock lock = new OperationLock(Integer.parseInt(entry.getId()), new Lockable(entry.getRepositoryId(), entry.getBranchPath()));
-			lock.acquire(context);
+			final OperationLock lock = new OperationLock(
+				Integer.parseInt(entry.getId()), 
+				new Date(entry.getTimestamp()), 
+				new Lockable(entry.getRepositoryId(), entry.getBranchPath())
+			);
+			
+			reconstructContexts(entry, lock);
 			return lock;
 		}).collect(Collectors.toSet());
-	}
-	
-	private DatastoreLockContext createLockContext(String userId, String description, String parentDescription) {
-		if (Strings.isNullOrEmpty(parentDescription)) {
-			return new DatastoreLockContext(userId, description);
-		}
-		
-		return new DatastoreLockContext(userId, description, parentDescription);
 	}
 	
 	private DatastoreLocks search(Expression query, int limit) {

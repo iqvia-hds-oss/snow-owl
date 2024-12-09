@@ -16,6 +16,7 @@
 package com.b2international.snowowl.core.locks;
 
 import java.text.MessageFormat;
+import java.util.Date;
 
 /**
  * Represents a reentrant lock that can be acquired and released in a balanced fashion multiple times by the same context.
@@ -33,8 +34,8 @@ public class OperationLock extends AbstractOperationLock {
 	 * @param id the lock identifier
 	 * @param target the lock target (may not be {@code null})
 	 */
-	public OperationLock(final int id, final Lockable target) {
-		super(id, target);
+	public OperationLock(final int id, final Date creationDate, final Lockable target) {
+		super(id, creationDate, target);
 	}
 
 	@Override

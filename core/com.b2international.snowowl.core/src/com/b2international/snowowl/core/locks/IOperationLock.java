@@ -15,8 +15,8 @@
  */
 package com.b2international.snowowl.core.locks;
 
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import com.b2international.snowowl.core.internal.locks.DatastoreLockContext;
 
@@ -33,7 +33,7 @@ public interface IOperationLock {
 	
 	DatastoreLockContext getContext();
 
-	Collection<DatastoreLockContext> getAllContexts();
+	List<DatastoreLockContext> getAllContexts();
 	
 	Lockable getTarget();
 	

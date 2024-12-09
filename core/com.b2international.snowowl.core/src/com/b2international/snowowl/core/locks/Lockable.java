@@ -18,7 +18,7 @@ package com.b2international.snowowl.core.locks;
 import java.io.Serializable;
 import java.util.Objects;
 
-import com.google.common.base.Strings;
+import com.b2international.commons.StringUtils;
 
 /**
  * @since 9.0.0
@@ -31,7 +31,7 @@ public record Lockable(String repositoryId, String branchPath) implements Serial
 	
 	public Lockable(String repositoryId, String branchPath) {
 		this.repositoryId = Objects.requireNonNull(repositoryId, "RepositoryId may not be null");
-		this.branchPath = branchPath == null ? _ALL : branchPath;
+		this.branchPath = StringUtils.isEmpty(branchPath) ? _ALL : branchPath;
     }
 	
 	public boolean conflicts(final Lockable other) {
@@ -39,11 +39,21 @@ public record Lockable(String repositoryId, String branchPath) implements Serial
 			return true;
 		}
 		
-		if (Strings.isNullOrEmpty(branchPath()) || Strings.isNullOrEmpty(other.branchPath())) {
+		if (_ALL.equals(branchPath()) || _ALL.equals(other.branchPath())) {
 			return repositoryId().equals(other.repositoryId());
 		}
 		
 		return equals(other);
 	}
 	
+	@Override
+	public String toString() {
+		if (ALL.equals(this)) {
+			return "all repositories";
+		} else if (_ALL.equals(branchPath)) {
+			return "repository '" + repositoryId + "'";
+		} else {
+			return "repository '" + repositoryId + "' and branch '" + branchPath + "'";
+		}
+	}
 }

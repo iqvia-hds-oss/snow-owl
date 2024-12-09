@@ -15,14 +15,15 @@
  */
 package com.b2international.snowowl.core.locks;
 
-import java.util.ArrayDeque;
-import java.util.Collection;
+import static com.google.common.collect.Lists.newArrayList;
+
 import java.util.Date;
-import java.util.Deque;
+import java.util.List;
 
 import com.b2international.snowowl.core.internal.locks.DatastoreLockContext;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 
 /**
  * An abstract lock implementation which supports basic methods of {@link IOperationLock}.
@@ -34,29 +35,32 @@ public abstract class AbstractOperationLock implements IOperationLock {
 	private static final String CONTEXT_NOT_IN_STACK_MESSAGE = "Context is not registered as a lock owner.";
 	
 	private final int id;
-	private final Date creationDate = new Date();
-	private final Deque<DatastoreLockContext> contextStack = new ArrayDeque<DatastoreLockContext>(); 
+	private final Date creationDate;
+	private final List<DatastoreLockContext> contexts = newArrayList(); 
 	private final Lockable target;
 
 	/**
 	 * Creates a new abstract lock instance.
 	 * 
 	 * @param id the lock identifier
+	 * @param creationDate the lock creation date (may not be {@code null})
 	 * @param target the lock target (may not be {@code null})
 	 */
-	protected AbstractOperationLock(final int id, final Lockable target) {
+	protected AbstractOperationLock(final int id, final Date creationDate, final Lockable target) {
 		Preconditions.checkNotNull(target, "Lock target may not be null.");
+		Preconditions.checkNotNull(creationDate, "Creation date may not be null.");
 		
 		this.id = id;
+		this.creationDate = creationDate;
 		this.target = target; 
 	}
 
 	private void pushContext(DatastoreLockContext context) {
-		contextStack.push(context);
+		contexts.add(context);
 	}
 
 	private void removeContext(DatastoreLockContext otherContext) {
-		if (!contextStack.remove(otherContext)) {
+		if (!contexts.remove(otherContext)) {
 			throw new IllegalArgumentException(CONTEXT_NOT_IN_STACK_MESSAGE);
 		}
 	}
@@ -73,12 +77,12 @@ public abstract class AbstractOperationLock implements IOperationLock {
 	
 	@Override
 	public DatastoreLockContext getContext() {
-		return contextStack.peek();
+		return Iterables.getLast(contexts, null);
 	}
 	
 	@Override
-	public Collection<DatastoreLockContext> getAllContexts() {
-		return ImmutableList.copyOf(contextStack);
+	public List<DatastoreLockContext> getAllContexts() {
+		return ImmutableList.copyOf(contexts);
 	}
 
 	@Override

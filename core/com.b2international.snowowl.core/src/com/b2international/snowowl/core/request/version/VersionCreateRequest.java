@@ -151,7 +151,7 @@ public final class VersionCreateRequest implements Request<RepositoryContext, Bo
 			}
 		}
 		
-		final IProgressMonitor monitor = SubMonitor.convert(context.service(IProgressMonitor.class), TASK_WORK_STEP);
+		final IProgressMonitor monitor = SubMonitor.convert(context.monitor(), TASK_WORK_STEP);
 
 		try (Locks<RepositoryContext> locks = Locks.forContext(CREATE_VERSION).by(submitter).on(resourcesToVersion).lock(context)) {
 			// inject a custom TimestampProvider instance into the ctx so we use the same timestamp across all repositories when versioning

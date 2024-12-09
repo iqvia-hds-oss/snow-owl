@@ -111,7 +111,6 @@
         <setEntry value="org.apache.commons.commons-compress@default:default"/>
         <setEntry value="org.apache.commons.commons-io@default:default"/>
         <setEntry value="org.apache.commons.lang3@default:default"/>
-        <setEntry value="org.apache.commons.logging@default:default"/>
         <setEntry value="org.apache.commons.text@default:default"/>
         <setEntry value="org.apache.felix.scr@1:true"/>
         <setEntry value="org.apache.httpcomponents.httpasyncclient@default:default"/>

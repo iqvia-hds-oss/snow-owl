@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.b2international.snowowl.core.locks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.lang.reflect.Field;
 
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class LockIndexTests {
 
 	private static final String USER = "test@b2ihealthcare.com";
+
 	private Index index;
 	private ObjectMapper mapper;
 
@@ -48,48 +50,101 @@ public class LockIndexTests {
 		index = Indexes.createIndex("locks", mapper, new Mappings(DatastoreLockIndexEntry.class));
 		index.admin().create();
 	}
-	
+
 	@Test
 	public void indexLockEntry() {
 		final String lockId = "1";
+
 		final DatastoreLockIndexEntry lock = DatastoreLockIndexEntry.builder()
 			.id(lockId)
 			.userId(USER)
-			.description(DatastoreLockContextDescriptions.CLASSIFY)
+			.addContext(DatastoreLockContextDescriptions.CLASSIFY)
 			.repositoryId("repositoryUuid")
 			.branchPath("branchPath")
 			.build();
-		
+
 		indexDocument(lock);
-		final DatastoreLockIndexEntry actual = get(lockId);
+
+		final DatastoreLockIndexEntry actual = getDocument(lockId);
 		assertDocEquals(lock, actual);
 	}
-	
-	private void indexDocument(DatastoreLockIndexEntry doc) {
+
+	@Test
+	public void updateLockEntry() {
+		final String lockId = "2";
+
+		final DatastoreLockIndexEntry lock = DatastoreLockIndexEntry.builder()
+			.id(lockId)
+			.userId(USER)
+			.addContext(DatastoreLockContextDescriptions.CREATE_VERSION)
+			.repositoryId("repositoryUuid")
+			.branchPath("branchPath")
+			.build();
+
+		indexDocument(lock);
+
+		final DatastoreLockIndexEntry updatedLock = DatastoreLockIndexEntry.from(lock)
+			.addContext(DatastoreLockContextDescriptions.COMMIT)
+			.build();
+
+		indexDocument(updatedLock);
+
+		final DatastoreLockIndexEntry actual = getDocument(lockId);
+		assertDocEquals(updatedLock, actual);
+	}
+
+	@Test
+	public void deleteLockEntry() {
+		final String lockId = "3";
+
+		final DatastoreLockIndexEntry lock = DatastoreLockIndexEntry.builder()
+			.id(lockId)
+			.userId(USER)
+			.addContext(DatastoreLockContextDescriptions.CREATE_VERSION)
+			.repositoryId("repositoryUuid")
+			.branchPath("branchPath")
+			.build();
+
+		indexDocument(lock);
+		deleteDocument(lockId);
+		
+		assertNull(getDocument(lockId));
+	}
+
+	private void indexDocument(final DatastoreLockIndexEntry doc) {
 		index.write(writer -> {
 			writer.put(doc);
 			writer.commit();
-			
 			return null;
 		});
 	}
-	
-	private DatastoreLockIndexEntry get(final String lockId) {
+
+	private DatastoreLockIndexEntry getDocument(final String lockId) {
 		return index.read(searcher -> searcher.get(DatastoreLockIndexEntry.class, lockId));
 	}
-	
-	private void assertDocEquals(DatastoreLockIndexEntry expected, DatastoreLockIndexEntry actual) {
+
+	private void deleteDocument(final String id) {
+		index.write(writer -> {
+			writer.remove(DatastoreLockIndexEntry.class, id);
+			writer.commit();
+			return null;
+		});
+	}
+
+	private void assertDocEquals(final DatastoreLockIndexEntry expected, final DatastoreLockIndexEntry actual) {
 		assertNotNull("Actual document is missing from index", actual);
-		for (Field f : index.admin().getIndexMapping().getMapping(expected.getClass()).getFields()) {
+
+		for (final Field f : index.admin().getIndexMapping().getMapping(expected.getClass()).getFields()) {
 			if (Revision.Fields.CREATED.equals(f.getName()) 
-					|| Revision.Fields.REVISED.equals(f.getName())
-					|| WithScore.SCORE.equals(f.getName())
-					) {
+				|| Revision.Fields.REVISED.equals(f.getName())
+				|| WithScore.SCORE.equals(f.getName())
+			) {
 				// skip revision fields from equality check
 				continue;
 			}
+
 			assertEquals(String.format("Field '%s' should be equal", f.getName()), Reflections.getValue(expected, f), Reflections.getValue(actual, f));
 		}
 	}
-	
+
 }
