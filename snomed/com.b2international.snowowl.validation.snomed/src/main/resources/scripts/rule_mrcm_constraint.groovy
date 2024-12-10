@@ -190,7 +190,7 @@ for (String typeId : allowedRanges.keySet()) {
 			String ancestorId = clause.replaceAll("<", "").strip();
 			ancestorIds.add(ancestorId);
 		} else if (clause.startsWith("^")) {
-			String refsetId = clause.replaceAll("^", "").strip();
+			String refsetId = clause.replaceAll("\\^", "").strip();
 			refsetIds.add(refsetId);
 		} else {
 			conceptIds.add(clause.strip());

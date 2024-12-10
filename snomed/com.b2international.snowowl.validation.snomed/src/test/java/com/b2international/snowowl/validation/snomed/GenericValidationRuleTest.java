@@ -26,6 +26,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
+import org.elasticsearch.core.List;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -1264,6 +1265,25 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.contentTypeId(POSTCOORDINATED_CONTENT)
 				.build();
 		
+		//Create MRCM rule with member of range
+		final SnomedRefSetMemberIndexEntry mrcmRangeMember5 = member(OBSERVABLE_ENTITY, Concepts.REFSET_MRCM_ATTRIBUTE_RANGE_INTERNATIONAL)
+				.referenceSetType(SnomedRefSetType.MRCM_ATTRIBUTE_RANGE)
+				.typeId(SnomedRefSetType.MRCM_ATTRIBUTE_RANGE.name())
+				.refsetId(Concepts.REFSET_MRCM_ATTRIBUTE_RANGE_INTERNATIONAL)
+				.rangeConstraint("^363787002 |Observable entity (observable entity)|")
+				.contentTypeId(POSTCOORDINATED_CONTENT)
+				.build();
+		
+		SnomedConceptDocument correctDestinationConcept = concept(generateConceptId())
+				.activeMemberOf(List.of(OBSERVABLE_ENTITY))
+				.moduleId(MODULE_B2I_EXTENSION)
+				.build();
+		
+		final SnomedRelationshipIndexEntry relationship7 = relationship(Concepts.CONCEPT_MODEL_ATTRIBUTE, OBSERVABLE_ENTITY, correctDestinationConcept.getId())
+				.relationshipGroup(1).moduleId(MODULE_B2I_EXTENSION).build();
+		final SnomedRelationshipIndexEntry relationship8 = relationship(Concepts.CONCEPT_MODEL_ATTRIBUTE, OBSERVABLE_ENTITY, Concepts.PHYSICAL_OBJECT)
+				.relationshipGroup(1).moduleId(MODULE_B2I_EXTENSION).build();
+		
 		final SnomedRelationshipIndexEntry relationship1 = relationship(Concepts.CONCEPT_MODEL_ATTRIBUTE, Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE)
 				.relationshipGroup(1).moduleId(MODULE_B2I_EXTENSION).build();
 		final SnomedRelationshipIndexEntry relationship2 = relationship(Concepts.CONCEPT_MODEL_ATTRIBUTE, Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT)
@@ -1318,14 +1338,16 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
-		indexRevision(MAIN, mrcmRangeMember1, mrcmRangeMember2, mrcmRangeMember3, mrcmRangeMember4,
-				relationship1, relationship2, relationship3, relationship4, relationship5, relationship6,
+		indexRevision(MAIN, mrcmRangeMember1, mrcmRangeMember2, mrcmRangeMember3, mrcmRangeMember4, mrcmRangeMember5,
+				correctDestinationConcept,
+				relationship1, relationship2, relationship3, relationship4, relationship5, relationship6, relationship7, relationship8,
 				axiomMember1, axiomMember2, axiomMember3, axiomMember4, axiomMember5, axiomMember6);
 		
 		ValidationIssues issues = validate(ruleId);
 		assertAffectedComponents(issues, 
 				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship1.getId()),
 				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship4.getId()),
+				ComponentIdentifier.of(SnomedRelationship.TYPE, relationship8.getId()),
 				ComponentIdentifier.of(SnomedReferenceSetMember.TYPE, axiomMember1.getId()),
 				ComponentIdentifier.of(SnomedReferenceSetMember.TYPE, axiomMember3.getId()));
 	}
