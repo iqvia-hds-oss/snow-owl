@@ -12,14 +12,16 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<spring.version>6.1.13</spring.version>
-		<spring.security.version>6.3.4</spring.security.version>
-		<springdoc.version>2.6.0</springdoc.version>
+		<spring.version>6.2.0</spring.version>
+		<spring.security.version>6.4.1</spring.security.version>
+		<springdoc.version>2.7.0</springdoc.version>
+		<!-- Ensure that Spring Boot version matches the version supported by SpringDoc -->
+		<spring.boot.version>3.4.0</spring.boot.version>
 		<!-- Make sure this version matches the one present in the target-platform for swagger-annotations and models -->
-		<swagger.core.version>2.2.22</swagger.core.version>
+		<swagger.core.version>2.2.25</swagger.core.version>
 		<!-- Node.js version to use for building the API docs site -->
-		<node.version>v20.16.0</node.version>
-		<npm.version>10.8.2</npm.version>
+		<node.version>v20.18.1</node.version>
+		<npm.version>10.9.2</npm.version>
 	</properties>
 
 	<!-- NOTE: in case of dependency changes, please update the includeArtifactIds section in the maven-dependency-plugin configuration as well, listing all (exact and transitive) dependency artifactIds -->
@@ -57,13 +59,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot</artifactId>
-			<version>3.3.2</version>
+			<version>${spring.boot.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-autoconfigure</artifactId>
-			<version>3.3.2</version>
+			<version>${spring.boot.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
