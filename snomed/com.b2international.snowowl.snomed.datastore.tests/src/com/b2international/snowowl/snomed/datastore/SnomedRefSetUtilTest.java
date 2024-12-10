@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- * @since 7.24.5
+ * @since 9.5.0
  */
 @RunWith(Parameterized.class)
 public class SnomedRefSetUtilTest {

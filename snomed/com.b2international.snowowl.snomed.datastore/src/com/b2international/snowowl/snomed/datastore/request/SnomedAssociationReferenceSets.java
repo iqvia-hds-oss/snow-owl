@@ -29,7 +29,7 @@ import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSet;
  * Fetches and memoizes SNOMED CT Association Reference Set IDs.
  * Works as a cache on top of multiple SNOMED CT specific requests. Requests can access this cache via {@link ServiceProvider#service(Class)} method.
  * 
- * @since 9.5
+ * @since 9.5.0
  */
 public final class SnomedAssociationReferenceSets {
 

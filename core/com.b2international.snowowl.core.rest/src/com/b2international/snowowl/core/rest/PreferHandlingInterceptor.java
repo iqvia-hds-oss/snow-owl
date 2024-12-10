@@ -37,7 +37,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * @since 9.4
+ * @since 9.5.0
  */
 public class PreferHandlingInterceptor implements HandlerInterceptor {
 

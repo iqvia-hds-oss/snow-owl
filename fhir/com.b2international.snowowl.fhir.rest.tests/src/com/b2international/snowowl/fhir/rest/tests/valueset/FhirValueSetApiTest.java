@@ -30,7 +30,7 @@ import com.b2international.snowowl.test.commons.rest.RestExtensions;
 /**
  * FHIR /ValueSet Resource API Tests
  * 
- * @since 9.4
+ * @since 9.5.0
  */
 public class FhirValueSetApiTest extends FhirRestTest {
 	
