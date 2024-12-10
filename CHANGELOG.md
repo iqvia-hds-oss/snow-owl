@@ -1,6 +1,40 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.5.0
+
+### Core
+- New, improved branch locking capabilities for more reliable lock management during transactions (#1353)
+
+### FHIR
+- Support RFC7240 Prefer header (#1336)
+  * Prefer `handling=lenient` and `handling=strict` are supported values
+  * Default behavior is `lenient` to keep compatibility with older systems
+- Improve compatibility with BCP-47 language tags (#1339)
+  * Support the official SNOMED on FHIR BCP-47 private use language tag format
+
+### SNOMED CT
+- Reintroduce and improved 7.x style SNOMED CT Reference Set to DSV exporter (Java API only) (#1349, #1351)
+
+### Security
+- Mitigate CVE-2024-38821, CVE-2024-47764, CVE-2024-29025, CVE-2024-47535
+
+### Bugs/Improvements
+- [core] fixed an issue where certain async executed requests would not propagate authorization information properly and resulted in missing authorization token errors (#1346)
+- [snomed] prevent failing RF2 imports when an existing remote job document is too large for the current Elasticsearch sizing (#1344)
+- [snomed] ensure that only RF2 Delta import generate actual visited component results in the remote job index (#1344)
+- [snomed] exclude irrelevant axiom types when validation SNOMED CT content based on MRCM (#1342)
+- [snomed] significantly improve performance of bulk SNOMED CT component inactivations by caching association refsets and skipping zero result query executions (#1350)
+
+### Dependencies
+- Upgrade fhir-core to 0.2.0 (hl7.fhir.core 6.4.0)
+- Upgrade Spring to 6.2.0
+- Upgrade Spring Security to 6.4.1
+- Upgrade SpringDoc to 2.7.0
+- Upgrade Swagger libraries to 2.2.25
+- Upgrade Netty to 4.1.115.Final
+- Upgrade Tycho to 4.0.10
+
 ## 9.4.0
 
 ### FHIR
@@ -15,8 +49,8 @@ All notable changes to this project will be documented in this file.
 
 ### SNOMED CT
 - Upgrade ECL to 2.2 (#1331)
-  - Support the complete ECL 2.2 syntax
-  - Support evaluation of Top and Bottom operators
+  * Support the complete ECL 2.2 syntax
+  * Support evaluation of Top and Bottom operators
 
 ### Security
 - Replace CRA with Vite to mitigate all API site security vulnerabilities (df334fe)
