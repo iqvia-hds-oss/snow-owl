@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,7 @@ import java.util.function.LongFunction;
 import com.b2international.collections.PrimitiveLists;
 import com.b2international.collections.PrimitiveMaps;
 import com.b2international.collections.PrimitiveSets;
-import com.b2international.collections.longs.LongCollection;
-import com.b2international.collections.longs.LongIterator;
-import com.b2international.collections.longs.LongKeyIntMap;
-import com.b2international.collections.longs.LongList;
-import com.b2international.collections.longs.LongSet;
+import com.b2international.collections.longs.*;
 
 /**
  * Tarjan's algorithm that works with primitive longs for performance.
@@ -62,7 +58,7 @@ public final class LongTarjan {
 		for (final LongIterator itr = ids.iterator(); itr.hasNext(); /* empty */) {
 			final long currentId = itr.next();
 			if (indexMap.get(currentId) == -1) {
-				visit(currentId, ids);
+				visit(currentId);
 			}
 		}
 
@@ -73,7 +69,7 @@ public final class LongTarjan {
 		return components;
 	}
 
-	private void visit(final long currentId, final LongCollection ids) {
+	private void visit(final long currentId) {
 
 		indexMap.put(currentId, index);
 		lowLinkMap.put(currentId, index);
@@ -90,7 +86,7 @@ public final class LongTarjan {
 			}
 
 			if (indexMap.get(currentFollowerId) == -1) {
-				visit(currentFollowerId, ids);
+				visit(currentFollowerId);
 				final int newLowLink = Math.min(lowLinkMap.get(currentId), lowLinkMap.get(currentFollowerId));
 				lowLinkMap.put(currentId, newLowLink);
 			} else if (idStack.contains(currentFollowerId)) {
