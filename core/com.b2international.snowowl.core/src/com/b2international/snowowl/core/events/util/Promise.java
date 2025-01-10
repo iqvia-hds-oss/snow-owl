@@ -48,6 +48,15 @@ public final class Promise<T> extends Observable<T> {
 	public T getSync() {
 		return getSyncResponse().getBody();
 	}
+
+	/**
+	 * @param timeoutInMillis
+	 * @return the response body when this Promise becomes resolved or throw an error if the specified timeout (in milliseconds) expires.
+	 * @since 9.6
+	 */
+	public T getSync(final long timeoutInMillis) {
+		return getSync(timeoutInMillis, TimeUnit.MILLISECONDS);
+	}
 	
 	/**
 	 * @param timeout
