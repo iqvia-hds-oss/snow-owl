@@ -1,6 +1,15 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.5.2
+
+### Bugs/Improvements 
+- [core] add syntactic sugar getSync method for millisec based timeouts (c22cf5a)
+
+## 9.5.1
+
+No changes. (version was required to get downstream releases depend on the same version)
+
 ## 9.5.0
 
 ### Core
