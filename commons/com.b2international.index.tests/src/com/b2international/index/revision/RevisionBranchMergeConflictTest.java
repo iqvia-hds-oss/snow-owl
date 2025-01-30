@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.b2international.index.Fixtures.Data;
 import com.b2international.index.revision.RevisionFixtures.*;
+import com.b2international.index.revision.RevisionFixtures.EnumPropertyData.Option;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
@@ -38,7 +39,9 @@ public class RevisionBranchMergeConflictTest extends BaseRevisionIndexTest {
 	
 	@Override
 	protected Collection<Class<?>> getTypes() {
-		return ImmutableList.<Class<?>>of(RevisionData.class, NestedRevisionData.class, ObjectPropertyData.class, ObjectListPropertyData.class, ObjectSetPropertyData.class, ContainerRevisionData.class, ComponentRevisionData.class, ObjectUniqueListPropertyData.class);
+		return ImmutableList.<Class<?>>of(RevisionData.class, NestedRevisionData.class, ObjectPropertyData.class, 
+				ObjectListPropertyData.class, ObjectSetPropertyData.class, ContainerRevisionData.class, 
+				ComponentRevisionData.class, ObjectUniqueListPropertyData.class, EnumPropertyData.class);
 	}
 	
 	@Override
@@ -96,6 +99,21 @@ public class RevisionBranchMergeConflictTest extends BaseRevisionIndexTest {
 		final String branchA = createBranch(MAIN, "a");
 		indexRevision(MAIN, new ComponentRevisionData(STORAGE_KEY2, STORAGE_KEY1, "field"));
 		deleteRevision(branchA, ContainerRevisionData.class, STORAGE_KEY1);
+		
+		branching().prepareMerge(MAIN, branchA).merge();
+	}
+	
+	@Test
+	public void rebaseEnumPropertyChangeToSameValueOnBothSides() throws Exception {
+		EnumPropertyData data = new EnumPropertyData(STORAGE_KEY1, Option.OPTION_B);
+		indexRevision(MAIN, data);
+		String branchA = createBranch(MAIN, "a");
+		
+		EnumPropertyData updateOnMain = new EnumPropertyData(STORAGE_KEY1, Option.OPTION_A);
+		indexChange(MAIN, data, updateOnMain);
+		
+		EnumPropertyData updateOnBranch = new EnumPropertyData(STORAGE_KEY1, Option.OPTION_A);
+		indexChange(branchA, data, updateOnBranch);
 		
 		branching().prepareMerge(MAIN, branchA).merge();
 	}
