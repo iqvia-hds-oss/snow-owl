@@ -414,6 +414,29 @@ public class RevisionFixtures {
 		
 	}
 	
+	@Doc(revisionHash = { "option" })
+	public static final class EnumPropertyData extends Revision {
+		
+		public enum Option {
+			OPTION_A,
+			OPTION_B,
+			OPTION_C;
+		}
+		
+		private final Option option;
+		
+		@JsonCreator
+		public EnumPropertyData(@JsonProperty("id") String id, @JsonProperty("option") Option option) {
+			super(id);
+			this.option = option;
+		}
+
+		public Option getOption() {
+			return option;
+		}
+		
+	}
+	
 	@Doc(revisionHash = { "items" })
 	public static final class ObjectListPropertyData extends Revision {
 
