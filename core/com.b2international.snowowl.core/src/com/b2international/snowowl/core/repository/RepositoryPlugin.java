@@ -149,10 +149,6 @@ public final class RepositoryPlugin extends Plugin {
 			
 			// open port in server environments
 			if (hostAndPort.getPort() > 0) {
-				final NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
-				final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
-
-				
 				final SslContext sslCtx;
 				try {
 				
@@ -185,6 +181,8 @@ public final class RepositoryPlugin extends Plugin {
 					throw new SnowowlRuntimeException("Failed to create server SSL context.", e);
 				}
 		        
+				final NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
+				final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
 				final TransportConfiguration transportConfiguration = configuration.getModuleConfig(TransportConfiguration.class);
 				final int watchdogRate = transportConfiguration.getWatchdogRate();
 				final int watchdogTimeout = transportConfiguration.getWatchdogTimeout();
