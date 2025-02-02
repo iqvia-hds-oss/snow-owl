@@ -87,7 +87,7 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho.version}</version>
 				<configuration>
-					<executionEnvironment>org.eclipse.justj.openjdk.hotspot.jre.full-17</executionEnvironment>
+					<executionEnvironment>org.eclipse.justj.openjdk.hotspot.jre.full-21</executionEnvironment>
 					<dependency-resolution>
 						<localArtifacts>ignore</localArtifacts>
 					</dependency-resolution>
@@ -279,7 +279,7 @@
 					<version>${tycho.version}</version>
 					<configuration>
 						<useProjectSettings>false</useProjectSettings>
-						<release>17</release>
+						<release>21</release>
 						<excludeResources>
 							<excludeResource>**/*.groovy</excludeResource>
 						</excludeResources>
@@ -291,7 +291,7 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.11.0</version>
 					<configuration>
-						<release>17</release>
+						<release>21</release>
 					</configuration>
 				</plugin>
 				<plugin>
