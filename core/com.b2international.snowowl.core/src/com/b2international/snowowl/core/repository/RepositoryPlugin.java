@@ -149,7 +149,7 @@ public final class RepositoryPlugin extends Plugin {
 			
 			// open port in server environments
 			if (hostAndPort.getPort() > 0) {
-				final SslContext sslCtx;
+				SslContext sslCtx = null;
 				try {
 				
 					final String certificateChainPath = repositoryConfiguration.getCertificateChainPath();
@@ -173,7 +173,7 @@ public final class RepositoryPlugin extends Plugin {
 							    .build();
 							
 						} catch (final CertificateException e) {
-							throw new SnowowlRuntimeException("Failed to generate self-signed certificate.", e);
+							LOG.warn("Failed to generate self-signed certificate.", e);
 						}
 					}
 				
