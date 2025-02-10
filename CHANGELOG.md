@@ -1,6 +1,11 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.5.3
+
+### Bugs/Improvements
+- [ci] bump GitHub Actions to newers versions, including codecov which fixes coverage upload issues (#1359)
+
 ## 9.5.2
 
 ### Bugs/Improvements 
