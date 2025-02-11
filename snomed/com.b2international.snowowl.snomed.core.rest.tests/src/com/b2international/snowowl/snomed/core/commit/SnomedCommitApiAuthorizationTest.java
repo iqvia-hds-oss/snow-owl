@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public class SnomedCommitApiAuthorizationTest {
 	}
 	
 	private String generateAccessTokenForResourceAccess(String...resourcesToGrantAccess) {
-		final List<Permission> permissions = List.of(resourcesToGrantAccess).stream().map(res -> Permission.requireAll(Permission.OPERATION_BROWSE, res)).collect(Collectors.toList());
+		final List<Permission> permissions = List.of(resourcesToGrantAccess).stream().map(res -> Permission.requireAll(Permission.OPERATION_READ, res)).collect(Collectors.toList());
 		final User user =  new User("test_user", permissions);
 		return Services.service(JWTSupport.class).generate(user);
 	}
