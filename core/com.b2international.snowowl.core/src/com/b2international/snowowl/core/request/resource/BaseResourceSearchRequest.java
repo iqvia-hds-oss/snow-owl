@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ public abstract class BaseResourceSearchRequest<R> extends SearchIndexResourceRe
 	 */
 	protected final void addSecurityFilter(RepositoryContext context, ExpressionBuilder queryBuilder) {
 		final User user = context.service(User.class);
-		if (user.isAdministrator() || user.hasPermission(Permission.requireAll(Permission.OPERATION_BROWSE, Permission.ALL))) {
+		if (user.hasReadAllAccess()) {
 			return;
 		}
 		
@@ -205,7 +205,7 @@ public abstract class BaseResourceSearchRequest<R> extends SearchIndexResourceRe
 				// special resources denoted by their special IDs are accessible when their original resource is accessible
 				final String componentIdToCheck = ResourceURI.withoutSpecialResourceIdPart(componentIdValue);
 				
-				authz.checkPermission(context, user, List.of(Permission.requireAll(Permission.OPERATION_BROWSE, componentIdToCheck)));
+				authz.checkPermission(context, user, List.of(Permission.requireAll(Permission.OPERATION_READ, componentIdToCheck)));
 				return;
 			} catch (ForbiddenException e) {
 				// if this fails let the system carry on with the default execution path and check all visible resources, including bundles

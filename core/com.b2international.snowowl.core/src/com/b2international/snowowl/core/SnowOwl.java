@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import com.b2international.commons.StringUtils;
 import com.b2international.commons.config.ConfigurationFactory;
 import com.b2international.commons.config.FileConfigurationSourceProvider;
+import com.b2international.commons.exceptions.FormattedRuntimeException;
 import com.b2international.commons.validation.ApiValidation;
 import com.b2international.snowowl.core.ApplicationContext.ServiceRegistryEntry;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
@@ -383,12 +384,12 @@ public final class SnowOwl {
 	 * 
 	 * @since 3.3
 	 */
-	public static class InitializationException extends RuntimeException {
+	public static class InitializationException extends FormattedRuntimeException {
 
 		private static final long serialVersionUID = 3313953055518425730L;
 
-		public InitializationException(String message) {
-			super(message);
+		public InitializationException(String message, Object...args) {
+			super(message, args);
 		}
 	}
 
