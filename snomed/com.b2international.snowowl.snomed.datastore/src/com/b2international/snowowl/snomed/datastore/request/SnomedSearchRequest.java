@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public abstract class SnomedSearchRequest<R, D extends SnomedDocument>
 	
 	@Override
 	public final String getOperation() {
-		return Permission.OPERATION_BROWSE;
+		return Permission.OPERATION_READ;
 	}
 	
 }
