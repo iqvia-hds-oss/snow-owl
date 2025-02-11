@@ -144,9 +144,7 @@ public final class User implements Serializable {
 	 */
 	@JsonIgnore
 	public boolean hasReadAllAccess() {
-		return isAdministrator() 
-				|| hasPermission(Permission.requireAll(Permission.OPERATION_BROWSE, Permission.ALL)) 
-				|| hasPermission(Permission.requireAll(Permission.OPERATION_READ, Permission.ALL));
+		return isAdministrator() || hasPermission(Permission.requireAll(Permission.OPERATION_READ, Permission.ALL));
 	}
 
 }

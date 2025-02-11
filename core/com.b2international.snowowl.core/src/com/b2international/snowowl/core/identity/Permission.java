@@ -43,7 +43,7 @@ public interface Permission extends Serializable {
 	public static final String OPERATION_READ = "read";  //$NON-NLS-N$
 	
 	/**
-	 * @deprecated - use {@link #OPERATION_READ} instead, backward compatibility is provided from read->browse direction but not that other way around
+	 * @deprecated - use {@link #OPERATION_READ} instead, browse permissions are automatically converted to read permissions
 	 */
 	public static final String OPERATION_BROWSE = "browse";  //$NON-NLS-N$
 	public static final String OPERATION_EDIT = "edit";  //$NON-NLS-N$

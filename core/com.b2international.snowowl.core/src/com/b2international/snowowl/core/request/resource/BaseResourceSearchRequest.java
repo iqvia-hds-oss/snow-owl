@@ -205,7 +205,7 @@ public abstract class BaseResourceSearchRequest<R> extends SearchIndexResourceRe
 				// special resources denoted by their special IDs are accessible when their original resource is accessible
 				final String componentIdToCheck = ResourceURI.withoutSpecialResourceIdPart(componentIdValue);
 				
-				authz.checkPermissionAny(context, user, List.of(Permission.requireAll(Permission.OPERATION_BROWSE, componentIdToCheck), Permission.requireAll(Permission.OPERATION_READ, componentIdToCheck)));
+				authz.checkPermission(context, user, List.of(Permission.requireAll(Permission.OPERATION_READ, componentIdToCheck)));
 				return;
 			} catch (ForbiddenException e) {
 				// if this fails let the system carry on with the default execution path and check all visible resources, including bundles

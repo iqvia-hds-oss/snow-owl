@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,8 @@ public abstract class BasePermission implements Permission {
 	private String permission;
 	
 	public BasePermission(String operation) {
-		this.operation = checkNotNull(operation, "Operation must be specified.");
+		checkNotNull(operation, "Operation must be specified.");
+		this.operation = Permission.OPERATION_BROWSE.equals(operation) ? Permission.OPERATION_READ : operation;
 	}
 	
 	@Override
