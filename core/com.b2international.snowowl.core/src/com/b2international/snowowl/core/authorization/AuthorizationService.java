@@ -70,26 +70,6 @@ public interface AuthorizationService {
 	}
 	
 	/**
-	 * Checks whether the user has any of the specified permissions and throws an error if none of the listed permissions are present in the user's assigned permissions.
-	 * 
-	 * @param context
-	 * @param user - the user who is currently executing a request
-	 * @param permissionsToCheck - a list of permissions from which the user should have at least one in order to continue the execution of the request
-	 * @return the updated user object with cached permissions
-	 * @throws ForbiddenException
-	 *             - this method must throw a {@link ForbiddenException} in order to reject execution of the request when the user does not have
-	 *             sufficient privileges
-	 */
-	default User checkPermissionAny(ServiceProvider context, User user, List<Permission> permissionsToCheck) {
-		permissionsToCheck.forEach(requiredPermission -> {
-			if (!user.hasPermission(requiredPermission)) {
-				throwForbiddenException(requiredPermission);
-			}
-		});
-		return user;
-	}
-
-	/**
 	 * Throws a {@link ForbiddenException} using the given required permission's descriptor.
 	 * @param requiredPermission - the permissions that was required but it was missing from the current user's permission list
 	 */
