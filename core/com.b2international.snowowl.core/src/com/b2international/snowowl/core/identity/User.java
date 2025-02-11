@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,6 +137,16 @@ public final class User implements Serializable {
 	 */
 	public static boolean isSystem(String userId) {
 		return SYSTEM.getUserId().equals(userId);
+	}
+
+	/**
+	 * @return whether the user represented by this object has either administrators privileges or read all resources privileges.
+	 */
+	@JsonIgnore
+	public boolean hasReadAllAccess() {
+		return isAdministrator() 
+				|| hasPermission(Permission.requireAll(Permission.OPERATION_BROWSE, Permission.ALL)) 
+				|| hasPermission(Permission.requireAll(Permission.OPERATION_READ, Permission.ALL));
 	}
 
 }
