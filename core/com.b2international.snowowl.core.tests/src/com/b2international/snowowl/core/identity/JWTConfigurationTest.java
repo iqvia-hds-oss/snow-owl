@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,38 +18,22 @@ package com.b2international.snowowl.core.identity;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
 import java.util.Map;
 
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.b2international.commons.config.ConfigurationFactory;
 import com.b2international.commons.exceptions.BadRequestException;
-import com.b2international.commons.validation.ApiValidation;
 import com.b2international.snowowl.core.SnowOwl;
-import com.b2international.snowowl.core.setup.Environment;
-import com.b2international.snowowl.core.util.PlatformUtil;
 
 /**
  * @since 8.1
  */
-public class JWTConfigurationTest {
-
-	private Path path;
-	private Environment env;
-
-	@Before
-	public void setup() {
-		this.path = Paths.get("target");
-		this.env = new Environment(path, path.resolve("configuration"), path.resolve("data"));
-	}
+public class JWTConfigurationTest extends BaseIdentityPluginTest {
 	
 	@After
 	public void after() {
@@ -172,10 +156,6 @@ public class JWTConfigurationTest {
 		String jwt = jwtSupport.generate("test@example.com", Map.of());
 		DecodedJWT token = jwtSupport.verify(jwt);
 		assertThat(token.getAlgorithm()).isEqualTo("RS512");
-	}
-	
-	private IdentityConfiguration readConfig(String configFile) throws Exception {
-		return new ConfigurationFactory<>(IdentityConfiguration.class, ApiValidation.getValidator()).build(PlatformUtil.toAbsolutePath(JWTConfigurationTest.class, configFile).toFile());
 	}
 	
 }

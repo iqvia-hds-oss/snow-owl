@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.b2international.snowowl.core.identity.jwks;
 import com.b2international.snowowl.core.identity.IdentityProvider;
 import com.b2international.snowowl.core.identity.IdentityProviderFactory;
 import com.b2international.snowowl.core.plugin.Component;
-import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 
 /**
@@ -28,7 +27,7 @@ import com.b2international.snowowl.core.setup.Plugin;
 public final class JwksIdentityPlugin extends Plugin implements IdentityProviderFactory<JwksIdentityProviderConfig> {
 
 	@Override
-	public IdentityProvider create(Environment env, JwksIdentityProviderConfig configuration) throws Exception {
+	public IdentityProvider create(JwksIdentityProviderConfig configuration) throws Exception {
 		return new JwksIdentityProvider(configuration);
 	}
 
