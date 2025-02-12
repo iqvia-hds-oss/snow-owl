@@ -177,7 +177,7 @@ public class ApiKeyApiTest {
 			"permissions", Json.array("read:SNOMEDCT")
 		))
 		.statusCode(400)
-		.body("message", equalTo("Token cannot be refreshed with a different permission claim value."));
+		.body("message", equalTo("Token cannot be refreshed when permissions argument is also set."));
 	}
 	
 	@Test

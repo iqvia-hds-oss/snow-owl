@@ -76,7 +76,7 @@ final class GenerateApiKeyRequest implements Request<ServiceProvider, User> {
 			user = context.service(AuthorizationHeaderVerifier.class).authJWT(token);
 			// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
 			if (!CompareUtils.isEmpty(this.permissions)) {
-				throw new BadRequestException("Token cannot be refreshed with a different permission claim value.");
+				throw new BadRequestException("Token cannot be refreshed when permissions argument is also set.");
 			}
 			newTokenPermissions = user.getPermissions();
 		} else {
@@ -89,7 +89,7 @@ final class GenerateApiKeyRequest implements Request<ServiceProvider, User> {
 				
 				// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
 				if (!CompareUtils.isEmpty(this.permissions)) {
-					throw new BadRequestException("Token cannot be refreshed with a different permission claim value.");
+					throw new BadRequestException("Token cannot be refreshed when permissions argument is also set.");
 				}
 				
 				newTokenPermissions = user.getPermissions();
