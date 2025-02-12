@@ -143,7 +143,7 @@ public final class IdentityPlugin extends Plugin {
 					throw new SnowOwl.InitializationException(String.format("Couldn't initialize '%s' identity provider", factory), e);
 				}
 			} else {
-				throw new SnowOwl.InitializationException("Couldn't find identity provider factory for '%s'.", providerConfig.getClass());
+				throw new IllegalStateException(String.format("Couldn't find identity provider factory for '%s'.", providerConfig.getClass()));
 			}
 		});
 		return providers;
