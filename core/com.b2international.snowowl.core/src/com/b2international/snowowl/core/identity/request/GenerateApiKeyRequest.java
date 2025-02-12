@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.b2international.snowowl.core.identity.request;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.b2international.commons.CompareUtils;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.authorization.AuthorizedRequest;
@@ -65,12 +66,19 @@ final class GenerateApiKeyRequest implements Request<ServiceProvider, User> {
 	
 	@Override
 	public User execute(ServiceProvider context) {
-		User user = null; 
+		User user = null;
+		List<Permission> newTokenPermissions = List.of();
 		
 		if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
 			user = context.service(IdentityProvider.class).auth(username, password);
+			newTokenPermissions = this.permissions == null ? user.getPermissions() : this.permissions.stream().map(Permission::valueOf).collect(Collectors.toList());
 		} else if (!Strings.isNullOrEmpty(token)) {
 			user = context.service(AuthorizationHeaderVerifier.class).authJWT(token);
+			// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
+			if (!CompareUtils.isEmpty(this.permissions)) {
+				throw new BadRequestException("Token cannot be refreshed with a different permission claim value.");
+			}
+			newTokenPermissions = user.getPermissions();
 		} else {
 			// check if there is an authorization token header and use that to login the user 
 			final RequestHeaders requestHeaders = context.service(RequestHeaders.class);
@@ -78,15 +86,22 @@ final class GenerateApiKeyRequest implements Request<ServiceProvider, User> {
 			
 			if (!Strings.isNullOrEmpty(authorizationToken)) {
 				user = context.service(AuthorizationHeaderVerifier.class).auth(authorizationToken);
+				
+				// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
+				if (!CompareUtils.isEmpty(this.permissions)) {
+					throw new BadRequestException("Token cannot be refreshed with a different permission claim value.");
+				}
+				
+				newTokenPermissions = user.getPermissions();
 			}
 		}
 		
 		if (user == null) {
 			throw new BadRequestException("Invalid authentication credentials provided.");
 		}
-		
-		// generate and attach a token
-		user = user.withPermissions(permissions == null ? user.getPermissions() : permissions.stream().map(Permission::valueOf).collect(Collectors.toList()));
+
+		// generate and attach the new token
+		user = user.withPermissions(newTokenPermissions);
 		return user.withAccessToken(context.service(JWTSupport.class).generate(user, expiration));
 	}
 
