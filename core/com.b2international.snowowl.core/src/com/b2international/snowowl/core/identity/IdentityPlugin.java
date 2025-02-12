@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.SnowOwl;
-import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.identity.jwks.JwksIdentityProvider;
 import com.b2international.snowowl.core.identity.jwks.JwksIdentityProviderConfig;
@@ -33,6 +33,7 @@ import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.setup.ConfigurationRegistry;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
+import com.b2international.snowowl.core.setup.Plugins;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -53,6 +54,10 @@ public final class IdentityPlugin extends Plugin {
 	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
 		final IdentityConfiguration conf = configuration.getModuleConfig(IdentityConfiguration.class);
 		IdentityProvider identityProvider = initIdentityProvider(env, conf);
+		
+		// ensure that identity providers are initialized
+		identityProvider.init(env);
+		
 		JWTSupport jwtSupport = initJWT(env, conf);
 		// JWTSupport for token generation and verification on a global level
 		env.services().registerService(JWTSupport.class, jwtSupport);
@@ -78,8 +83,8 @@ public final class IdentityPlugin extends Plugin {
 	}
 
 	@VisibleForTesting
-	/*package*/ IdentityProvider initIdentityProvider(Environment env, final IdentityConfiguration conf) throws Exception {
-		final List<IdentityProvider> providers = createProviders(env, conf.getProviderConfigurations() == null ? List.of() : conf.getProviderConfigurations());
+	/*package*/ IdentityProvider initIdentityProvider(ServiceProvider context, final IdentityConfiguration conf) throws Exception {
+		final List<IdentityProvider> providers = createProviders(context, conf.getProviderConfigurations() == null ? List.of() : conf.getProviderConfigurations());
 
 		if (!Strings.isNullOrEmpty(conf.getJwksUrl())) {
 			// if jwks identity provider is present amongst the configured ones, fail startup with clear error message
@@ -88,7 +93,7 @@ public final class IdentityPlugin extends Plugin {
 			}
 			
 			// if only the old deprecated JWKS URL is set, raise deprecation warning message
-			env.deprecationLog().log("'identity.jwksUrl' configuration option is deprecated. Change your configuration setting to use the new 'jwks' identity provider configuration.");
+			context.deprecationLog().log("'identity.jwksUrl' configuration option is deprecated. Change your configuration setting to use the new 'jwks' identity provider configuration.");
 			
 			// prepare backward compatible JWKS URL configuration
 			JwksIdentityProviderConfig jwksConfig = new JwksIdentityProviderConfig();
@@ -115,9 +120,6 @@ public final class IdentityPlugin extends Plugin {
 			identityProvider = new AdminPartyIdentityProvider(identityProvider);
 		}
 		
-		// ensure that identity providers are initialized
-		identityProvider.init(env);
-		
 		return identityProvider;
 	}
 
@@ -125,21 +127,25 @@ public final class IdentityPlugin extends Plugin {
 		return identityProviders.stream().anyMatch(ip -> ip instanceof JwksIdentityProvider);
 	}
 
-	private List<IdentityProvider> createProviders(Environment env, List<IdentityProviderConfig> providerConfigurations) {
+	private List<IdentityProvider> createProviders(ServiceProvider ctx, List<IdentityProviderConfig> providerConfigurations) {
 		final List<IdentityProvider> providers = newArrayListWithExpectedSize(3);
-		env.plugins().getPlugins().stream()
-			.filter(IdentityProviderFactory.class::isInstance)
-			.map(IdentityProviderFactory.class::cast)
-			.forEach(factory -> {
-				Optional<IdentityProviderConfig> providerConfig = providerConfigurations.stream().filter(conf -> conf.getClass() == factory.getConfigType()).findFirst();
-				if (providerConfig.isPresent()) {
-					try {
-						providers.add(factory.create(env, providerConfig.get()));
-					} catch (Exception e) {
-						throw new SnowowlRuntimeException(String.format("Couldn't initialize '%s' identity provider", factory), e);
-					}
+		final List<IdentityProviderFactory> factories = ctx.service(Plugins.class).getPlugins().stream()
+		.filter(IdentityProviderFactory.class::isInstance)
+		.map(IdentityProviderFactory.class::cast)
+		.toList();
+		
+		providerConfigurations.forEach(providerConfig -> {
+			Optional<IdentityProviderFactory> factory = factories.stream().filter(f -> f.getConfigType() == providerConfig.getClass()).findFirst();
+			if (factory.isPresent()) {
+				try {
+					providers.add(factory.get().create(providerConfig));
+				} catch (Exception e) {
+					throw new SnowOwl.InitializationException(String.format("Couldn't initialize '%s' identity provider", factory), e);
 				}
-			});
+			} else {
+				throw new SnowOwl.InitializationException("Couldn't find identity provider factory for '%s'.", providerConfig.getClass());
+			}
+		});
 		return providers;
 	}
 

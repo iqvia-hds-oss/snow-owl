@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.b2international.snowowl.core.ecl.EclRewriterTest;
 import com.b2international.snowowl.core.events.NotificationsTest;
 import com.b2international.snowowl.core.events.util.PromiseTest;
 import com.b2international.snowowl.core.events.util.RequestTest;
+import com.b2international.snowowl.core.identity.IdentityProviderConfigurationTest;
 import com.b2international.snowowl.core.identity.JWTConfigurationTest;
 import com.b2international.snowowl.core.identity.PermissionTest;
 import com.b2international.snowowl.core.info.RepositoryInfoSerializationTest;
@@ -57,7 +58,9 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 @SuiteClasses({
 	// XXX this JWT configuration test manipulates the global injection context (ApplicationContext), should be executed before any other tests 
 	JWTConfigurationTest.class,
-	// identity/authorization tests
+	// identity plugin config tests
+	IdentityProviderConfigurationTest.class,
+	// authorization tests
 	PermissionTest.class,
 	
 	// unit tests
