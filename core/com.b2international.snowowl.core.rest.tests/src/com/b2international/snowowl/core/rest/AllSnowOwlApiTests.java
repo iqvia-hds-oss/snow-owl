@@ -38,16 +38,16 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
  */
 @RunWith(Suite.class)
 @SuiteClasses({ 
-//	BasicAuthenticationTest.class,
-//	AuthorizationTest.class,
+	BasicAuthenticationTest.class,
+	AuthorizationTest.class,
 	ApiKeyApiTest.class,
-//	RateLimitTest.class,
-//	CodeSystemApiTest.class,
-//	CodeSystemApiDependencyTest.class,
-//	ResourceApiTest.class,
-//	TerminologyResourceCollectionApiTest.class,
-//	BundleApiTest.class,
-//	BundleRestApiTest.class,
+	RateLimitTest.class,
+	CodeSystemApiTest.class,
+	CodeSystemApiDependencyTest.class,
+	ResourceApiTest.class,
+	TerminologyResourceCollectionApiTest.class,
+	BundleApiTest.class,
+	BundleRestApiTest.class,
 })
 public class AllSnowOwlApiTests {
 	
