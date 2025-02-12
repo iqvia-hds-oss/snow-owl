@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import java.util.concurrent.TimeUnit;
 public interface ApiTestConstants {
 
 	/**
-	 * The context-relative base URL for the administrative controller. 
+	 * The context-relative base URL for the token/api key controller.
 	 */
-//	String ADMIN_API = "/admin";
+	String TOKEN_API = "/token";
 	
 	/**
 	 * The context-relative base URL for the codesystems controller.
