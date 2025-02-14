@@ -15,6 +15,7 @@
  */
 package com.b2international.index.revision;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.util.Collection;
@@ -116,6 +117,8 @@ public class RevisionBranchMergeConflictTest extends BaseRevisionIndexTest {
 		indexChange(branchA, data, updateOnBranch);
 		
 		branching().prepareMerge(MAIN, branchA).merge();
+		
+		assertEquals(Option.OPTION_A, getRevision(MAIN, EnumPropertyData.class, data.getId()).getOption());
 	}
 	
 	@Test(expected = BranchMergeConflictException.class)
