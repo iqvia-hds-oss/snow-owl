@@ -101,7 +101,7 @@ public final class ImportResponse implements Serializable {
 	}
 	
 	public static ImportResponse success(Set<ComponentURI> visitedComponents, List<ImportDefect> defects) {
-		return new ImportResponse(null, visitedComponents, defects, 0);
+		return new ImportResponse(null, visitedComponents, defects, visitedComponents.size());
 	}
 	
 	public static ImportResponse success(Set<ComponentURI> visitedComponents, List<ImportDefect> defects, int changeCount) {
