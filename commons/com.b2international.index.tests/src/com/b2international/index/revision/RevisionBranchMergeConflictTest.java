@@ -16,6 +16,7 @@
 package com.b2international.index.revision;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
@@ -31,6 +32,7 @@ import com.b2international.index.Hits;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Query;
 import com.b2international.index.revision.RevisionFixtures.*;
+import com.b2international.index.revision.RevisionFixtures.EnumPropertyData.Option;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,7 +45,9 @@ public class RevisionBranchMergeConflictTest extends BaseRevisionIndexTest {
 	
 	@Override
 	protected Collection<Class<?>> getTypes() {
-		return List.<Class<?>>of(RevisionData.class, NestedRevisionData.class, ObjectPropertyData.class, ObjectListPropertyData.class, ObjectSetPropertyData.class, ContainerRevisionData.class, ComponentRevisionData.class, ObjectUniqueListPropertyData.class);
+		return List.<Class<?>>of(RevisionData.class, NestedRevisionData.class, ObjectPropertyData.class, 
+				ObjectListPropertyData.class, ObjectSetPropertyData.class, ContainerRevisionData.class, 
+				ComponentRevisionData.class, ObjectUniqueListPropertyData.class, EnumPropertyData.class);
 	}
 	
 	@Override
@@ -140,6 +144,23 @@ public class RevisionBranchMergeConflictTest extends BaseRevisionIndexTest {
 		deleteRevision(branchA, ContainerRevisionData.class, STORAGE_KEY1);
 		
 		branching().prepareMerge(MAIN, branchA).merge();
+	}
+	
+	@Test
+	public void rebaseEnumPropertyChangeToSameValueOnBothSides() throws Exception {
+		EnumPropertyData data = new EnumPropertyData(STORAGE_KEY1, Option.OPTION_B);
+		indexRevision(MAIN, data);
+		String branchA = createBranch(MAIN, "a");
+		
+		EnumPropertyData updateOnMain = new EnumPropertyData(STORAGE_KEY1, Option.OPTION_A);
+		indexChange(MAIN, data, updateOnMain);
+		
+		EnumPropertyData updateOnBranch = new EnumPropertyData(STORAGE_KEY1, Option.OPTION_A);
+		indexChange(branchA, data, updateOnBranch);
+		
+		branching().prepareMerge(MAIN, branchA).merge();
+		
+		assertEquals(Option.OPTION_A, getRevision(MAIN, EnumPropertyData.class, data.getId()).getOption());
 	}
 	
 	@Test(expected = BranchMergeConflictException.class)

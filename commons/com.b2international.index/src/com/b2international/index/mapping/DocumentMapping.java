@@ -357,6 +357,7 @@ public final class DocumentMapping {
 
 	private static boolean isObject(Class<?> fieldType) {
 		return !fieldType.isPrimitive() 
+				&& !fieldType.isEnum()
 				&& !String.class.equals(fieldType)
 				&& !BigDecimal.class.equals(fieldType) 
 				&& !Primitives.isWrapperType(fieldType)
