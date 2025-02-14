@@ -34,8 +34,7 @@ public class ImportResponseSerializationTest {
 		ImportDefect defect = ImportDefect.info("file", "location", "message");
 		response = ImportResponse.success(Set.of(componentURI), List.of(defect));
 		
-		serializedResponse = "{\"visitedComponents\":[\"SNOMEDCT/100/138875005\"],\"defects\":[{\"file\":\"file\",\"location\":\"location\",\"message\":\"message\",\"type\":\"INFO\"}],\"success\":true}";
-		
+		serializedResponse = "{\"visitedComponents\":[\"SNOMEDCT/100/138875005\"],\"defects\":[{\"file\":\"file\",\"location\":\"location\",\"message\":\"message\",\"type\":\"INFO\"}],\"changeCount\":1,\"success\":true}";		
 	}
 	
 	@Test
