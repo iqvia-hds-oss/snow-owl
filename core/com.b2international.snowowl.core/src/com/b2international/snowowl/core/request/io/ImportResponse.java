@@ -40,15 +40,18 @@ public final class ImportResponse implements Serializable {
 	private final String error;
 	private final Set<ComponentURI> visitedComponents;
 	private final List<ImportDefect> defects;
+	private final int changeCount;
 	
 	@JsonCreator
 	public ImportResponse(
 			@JsonProperty("error") final String error, 
 			@JsonProperty("visitedComponents") final Set<ComponentURI> visitedComponents, 
-			@JsonProperty("defects") final List<ImportDefect> defects) {
+			@JsonProperty("defects") final List<ImportDefect> defects,
+			@JsonProperty("changeCount") final int changeCount) {
 		this.error = error;
 		this.visitedComponents = visitedComponents;
 		this.defects = defects;
+		this.changeCount = changeCount;
 	}
 	
 	public boolean isSuccess() {
@@ -84,9 +87,13 @@ public final class ImportResponse implements Serializable {
 	public Set<ComponentURI> getVisitedComponents() {
 		return visitedComponents;
 	}
+	
+	public int getChangeCount() {
+		return changeCount;
+	}
 
 	public static ImportResponse error(String error) {
-		return new ImportResponse(error, Set.of(), List.of());
+		return new ImportResponse(error, Set.of(), List.of(), 0);
 	}
 
 	public static ImportResponse success(Set<ComponentURI> visitedComponents) {
@@ -94,11 +101,15 @@ public final class ImportResponse implements Serializable {
 	}
 	
 	public static ImportResponse success(Set<ComponentURI> visitedComponents, List<ImportDefect> defects) {
-		return new ImportResponse(null, visitedComponents, defects);
+		return new ImportResponse(null, visitedComponents, defects, 0);
+	}
+	
+	public static ImportResponse success(Set<ComponentURI> visitedComponents, List<ImportDefect> defects, int changeCount) {
+		return new ImportResponse(null, visitedComponents, defects, changeCount);
 	}
 	
 	public static ImportResponse defects(List<ImportDefect> defects) {
-		return new ImportResponse(String.format("There are '%s' issues with the import file.", defects.size()), Set.of(), defects);
+		return new ImportResponse(String.format("There are '%s' issues with the import file.", defects.size()), Set.of(), defects, 0);
 	}
 
 	@Override
@@ -121,5 +132,4 @@ public final class ImportResponse implements Serializable {
 		return Objects.equals(defects, other.defects) && Objects.equals(error, other.error)
 				&& Objects.equals(visitedComponents, other.visitedComponents);
 	}
-	
 }
