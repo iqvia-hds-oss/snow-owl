@@ -129,7 +129,9 @@ public final class ImportResponse implements Serializable {
 			return false;
 		}
 		ImportResponse other = (ImportResponse) obj;
-		return Objects.equals(defects, other.defects) && Objects.equals(error, other.error)
-				&& Objects.equals(visitedComponents, other.visitedComponents);
+		return Objects.equals(defects, other.defects) 
+				&& Objects.equals(error, other.error)
+				&& Objects.equals(visitedComponents, other.visitedComponents)
+				&& changeCount == other.changeCount;
 	}
 }
