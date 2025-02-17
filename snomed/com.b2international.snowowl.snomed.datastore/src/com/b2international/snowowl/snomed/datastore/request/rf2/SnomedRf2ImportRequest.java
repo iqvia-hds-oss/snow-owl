@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 B2i Healthcare Pte Ltd, http://b2i.sg
+ * Copyright 2017-2025 B2i Healthcare Pte Ltd, http://b2i.sg
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,8 @@ import com.b2international.snowowl.core.request.io.ImportDefectAcceptor.ImportDe
 import com.b2international.snowowl.core.request.io.ImportResponse;
 import com.b2international.snowowl.core.uri.CodeSystemURI;
 import com.b2international.snowowl.core.uri.ComponentURI;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.index.entry.*;
@@ -247,21 +249,31 @@ final class SnomedRf2ImportRequest implements Request<BranchContext, ImportRespo
 			}
 			
 			// Import effective time slices in chronological order
-			final ImmutableSet.Builder<ComponentURI> visitedComponents = ImmutableSet.builder(); 
+			final ImmutableSet.Builder<ComponentURI> visitedComponentsBuilder = ImmutableSet.builder(); 
+			
+			int changeCount = 0;
+			ImmutableSet<ComponentURI> visitedComponents = ImmutableSet.of();
 			
 			// if not a dryRun, perform import
 			if (!dryRun) {
 				// Import effective time slices in chronological order
 				boolean collectVisitedComponents = Rf2ReleaseType.DELTA == releaseType; 
 				for (Rf2EffectiveTimeSlice slice : orderedEffectiveTimeSlices) {
-					slice.doImport(context, codeSystemUri, importconfig, visitedComponents, collectVisitedComponents);
+					slice.doImport(context, codeSystemUri, importconfig, visitedComponentsBuilder);
 				}
-					
+				
+				visitedComponents = visitedComponentsBuilder.build();
+				changeCount = visitedComponents.size();
+				
+				if (!collectVisitedComponents) {
+					visitedComponents = ImmutableSet.of(ComponentURI.of(codeSystemUri, SnomedTerminologyComponentConstants.CONCEPT_NUMBER, SnomedConstants.Concepts.ROOT_CONCEPT));
+				}
+				
 			    // Update locales registered on the code system
 				updateLocales(context, codeSystemUri.getCodeSystem());
 			}
 			
-			return ImportResponse.success(visitedComponents.build(), reporter.getDefects());
+			return ImportResponse.success(visitedComponents, reporter.getDefects(), changeCount);
 		}
 	}
 
