@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 B2i Healthcare. All rights reserved.
+ * Copyright (c) 2020-2025 B2i Healthcare. All rights reserved.
  *******************************************************************************/
 package com.b2international.snowowl.core.request.io;
 
