@@ -15,6 +15,7 @@
  */
 package com.b2international.snowowl.core.rest.auth;
 
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenRequestWithToken;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
@@ -204,4 +205,11 @@ public class ApiKeyApiTest {
 		assertThat(decoded.getClaim("permissions").asList(String.class)).containsOnly("read:SNOMEDCT");
 	}
 	
+	@Test
+	public void allowIncorrectCredentialsOnUnprotected() {
+		givenRequestWithToken("/info", "not-a-valid-token")
+			.get()
+			.then()
+			.statusCode(200);
+	}
 }

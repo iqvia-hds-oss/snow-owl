@@ -46,4 +46,9 @@ public class BasicAuthenticationTest {
 	public void allowAuthenticated() {
 		assertResponseStatus(givenAuthenticatedRequest("/codesystems"), 200);
 	}
+	
+	@Test
+	public void allowIncorrectCredentialsOnUnprotected() {
+		assertResponseStatus(givenInvalidPasswordRequest("/info"), 200);
+	}
 }
