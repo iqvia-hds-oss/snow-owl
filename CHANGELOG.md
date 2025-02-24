@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
   * Snow Owl will make sure that authorization headers coming from various identity providers will be properly recognized, even if there are other same type providers present in the system
 
 ### Bugs/Improvements
+- [index] ensure that stop_words are not included in the top token count when suggesting concepts (ef84836)
 - [index] ensure the enum type field in document mapping does not produce JSON parse errors during confict detection (#1366)
 - [auth] introduce a `read` permission operation alias for `browse` (#1361)
 - [auth] disallow token permission abuse when refreshing a previously generated API token (#1362)
