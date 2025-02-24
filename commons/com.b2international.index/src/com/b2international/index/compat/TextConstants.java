@@ -15,7 +15,10 @@
  */
 package com.b2international.index.compat;
 
+import java.util.SortedSet;
+
 import com.google.common.base.CharMatcher;
+import com.google.common.collect.ImmutableSortedSet;
 
 /**
  * Holds constants related to text manipulation in terminology indexes.
@@ -31,6 +34,15 @@ public abstract class TextConstants {
 	 * UKTC; note that the set has been extended with additional characters.
 	 */
 	public static final String DELIMITERS = "()[]/,.:;%#&+-*~'^><=\"`";
+	
+	/**
+	 * English stop words considered by the application
+	 * 
+	 * Must be kept in sync with the analysis.json stop_word filter
+	 */
+	public static final SortedSet<String> STOP_WORDS_EN = ImmutableSortedSet.of(
+		"a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "if", "in", "into", "is", "it", "of", "on", "or", "such", "that", "the", "their", "then", "there", "these", "they", "this", "to", "was", "will", "with"
+	);
 
 	private static final CharMatcher INTERNAL_DELIMITER_MATCHER = CharMatcher.anyOf(DELIMITERS);
 

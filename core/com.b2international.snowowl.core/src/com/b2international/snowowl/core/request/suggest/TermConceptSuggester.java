@@ -98,6 +98,7 @@ public final class TermConceptSuggester implements ConceptSuggester {
 			.map(term -> term.toLowerCase(Locale.US))
 			.flatMap(lowerCaseTerm -> TOKEN_SPLITTER.splitToList(lowerCaseTerm).stream())
 			.filter(token -> token.length() >= minTokenLength) // skip short tokens
+			.filter(token -> !TextConstants.STOP_WORDS_EN.contains(token)) // ignore stopwords from top tokens, so they won't interfere with minShouldMatch
 			.map(token -> stemToken(stemmer, token))
 			.forEach(tokenOccurrences::add);
 			

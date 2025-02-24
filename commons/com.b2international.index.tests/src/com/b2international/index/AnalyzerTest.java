@@ -200,4 +200,30 @@ public class AnalyzerTest extends BaseIndexTest {
 		assertThat(hits).containsOnly(bbq);
 	}
 	
+	
+	@Test
+	public void tokenizedIgnoreStopwords_WithMinShouldMatch() throws Exception {
+		DataWithTokenizedText match1 = new DataWithTokenizedText(KEY1, "Contusion of kidney");
+		DataWithTokenizedText match2 = new DataWithTokenizedText(KEY2, "Contusion of left kidney");
+		indexDocuments(match1, match2);
+		
+		// search with stopwords filtered + min should match on a stopword causes empty results 
+		Hits<DataWithTokenizedText> hits = search(Query.select(DataWithTokenizedText.class)
+				.where(Expressions.matchTextAny("text.tokenized", "contusion of kidney", 3).withAnalyzer(Analyzers.TOKENIZED_IGNORE_STOPWORDS))
+				.build());
+		assertThat(hits).isEmpty();
+		
+		// adding more words fixes the issue, but still does not good for certain use cases
+		hits = search(Query.select(DataWithTokenizedText.class)
+				.where(Expressions.matchTextAny("text.tokenized", "contusion of left kidney", 3).withAnalyzer(Analyzers.TOKENIZED_IGNORE_STOPWORDS))
+				.build());
+		assertThat(hits).containsOnly(match2);
+		
+		// removing the stopword from the min should match count fixed the problem
+		hits = search(Query.select(DataWithTokenizedText.class)
+				.where(Expressions.matchTextAny("text.tokenized", "contusion of kidney", 2).withAnalyzer(Analyzers.TOKENIZED_IGNORE_STOPWORDS))
+				.build());
+		assertThat(hits).containsOnly(match1, match2);
+	}
+	
 }
