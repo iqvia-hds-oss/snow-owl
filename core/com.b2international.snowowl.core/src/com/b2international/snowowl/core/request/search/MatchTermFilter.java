@@ -213,6 +213,7 @@ public final class MatchTermFilter extends TermFilter {
 
 	public Expression minShouldMatchTermDisjunctionQuery(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
 		return dismaxWithScoreCategories(
+			TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix),
 			matchTextAny(fieldAlias(field, textFieldSuffix), getTerm(), getMinShouldMatch())
 				.withIgnoreStopwords(isIgnoreStopwords())
 				.withSynonymsEnabled(isSynonyms()),
