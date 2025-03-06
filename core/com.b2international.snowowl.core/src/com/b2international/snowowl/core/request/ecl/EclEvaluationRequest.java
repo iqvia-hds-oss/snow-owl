@@ -521,6 +521,30 @@ public abstract class EclEvaluationRequest<C extends ServiceProvider> implements
 		return filterExpression;
 	}
 	
+	protected Promise<Expression> eval(C context, final ConjunctionFilter conjunction) {
+		return Promise.all(evaluate(context, conjunction.getLeft()), evaluate(context, conjunction.getRight()))
+			.then(results -> {
+				Expression left = (Expression) results.get(0);
+				Expression right = (Expression) results.get(1);
+				return Expressions.bool()
+					.filter(left)
+					.filter(right)
+					.build();
+			});
+	}
+	
+	protected Promise<Expression> eval(C context, final DisjunctionFilter disjunction) {
+		return Promise.all(evaluate(context, disjunction.getLeft()), evaluate(context, disjunction.getRight()))
+			.then(results -> {
+				Expression left = (Expression) results.get(0);
+				Expression right = (Expression) results.get(1);
+				return Expressions.bool()
+					.should(left)
+					.should(right)
+					.build();
+			});
+	}
+	
 	protected Promise<Expression> eval(C context, final IdFilter idFilter) {
 		final Operator op = Operator.fromString(idFilter.getOp());
 		Expression expression = RevisionDocument.Expressions.ids(idFilter.getIds());
