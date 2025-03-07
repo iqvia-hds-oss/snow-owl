@@ -431,6 +431,12 @@ public abstract class SnomedConstants {
 		// Module dependency
 		public static final String ATTRIBUTE_TYPE_SOURCE_EFFECTIVE_TIME = "900000000000536009";
 		public static final String ATTRIBUTE_TYPE_TARGET_EFFECTIVE_TIME = "900000000000537000";
+		
+		// SI Drug model
+		public static final String HAS_PRECISE_ACTIVE_INGREDIENT = "762949000";
+		public static final String HAS_BASIS_OF_STRENGTH_SUBSTANCE = "732943007";
+		public static final String BASIS_STRNTCD_CODE_ACTIVE = "0001";
+		public static final String BASIS_STRNTCD_CODE_DERIVATIVE = "0002";
 	}
 	
 	// RF2 effective time format
