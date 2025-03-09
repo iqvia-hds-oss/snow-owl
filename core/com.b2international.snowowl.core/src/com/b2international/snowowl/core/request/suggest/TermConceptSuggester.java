@@ -17,14 +17,9 @@ package com.b2international.snowowl.core.request.suggest;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.tartarus.snowball.ext.EnglishStemmer;
 
 import com.b2international.commons.http.ExtendedLocale;
-import com.b2international.index.compat.TextConstants;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.identity.User;
@@ -34,10 +29,6 @@ import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.google.common.base.Splitter;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.Multisets;
 
 /**
  * @since 8.5
@@ -46,11 +37,6 @@ import com.google.common.collect.Multisets;
 @JsonTypeName("term")
 public final class TermConceptSuggester implements ConceptSuggester {
 
-	// Split terms at delimiter or whitespace separators
-	private static final Splitter TOKEN_SPLITTER = Splitter.on(TextConstants.WHITESPACE_OR_DELIMITER_MATCHER)
-			.trimResults()
-			.omitEmptyStrings();
-	
 	/**
 	 * The number of most frequent tokens (words) to consider from the selected like text corpus. Default value is 9.
 	 */
@@ -90,23 +76,8 @@ public final class TermConceptSuggester implements ConceptSuggester {
 	@Override
 	public Promise<Suggestions> suggest(ConceptSuggestionContext context, int limit, String display, List<ExtendedLocale> locales) {
 		
-		// Gather tokens
-		final Multiset<String> tokenOccurrences = HashMultiset.create(); 
-		final EnglishStemmer stemmer = new EnglishStemmer();
-		
-		context.streamLikes()
-			.map(term -> term.toLowerCase(Locale.US))
-			.flatMap(lowerCaseTerm -> TOKEN_SPLITTER.splitToList(lowerCaseTerm).stream())
-			.filter(token -> token.length() >= minTokenLength) // skip short tokens
-			.filter(token -> !TextConstants.STOP_WORDS_EN.contains(token)) // ignore stopwords from top tokens, so they won't interfere with minShouldMatch
-			.map(token -> stemToken(stemmer, token))
-			.forEach(tokenOccurrences::add);
-			
-		final List<String> topTokens = Multisets.copyHighestCountFirst(tokenOccurrences)
-			.elementSet()
-			.stream()
-			.limit(topTokenCount)
-			.collect(Collectors.toList());
+		// gather top tokens from the context
+		List<String> topTokens = context.topTokens(topTokenCount, minTokenLength, stemming);
 		
 		// if there are no tokens to search for then shortcut here
 		if (topTokens.isEmpty()) {
@@ -149,16 +120,6 @@ public final class TermConceptSuggester implements ConceptSuggester {
 				.then(concepts -> {
 					return new Suggestions(topTokens, concepts.getItems(), concepts.getSearchAfter(), limit, concepts.getTotal());
 				});
-	}
-	
-	private String stemToken(EnglishStemmer stemmer, String token) {
-		if (stemming) {
-			stemmer.setCurrent(token);
-			stemmer.stem();
-			return stemmer.getCurrent();
-		} else {
-			return token;
-		}
 	}
 	
 }

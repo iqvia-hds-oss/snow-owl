@@ -16,11 +16,15 @@
 package com.b2international.snowowl.core.request.suggest;
 
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.tartarus.snowball.ext.EnglishStemmer;
 
 import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.http.ExtendedLocale;
+import com.b2international.index.compat.TextConstants;
 import com.b2international.snomed.ecl.Ecl;
 import com.b2international.snowowl.core.ResourceTypeConverter;
 import com.b2international.snowowl.core.ResourceURI;
@@ -31,14 +35,19 @@ import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.domain.DelegatingContext;
 import com.b2international.snowowl.core.domain.Description;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.base.Splitter;
+import com.google.common.collect.*;
 
 /**
  * @since 8.5
  */
 public final class ConceptSuggestionContext extends DelegatingContext {
 
+	// Split terms at delimiter or whitespace separators
+	private static final Splitter TOKEN_SPLITTER = Splitter.on(TextConstants.WHITESPACE_OR_DELIMITER_MATCHER)
+			.trimResults()
+			.omitEmptyStrings();
+	
 	private final ResourceURIWithQuery from;
 	private final SortedSet<String> likes;
 	private final SortedSet<String> unlikes;
@@ -173,6 +182,32 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 		
 		// not an URI
 		return null;
+	}
+
+	public List<String> topTokens(int topTokenCount, int minTokenLength, boolean stemming) {
+		// Gather tokens
+		final Multiset<String> tokenOccurrences = HashMultiset.create(); 
+		final EnglishStemmer stemmer = new EnglishStemmer();
+		
+		this.streamLikes()
+			.map(term -> term.toLowerCase(Locale.US))
+			.flatMap(lowerCaseTerm -> TOKEN_SPLITTER.splitToList(lowerCaseTerm).stream())
+			.filter(token -> token.length() >= minTokenLength) // skip short tokens
+			.filter(token -> !TextConstants.STOP_WORDS_EN.contains(token)) // ignore stopwords from top tokens, so they won't interfere with minShouldMatch
+			.map(token -> stemming ? stemToken(stemmer, token) : token)
+			.forEach(tokenOccurrences::add);
+		
+		return Multisets.copyHighestCountFirst(tokenOccurrences)
+			.elementSet()
+			.stream()
+			.limit(topTokenCount)
+			.collect(Collectors.toList());
+	}
+	
+	private String stemToken(EnglishStemmer stemmer, String token) {
+		stemmer.setCurrent(token);
+		stemmer.stem();
+		return stemmer.getCurrent();
 	}
 	
 }
