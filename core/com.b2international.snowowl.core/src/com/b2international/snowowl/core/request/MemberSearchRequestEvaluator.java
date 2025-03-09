@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,19 @@ public interface MemberSearchRequestEvaluator<R> {
 		MAP_SOURCE,
 		
 		/**
+		 * Search for mappings with the specified map source term(s)
+		 */
+		MAP_SOURCE_TERM,
+		
+		/**
 		 * Search for mappings with the specified map target id(s)
 		 */
 		MAP_TARGET,
+		
+		/**
+		 * Search for mappings with the specified map target term(s)
+		 */
+		MAP_TARGET_TERM,
 		
 		/**
 		 * Matches concept map mappings where either the source or target component id matches the given value.

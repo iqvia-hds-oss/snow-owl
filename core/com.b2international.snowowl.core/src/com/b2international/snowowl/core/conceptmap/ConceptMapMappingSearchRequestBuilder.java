@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,12 +61,20 @@ public final class ConceptMapMappingSearchRequestBuilder
 		return addOption(OptionKey.MAP_SOURCE, mapSources);
 	}
 	
+	public ConceptMapMappingSearchRequestBuilder filterByMapSourceTerm(String mapSourceTerm) {
+		return addOption(OptionKey.MAP_SOURCE_TERM, mapSourceTerm);
+	}
+	
 	public ConceptMapMappingSearchRequestBuilder filterByMapTarget(String mapTarget) {
 		return addOption(OptionKey.MAP_TARGET, mapTarget);
 	}
 	
 	public ConceptMapMappingSearchRequestBuilder filterByMapTargets(Iterable<String> mapTargets) {
 		return addOption(OptionKey.MAP_TARGET, mapTargets);
+	}
+	
+	public ConceptMapMappingSearchRequestBuilder filterByMapTargetTerm(String mapTargetTerm) {
+		return addOption(OptionKey.MAP_TARGET_TERM, mapTargetTerm);
 	}
 
 	public ConceptMapMappingSearchRequestBuilder filterByComponentId(String componentId) {
