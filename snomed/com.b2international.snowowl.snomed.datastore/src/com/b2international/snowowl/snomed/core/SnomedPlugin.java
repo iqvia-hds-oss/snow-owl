@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import com.b2international.index.revision.Hooks.PreCommitHook;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.compare.DependencyComparer;
+import com.b2international.snowowl.core.conceptmap.ConceptMapMappingSearchRequestEvaluator;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.domain.ContextConfigurer;

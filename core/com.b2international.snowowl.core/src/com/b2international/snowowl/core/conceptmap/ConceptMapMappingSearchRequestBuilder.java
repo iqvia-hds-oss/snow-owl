@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.b2international.snowowl.core.request;
+package com.b2international.snowowl.core.conceptmap;
 
 import java.util.Set;
 
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.ConceptMapMappings;
+import com.b2international.snowowl.core.request.SearchPageableCollectionResourceRequestBuilder;
+import com.b2international.snowowl.core.request.SearchResourceRequest;
+import com.b2international.snowowl.core.request.SystemRequestBuilder;
 import com.b2international.snowowl.core.request.MemberSearchRequestEvaluator.OptionKey;
 import com.b2international.snowowl.core.uri.ComponentURI;
 import com.google.common.collect.FluentIterable;

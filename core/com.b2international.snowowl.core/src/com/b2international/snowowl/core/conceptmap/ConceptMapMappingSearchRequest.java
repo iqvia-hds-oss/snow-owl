@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.b2international.snowowl.core.request;
+package com.b2international.snowowl.core.conceptmap;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,6 +25,7 @@ import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.ConceptMapMappings;
+import com.b2international.snowowl.core.request.SearchResourceRequest;
 
 /**
 * @since 7.8

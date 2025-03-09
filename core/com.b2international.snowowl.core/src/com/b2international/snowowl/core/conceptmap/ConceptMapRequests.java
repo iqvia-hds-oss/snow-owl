@@ -19,7 +19,6 @@ import java.util.List;
 
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.compare.ConceptMapCompareResultItem;
-import com.b2international.snowowl.core.request.ConceptMapMappingSearchRequestBuilder;
 
 /**
  * @since 8.0
