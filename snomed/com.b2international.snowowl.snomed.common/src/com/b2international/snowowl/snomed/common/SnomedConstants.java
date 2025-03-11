@@ -435,8 +435,6 @@ public abstract class SnomedConstants {
 		// SI Drug model
 		public static final String HAS_PRECISE_ACTIVE_INGREDIENT = "762949000";
 		public static final String HAS_BASIS_OF_STRENGTH_SUBSTANCE = "732943007";
-		public static final String BASIS_STRNTCD_CODE_ACTIVE = "0001";
-		public static final String BASIS_STRNTCD_CODE_DERIVATIVE = "0002";
 	}
 	
 	// RF2 effective time format
