@@ -138,10 +138,22 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 		if (concept.getTerm() != null) {
 			allTerms.add(concept.getTerm());
 		}
+		
+		// all other terms should be filtered by language
 		if (concept.getDescriptions() != null) {
-			concept.getDescriptions().stream().map(Description::getTerm).forEach(allTerms::add);
+			concept.getDescriptions()
+				.stream()
+				.filter(d -> hasMatchingLanguage(d))
+				.map(Description::getTerm)
+				.forEach(allTerms::add);
 		}
+		
 		return allTerms;
+	}
+
+	private boolean hasMatchingLanguage(Description description) {
+		return locales.stream()
+			.anyMatch(locale -> locale.getLanguage().equals(description.getLanguage()));
 	}
 
 	public Collection<String> exclusionQuery(ResourceURI resourceUri) {
