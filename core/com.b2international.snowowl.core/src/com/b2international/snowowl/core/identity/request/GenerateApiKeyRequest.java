@@ -16,8 +16,10 @@
 package com.b2international.snowowl.core.identity.request;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.auth0.jwt.JWT;
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -74,6 +76,12 @@ final class GenerateApiKeyRequest implements Request<ServiceProvider, User> {
 			newTokenPermissions = this.permissions == null ? user.getPermissions() : this.permissions.stream().map(Permission::valueOf).collect(Collectors.toList());
 		} else if (!Strings.isNullOrEmpty(token)) {
 			user = context.service(AuthorizationHeaderVerifier.class).authJWT(token);
+			// at this point the token is valid but it might happen that it was issued by another authority allowed via JWKS provider, ensure that we only allow refreshing for the same issuer
+			final String serverIssuer = context.config().getModuleConfig(IdentityConfiguration.class).getIssuer();
+			final String tokenIssuer = JWT.decode(token).getIssuer();
+			if (!Objects.equals(tokenIssuer, serverIssuer)) {
+				throw new BadRequestException("Token cannot be refreshed as it was issued by another server: '%s'", tokenIssuer);
+			}
 			// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
 			if (!CompareUtils.isEmpty(this.permissions)) {
 				throw new BadRequestException("Token cannot be refreshed when permissions argument is also set.");
