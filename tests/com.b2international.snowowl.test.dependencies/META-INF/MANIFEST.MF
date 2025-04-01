@@ -4,7 +4,7 @@ Bundle-Name: Test Dependencies
 Bundle-SymbolicName: com.b2international.snowowl.test.dependencies;singleton:=true
 Bundle-Version: 9.6.1.qualifier
 Bundle-Vendor: B2iHealthcare
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ClassPath: .,
  lib/annotations-17.0.0.jar,
  lib/contiperf-2.3.2.jar,

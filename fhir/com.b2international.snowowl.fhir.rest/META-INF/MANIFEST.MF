@@ -25,5 +25,5 @@ Import-Package: com.b2international.fhir;version="0.2.0",
  org.hl7.fhir.r5.formats;version="6.3.25",
  org.hl7.fhir.r5.model;version="6.3.25"
 Automatic-Module-Name: com.b2international.snowowl.fhir.rest
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: com.b2international.snowowl.fhir.core

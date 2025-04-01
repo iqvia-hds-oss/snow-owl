@@ -4,7 +4,7 @@ Bundle-Name: Groovy Wrapper Bundle
 Bundle-SymbolicName: com.b2international.groovy;singleton:=true
 Bundle-Version: 3.0.9.1-b2i
 Bundle-Vendor: B2i Healthcare
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ClassPath: lib/groovy-3.0.9.jar,
  lib/groovy-json-3.0.9.jar,
  lib/groovy-templates-3.0.9.jar,

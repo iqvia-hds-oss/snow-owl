@@ -5,7 +5,7 @@ Bundle-SymbolicName: com.b2international.snowowl.core.rest;singleton:=true
 Bundle-Version: 9.6.1.qualifier
 Bundle-Vendor: B2i Healthcare
 Automatic-Module-Name: com.b2international.snowowl.rest
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
  WEB-INF/lib/spring-aop-6.2.0.jar,
