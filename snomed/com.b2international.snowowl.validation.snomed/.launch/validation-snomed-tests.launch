@@ -119,7 +119,6 @@
         <setEntry value="org.apache.httpcomponents.httpasyncclient@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpclient@default:default"/>
         <setEntry value="org.apache.httpcomponents.httpcore@default:default"/>
-        <setEntry value="org.apache.log4j@default:default"/>
         <setEntry value="org.ccil.cowan.tagsoup@default:default"/>
         <setEntry value="org.eclipse.core.commands@default:default"/>
         <setEntry value="org.eclipse.core.contenttype@default:default"/>
