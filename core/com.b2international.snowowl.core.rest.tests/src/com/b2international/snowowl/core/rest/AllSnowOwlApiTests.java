@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.b2international.snowowl.core.bundle.BundleApiTest;
+import com.b2international.snowowl.core.rest.auth.ApiKeyApiTest;
 import com.b2international.snowowl.core.rest.auth.AuthorizationTest;
 import com.b2international.snowowl.core.rest.auth.BasicAuthenticationTest;
 import com.b2international.snowowl.core.rest.bundle.BundleRestApiTest;
@@ -39,6 +40,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 @SuiteClasses({ 
 	BasicAuthenticationTest.class,
 	AuthorizationTest.class,
+	ApiKeyApiTest.class,
 	RateLimitTest.class,
 	CodeSystemApiTest.class,
 	CodeSystemApiDependencyTest.class,

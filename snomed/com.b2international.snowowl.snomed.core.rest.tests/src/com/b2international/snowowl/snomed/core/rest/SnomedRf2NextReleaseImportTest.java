@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.b2international.snowowl.snomed.core.rest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.FixMethodOrder;
@@ -32,6 +33,7 @@ import com.b2international.snowowl.core.jobs.RemoteJobEntry;
 import com.b2international.snowowl.core.request.io.ImportResponse;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.core.version.Version;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2Requests;
@@ -71,8 +73,13 @@ public class SnomedRf2NextReleaseImportTest extends AbstractSnomedApiTest {
 		RemoteJobEntry job = JobRequests.waitForJob(Services.bus(), jobId, 2000 /* 2 seconds */);
 		assertTrue("Failed to import RF2 archive", job.isSuccessful());
 		ImportResponse response = job.getResultAs(Services.context().service(ObjectMapper.class),  ImportResponse.class);
-		//assert that the previous import job didn't store all visited components
-		assertTrue("Import result of FULL RF2 import should not include any visited components", response.getVisitedComponents().isEmpty());
+		
+		//assert that only the root concept is present in the visited components
+		List<String> conceptIds = response.getVisitedComponents().stream()
+			.map(c -> c.identifier())
+			.toList();
+		assertTrue("Import result of FULL RF2 import should only include the root concept as a visited component", 
+				conceptIds.size() == 1 && conceptIds.get(0).equals(SnomedConstants.Concepts.ROOT_CONCEPT));
 		// assert that the version for importUntil is present in the system
 		Version latestVersion = CodeSystemVersionRestRequests.getLatestVersion(SnomedContentRule.SNOMEDCT_ID).get();
 		assertEquals(importUntil, EffectiveTimes.format(latestVersion.getEffectiveTime(), DateFormats.SHORT));

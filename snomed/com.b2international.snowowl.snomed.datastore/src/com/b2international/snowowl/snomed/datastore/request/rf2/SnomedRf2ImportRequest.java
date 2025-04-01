@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,8 +73,10 @@ import com.b2international.snowowl.core.request.io.ImportResponse;
 import com.b2international.snowowl.core.uri.ComponentURI;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.eventbus.IEventBus;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
+import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSet;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSets;
@@ -286,21 +288,31 @@ final class SnomedRf2ImportRequest implements Request<BranchContext, ImportRespo
 			}
 			
 			// Import effective time slices in chronological order
-			final ImmutableSet.Builder<ComponentURI> visitedComponents = ImmutableSet.builder(); 
+			final ImmutableSet.Builder<ComponentURI> visitedComponentsBuilder = ImmutableSet.builder(); 
+			
+			int changeCount = 0;
+			ImmutableSet<ComponentURI> visitedComponents = ImmutableSet.of();
 			
 			// if not a dryRun, perform import
 			if (!dryRun) {
 				// Import effective time slices in chronological order
 				boolean collectVisitedComponents = DELTA == releaseType;
 				for (Rf2EffectiveTimeSlice slice : orderedEffectiveTimeSlices) {
-					slice.doImport(context, codeSystemUri, importconfig, visitedComponents, collectVisitedComponents);
+					slice.doImport(context, codeSystemUri, importconfig, visitedComponentsBuilder);
 				}
-					
+				
+				visitedComponents = visitedComponentsBuilder.build();
+				changeCount = visitedComponents.size();
+				
+				if (!collectVisitedComponents) {
+					visitedComponents = ImmutableSet.of(ComponentURI.of(codeSystemUri, SnomedConcept.TYPE, SnomedConstants.Concepts.ROOT_CONCEPT));
+				}
+				
 			    // Update locales registered on the code system
 				updateCodeSystemSettings(context, codeSystemUri);
 			}
 			
-			return ImportResponse.success(visitedComponents.build(), reporter.getDefects());
+			return ImportResponse.success(visitedComponents, reporter.getDefects(), changeCount);
 		}
 	}
 

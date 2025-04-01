@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.text.StringSubstitutor;
 import org.hamcrest.CoreMatchers;
 
-import com.b2international.snowowl.core.ApplicationContext;
-import com.b2international.snowowl.core.identity.JWTSupport;
+import com.b2international.commons.json.Json;
 import com.b2international.snowowl.core.identity.Permission;
-import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.util.PlatformUtil;
+import com.b2international.snowowl.test.commons.ApiTestConstants;
 import com.google.common.base.*;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
@@ -242,11 +241,39 @@ public class RestExtensions {
 	}
 	
 	public static String generateToken(Permission...permissions) {
-		return generateToken(RestExtensions.USER, permissions);
+		return generateToken(RestExtensions.USER, RestExtensions.PASS, permissions);
 	}
 	
-	public static String generateToken(String userId, Permission...permissions) {
-		return ApplicationContext.getServiceForClass(JWTSupport.class).generate(new User(userId, List.of(permissions)));
+	public static String generateToken(String user, String password, Permission...permissions) {
+		List<String> permissionValues = permissions == null ? null : List.of(permissions).stream().map(Permission::getPermission).toList();
+		return assertGenerateToken(Json.object(
+					"username", user,
+					"password", password,
+					"permissions", permissionValues
+				))
+				.statusCode(200)
+				.extract()
+				.body()
+				.path("accessToken");
+	}
+	
+	public static String refreshToken(String token) {
+		return assertGenerateToken(Json.object(
+					"token", token
+				))
+				.statusCode(200)
+				.extract()
+				.body()
+				.path("accessToken");
+	}
+	
+	public static ValidatableResponse assertGenerateToken(Json body) {
+		return givenUnauthenticatedRequest(ApiTestConstants.TOKEN_API)
+				.contentType(ContentType.JSON)
+				.body(body)
+				.accept(ContentType.JSON)
+				.post()
+				.then().assertThat();
 	}
 	
 	public static Map<String, Object> encodeQueryParameters(Map<String, Object> queryParams) {

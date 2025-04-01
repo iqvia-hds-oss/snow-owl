@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -278,17 +278,13 @@ public class JWTSupport implements JWTGenerator {
 			userId = emailClaim.asString();
 		}
 
-		final List<String> permissions;
+		List<String> permissions = Collections.emptyList();
 		final String permissionsClaimProperty = config.getPermissionsClaimProperty();
 		if (!Strings.isNullOrEmpty(permissionsClaimProperty)) {
 			Claim permissionsClaim = jwt.getClaim(permissionsClaimProperty);
-			if (permissionsClaim == null || permissionsClaim.isNull()) {
-				throw new BadRequestException("'%s' JWT access token field is required for permissions access, but it was missing.",
-						permissionsClaimProperty);
+			if (permissionsClaim != null && !permissionsClaim.isNull() && !permissionsClaim.isMissing()) {
+				permissions = permissionsClaim.asList(String.class);
 			}
-			permissions = permissionsClaim.asList(String.class);
-		} else {
-			permissions = Collections.emptyList();
 		}
 
 		return new User(userId, permissions.stream().map(Permission::valueOf).collect(Collectors.toList()), jwt.getToken());

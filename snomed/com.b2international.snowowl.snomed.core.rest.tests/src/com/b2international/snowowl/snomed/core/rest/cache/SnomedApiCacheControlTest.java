@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class SnomedApiCacheControlTest extends AbstractSnomedApiTest {
 			.extract()
 			.header("ETag");
 		
-		String accessTokenWithoutSnomedAccess = generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, UUID.randomUUID().toString()));
+		String accessTokenWithoutSnomedAccess = generateToken(Permission.requireAll(Permission.OPERATION_READ, UUID.randomUUID().toString()));
 		
 		givenRequestWithToken(SnomedApiTestConstants.SCT_API, accessTokenWithoutSnomedAccess)
 			.contentType(JSON_UTF8)

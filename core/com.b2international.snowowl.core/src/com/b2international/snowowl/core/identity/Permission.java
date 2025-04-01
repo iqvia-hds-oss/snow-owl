@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,11 @@ public interface Permission extends Serializable {
 	public static final String RESOURCE_SEPARATOR = "/";
 	
 	public static final String ALL = "*"; //$NON-NLS-N$
+	public static final String OPERATION_READ = "read";  //$NON-NLS-N$
+	
+	/**
+	 * @deprecated - use {@link #OPERATION_READ} instead, browse permissions are automatically converted to read permissions
+	 */
 	public static final String OPERATION_BROWSE = "browse";  //$NON-NLS-N$
 	public static final String OPERATION_EDIT = "edit";  //$NON-NLS-N$
 	public static final String OPERATION_IMPORT = "import";  //$NON-NLS-N$

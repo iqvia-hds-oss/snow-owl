@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ final class IgnoredRf2EffectiveTimeSlice extends BaseRf2EffectiveTimeSlice {
 	}
 
 	@Override
-	public void doImport(BranchContext context, ResourceURI codeSystemUri, Rf2ImportConfiguration importConfig, Builder<ComponentURI> visitedComponents, boolean collectVisitedComponents) throws Exception {
+	public void doImport(BranchContext context, ResourceURI codeSystemUri, Rf2ImportConfiguration importConfig, Builder<ComponentURI> visitedComponents) throws Exception {
 		context.log().info(message);
 	}
 

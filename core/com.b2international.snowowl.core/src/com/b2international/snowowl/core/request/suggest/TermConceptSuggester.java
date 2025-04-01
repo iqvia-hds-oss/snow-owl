@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,7 @@ public final class TermConceptSuggester implements ConceptSuggester {
 			.map(term -> term.toLowerCase(Locale.US))
 			.flatMap(lowerCaseTerm -> TOKEN_SPLITTER.splitToList(lowerCaseTerm).stream())
 			.filter(token -> token.length() >= minTokenLength) // skip short tokens
+			.filter(token -> !TextConstants.STOP_WORDS_EN.contains(token)) // ignore stopwords from top tokens, so they won't interfere with minShouldMatch
 			.map(token -> stemToken(stemmer, token))
 			.forEach(tokenOccurrences::add);
 			

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ final class DefaultJWTGenerator implements JWTGenerator {
 	@Override
 	public String generate(User user, String expiration) {
 		final List<String> permissions = user.getPermissions().stream().map(Permission::getPermission).collect(Collectors.toList());
-		return generate(user.getUserId(), Map.of(permissionsClaimProperty, permissions), expiration);
+		return generate(user.getUserId(), permissions.isEmpty() ? Map.of() : Map.of(permissionsClaimProperty, permissions), expiration);
 	}
 	
 }

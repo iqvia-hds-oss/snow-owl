@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class ImportResponseSerializationTest {
 		ImportDefect defect = ImportDefect.info("file", "location", "message");
 		response = ImportResponse.success(Set.of(componentURI), List.of(defect));
 		
-		serializedResponse = "{\"visitedComponents\":[\"codesystem/SNOMEDCT/100/138875005\"],\"defects\":[{\"file\":\"file\",\"location\":\"location\",\"message\":\"message\",\"type\":\"INFO\"}],\"success\":true}";
+		serializedResponse = "{\"visitedComponents\":[\"codesystem/SNOMEDCT/100/138875005\"],\"defects\":[{\"file\":\"file\",\"location\":\"location\",\"message\":\"message\",\"type\":\"INFO\"}],\"changeCount\":1,\"success\":true}";
 		
 	}
 	

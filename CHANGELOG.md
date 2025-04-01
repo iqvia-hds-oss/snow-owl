@@ -1,6 +1,27 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.6.0
+
+### Core
+- Allow specifying and using multiple identity providers with the same type (#1364)
+  * This allows system integrators to have multiple same type identity providers (e.g. file, ldap, jwks) in the snowowl.yml configuration file
+  * Snow Owl will make sure that authorization headers coming from various identity providers will be properly recognized, even if there are other same type providers present in the system
+
+### Bugs/Improvements
+- [index] ensure that stop_words are not included in the top token count when suggesting concepts (ef84836)
+- [index] ensure the enum type field in document mapping does not produce JSON parse errors during confict detection (#1366)
+- [core] ensure that min should match based term filtering in all APIs finds exact matches and prioritizes them over other matches (ad7ba13)
+- [auth] introduce a `read` permission operation alias for `browse` (#1361)
+- [auth] disallow token permission abuse when refreshing a previously generated API token (#1362)
+- [auth] improve error message when trying authenticate without a kid token in a jwks provider (716c406)
+- [auth] ensure that unprotected requests does not respond with HTTP 401 Unauthorized when the Authorization header contains an invalid value (#1368)
+
+## 9.5.3
+
+### Bugs/Improvements
+- [ci] bump GitHub Actions to newers versions, including codecov which fixes coverage upload issues (#1359)
+
 ## 9.5.2
 
 ### Bugs/Improvements 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public interface AuthorizationService {
 		});
 		return user;
 	}
-
+	
 	/**
 	 * Throws a {@link ForbiddenException} using the given required permission's descriptor.
 	 * @param requiredPermission - the permissions that was required but it was missing from the current user's permission list

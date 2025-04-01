@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -410,6 +410,29 @@ public class RevisionFixtures {
 		
 		public ObjectItem getNested() {
 			return nested;
+		}
+		
+	}
+	
+	@Doc(revisionHash = { "option" })
+	public static final class EnumPropertyData extends Revision {
+		
+		public enum Option {
+			OPTION_A,
+			OPTION_B,
+			OPTION_C;
+		}
+		
+		private final Option option;
+		
+		@JsonCreator
+		public EnumPropertyData(@JsonProperty("id") String id, @JsonProperty("option") Option option) {
+			super(id);
+			this.option = option;
+		}
+
+		public Option getOption() {
+			return option;
 		}
 		
 	}

@@ -361,30 +361,6 @@ final class SnomedEclEvaluationRequest extends EclEvaluationRequest<BranchContex
 		return Promise.immediate(SnomedDescriptionIndexEntry.Expressions.languageCodes(languageCodeFilter.getLanguageCodes()));
 	}
 	
-	protected Promise<Expression> eval(BranchContext context, final ConjunctionFilter conjunction) {
-		return Promise.all(evaluate(context, conjunction.getLeft()), evaluate(context, conjunction.getRight()))
-				.then(results -> {
-					Expression left = (Expression) results.get(0);
-					Expression right = (Expression) results.get(1);
-					return Expressions.bool()
-							.filter(left)
-							.filter(right)
-							.build();
-				});
-	}
-	
-	protected Promise<Expression> eval(BranchContext context, final DisjunctionFilter disjunction) {
-		return Promise.all(evaluate(context, disjunction.getLeft()), evaluate(context, disjunction.getRight()))
-				.then(results -> {
-					Expression left = (Expression) results.get(0);
-					Expression right = (Expression) results.get(1);
-					return Expressions.bool()
-							.should(left)
-							.should(right)
-							.build();
-				});
-	}
-	
 	protected Promise<Expression> eval(BranchContext context, final DialectAliasFilter dialectAliasFilter) {
 		final ListMultimap<String, String> languageMapping = SnomedDescriptionUtils.getLanguageMapping(context);
 		final Multimap<String, String> languageRefSetsByAcceptabilityField = HashMultimap.create();

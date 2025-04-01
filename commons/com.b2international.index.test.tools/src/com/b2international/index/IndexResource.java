@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public final class IndexResource extends ExternalResource {
 	 */
 	public static final String ES_USE_TEST_CONTAINER_VARIABLE = "so.index.es.useDocker";
 	
-	public static final String DEFAULT_ES_DOCKER_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:8.15.0";
+	public static final String DEFAULT_ES_DOCKER_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:8.17.3";
 
 	private static final AtomicBoolean INIT = new AtomicBoolean(false);
 	

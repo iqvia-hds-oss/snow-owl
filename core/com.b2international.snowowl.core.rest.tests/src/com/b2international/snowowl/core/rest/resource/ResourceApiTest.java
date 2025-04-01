@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -470,7 +470,7 @@ public class ResourceApiTest {
 		CodeSystemRestRequests.createCodeSystem(codeSystemId).statusCode(201);
 		
 		// simulate that the user only has access to another resource
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, "another-resource"));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, "another-resource"));
 		
 		String branchPathToUse = RepositoryRequests.branching().prepareCreate().setParent(Branch.MAIN_PATH).setName(IDs.base62UUID()).build(SnomedTerminologyComponentConstants.TOOLING_ID).execute(bus).getSync();
 		
@@ -505,7 +505,7 @@ public class ResourceApiTest {
 		var codeSystemUrlToUse = CodeSystemRestRequests.getSnomedIntUrl(codeSystemId);
 		
 		// simulate that the user only has access to another resource
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, "another-resource"));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, "another-resource"));
 		
 		String branchPathToUse = RepositoryRequests.branching().prepareCreate().setParent(Branch.MAIN_PATH).setName(IDs.base62UUID()).build(SnomedTerminologyComponentConstants.TOOLING_ID).execute(bus).getSync();
 		
@@ -556,7 +556,7 @@ public class ResourceApiTest {
 			.statusCode(201);
 		
 		// simulate that the user only has access to another resource
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, "another-resource"));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, "another-resource"));
 		
 		String branchPathToUse = RepositoryRequests.branching().prepareCreate().setParent(Branch.MAIN_PATH).setName(IDs.base62UUID()).build(SnomedTerminologyComponentConstants.TOOLING_ID).execute(bus).getSync();
 		

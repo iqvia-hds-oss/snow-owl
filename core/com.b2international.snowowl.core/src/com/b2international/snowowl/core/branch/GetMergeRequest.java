@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class GetMergeRequest implements Request<RepositoryContext, Merge>, Acces
 
 	@Override
 	public String getOperation() {
-		return Permission.OPERATION_BROWSE;
+		return Permission.OPERATION_READ;
 	}
 
 }

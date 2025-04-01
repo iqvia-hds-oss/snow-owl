@@ -536,6 +536,11 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		final String _format, 
 		final Boolean _pretty
 	) {
+		
+		if (parameters.getUrl() == null) {
+			throw new BadRequestException("'url' parameter is required.");
+		}
+		
 		return FhirRequests.codeSystems().prepareValidateCode()
 			.setParameters(parameters)
 			.buildAsync()

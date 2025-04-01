@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,6 +213,7 @@ public final class MatchTermFilter extends TermFilter {
 
 	public Expression minShouldMatchTermDisjunctionQuery(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
 		return dismaxWithScoreCategories(
+			TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix),
 			matchTextAny(fieldAlias(field, textFieldSuffix), getTerm(), getMinShouldMatch())
 				.withIgnoreStopwords(isIgnoreStopwords())
 				.withSynonymsEnabled(isSynonyms()),

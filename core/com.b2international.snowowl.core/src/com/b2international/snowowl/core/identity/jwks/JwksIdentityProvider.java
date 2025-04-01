@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
-import com.b2international.snowowl.core.api.SnowowlRuntimeException;
+import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.identity.*;
 import com.b2international.snowowl.core.setup.Environment;
@@ -64,7 +64,8 @@ public final class JwksIdentityProvider implements IdentityProvider {
 				try {
 					return (RSAPublicKey) jwkProvider.get(kid).getPublicKey();
 				} catch (JwkException e) {
-					throw new SnowowlRuntimeException(e.getMessage(), e);
+					IdentityProvider.LOG.warn("Failed login attempt with an invalid authorization token. Error: %s", e.getMessage());
+					throw new BadRequestException(e.getMessage(), e);
 				}
 			}
 			

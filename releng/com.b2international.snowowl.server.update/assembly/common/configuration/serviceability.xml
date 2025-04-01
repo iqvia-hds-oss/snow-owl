@@ -34,6 +34,8 @@
 	<logger level="ERROR" additivity="false" name="org.semanticweb.elk.reasoner.indexing.hierarchy.ChangeIndexingProcessor" />
 	<!-- Suppresses errors thrown during "Jetty Shutdown" -->
 	<logger level="OFF" additivity="false" name="org.eclipse.jetty.osgi.AbstractContextProvider" />
+	<!-- Suppresses deprecation warnings thrown by the Elasticsearch REST client -->
+	<logger level="ERROR" additivity="false" name="org.elasticsearch.client.RestClient" />
 
 	<root level="INFO">
 		<appender-ref ref="LOG_FILE" />

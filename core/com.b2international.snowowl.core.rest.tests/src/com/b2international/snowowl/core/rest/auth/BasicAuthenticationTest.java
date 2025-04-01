@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,5 +45,10 @@ public class BasicAuthenticationTest {
 	@Test
 	public void allowAuthenticated() {
 		assertResponseStatus(givenAuthenticatedRequest("/codesystems"), 200);
+	}
+	
+	@Test
+	public void allowIncorrectCredentialsOnUnprotected() {
+		assertResponseStatus(givenInvalidPasswordRequest("/info"), 200);
 	}
 }

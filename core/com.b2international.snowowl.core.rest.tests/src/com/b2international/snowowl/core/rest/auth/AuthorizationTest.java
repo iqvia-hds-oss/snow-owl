@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,16 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void readOnlyAccessOnSingleResource() throws Exception {
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, SNOMEDCT_ID));
+		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
+			.get()
+			.then()
+			.assertThat().statusCode(200)
+			.and().body("total", equalTo(1));
+	}
+	
+	@Test
+	public void readOnlyAccessOnSingleResource_BrowseOperation() throws Exception {
 		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, SNOMEDCT_ID));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get()
@@ -69,7 +79,7 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void noAccessToResourceDirectlyWithoutPermission() throws Exception {
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, SNOMEDCT_ID));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, SNOMEDCT_ID));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get("/{id}", SNOMEDCT_UK_CL)
 			.then()
@@ -78,7 +88,7 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void shouldReturnResourceWithBundlePermission() throws Exception {
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, UK_CLINICAL_BUNDLE_ID));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, UK_CLINICAL_BUNDLE_ID));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get("/{id}", SNOMEDCT_UK_CL)
 			.then()
@@ -87,7 +97,7 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void readOnlyAccessOnBundleGivesAccessToResourcesWithin() throws Exception {
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, UK_CLINICAL_BUNDLE_ID));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, UK_CLINICAL_BUNDLE_ID));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get()
 			.then()
@@ -97,7 +107,7 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void readOnlyWildcardAccessOnBundleGivesAccessToResourcesWithin() throws Exception {
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, UK_CLINICAL_BUNDLE_ID + "*"));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, UK_CLINICAL_BUNDLE_ID + "*"));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get()
 			.then()
@@ -107,7 +117,7 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void readOnlyAccessOnBundleGivesAccessToResourcesWithinTransitively() throws Exception {
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, UK_ALL_BUNDLE_ID));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, UK_ALL_BUNDLE_ID));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get()
 			.then()
@@ -117,7 +127,7 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void readOnlyWildcardAccessOnBundleGivesAccessToResourcesWithinTransitively() throws Exception {
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, UK_ALL_BUNDLE_ID + "*"));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, UK_ALL_BUNDLE_ID + "*"));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get()
 			.then()
@@ -127,7 +137,7 @@ public class AuthorizationTest extends BaseAuthorizationTest {
 	
 	@Test
 	public void wildcardPermissionGivesAccessToAllMatchingResources() throws Exception {
-		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_BROWSE, SNOMEDCT_UK_CL+"*"));
+		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, SNOMEDCT_UK_CL+"*"));
 		RestExtensions.givenRequestWithToken(ApiTestConstants.CODESYSTEMS_API, token)
 			.get()
 			.then()

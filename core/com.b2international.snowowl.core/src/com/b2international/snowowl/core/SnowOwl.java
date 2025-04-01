@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import com.b2international.commons.StringUtils;
 import com.b2international.commons.config.ConfigurationFactory;
 import com.b2international.commons.config.FileConfigurationSourceProvider;
+import com.b2international.commons.exceptions.FormattedRuntimeException;
 import com.b2international.commons.validation.ApiValidation;
 import com.b2international.snowowl.core.ApplicationContext.ServiceRegistryEntry;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
@@ -383,12 +384,12 @@ public final class SnowOwl {
 	 * 
 	 * @since 3.3
 	 */
-	public static class InitializationException extends RuntimeException {
+	public static class InitializationException extends FormattedRuntimeException {
 
 		private static final long serialVersionUID = 3313953055518425730L;
 
-		public InitializationException(String message) {
-			super(message);
+		public InitializationException(String message, Object...args) {
+			super(message, args);
 		}
 	}
 
