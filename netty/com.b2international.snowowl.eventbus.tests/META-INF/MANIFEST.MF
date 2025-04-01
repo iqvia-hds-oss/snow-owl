@@ -9,4 +9,8 @@ Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit,
  com.b2international.snowowl.test.dependencies,
  io.netty.handler,
- io.netty.codec
+ io.netty.codec,
+ bcpg,
+ bcpkix,
+ bcprov,
+ bcutil
