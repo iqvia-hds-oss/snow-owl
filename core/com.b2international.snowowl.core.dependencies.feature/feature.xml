@@ -650,4 +650,20 @@ Visit us at https://b2ihealthcare.com
          id="org.jsr-305"
          version="0.0.0"/>
 
+   <plugin
+         id="bcpg"
+         version="0.0.0"/>
+
+   <plugin
+         id="bcpkix"
+         version="0.0.0"/>
+
+   <plugin
+         id="bcprov"
+         version="0.0.0"/>
+
+   <plugin
+         id="bcutil"
+         version="0.0.0"/>
+
 </feature>
