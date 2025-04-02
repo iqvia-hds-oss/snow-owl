@@ -53,6 +53,6 @@ Visit us at https://b2ihealthcare.com
 
    <plugin
          id="com.b2international.mapdb"
-         version="3.1.0.b2i"/>
+         version="3.1.1.b2i"/>
 
 </feature>
