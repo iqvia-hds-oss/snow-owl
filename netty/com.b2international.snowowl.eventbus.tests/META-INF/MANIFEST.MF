@@ -5,8 +5,12 @@ Bundle-SymbolicName: com.b2international.snowowl.eventbus.tests
 Bundle-Version: 9.6.1.qualifier
 Bundle-Vendor: B2i Healthcare
 Fragment-Host: com.b2international.snowowl.eventbus
-Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-RequiredExecutionEnvironment: JavaSE-21
 Require-Bundle: org.junit,
  com.b2international.snowowl.test.dependencies,
  io.netty.handler,
- io.netty.codec
+ io.netty.codec,
+ bcpg,
+ bcpkix,
+ bcprov,
+ bcutil
