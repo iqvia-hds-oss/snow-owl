@@ -14,7 +14,7 @@ set CONFIG_AREA=%KERNEL_HOME%\work
 IF DEFINED JAVA_HOME (
 	set JAVA_EXECUTABLE=%JAVA_HOME%\bin\java.exe
 ) else (
-	for /D %%D in ("%KERNEL_HOME%\plugins\org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_17.*") do (
+	for /D %%D in ("%KERNEL_HOME%\plugins\org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_21.*") do (
 		set JAVA_EXECUTABLE="%%~D\jre\bin\java.exe"
 	)
 )
