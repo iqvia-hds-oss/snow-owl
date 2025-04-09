@@ -12,8 +12,8 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<spring.version>6.2.0</spring.version>
-		<spring.security.version>6.4.1</spring.security.version>
+		<spring.version>6.2.5</spring.version>
+		<spring.security.version>6.4.4</spring.security.version>
 		<springdoc.version>2.7.0</springdoc.version>
 		<!-- Ensure that Spring Boot version matches the version supported by SpringDoc -->
 		<spring.boot.version>3.4.0</spring.boot.version>
