@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -63,9 +64,9 @@ public class SnomedRf2ExportRestService extends AbstractRestService {
 		description="Exports SNOMED CT content from the given branch to RF2."
 	)
 	@ApiResponses({
-		@ApiResponse(responseCode="200", description="OK")
+		@ApiResponse(responseCode="200", description="OK", content = {@Content(mediaType = OCTET_STREAM_MEDIA_TYPE)}),
 	})
-	@GetMapping
+	@GetMapping(produces = {OCTET_STREAM_MEDIA_TYPE})
 	public @ResponseBody ResponseEntity<?> export(
 			@Parameter(description = "The branch path", required = true)
 			@PathVariable(value="path")
