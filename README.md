@@ -54,9 +54,11 @@ Not the version you're looking for? View [past releases](https://github.com/b2ih
 
 ### Install and Run
 
-NOTE: You need to have at least version 17 of the JDK installed for local builds and running the development environment. Official releases include the runtime.
+NOTE: You need to have at least version 21 of the JDK installed for local builds and running the development environment. Official releases include the [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=21) runtime.
 
-Once you have downloaded the appropriate package:
+The recommended install option is via the [official OSS](https://hub.docker.com/r/b2ihealthcare/snow-owl-oss) (or the Pro version registries if you have access to those) Docker image. 
+
+If you prefer to download a package and run it manually, then once the package is installed:
 
 * Run `bin/snowowl.sh` on unix, or `bin/snowowl.bat` on windows
 * Run `curl http://localhost:8080/snowowl/info` to access server health status information
