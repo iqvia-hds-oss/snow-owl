@@ -1,6 +1,30 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.7.0
+
+### Java 21
+
+This release changes the primary Java version from 17 LTS to 21 LTS. Release packages and docker images come with a pre-installed [Eclipse Temurin build](https://adoptium.net/temurin/releases/?version=21).
+
+### Bugs/Improvements
+- [core] ensure that suggestion context considers only matching languages when determining search corpus (590fdb6)
+- [api] prevent refreshing a token issued by another server (#1374)
+- [api] ensure that proper response media type is present in SNOMED CT RF2 Export endpoint (c498a5d)
+- [fhir] properly response with HTTP 400 when URL is not set in CodeSystem$validate-code (395abe7)
+
+### Security
+- Mitigate CVE-2025-27152, CVE-2025-27789, CVE-2024-53382, CVE-2025-31486, CVE-2025-31125, CVE-2025-30208, CVE-2025-24010, CVE-2025-25193, CVE-2025-24970, CVE-2025-22223, CVE-2025-22228 security issues
+
+### Dependencies
+- Add bouncycastle 1.77.0
+- Bump Elasticsearch 8 client to 8.17.3
+- Bump Groovy to 3.0.24
+- Bump Spring to 6.2.5
+- Bump Spring Security to 6.4.4
+- Bump Netty to 4.1.119.Final
+- Bump Apache Commons IO to 2.18.0
+
 ## 9.6.0
 
 ### Core
