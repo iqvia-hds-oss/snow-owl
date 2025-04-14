@@ -97,15 +97,21 @@ public class FhirCodeSystemController extends AbstractFhirController {
 	@ApiResponse(responseCode = "201", description = "Resource created")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PostMapping(consumes =	{
+		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_VALUE,
 		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_VALUE,
 		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
 		APPLICATION_JSON_VALUE,
 		TEXT_JSON_VALUE,
 		
+		APPLICATION_FHIR_XML_5_0_VALUE,
 		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_VALUE,
 		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_VALUE,
 		APPLICATION_FHIR_XML_4_0_1_VALUE,
 		APPLICATION_FHIR_XML_VALUE,
 		APPLICATION_XML_VALUE,
@@ -113,16 +119,22 @@ public class FhirCodeSystemController extends AbstractFhirController {
 	})
 	public ResponseEntity<Void> create(
 			
-		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The code system resource", content = { 
+		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The code system resource", content = {
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
 
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
@@ -224,15 +236,21 @@ public class FhirCodeSystemController extends AbstractFhirController {
 		final String id,
 		
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The code system resource", content = { 
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
 
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),

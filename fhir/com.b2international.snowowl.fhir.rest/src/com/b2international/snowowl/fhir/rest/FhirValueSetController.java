@@ -97,15 +97,21 @@ public class FhirValueSetController extends AbstractFhirController {
 	@ApiResponse(responseCode = "201", description = "Resource created")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PostMapping(consumes =	{
+		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_VALUE,
 		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_VALUE,
 		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
 		APPLICATION_JSON_VALUE,
 		TEXT_JSON_VALUE,
 		
+		APPLICATION_FHIR_XML_5_0_VALUE,
 		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_VALUE,
 		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_VALUE,
 		APPLICATION_FHIR_XML_4_0_1_VALUE,
 		APPLICATION_FHIR_XML_VALUE,
 		APPLICATION_XML_VALUE,
@@ -114,15 +120,21 @@ public class FhirValueSetController extends AbstractFhirController {
 	public ResponseEntity<Void> create(
 			
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The value set resource", content = { 
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
 
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
@@ -202,15 +214,21 @@ public class FhirValueSetController extends AbstractFhirController {
 	@ApiResponse(responseCode = "201", description = "Resource created")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PutMapping(value = "/{id:**}", consumes = {
+		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_VALUE,
 		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_VALUE,
 		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
 		APPLICATION_JSON_VALUE,
 		TEXT_JSON_VALUE,
 		
+		APPLICATION_FHIR_XML_5_0_VALUE,
 		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_VALUE,
 		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_VALUE,
 		APPLICATION_FHIR_XML_4_0_1_VALUE,
 		APPLICATION_FHIR_XML_VALUE,
 		APPLICATION_XML_VALUE,
@@ -224,15 +242,21 @@ public class FhirValueSetController extends AbstractFhirController {
 		final String id,
 		
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The value set resource", content = { 
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
 
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
 			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
@@ -350,15 +374,21 @@ public class FhirValueSetController extends AbstractFhirController {
 	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@GetMapping(produces = {
+		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_VALUE,
 		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_VALUE,
 		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
 		APPLICATION_JSON_VALUE,
 		TEXT_JSON_VALUE,
 		
+		APPLICATION_FHIR_XML_5_0_VALUE,
 		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_VALUE,
 		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_VALUE,
 		APPLICATION_FHIR_XML_4_0_1_VALUE,
 		APPLICATION_FHIR_XML_VALUE,
 		APPLICATION_XML_VALUE,
@@ -374,15 +404,21 @@ public class FhirValueSetController extends AbstractFhirController {
 		final String accept,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_VALUE,
 			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_VALUE,
 			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_VALUE,
 			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
 			APPLICATION_JSON_VALUE,
 			TEXT_JSON_VALUE,
 			
+			APPLICATION_FHIR_XML_5_0_VALUE,
 			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_VALUE,
 			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_VALUE,
 			APPLICATION_FHIR_XML_4_0_1_VALUE,
 			APPLICATION_FHIR_XML_VALUE,
 			APPLICATION_XML_VALUE,
@@ -463,15 +499,21 @@ public class FhirValueSetController extends AbstractFhirController {
 	@ApiResponse(responseCode = "400", description = "Bad request")
 	@ApiResponse(responseCode = "404", description = "Value set not found")
 	@GetMapping(value = "/{id:**}", produces = {
+		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_VALUE,
 		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_VALUE,
 		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
 		APPLICATION_JSON_VALUE,
 		TEXT_JSON_VALUE,
 		
+		APPLICATION_FHIR_XML_5_0_VALUE,
 		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_VALUE,
 		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_VALUE,
 		APPLICATION_FHIR_XML_4_0_1_VALUE,
 		APPLICATION_FHIR_XML_VALUE,
 		APPLICATION_XML_VALUE,
@@ -492,15 +534,21 @@ public class FhirValueSetController extends AbstractFhirController {
 		final String accept,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_VALUE,
 			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_VALUE,
 			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_VALUE,
 			APPLICATION_FHIR_JSON_4_0_1_VALUE,
 			APPLICATION_FHIR_JSON_VALUE,
 			APPLICATION_JSON_VALUE,
 			TEXT_JSON_VALUE,
 			
+			APPLICATION_FHIR_XML_5_0_VALUE,
 			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_VALUE,
 			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_VALUE,
 			APPLICATION_FHIR_XML_4_0_1_VALUE,
 			APPLICATION_FHIR_XML_VALUE,
 			APPLICATION_XML_VALUE,
