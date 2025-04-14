@@ -22,7 +22,7 @@
 		<slf4j.version>2.0.11</slf4j.version>
 		
 		<!-- Build tool/compiler versions -->
-		<tycho.version>4.0.10</tycho.version>
+		<tycho.version>4.0.12</tycho.version>
 		<jacoco.version>0.8.11</jacoco.version>
 		
 		<!-- Versioning -->
