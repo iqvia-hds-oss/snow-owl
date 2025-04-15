@@ -480,18 +480,19 @@ public abstract class SnomedRestFixtures {
 				.statusCode(200)
 				.extract().as(Map.class);
 
-		final Json reactivationRequest = Json.assign(concept)
-			.without("inactivationIndicator")
-			.without("associationTargets")
-			.with("active", true)
-			.with("commitComment", "Reactivated concept");
-
-		// reactivate all relationships as well
-		final Map<String, Object> relationships = (Map<String, Object>) reactivationRequest.get("relationships");
+		// make sure all relationships also get reactivated
+		final Map<String, Object> relationships = (Map<String, Object>) concept.get("relationships");
 		final List<Map<String, Object>> relationshipItems = (List<Map<String, Object>>) relationships.get("items");
 		relationshipItems.forEach(relationship -> {
 			relationship.put("active", true);
 		});
+		
+		// reactivate the concept and its relationships
+		final Json reactivationRequest = Json.object(
+			"active", true,
+			"relationships", relationships,
+			"commitComment", "Reactivated concept"
+		);
 
 		updateComponent(branch, SnomedComponentType.CONCEPT, conceptId, reactivationRequest).statusCode(204);
 	}
