@@ -534,8 +534,10 @@ public class SnomedClassificationApiTest extends AbstractSnomedApiTest {
 
 		// Create code system that is an extension of the national extension
 		createCodeSystem(createCodeSystemBody(ResourceURI.branch(CodeSystem.RESOURCE_TYPE, nationalShortName, "v1"), null, "SNOMEDCT-EXT-4985", null)
-			.with("additionalProperties", Json.object(
-				SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of(extensionModuleId)
+			.merge(Json.object(
+				"settings", Json.object(
+					SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of(extensionModuleId)
+				)
 			)))
 			.statusCode(201);
 
