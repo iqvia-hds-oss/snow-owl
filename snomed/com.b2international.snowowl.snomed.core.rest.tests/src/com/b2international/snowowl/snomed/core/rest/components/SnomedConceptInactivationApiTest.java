@@ -20,7 +20,6 @@ import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRe
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.updateComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.*;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.assertCreated;
-import static com.google.common.collect.Maps.newHashMap;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.everyItem;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -259,19 +258,20 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 		// Reactivate relationships first
 		final List<Map<String, Object>> relationshipItems = (List<Map<String, Object>>) ((Map<String, Object>) concept.get("relationships")).get("items");
 		relationshipItems.forEach(relationship -> {
-			final Map<String, Object> updatedRelationship = newHashMap(relationship);
-			updatedRelationship.put("active", true);
-			updatedRelationship.put("commitComment", "Reactivate Relationship");
-			updateRelationship((String) relationship.get("id"), updatedRelationship);
+			updateRelationship(
+				(String) relationship.get("id"), 
+				Json.object(
+					"active", true,
+					"commitComment", "Reactivate Relationship"
+				)
+			);
 		});
 		
 		// Reactivate the child concept
-		final Map<String, Object> reactivationRequest = Maps.newHashMap(concept);
-		reactivationRequest.put("active", true);
-		reactivationRequest.remove("relationships"); //remove relationships from concept update call
-		reactivationRequest.put("commitComment", "Reactivated concept");
-
-		updateConcept(inactiveChildConcept, reactivationRequest);
+		updateConcept(inactiveChildConcept, Json.object(
+			"active", true,
+			"commitComment", "Reactivated child concept"
+		));
 
 		// Verify that the concept is active again, no association targets, no indicator
 		assertGetConcept(inactiveChildConcept, "inactivationProperties()")
