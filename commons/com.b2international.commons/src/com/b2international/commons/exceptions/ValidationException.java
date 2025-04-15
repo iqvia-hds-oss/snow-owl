@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,6 @@ package com.b2international.commons.exceptions;
 
 import java.util.Collection;
 
-import jakarta.validation.ConstraintViolation;
-
-import com.b2international.commons.validation.ConstraintViolations;
-
 /**
  * @since 4.1.1
  */
@@ -28,9 +24,9 @@ public final class ValidationException extends BadRequestException {
 
 	private static final long serialVersionUID = -1656929747149578841L;
 
-	public ValidationException(Collection<? extends ConstraintViolation<?>> violations) {
+	public ValidationException(Collection<String> violations) {
 		super("%s validation error%s", violations.size(), violations.size() == 1 ? "" : "s");
-		withAdditionalInfo("violations", ConstraintViolations.format(violations));
+		withAdditionalInfo("violations", violations);
 	}
 	
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,14 @@ import static java.util.Collections.singletonList;
 import java.util.List;
 import java.util.Set;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.ValidationProviderResolver;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
-import jakarta.validation.executable.ExecutableValidator;
-import jakarta.validation.metadata.BeanDescriptor;
-import jakarta.validation.spi.ValidationProvider;
-
 import org.hibernate.validator.HibernateValidator;
 
 import com.b2international.commons.exceptions.ValidationException;
+
+import jakarta.validation.*;
+import jakarta.validation.executable.ExecutableValidator;
+import jakarta.validation.metadata.BeanDescriptor;
+import jakarta.validation.spi.ValidationProvider;
 
 /**
  * Custom ValidationUtil class to access powerful bean validation infrastructure
@@ -71,7 +67,7 @@ public class ApiValidation {
 	public static <T> T checkInput(T object) {
 		final Set<ConstraintViolation<T>> violations = getValidator().validate(object);
 		if (!violations.isEmpty()) {
-			throw new ValidationException(violations);
+			throw new ValidationException(ConstraintViolations.format(violations));
 		} else {
 			return object;
 		}
