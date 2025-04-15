@@ -48,14 +48,14 @@ public final class RefSetMemberBulkRestRequest extends BaseSnomedResourceRestCha
 		return requests;
 	}
 	
-	public final class RestRequest {
+	public static final class RestRequest {
 
 		private String action;
 
 		private Map<String, Object> source = newHashMap();
 
 		@JsonCreator
-		RestRequest(@JsonProperty("action") String action) {
+		public RestRequest(@JsonProperty("action") String action) {
 			this.action = action;
 		}
 
