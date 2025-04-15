@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,10 @@ import com.google.common.base.Strings;
 /**
  * @since 4.5
  */
-public class SnomedRefSetRestInput {
+public class SnomedRefSetRestCreate extends BaseSnomedResourceRestChange {
 
 	@JsonUnwrapped
-	private SnomedConceptRestInput conceptRestInput;
+	private SnomedConceptRestCreate conceptRestInput;
 	
 	private SnomedRefSetType type;
 	private String referencedComponentType;
@@ -51,11 +51,11 @@ public class SnomedRefSetRestInput {
 		this.referencedComponentType = referencedComponentType;
 	}
 
-	public SnomedConceptRestInput getConceptRestInput() {
+	public SnomedConceptRestCreate getConceptRestInput() {
 		return conceptRestInput;
 	}
 	
-	public void setConceptRestInput(SnomedConceptRestInput conceptRestInput) {
+	public void setConceptRestInput(SnomedConceptRestCreate conceptRestInput) {
 		this.conceptRestInput = conceptRestInput;
 	}
 	

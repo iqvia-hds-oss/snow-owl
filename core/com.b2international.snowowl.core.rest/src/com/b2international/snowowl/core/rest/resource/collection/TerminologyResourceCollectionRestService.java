@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2023-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import com.b2international.snowowl.core.collection.TerminologyResourceCollection
 import com.b2international.snowowl.core.collection.TerminologyResourceCollections;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.AbstractRestService;
-import com.b2international.snowowl.core.rest.domain.ResourceRequest;
 import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
-import com.b2international.snowowl.core.rest.resource.ResourceUpdateRestInput;
+import com.b2international.snowowl.core.rest.resource.ResourceRestUpdate;
 import com.b2international.snowowl.core.rest.resource.TerminologyResourceRestSearch;
 import com.google.common.base.Strings;
 
@@ -164,14 +163,14 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<Void> create(
 		@RequestBody
-		final ResourceRequest<TerminologyResourceCollectionRestCreate> body,
+		final TerminologyResourceCollectionRestCreate body,
 		
 		@RequestHeader(value = X_AUTHOR, required = false)
 		final String author) {
 
 		
-		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Created new Resource Collection %s", body.getChange().getId()) : body.getCommitComment();
-		final String collectionId = body.getChange().toCreateRequest()
+		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Created new Resource Collection %s", body.getId()) : body.getCommitComment();
+		final String collectionId = body.toCreateRequest()
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES)
@@ -196,12 +195,12 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 			final String collectionId,
 			
 			@RequestBody
-			final ResourceRequest<ResourceUpdateRestInput> body,
+			final ResourceRestUpdate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Terminology Collection Resource %s", collectionId) : body.getCommitComment();
-		body.getChange().toUpdateRequest(collectionId)
+		body.toUpdateRequest(collectionId)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);

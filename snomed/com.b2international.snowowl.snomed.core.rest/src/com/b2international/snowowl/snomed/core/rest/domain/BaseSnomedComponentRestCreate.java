@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@ import com.b2international.snowowl.snomed.core.domain.IdGenerationStrategy;
 import com.b2international.snowowl.snomed.core.domain.NamespaceConceptIdStrategy;
 import com.b2international.snowowl.snomed.core.domain.NamespaceIdStrategy;
 import com.b2international.snowowl.snomed.datastore.request.SnomedComponentCreateRequestBuilder;
+import com.google.common.base.MoreObjects.ToStringHelper;
 
 /**
  * @since 4.0
  */
-public abstract class AbstractSnomedComponentRestInput<I extends SnomedComponentCreateRequestBuilder<I>> {
+public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCreateRequestBuilder<I>> extends BaseSnomedResourceRestChange {
 
 	private String id;
 	private Boolean active = Boolean.TRUE;
@@ -95,5 +96,15 @@ public abstract class AbstractSnomedComponentRestInput<I extends SnomedComponent
 		} else {
 			return new ConstantIdStrategy(idOrNull);
 		}
+	}
+	
+	@Override
+	protected void doToString(ToStringHelper toStringHelper) {
+		super.doToString(toStringHelper);
+		toStringHelper.add("id", getId());
+		toStringHelper.add("active", isActive());
+		toStringHelper.add("moduleId", getModuleId());
+		toStringHelper.add("namespaceId", getNamespaceId());
+		toStringHelper.add("namespaceConceptId", getNamespaceConceptId());
 	}
 }

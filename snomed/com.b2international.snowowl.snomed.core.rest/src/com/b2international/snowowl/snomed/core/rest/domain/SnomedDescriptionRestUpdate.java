@@ -24,7 +24,7 @@ import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 /**
  * @since 1.0
  */
-public class SnomedDescriptionRestUpdate extends AbstractSnomedComponentRestUpdate {
+public class SnomedDescriptionRestUpdate extends BaseSnomedComponentRestUpdate {
 
 	private String caseSignificanceId;
 	private Map<String, Acceptability> acceptability;

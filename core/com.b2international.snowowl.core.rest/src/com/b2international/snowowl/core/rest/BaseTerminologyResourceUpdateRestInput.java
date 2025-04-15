@@ -22,7 +22,7 @@ import com.b2international.snowowl.core.Dependency;
 /**
  * @since 8.12.0
  */
-public abstract class BaseTerminologyResourceUpdateRestInput extends BaseResourceUpdateRestInput {
+public abstract class BaseTerminologyResourceUpdateRestInput extends BaseResourceRestUpdate {
 
 	private String oid;
 	private String branchPath;

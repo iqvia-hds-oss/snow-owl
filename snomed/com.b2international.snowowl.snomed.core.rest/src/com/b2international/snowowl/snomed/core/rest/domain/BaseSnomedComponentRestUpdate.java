@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonFormat.Shape;
 /**
  * @since 4.0
  */
-public abstract class AbstractSnomedComponentRestUpdate {
+public abstract class BaseSnomedComponentRestUpdate extends BaseSnomedResourceRestChange {
 
 	private String moduleId;
 	private Boolean active;

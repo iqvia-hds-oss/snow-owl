@@ -25,7 +25,7 @@ import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 /**
  * @since 4.0
  */
-public class SnomedConceptRestUpdate extends AbstractSnomedComponentRestUpdate {
+public class SnomedConceptRestUpdate extends BaseSnomedComponentRestUpdate {
 
 	private String definitionStatusId;
 	private SubclassDefinitionStatus subclassDefinitionStatus;

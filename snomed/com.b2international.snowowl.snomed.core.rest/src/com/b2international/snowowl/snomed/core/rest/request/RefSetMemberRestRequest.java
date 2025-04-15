@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,22 @@ import java.util.Map;
 
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.snomed.core.rest.domain.BaseSnomedResourceRestChange;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * @since 4.5
+ * @since 9.7
  */
-public final class RestRequest {
+public final class RefSetMemberRestRequest extends BaseSnomedResourceRestChange {
 
 	private String action;
 
 	private Map<String, Object> source = newHashMap();
 
 	@JsonCreator
-	RestRequest(@JsonProperty("action") String action) {
+	RefSetMemberRestRequest(@JsonProperty("action") String action) {
 		this.action = action;
 	}
 
@@ -54,5 +55,5 @@ public final class RestRequest {
 	public <C extends ServiceProvider> Request<C, ?> resolve(RequestResolver<C> resolver) {
 		return resolver.resolve(action, source);
 	}
-
+	
 }

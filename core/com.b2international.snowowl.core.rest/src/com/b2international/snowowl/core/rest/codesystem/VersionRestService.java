@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.b2international.snowowl.core.jobs.JobRequests;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.rest.AbstractRestService;
-import com.b2international.snowowl.core.rest.domain.ResourceRequest;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.core.version.Versions;
@@ -133,25 +132,24 @@ public class VersionRestService extends AbstractRestService {
 	@ResponseStatus(value = HttpStatus.CREATED)
 	public ResponseEntity<Void> createVersion(
 			@Parameter(description="Version parameters")
-			@RequestBody final ResourceRequest<VersionRestInput> input,
+			@RequestBody final VersionRestCreate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
-		final VersionRestInput change = input.getChange();
-		ApiValidation.checkInput(change);
+		ApiValidation.checkInput(body);
 		
-		String newVersionUri = String.join(Branch.SEPARATOR, change.getResource().toString(), change.getVersion());
+		String newVersionUri = String.join(Branch.SEPARATOR, body.getResource().toString(), body.getVersion());
 		
 		String jobId = ResourceRequests.prepareNewVersion()
-				.setResource(change.getResource())
-				.setVersion(change.getVersion())
-				.setDescription(change.getDescription())
-				.setEffectiveTime(change.getEffectiveTime())
-				.setForce(change.isForce())
-				.setCommitComment(input.getCommitComment())
+				.setResource(body.getResource())
+				.setVersion(body.getVersion())
+				.setDescription(body.getDescription())
+				.setEffectiveTime(body.getEffectiveTime())
+				.setForce(body.isForce())
+				.setCommitComment(body.getCommitComment())
 				.setAuthor(author)
 				.buildAsync()
-				.runAsJobWithRestart(ResourceRequests.versionJobKey(change.getResource()), "Creating version " + newVersionUri)
+				.runAsJobWithRestart(ResourceRequests.versionJobKey(body.getResource()), "Creating version " + newVersionUri)
 				.execute(getBus())
 				.getSync(1, TimeUnit.MINUTES);
 		

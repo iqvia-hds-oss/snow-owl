@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.datastore.request.SnomedDescriptionCreateRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.google.common.base.MoreObjects.ToStringHelper;
 
 /**
  * @since 1.0
  */
-public class SnomedDescriptionRestInput extends AbstractSnomedComponentRestInput<SnomedDescriptionCreateRequestBuilder> {
+public class SnomedDescriptionRestCreate extends BaseSnomedComponentRestCreate<SnomedDescriptionCreateRequestBuilder> {
 
 	private String typeId;
 	private String term;
@@ -117,21 +118,14 @@ public class SnomedDescriptionRestInput extends AbstractSnomedComponentRestInput
 	}
 
 	@Override
-	public String toString() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("SnomedDescriptionRestInput [typeId=");
-		builder.append(typeId);
-		builder.append(", term=");
-		builder.append(term);
-		builder.append(", languageCode=");
-		builder.append(languageCode);
-		builder.append(", conceptId=");
-		builder.append(conceptId);
-		builder.append(", caseSignificanceId=");
-		builder.append(caseSignificanceId);
-		builder.append(", acceptability=");
-		builder.append(acceptability);
-		builder.append("]");
-		return builder.toString();
+	protected void doToString(ToStringHelper toStringHelper) {
+		super.doToString(toStringHelper);
+		toStringHelper.add("term", getTerm());
+		toStringHelper.add("typeId", getTypeId());
+		toStringHelper.add("languageCode", getLanguageCode());
+		toStringHelper.add("conceptId", getConceptId());
+		toStringHelper.add("caseSignifanceId", getCaseSignificanceId());
+		toStringHelper.add("acceptability", getAcceptability());
 	}
+	
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package com.b2international.snowowl.core.rest.resource;
 
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.request.ResourceUpdateRequestBuilder;
-import com.b2international.snowowl.core.rest.BaseResourceUpdateRestInput;
+import com.b2international.snowowl.core.rest.BaseResourceRestUpdate;
 
 /**
  * @since 8.5.1
  */
-public class ResourceUpdateRestInput extends BaseResourceUpdateRestInput {
+public class ResourceRestUpdate extends BaseResourceRestUpdate {
 
 	public ResourceUpdateRequestBuilder toUpdateRequest(String resourceId) {
 		return ResourceRequests.prepareUpdate(resourceId)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.rest.AbstractRestService;
 import com.b2international.snowowl.core.rest.CoreApiConfig;
-import com.b2international.snowowl.core.rest.domain.ResourceRequest;
 import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -160,14 +159,14 @@ public class BundleRestService extends AbstractRestService {
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<Void> create(
 			@RequestBody
-			final ResourceRequest<BundleRestCreate> body,
+			final BundleRestCreate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
-		final String commitComment = body.getCommitComment() == null ? String.format("Created new bundle %s", body.getChange().getTitle()) : body.getCommitComment();
+		final String commitComment = body.getCommitComment() == null ? String.format("Created new bundle %s", body.getTitle()) : body.getCommitComment();
 		
-		final String codeSystemId = body.getChange().toCreateRequest()
+		final String codeSystemId = body.toCreateRequest()
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES)
@@ -191,21 +190,21 @@ public class BundleRestService extends AbstractRestService {
 			final String bundleId,
 			
 			@RequestBody
-			final ResourceRequest<BundleRestUpdate> body,
+			final BundleRestUpdate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
 		final String commitComment = body.getCommitComment() == null ? String.format("Update bundle %s", getBundleTitle(bundleId, body)) : body.getCommitComment();
 		
-		body.getChange().toUpdateRequest(bundleId)
+		body.toUpdateRequest(bundleId)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);
 	}
 
-	private String getBundleTitle(final String bundleId, final ResourceRequest<BundleRestUpdate> body) {
-		return body.getChange().getTitle() != null ? body.getChange().getTitle() : ResourceRequests.bundles().prepareGet(bundleId).buildAsync().execute(getBus()).getSync(1, TimeUnit.MINUTES).getTitle();
+	private String getBundleTitle(final String bundleId, final BundleRestUpdate body) {
+		return body.getTitle() != null ? body.getTitle() : ResourceRequests.bundles().prepareGet(bundleId).buildAsync().execute(getBus()).getSync(1, TimeUnit.MINUTES).getTitle();
 	}
 	
 	@Operation(

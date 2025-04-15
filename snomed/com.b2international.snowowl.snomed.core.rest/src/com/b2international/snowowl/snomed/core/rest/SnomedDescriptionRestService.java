@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,9 @@ import com.b2international.snowowl.core.rest.SnomedApiConfig;
 import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescriptions;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedDescriptionRestInput;
+import com.b2international.snowowl.snomed.core.rest.domain.SnomedDescriptionRestCreate;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedDescriptionRestSearch;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedDescriptionRestUpdate;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedResourceRequest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -157,16 +156,15 @@ public class SnomedDescriptionRestService extends AbstractRestService {
 			
 			@Parameter(description = "Description parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedDescriptionRestInput> body,
+			final SnomedDescriptionRestCreate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
-		final SnomedDescriptionRestInput change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 			
-		final String createdDescriptionId = change.toRequestBuilder()
+		final String createdDescriptionId = body.toRequestBuilder()
 				.commit()
 				.setDefaultModuleId(defaultModuleId)
 				.setAuthor(author)
@@ -233,7 +231,7 @@ public class SnomedDescriptionRestService extends AbstractRestService {
 			
 			@Parameter(description = "Update Description parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedDescriptionRestUpdate> body,
+			final SnomedDescriptionRestUpdate body,
 			
 			@Parameter(description = "Force update flag")
 			@RequestParam(value = "force", defaultValue="false", required=false)
@@ -244,8 +242,7 @@ public class SnomedDescriptionRestService extends AbstractRestService {
 
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
-		body.getChange()
-			.toRequestBuilder(descriptionId)
+		body.toRequestBuilder(descriptionId)
 			.force(force)
 			.commit()
 			.setDefaultModuleId(defaultModuleId)

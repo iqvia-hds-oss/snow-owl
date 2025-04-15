@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.b2international.snowowl.core.Resources;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.rest.AbstractRestService;
-import com.b2international.snowowl.core.rest.domain.ResourceRequest;
 import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
 import com.google.common.base.Strings;
 
@@ -170,12 +169,12 @@ public class ResourceRestService extends AbstractRestService {
 			final String resourceId,
 			
 			@RequestBody
-			final ResourceRequest<ResourceUpdateRestInput> body,
+			final ResourceRestUpdate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Resource %s", resourceId) : body.getCommitComment();
-		body.getChange().toUpdateRequest(resourceId)
+		body.toUpdateRequest(resourceId)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);

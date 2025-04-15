@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.rest.AbstractRestService;
 import com.b2international.snowowl.core.rest.CoreApiConfig;
-import com.b2international.snowowl.core.rest.domain.ResourceRequest;
 import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
 import com.b2international.snowowl.core.rest.resource.TerminologyResourceRestSearch;
 import com.google.common.base.Strings;
@@ -167,14 +166,14 @@ public class CodeSystemRestService extends AbstractRestService {
 	@ResponseStatus(HttpStatus.CREATED)
 	public ResponseEntity<Void> create(
 		@RequestBody
-		final ResourceRequest<CodeSystemRestCreate> body,
+		final CodeSystemRestCreate body,
 		
 		@RequestHeader(value = X_AUTHOR, required = false)
 		final String author) {
 
 		
-		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Created new Code System %s", body.getChange().getId()) : body.getCommitComment();
-		final String codeSystemId = body.getChange().toCreateRequest()
+		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Created new Code System %s", body.getId()) : body.getCommitComment();
+		final String codeSystemId = body.toCreateRequest()
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES)
@@ -199,12 +198,12 @@ public class CodeSystemRestService extends AbstractRestService {
 			final String codeSystemId,
 			
 			@RequestBody
-			final ResourceRequest<CodeSystemUpdateRestInput> body,
+			final CodeSystemUpdateRestInput body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Code System %s", codeSystemId) : body.getCommitComment();
-		body.getChange().toCodeSystemUpdateRequest(codeSystemId)
+		body.toCodeSystemUpdateRequest(codeSystemId)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);

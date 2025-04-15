@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,11 @@ import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMembers;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedMemberRestUpdate;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedRefSetMemberRestInput;
+import com.b2international.snowowl.snomed.core.rest.domain.SnomedRefSetMemberRestCreate;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedReferenceSetMemberRestSearch;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedResourceRequest;
 import com.b2international.snowowl.snomed.core.rest.request.RefSetMemberRequestResolver;
 import com.b2international.snowowl.snomed.core.rest.request.RequestResolver;
-import com.b2international.snowowl.snomed.core.rest.request.RestRequest;
+import com.b2international.snowowl.snomed.core.rest.request.RefSetMemberRestRequest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRefSetMemberSearchRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 
@@ -186,16 +185,15 @@ public class SnomedReferenceSetMemberRestService extends AbstractRestService {
 			
 			@Parameter(description = "Reference set member parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedRefSetMemberRestInput> body,
+			final SnomedRefSetMemberRestCreate body,
 
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
-		final SnomedRefSetMemberRestInput change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 		
-		final String createdRefSetMemberId = change.toRequestBuilder()
+		final String createdRefSetMemberId = body.toRequestBuilder()
 				.commit()
 				.setDefaultModuleId(defaultModuleId)
 				.setAuthor(author)
@@ -271,7 +269,7 @@ public class SnomedReferenceSetMemberRestService extends AbstractRestService {
 			
 			@Parameter(description = "Updated Reference Set parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedMemberRestUpdate> body,
+			final SnomedMemberRestUpdate body,
 			
 			@Parameter(description = "Force update flag")
 			@RequestParam(value = "force", defaultValue="false", required=false)
@@ -280,12 +278,11 @@ public class SnomedReferenceSetMemberRestService extends AbstractRestService {
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
-		final SnomedMemberRestUpdate update = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 		
 		SnomedRequests.prepareUpdateMember(memberId)
-			.setSource(update.getSource())
+			.setSource(body.getSource())
 			.force(force)
 			.commit()
 			.setDefaultModuleId(defaultModuleId)
@@ -323,23 +320,22 @@ public class SnomedReferenceSetMemberRestService extends AbstractRestService {
 			
 			@Parameter(description = "Reference set member action")
 			@RequestBody 
-			final SnomedResourceRequest<RestRequest> body,
+			final RefSetMemberRestRequest body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
 		final RequestResolver<TransactionContext> resolver = new RefSetMemberRequestResolver();
 		
-		final RestRequest change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 		
-		change.setSource("memberId", memberId);
+		body.setSource("memberId", memberId);
 		
 		return SnomedRequests.prepareCommit()
 				.setDefaultModuleId(defaultModuleId)
 				.setAuthor(author)
-				.setBody(change.resolve(resolver))
+				.setBody(body.resolve(resolver))
 				.setCommitComment(commitComment)
 				.build(path)
 				.execute(getBus())

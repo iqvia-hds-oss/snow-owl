@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRelationshipCreateRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
-import com.google.common.base.MoreObjects;
+import com.google.common.base.MoreObjects.ToStringHelper;
 
 /**
  * @since 1.0
  */
-public class SnomedRelationshipRestInput extends AbstractSnomedComponentRestInput<SnomedRelationshipCreateRequestBuilder> {
+public class SnomedRelationshipRestCreate extends BaseSnomedComponentRestCreate<SnomedRelationshipCreateRequestBuilder> {
 
 	private String sourceId;
 	private String typeId;
@@ -128,19 +128,16 @@ public class SnomedRelationshipRestInput extends AbstractSnomedComponentRestInpu
 	}
 
 	@Override
-	public String toString() {
-		return MoreObjects.toStringHelper(this)
-			.add("id", getId())
-			.add("moduleId", getModuleId())
-			.add("sourceId", sourceId)
-			.add("typeId", typeId)
-			.add("destinationId", destinationId)
-			.add("destinationNegated", destinationNegated)
-			.add("value", value)
-			.add("relationshipGroup", relationshipGroup)
-			.add("unionGroup", unionGroup)
-			.add("characteristicTypeId", characteristicTypeId)
-			.add("modifierId", modifierId)
-			.toString();
+	protected void doToString(ToStringHelper toStringHelper) {
+		super.doToString(toStringHelper);
+		toStringHelper.add("sourceId", getSourceId());
+		toStringHelper.add("typeId", getTypeId());
+		toStringHelper.add("destinationId", getDestinationId());
+		toStringHelper.add("destinationNegated", isDestinationNegated());
+		toStringHelper.add("value", getValue());
+		toStringHelper.add("relationshipGroup", getRelationshipGroup());
+		toStringHelper.add("unionGroup", getUnionGroup());
+		toStringHelper.add("characteristicTypeId", getCharacteristicTypeId());
+		toStringHelper.add("modifierId", getModifierId());
 	}
 }

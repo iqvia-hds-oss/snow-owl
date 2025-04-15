@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,12 @@ package com.b2international.snowowl.core.rest;
 
 import java.util.Map;
 
+import com.b2international.snowowl.core.rest.domain.BaseResourceRestChange;
+
 /**
  * @since 8.0
  */
-public abstract class BaseResourceUpdateRestInput {
+public abstract class BaseResourceRestUpdate extends BaseResourceRestChange {
 	
 	private String bundleId;
 	private String url;

@@ -22,7 +22,7 @@ import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 /**
  * @since 1.0
  */
-public class SnomedRelationshipRestUpdate extends AbstractSnomedComponentRestUpdate {
+public class SnomedRelationshipRestUpdate extends BaseSnomedComponentRestUpdate {
 
 	private String typeId;
 	private String destinationId;

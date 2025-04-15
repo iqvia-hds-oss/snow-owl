@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.b2international.snowowl.snomed.core.rest.domain;
+package com.b2international.snowowl.core.rest.domain;
 
-import com.b2international.snowowl.core.rest.domain.ResourceRequest;
+import javax.annotation.OverridingMethodsMustInvokeSuper;
+
+import com.google.common.base.MoreObjects;
 import com.google.common.base.MoreObjects.ToStringHelper;
 
 /**
- * @since 1.0
- * @param <T> - the actual resource request body
+ * @since 9.7
  */
-public final class SnomedResourceRequest<T> extends ResourceRequest<T> {
+public abstract class BaseResourceRestChange {
+	
+	private String commitComment;
 
-	private String defaultModuleId;
-
-	public String getDefaultModuleId() {
-		return defaultModuleId;
+	public String getCommitComment() {
+		return commitComment;
 	}
 
-	public void setDefaultModuleId(final String defaultModuleId) {
-		this.defaultModuleId = defaultModuleId;
+	public void setCommitComment(final String commitComment) {
+		this.commitComment = commitComment;
 	}
 
 	@Override
-	protected void doToString(ToStringHelper toStringHelper) {
-		toStringHelper.add("defaultModuleId", defaultModuleId);
+	public final String toString() {
+		ToStringHelper toStringHelper = MoreObjects.toStringHelper(getClass()).add("commitComment", commitComment);
+		doToString(toStringHelper);
+		return toStringHelper.toString();
 	}
+
+	@OverridingMethodsMustInvokeSuper
+	protected void doToString(ToStringHelper toStringHelper) {
+	}
+
 }

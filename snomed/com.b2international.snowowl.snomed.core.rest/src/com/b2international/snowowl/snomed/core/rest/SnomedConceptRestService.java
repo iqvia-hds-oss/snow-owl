@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,9 @@ import com.b2international.snowowl.core.rest.SnomedApiConfig;
 import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcepts;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedConceptRestInput;
+import com.b2international.snowowl.snomed.core.rest.domain.SnomedConceptRestCreate;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedConceptRestSearch;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedConceptRestUpdate;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedResourceRequest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.google.common.collect.ImmutableSet;
 
@@ -215,16 +214,15 @@ public class SnomedConceptRestService extends AbstractRestService {
 
 			@Parameter(description = "Concept parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedConceptRestInput> body,
+			final SnomedConceptRestCreate body,
 
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
-		final SnomedConceptRestInput change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 		
-		final String createdConceptId = change.toRequestBuilder()
+		final String createdConceptId = body.toRequestBuilder()
 			.commit()
 			.setDefaultModuleId(defaultModuleId)
 			.setAuthor(author)
@@ -270,7 +268,7 @@ public class SnomedConceptRestService extends AbstractRestService {
 			
 			@Parameter(description = "Updated Concept parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedConceptRestUpdate> body,
+			final SnomedConceptRestUpdate body,
 			
 			@Parameter(description = "Force update flag")
 			@RequestParam(value = "force", defaultValue="false", required=false)
@@ -279,11 +277,10 @@ public class SnomedConceptRestService extends AbstractRestService {
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 
-		final SnomedConceptRestUpdate change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 		
-		change.toRequestBuilder(conceptId)
+		body.toRequestBuilder(conceptId)
 			.force(force)
 			.commit()
 			.setDefaultModuleId(defaultModuleId)

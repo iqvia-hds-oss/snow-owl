@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,8 @@ import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSet;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSets;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedRefSetRestInput;
+import com.b2international.snowowl.snomed.core.rest.domain.SnomedRefSetRestCreate;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedReferenceSetRestSearch;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedResourceRequest;
 import com.b2international.snowowl.snomed.core.rest.request.*;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.google.common.collect.Sets;
@@ -221,16 +220,15 @@ public class SnomedReferenceSetRestService extends AbstractRestService {
 			
 			@Parameter(description = "Reference set parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedRefSetRestInput> body,
+			final SnomedRefSetRestCreate body,
 
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
-		final SnomedRefSetRestInput change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId(); 
 		
-		final String createdRefSetId = change.toRequestBuilder()
+		final String createdRefSetId = body.toRequestBuilder()
 				.commit()
 				.setDefaultModuleId(defaultModuleId)
 				.setAuthor(author)
@@ -267,22 +265,21 @@ public class SnomedReferenceSetRestService extends AbstractRestService {
 			
 			@Parameter(description = "Reference set action")
 			@RequestBody 
-			final SnomedResourceRequest<RestRequest> body,
+			final RefSetMemberRestRequest body,
 			
 			@RequestHeader(value = X_AUTHOR)
 			final String author) {
 		
 		final RequestResolver<TransactionContext> resolver = new RefSetRequestResolver();
 		
-		final RestRequest change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 		
-		change.setSource(SnomedRf2Headers.FIELD_REFSET_ID, refsetId);
+		body.setSource(SnomedRf2Headers.FIELD_REFSET_ID, refsetId);
 		
 		SnomedRequests.prepareCommit()
 			.setDefaultModuleId(defaultModuleId)
-			.setBody(change.resolve(resolver))
+			.setBody(body.resolve(resolver))
 			.setCommitComment(commitComment)
 			.setAuthor(author)
 			.build(path)
@@ -312,20 +309,20 @@ public class SnomedReferenceSetRestService extends AbstractRestService {
 			
 			@Parameter(description = "The reference set member changes")
 			@RequestBody
-			final SnomedResourceRequest<BulkRestRequest> request,
+			final RefSetMemberBulkRestRequest request,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
 		final RequestResolver<TransactionContext> resolver = new RefSetMemberRequestResolver();
 		
-		final BulkRestRequest bulkRequest = request.getChange();
+		final RefSetMemberBulkRestRequest bulkRequest = request;
 		final String commitComment = request.getCommitComment();
 		final String defaultModuleId = request.getDefaultModuleId();
 		
 		// FIXME setting refsetId even if defined??? 
 		// enforces that new members will be created in the defined refset
-		for (RestRequest req : bulkRequest.getRequests()) {
+		for (var req : bulkRequest.getRequests()) {
 			req.setSource(SnomedRf2Headers.FIELD_REFSET_ID, refsetId);
 		}
 		

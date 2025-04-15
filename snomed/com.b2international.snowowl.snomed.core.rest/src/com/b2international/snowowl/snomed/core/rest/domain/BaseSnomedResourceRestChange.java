@@ -15,28 +15,27 @@
  */
 package com.b2international.snowowl.snomed.core.rest.domain;
 
-import static com.google.common.collect.Maps.newHashMap;
-
-import java.util.Map;
-
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.b2international.snowowl.core.rest.domain.BaseResourceRestChange;
+import com.google.common.base.MoreObjects.ToStringHelper;
 
 /**
- * @since 4.5
+ * @since 1.0
  */
-public class SnomedMemberRestUpdate extends BaseSnomedResourceRestChange {
+public abstract class BaseSnomedResourceRestChange extends BaseResourceRestChange {
 
-	private Map<String, Object> source = newHashMap();
-	
-	@JsonAnyGetter
-	public Map<String, Object> getSource() {
-		return source;
-	}
-	
-	@JsonAnySetter
-	public void setSource(String key, Object value) {
-		this.source.put(key, value);
+	private String defaultModuleId;
+
+	public String getDefaultModuleId() {
+		return defaultModuleId;
 	}
 
+	public void setDefaultModuleId(final String defaultModuleId) {
+		this.defaultModuleId = defaultModuleId;
+	}
+
+	@Override
+	protected void doToString(ToStringHelper toStringHelper) {
+		super.doToString(toStringHelper);
+		toStringHelper.add("defaultModuleId", defaultModuleId);
+	}
 }

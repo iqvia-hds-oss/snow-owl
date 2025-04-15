@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,9 @@ import com.b2international.snowowl.core.rest.domain.ResourceSelectors;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationships;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedRelationshipRestInput;
+import com.b2international.snowowl.snomed.core.rest.domain.SnomedRelationshipRestCreate;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedRelationshipRestSearch;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedRelationshipRestUpdate;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedResourceRequest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -153,16 +152,15 @@ public class SnomedRelationshipRestService extends AbstractRestService {
 			
 			@Parameter(description = "Relationship parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedRelationshipRestInput> body,
+			final SnomedRelationshipRestCreate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 
-		final SnomedRelationshipRestInput change = body.getChange();
 		final String commitComment = body.getCommitComment();
 		final String defaultModuleId = body.getDefaultModuleId();
 		
-		final String createdRelationshipId = change.toRequestBuilder()
+		final String createdRelationshipId = body.toRequestBuilder()
 				.commit()
 				.setDefaultModuleId(defaultModuleId)
 				.setAuthor(author)
@@ -236,7 +234,7 @@ public class SnomedRelationshipRestService extends AbstractRestService {
 			
 			@Parameter(description = "Update Relationship parameters")
 			@RequestBody 
-			final SnomedResourceRequest<SnomedRelationshipRestUpdate> body,
+			final SnomedRelationshipRestUpdate body,
 			
 			@Parameter(description = "Force update flag")
 			@RequestParam(value = "force", defaultValue="false", required=false)
@@ -246,10 +244,9 @@ public class SnomedRelationshipRestService extends AbstractRestService {
 			final String author) {
 
 		final String commitComment = body.getCommitComment();
-		final SnomedRelationshipRestUpdate update = body.getChange();
 		final String defaultModuleId = body.getDefaultModuleId();
 
-		update.toRequestBuilder(relationshipId)
+		body.toRequestBuilder(relationshipId)
 			.force(force)
 			.commit()
 			.setDefaultModuleId(defaultModuleId)

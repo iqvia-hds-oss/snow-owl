@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,28 @@
  */
 package com.b2international.snowowl.snomed.core.rest.request;
 
+import static com.google.common.collect.Maps.newHashMap;
+
 import java.util.Collection;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.snomed.core.rest.domain.BaseSnomedResourceRestChange;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 4.5
  */
-public final class BulkRestRequest {
+public final class RefSetMemberBulkRestRequest extends BaseSnomedResourceRestChange {
 
 	private final Collection<RestRequest> requests;
 
 	@JsonCreator
-	public BulkRestRequest(@JsonProperty("requests") Collection<RestRequest> requests) {
+	public RefSetMemberBulkRestRequest(@JsonProperty("requests") Collection<RestRequest> requests) {
 		this.requests = requests;
 	}
 	
@@ -42,4 +47,34 @@ public final class BulkRestRequest {
 	public Collection<RestRequest> getRequests() {
 		return requests;
 	}
+	
+	public final class RestRequest {
+
+		private String action;
+
+		private Map<String, Object> source = newHashMap();
+
+		@JsonCreator
+		RestRequest(@JsonProperty("action") String action) {
+			this.action = action;
+		}
+
+		@JsonAnySetter
+		public void setSource(String key, Object value) {
+			source.put(key, value);
+		}
+		
+		/**
+		 * Converts this {@link RestRequest} to a {@link Request} with the given {@link RequestResolver} that can be executed.
+		 *
+		 * @param resolver
+		 *            - the resolver to use for {@link Request} resolution
+		 * @return
+		 */
+		public <C extends ServiceProvider> Request<C, ?> resolve(RequestResolver<C> resolver) {
+			return resolver.resolve(action, source);
+		}
+
+	}
+
 }

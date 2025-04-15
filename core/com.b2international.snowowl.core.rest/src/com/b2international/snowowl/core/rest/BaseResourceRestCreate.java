@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ import java.util.Map;
 
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.id.IDs;
+import com.b2international.snowowl.core.rest.domain.BaseResourceRestChange;
 
 /**
  * @since 8.0
  */
-public abstract class BaseResourceRestCreate {
+public abstract class BaseResourceRestCreate extends BaseResourceRestChange {
 	
 	//Mandatory properties
 	private String id = IDs.base62UUID();
