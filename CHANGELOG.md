@@ -12,6 +12,7 @@ This release changes the primary Java version from 17 LTS to 21 LTS. Release pac
 - [api] prevent refreshing a token issued by another server (#1374)
 - [api] ensure that proper response media type is present in SNOMED CT RF2 Export endpoint (c498a5d)
 - [fhir] properly response with HTTP 400 when URL is not set in CodeSystem$validate-code (395abe7)
+- [fhir] support two digit versions in `$versions`, `_format` and `Accept` header (#1382)
 
 ### Security
 - Mitigate CVE-2025-27152, CVE-2025-27789, CVE-2024-53382, CVE-2025-31486, CVE-2025-31125, CVE-2025-30208, CVE-2025-24010, CVE-2025-25193, CVE-2025-24970, CVE-2025-22223, CVE-2025-22228 security issues
@@ -24,6 +25,7 @@ This release changes the primary Java version from 17 LTS to 21 LTS. Release pac
 - Bump Spring Security to 6.4.4
 - Bump Netty to 4.1.119.Final
 - Bump Apache Commons IO to 2.18.0
+- Bump Tycho to 4.0.12
 
 ## 9.6.0
 
