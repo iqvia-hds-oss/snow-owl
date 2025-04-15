@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2024-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,12 +54,18 @@ public final class FhirMediaType {
 	public static final String MIME_TYPE_FHIR_VERSION_PARAMETER = "fhirVersion";
 	public static final String APPLICATION_FHIR_JSON_4_0_1_VALUE = "application/fhir+json;fhirVersion=4.0.1";
 	public static final String APPLICATION_FHIR_XML_4_0_1_VALUE = "application/fhir+xml;fhirVersion=4.0.1";
+	public static final String APPLICATION_FHIR_JSON_4_0_VALUE = "application/fhir+json;fhirVersion=4.0";
+	public static final String APPLICATION_FHIR_XML_4_0_VALUE = "application/fhir+xml;fhirVersion=4.0";
 	
 	public static final String APPLICATION_FHIR_JSON_4_3_0_VALUE = "application/fhir+json;fhirVersion=4.3.0";
 	public static final String APPLICATION_FHIR_XML_4_3_0_VALUE = "application/fhir+xml;fhirVersion=4.3.0";
+	public static final String APPLICATION_FHIR_JSON_4_3_VALUE = "application/fhir+json;fhirVersion=4.3";
+	public static final String APPLICATION_FHIR_XML_4_3_VALUE = "application/fhir+xml;fhirVersion=4.3";
 	
 	public static final String APPLICATION_FHIR_JSON_5_0_0_VALUE = "application/fhir+json;fhirVersion=5.0.0";
 	public static final String APPLICATION_FHIR_XML_5_0_0_VALUE = "application/fhir+xml;fhirVersion=5.0.0";
+	public static final String APPLICATION_FHIR_JSON_5_0_VALUE = "application/fhir+json;fhirVersion=5.0";
+	public static final String APPLICATION_FHIR_XML_5_0_VALUE = "application/fhir+xml;fhirVersion=5.0";
 
 	// Short values are only admitted as _format parameters
 	public static final String FORMAT_JSON = "json";
@@ -78,13 +84,19 @@ public final class FhirMediaType {
 	public static final MediaType APPLICATION_FHIR_JSON = MediaType.parseMediaType(APPLICATION_FHIR_JSON_VALUE);
 	public static final MediaType APPLICATION_FHIR_XML = MediaType.parseMediaType(APPLICATION_FHIR_XML_VALUE);
 	
+	public static final MediaType APPLICATION_FHIR_JSON_4_0 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_4_0_VALUE);
 	public static final MediaType APPLICATION_FHIR_JSON_4_0_1 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_4_0_1_VALUE);
+	public static final MediaType APPLICATION_FHIR_XML_4_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_4_0_VALUE);
 	public static final MediaType APPLICATION_FHIR_XML_4_0_1 = MediaType.parseMediaType(APPLICATION_FHIR_XML_4_0_1_VALUE);
 	
+	public static final MediaType APPLICATION_FHIR_JSON_4_3 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_4_3_VALUE);
 	public static final MediaType APPLICATION_FHIR_JSON_4_3_0 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_4_3_0_VALUE);
+	public static final MediaType APPLICATION_FHIR_XML_4_3 = MediaType.parseMediaType(APPLICATION_FHIR_XML_4_3_VALUE);
 	public static final MediaType APPLICATION_FHIR_XML_4_3_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_4_3_0_VALUE);
 	
+	public static final MediaType APPLICATION_FHIR_JSON_5_0 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_5_0_VALUE);
 	public static final MediaType APPLICATION_FHIR_JSON_5_0_0 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_5_0_0_VALUE);
+	public static final MediaType APPLICATION_FHIR_XML_5_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_5_0_VALUE);
 	public static final MediaType APPLICATION_FHIR_XML_5_0_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_5_0_0_VALUE);
 
 	// Last ditch effort: return JSON when "*/*" media type is accepted by the client
@@ -94,15 +106,21 @@ public final class FhirMediaType {
 	 * All currently supported media type values (versioned and unversioned forms)
 	 */
 	public static final String[] SUPPORTED_MEDIA_TYPE_VALUES = new String[] {
+		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_VALUE,
 		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_VALUE,
 		APPLICATION_FHIR_JSON_4_0_1_VALUE,
 		APPLICATION_FHIR_JSON_VALUE,
 		APPLICATION_JSON_VALUE,
 		TEXT_JSON_VALUE,
 		
+		APPLICATION_FHIR_XML_5_0_VALUE,
 		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_VALUE,
 		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_VALUE,
 		APPLICATION_FHIR_XML_4_0_1_VALUE,
 		APPLICATION_FHIR_XML_VALUE,
 		APPLICATION_XML_VALUE,
@@ -113,13 +131,19 @@ public final class FhirMediaType {
 	 * All currently supported media types (versioned and unversioned forms)
 	 */
 	public static final List<MediaType> SUPPORTED_MEDIA_TYPES = List.of(
+		APPLICATION_FHIR_JSON_5_0,
 		APPLICATION_FHIR_JSON_5_0_0,
+		APPLICATION_FHIR_XML_5_0,
 		APPLICATION_FHIR_XML_5_0_0,
 		
+		APPLICATION_FHIR_JSON_4_3,
 		APPLICATION_FHIR_JSON_4_3_0,
+		APPLICATION_FHIR_XML_4_3,
 		APPLICATION_FHIR_XML_4_3_0,
 		
+		APPLICATION_FHIR_JSON_4_0,
 		APPLICATION_FHIR_JSON_4_0_1,
+		APPLICATION_FHIR_XML_4_0,
 		APPLICATION_FHIR_XML_4_0_1,
 		
 		APPLICATION_FHIR_JSON,
@@ -136,8 +160,11 @@ public final class FhirMediaType {
 	 * The supported list of FHIR versions.
 	 */
 	public static final List<FHIRVersion> SUPPORTED_FHIR_VERSIONS = List.of(
+		FHIRVersion._4_0,
 		FHIRVersion._4_0_1,
+		FHIRVersion._4_3,
 		FHIRVersion._4_3_0,
+		FHIRVersion._5_0,
 		FHIRVersion._5_0_0
 	);
 	
@@ -160,8 +187,24 @@ public final class FhirMediaType {
 			throw new IllegalStateException("Unsupported FHIR mime-type: " + mediaType);
 		}
 		
+		// parse the FHIR version from the media type parameter
 		final String fhirVersionValue = mediaType.getParameter(MIME_TYPE_FHIR_VERSION_PARAMETER);
-		this.fhirVersion = FHIRVersion.fromCode(fhirVersionValue);
+		var fhirVersion = FHIRVersion.fromCode(fhirVersionValue);
+		// ensure we always use the full three digit version variant (this should be handled during parsing so this is just a safety net here)
+		switch (fhirVersion) {
+		case _4_0:
+			fhirVersion = FHIRVersion._4_0_1;
+			break;
+		case _4_3:
+			fhirVersion = FHIRVersion._4_3_0;
+			break;
+		case _5_0:
+			fhirVersion = FHIRVersion._5_0_0;
+			break;
+		default:
+			break;
+		}
+		this.fhirVersion = fhirVersion;
 	}
 
 	public MediaType getMediaType() {
@@ -418,13 +461,16 @@ public final class FhirMediaType {
 			case APPLICATION_JSON_VALUE: //$FALL-THROUGH$
 			case ALL_VALUE:
 				return CURRENT_JSON_MEDIA_TYPE;
-				
+			
+			case APPLICATION_FHIR_JSON_4_0_VALUE:
 			case APPLICATION_FHIR_JSON_4_0_1_VALUE:
 				return APPLICATION_FHIR_JSON_4_0_1;
-				
+			
+			case APPLICATION_FHIR_JSON_4_3_VALUE:
 			case APPLICATION_FHIR_JSON_4_3_0_VALUE:
 				return APPLICATION_FHIR_JSON_4_3_0;
 			
+			case APPLICATION_FHIR_JSON_5_0_VALUE:
 			case APPLICATION_FHIR_JSON_5_0_0_VALUE:
 				return APPLICATION_FHIR_JSON_5_0_0;
 				
@@ -433,13 +479,16 @@ public final class FhirMediaType {
 			case APPLICATION_FHIR_XML_VALUE: //$FALL-THROUGH$
 			case APPLICATION_XML_VALUE:
 				return CURRENT_XML_MEDIA_TYPE;
-				
+			
+			case APPLICATION_FHIR_XML_4_0_VALUE: 
 			case APPLICATION_FHIR_XML_4_0_1_VALUE: 
 				return APPLICATION_FHIR_XML_4_0_1;
-				
+			
+			case APPLICATION_FHIR_XML_4_3_VALUE:
 			case APPLICATION_FHIR_XML_4_3_0_VALUE:
 				return APPLICATION_FHIR_XML_4_3_0;
-				
+			
+			case APPLICATION_FHIR_XML_5_0_VALUE:
 			case APPLICATION_FHIR_XML_5_0_0_VALUE:
 				return APPLICATION_FHIR_XML_5_0_0;
 				

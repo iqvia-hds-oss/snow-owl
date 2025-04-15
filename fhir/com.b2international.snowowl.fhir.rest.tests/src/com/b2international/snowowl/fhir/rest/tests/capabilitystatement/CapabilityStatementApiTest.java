@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.b2international.snowowl.fhir.rest.tests.capabilitystatement;
 
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.*;
 
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
 import org.junit.Test;
@@ -32,7 +32,30 @@ import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 public class CapabilityStatementApiTest extends FhirRestTest {
 	
 	@Test
-	public void capabilityStatementTest() {
+	public void capabilityStatementTest_4_0() {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.when()
+			.accept("application/fhir+json;fhirVersion=4.0")
+			.get("metadata")
+			.then()
+			.assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("CapabilityStatement"))
+			.body("url", notNullValue())
+			.body("version", notNullValue())
+			.body("name", notNullValue())
+			.body("title", notNullValue())
+			.body("status", notNullValue())
+			.body("date", notNullValue())
+			.body("description", notNullValue())
+			.body("kind", equalTo(CapabilityStatementKind.INSTANCE.toCode()))
+			.body("fhirVersion", equalTo("4.0.1"))
+			.body("rest[0]", notNullValue())
+			.body("rest[0].resource[0]", notNullValue());
+	}
+	
+	@Test
+	public void capabilityStatementTest_5_0_0() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when().get("metadata")
 			.then()
@@ -74,6 +97,20 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 			.statusCode(404)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue[0].code", equalTo("not-found"));
+	}
+	
+	@Test
+	public void versions() {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.when()
+			.get("$versions")
+			.then()
+			.assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.valueCode", hasItems("4.0", "4.3", "5.0", "4.0.1", "4.3.0", "5.0.0"))
+			.body("parameter[6].name", equalTo("default"))
+			.body("parameter[6].valueCode", equalTo("5.0.0"));
 	}
 
 }
