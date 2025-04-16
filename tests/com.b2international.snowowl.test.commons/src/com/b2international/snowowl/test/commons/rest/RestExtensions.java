@@ -16,6 +16,7 @@
 package com.b2international.snowowl.test.commons.rest;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.config.EncoderConfig.encoderConfig;
 import static io.restassured.config.LogConfig.logConfig;
 import static io.restassured.config.ObjectMapperConfig.objectMapperConfig;
 
@@ -110,6 +111,7 @@ public class RestExtensions {
 			RestAssured.urlEncodingEnabled = false;
 			
 			RestAssured.config = RestAssuredConfig.config()
+				.encoderConfig(encoderConfig().appendDefaultContentCharsetToContentTypeIfUndefined(false))
 				.objectMapperConfig(objectMapperConfig().defaultObjectMapper(new Jackson2Mapper(new CustomJackson2ObjectMapperFactory())))
 				.logConfig(logConfig().enableLoggingOfRequestAndResponseIfValidationFails());
 
