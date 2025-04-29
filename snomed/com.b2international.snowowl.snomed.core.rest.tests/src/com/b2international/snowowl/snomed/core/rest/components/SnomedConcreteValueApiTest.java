@@ -89,8 +89,7 @@ public class SnomedConcreteValueApiTest extends AbstractSnomedApiTest {
 
 	@Test
 	public void createConcreteValueInvalidValue() {
-		Json requestBody = createConcreteValueRequestBody(
-			Concepts.ROOT_CONCEPT, Concepts.PART_OF, new RelationshipValue(20))
+		Json requestBody = createConcreteValueRequestBody(Concepts.ROOT_CONCEPT, Concepts.PART_OF, new RelationshipValue(20))
 			/*
 			 * XXX: need to set literal again here, as the request body creation method above 
 			 * does not allow invalid values.
