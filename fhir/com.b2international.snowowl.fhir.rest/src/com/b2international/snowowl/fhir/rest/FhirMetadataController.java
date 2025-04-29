@@ -77,7 +77,7 @@ public class FhirMetadataController extends AbstractFhirController {
 	private SnowOwlOpenApiWebMvcResource openApiResource;
 	
 	@Autowired
-	private FhirApiConfig config; 
+	private FhirApiConfig config;
 	
 	private static record Metadata (
 		Map<FHIRVersion, CapabilityStatement> capabilityStatementMap,
@@ -273,7 +273,8 @@ public class FhirMetadataController extends AbstractFhirController {
 	
 	private Metadata initMetadata() {
 		// get the ENGLISH version of the OpenAPI and use it to populate the FHIR metadata
-		final OpenAPI openAPI = openApiResource.getOpenApi(Locale.ENGLISH);
+		// XXX serverBaseUrl is set to null here on purpose, see getOpenApi private method in the Spring Doc class
+		final OpenAPI openAPI = openApiResource.getOpenApi(null, Locale.ENGLISH);
 		
 		final Collection<OperationDefinition> operationDefinitions = collectOperationDefinitions(openAPI);
 		final Map<String, OperationDefinition> operationMap = indexOperationDefinitions(operationDefinitions);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import org.springframework.beans.factory.ObjectFactory;
 import io.swagger.v3.oas.models.OpenAPI;
 
 /**
- * Exposes the {@link OpenApiWebMvcResource#getOpenApi(Locale) getOpenApi(Locale)} method on the superclass for programmatic access to generated
+ * Exposes the {@link OpenApiWebMvcResource#getOpenApi(String, Locale) getOpenApi(String, Locale)} method on the superclass for programmatic access to generated
  * OpenAPI metadata within Snow Owl.
  * 
  * @since 8.0
@@ -50,8 +50,8 @@ public class SnowOwlOpenApiWebMvcResource extends OpenApiWebMvcResource {
 	}
 
 	@Override
-	public OpenAPI getOpenApi(Locale locale) {
-		return super.getOpenApi(locale);
+	public OpenAPI getOpenApi(String serverBaseUrl, Locale locale) {
+		return super.getOpenApi(serverBaseUrl, locale);
 	}
 
 }
