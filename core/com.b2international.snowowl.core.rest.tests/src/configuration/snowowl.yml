@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+# Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
 #
 
 identity:
@@ -16,3 +16,6 @@ repository:
     resources:
       number_of_shards: "2"
 
+# to verify that prometheus based metrics endpoint works
+monitoring:
+  enabled: true
