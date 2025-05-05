@@ -19,7 +19,7 @@ Features include:
     * Independent work branches offer work-in-process isolation, external business workflow integration and team collaboration
 * SNOMED CT and others
     * SNOMED CT terminology support
-        * RF2 Release File Specification as of 2024-10-01
+        * RF2 Release File Specification as of 2025-05-01
         * Support for Relationships with concrete values
         * Official and Custom Reference Sets
         * Expression Constraint Language v2.2.0 [spec](https://confluence.ihtsdotools.org/download/attachments/33493263/doc_ExpressionConstraintLanguage_v2.2-en-US_INT_20231122.pdf?api=v2), [implementation](https://github.com/b2ihealthcare/snomed-ecl)
@@ -28,13 +28,13 @@ Features include:
     * LOINC, ICD-10 (+ modifications) and Custom CodeSystems are available when licensed
     * With its modular design, the server can maintain multiple terminologies (including local codes, mapping sets, value sets)
 * Various sets of APIs
-    * FHIR Terminology Service API supporting R4/R4B/R5 formats [spec](https://hl7.org/fhir/R4/index.html)
+    * FHIR Terminology Service API supporting [R4](https://hl7.org/fhir/R4/index.html)/[R4B](https://hl7.org/fhir/R4B/index.html)/[R5](https://hl7.org/fhir/R5/index.html) formats in a single deployment
     * RESTful and native Java APIs for advanced use cases
     * CIS API 1.0 [see reference implementation](https://github.com/IHTSDO/component-identifier-service)
 * Highly extensible and configurable
     * Simple to use plug-in system makes it easy to develop and add new terminology tooling/API or any other functionality
 * Built on top of [Elasticsearch](https://www.elastic.co/elasticsearch) (highly scalable, distributed, open source search engine)
-    * Connect to your existing cluster or use the embedded instance (supports up to Elasticsearch 8.x)
+    * Supports up to the latest Elasticsearch 8 with compatibility mode enabled for Elasticsearch 7 clusters (Elasticsearch 9 is not supported yet)
     * All the power of Elasticsearch is available (full-text search features, monitoring, machine-learning, analytics and many more)
 
 # Download
