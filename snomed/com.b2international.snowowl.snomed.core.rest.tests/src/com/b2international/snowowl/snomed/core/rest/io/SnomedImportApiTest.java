@@ -341,6 +341,23 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 		importDeltaAndValidateBranchHeadTimestampUpdate(branchPath,
 				"SnomedCT_RF2Release_INT_20180223_only_refset_wo_effective_time.zip", true);
 	}
+	
+	@Test
+	public void import23a_OnlyUnpubRefsetMembers_Inactivation() throws Exception {
+		var memberId = "db152e55-3755-499f-9557-77b400360666";
+		// import the new member first to a branch
+		importDeltaAndValidateBranchHeadTimestampUpdate(branchPath,
+				"SnomedCT_RF2Release_INT_20180223_only_refset_wo_effective_time.zip", false);
+		// verify that member got inactivated
+		getComponent(branchPath, SnomedComponentType.MEMBER, memberId)
+			.body("active", equalTo(true));
+		// then inactivate via another import
+		doImportFileTo(branchPath,
+				"SnomedCT_RF2Release_INT_20180223_only_refset_wo_effective_time_member_inactivation.zip", false, Rf2ReleaseType.DELTA);
+		// verify that member got inactivated
+		getComponent(branchPath, SnomedComponentType.MEMBER, memberId)
+			.body("active", equalTo(false));
+	}
 
 	@Test
 	public void import24IncompleteTaxonomyMustBeImported() throws Exception {
@@ -762,7 +779,7 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
   		);
   		
   	}
-  	
+	
 	private void importDeltaAndValidateBranchHeadTimestampUpdate(IBranchPath branch, String importArchiveFileName,
 			boolean createVersions) {
 		importAndValidateBranchHeadTimestampUpdate(branchPath, importArchiveFileName, createVersions, Rf2ReleaseType.DELTA);
@@ -793,6 +810,11 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 			.execute(getBus())
 			.getSync(1L, TimeUnit.MINUTES);
 		
+		doImportFileTo(branch, importArchiveFileName, createVersions, rf2ReleaseType);
+	}
+
+	private void doImportFileTo(IBranchPath branch, String importArchiveFileName, boolean createVersions,
+			Rf2ReleaseType rf2ReleaseType) {
 		var importConfiguration = Map.of(
 			"type", rf2ReleaseType.name(),
 			"createVersions", createVersions
