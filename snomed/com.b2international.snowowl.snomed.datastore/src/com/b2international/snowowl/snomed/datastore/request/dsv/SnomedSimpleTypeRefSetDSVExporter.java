@@ -16,7 +16,7 @@
 package com.b2international.snowowl.snomed.datastore.request.dsv;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newTreeMap;
+import static com.google.common.collect.Maps.newHashMap;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,10 +38,9 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcepts;
-import com.b2international.snowowl.snomed.datastore.internal.rf2.AbstractSnomedDsvExportItem;
-import com.b2international.snowowl.snomed.datastore.internal.rf2.ComponentIdSnomedDsvExportItem;
-import com.b2international.snowowl.snomed.datastore.internal.rf2.DatatypeSnomedDsvExportItem;
-import com.b2international.snowowl.snomed.datastore.internal.rf2.SnomedRefSetDSVExportModel;
+import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.*;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptRequestCache;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptSearchRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
@@ -54,16 +54,22 @@ import com.google.common.collect.*;
  */
 public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 
+	// Keep keys sorted but allow non-unique values
+	private static final Supplier<ListMultimap<String, String>> MULTIMAP_FACTORY = () -> MultimapBuilder
+		.treeKeys()
+		.arrayListValues()
+		.build();
+
 	private static final String HEADER_EXPAND = "descriptions(active:true), "
-			+ "relationships(active:true), "
-			+ "members(active:true, refSetType:\"CONCRETE_DATA_TYPE\")";
+		+ "relationships(active:true), "
+		+ "members(active:true, refSetType:\"CONCRETE_DATA_TYPE\")";
 	
 	private static final String DATA_EXPAND = "pt(), "
-			+ "descriptions(active:true), "
-			+ "relationships(active:true, expand(destination(expand(pt())))), "
-			+ "members(active:true, refSetType:\"CONCRETE_DATA_TYPE\")";
+		+ "descriptions(active:true), "
+		+ "relationships(active:true, expand(destination(expand(pt())))), "
+		+ "members(active:true, refSetType:\"CONCRETE_DATA_TYPE\")";
 
-	private static final Multiset<String> NO_OCCURRENCES = ImmutableMultiset.of();
+	private static final SortedMultiset<Integer> NO_OCCURRENCES = ImmutableSortedMultiset.of();
 	
 	static interface ConceptStreamFactory {
 		
@@ -76,7 +82,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 		);
 		
 		ConceptStreamFactory DEFAULT = (expand, locales, context, includeInactiveMembers, refSetId) -> {
-			SnomedConceptSearchRequestBuilder builder = SnomedRequests.prepareSearchConcept()
+			final SnomedConceptSearchRequestBuilder builder = SnomedRequests.prepareSearchConcept()
 				.setLocales(locales)
 				.setExpand(expand)
 				.setLimit(context.getPageSize());
@@ -114,17 +120,22 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	private final ConceptStreamFactory conceptStreamFactory;
 	private final AncestorCollector ancestorCollector;
 	
-	private String refSetId;
-	private boolean includeDescriptionId;
-	private boolean includeRelationshipId;
-	private boolean includeInactiveMembers;
-	private List<AbstractSnomedDsvExportItem> exportItems;
-	private List<ExtendedLocale> locales;
-	private Joiner joiner;
-	private String lineSeparator;
-	
-	private Multiset<String> descriptionCount; // maximum number of descriptions by type
-	private Map<Integer, Multiset<String>> propertyCountByGroup; // maximum number of properties by group and type
+	private final String refSetId;
+	private final boolean includeDescriptionId;
+	private final boolean includeRelationshipId;
+	private final boolean includeInactiveMembers;
+	private final List<AbstractSnomedDsvExportItem> exportItems;
+	private final List<ExtendedLocale> locales;
+	private final Joiner joiner;
+	private final String lineSeparator;
+
+	private Set<String> descriptionTypeIds;
+	private Set<String> relationshipTypeIds;
+	private Set<String> memberTypeIds;
+
+	private Multiset<String> descriptionCount; // maximum number of descriptions by type ID
+	private Map<String, SortedMultiset<Integer>> relationshipCount; // maximum number of properties by type ID and relationship group
+	private Map<String, SortedMultiset<Integer>> memberCount; // maximum number of properties by type ID and relationship group
 
 	/**
 	 * Creates a new instance with the export parameters.
@@ -163,9 +174,9 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	 * @return The file with the exported values.
 	 */
 	@Override
-	public File executeDSVExport(IProgressMonitor monitor) throws IOException {
+	public File executeDSVExport(final IProgressMonitor monitor) throws IOException {
 		monitor.beginTask("Export RefSet to DSV...", 100);
-		Path exportPath = Files.createTempFile("dsv-export-" + refSetId + Dates.now(), ".csv");
+		final Path exportPath = Files.createTempFile("dsv-export-" + refSetId + Dates.now(), ".csv");
 		try {
 			try (BufferedWriter writer = Files.newBufferedWriter(exportPath, Charsets.UTF_8)) {
 				computeHeader();
@@ -183,7 +194,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	/*
 	 * Fetches members of the specified reference set
 	 */
-	private Stream<SnomedConcepts> getConceptStream(String expand) {
+	private Stream<SnomedConcepts> getConceptStream(final String expand) {
 		return conceptStreamFactory.getConceptStream(expand, locales, context, includeInactiveMembers, refSetId);
 	}
 
@@ -191,305 +202,312 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	 * Finds the maximum number of occurrences for each description, relationship and concrete data type; generates headers. 
 	 */
 	private void computeHeader() {
+		final SetMultimap<SnomedDsvExportItemType, String> relevantTypeIds = HashMultimap.create(); 
+
+		for (final AbstractSnomedDsvExportItem exportItem : exportItems) {
+			switch (exportItem.getType()) {
+				case DESCRIPTION:
+				case RELATIONSHIP:
+				case DATAYPE:
+					final ComponentIdSnomedDsvExportItem componentIdItem = (ComponentIdSnomedDsvExportItem) exportItem;
+					relevantTypeIds.put(exportItem.getType(), componentIdItem.getComponentId());
+					break;
+				
+				default:
+					// We are not interested in any other export item type at this time
+					break;
+			}
+		}
+		
+		descriptionTypeIds = relevantTypeIds.get(SnomedDsvExportItemType.DESCRIPTION);
+		relationshipTypeIds = relevantTypeIds.get(SnomedDsvExportItemType.RELATIONSHIP);
+		memberTypeIds = relevantTypeIds.get(SnomedDsvExportItemType.DATAYPE);
+		
 		descriptionCount = HashMultiset.create();
-		propertyCountByGroup = newTreeMap();
+		relationshipCount = newHashMap();
+		memberCount = newHashMap();
+		
 		getConceptStream(HEADER_EXPAND).forEachOrdered(this::computeHeader);
 	}
 	
-	private void computeHeader(SnomedConcepts chunk) {
-		for (SnomedConcept concept : chunk) {
-			// Respect the exported item order that was sent in via the export request
-			for (AbstractSnomedDsvExportItem exportItem : exportItems) {
-				switch (exportItem.getType()) {
+	private void computeHeader(final SnomedConcepts chunk) {
+		final Multiset<String> descriptionCountInChunk = HashMultiset.create(); 
+		final Map<String, Multiset<Integer>> relationshipCountInChunk = newHashMap();
+		final Map<String, Multiset<Integer>> memberCountInChunk = newHashMap();
+		
+		for (final SnomedConcept concept : chunk) {
+
+			// Collect description occurrence counts by type ID
+			if (!descriptionTypeIds.isEmpty()) {
+				concept.getDescriptions()
+					.stream()
+					.map(d -> d.getTypeId())
+					.filter(typeId -> descriptionTypeIds.contains(typeId))
+					.forEachOrdered(descriptionCountInChunk::add);
 				
-					case DESCRIPTION: {
-						final ComponentIdSnomedDsvExportItem descriptionItem = (ComponentIdSnomedDsvExportItem) exportItem;
-						final String typeId = descriptionItem.getComponentId();
-						
-						// Find the number of active descriptions with this type ID (status is included in expand filter)
-						final int previousDescriptions = descriptionCount.count(typeId);
-						final int currentDescriptions = concept.getDescriptions()
-							.stream()
-							.filter(d -> typeId.equals(d.getTypeId()))
-							.collect(Collectors.summingInt(d -> 1));
-						
-						// Register in description type column counter -- bigger number wins
-						descriptionCount.setCount(typeId, Math.max(previousDescriptions, currentDescriptions));
-						break;
-					}
-						
-					case RELATIONSHIP: {
-						final ComponentIdSnomedDsvExportItem relationshipItem = (ComponentIdSnomedDsvExportItem) exportItem;
-						final String typeId = relationshipItem.getComponentId();
-						
-						// Find the number of active relationships with this type ID (status is included in expand filter)
-						// ...but only count inferred relationships and additional relationships in group 0
-						Map<Integer, Integer> currentRelationshipsByGroup = concept.getRelationships()
-							.stream()
-							.filter(r -> {
-								final String relationshipTypeId = r.getTypeId();
-								final String characteristicTypeId = r.getCharacteristicTypeId();
-								final Integer relationshipGroup = r.getRelationshipGroup();
-								
-								return typeId.equals(relationshipTypeId) 
-									&& (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId) 
-										|| (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId) && relationshipGroup == 0));
-							})
-							.collect(Collectors.groupingBy(
-								// Results should be collected on a per-group basis
-								r -> r.getRelationshipGroup(),
-								Collectors.summingInt(r -> 1)
-							));
+				if (!descriptionCountInChunk.isEmpty()) {
+					updateOccurrences(descriptionCountInChunk, descriptionCount);
+					descriptionCountInChunk.clear();
+				}
+			}
 
-						currentRelationshipsByGroup.entrySet()
-							.stream()
-							.forEachOrdered(entry -> {
-								final int relationshipGroup = entry.getKey();
-								// Number of properties encountered so far, for this type _and_ group number
-								final Multiset<String> previousRelationshipsByType = propertyCountByGroup.computeIfAbsent(relationshipGroup, HashMultiset::create);
-								final int previousRelationships = previousRelationshipsByType.count(typeId);
-								final int currentRelationships = entry.getValue();
-								
-								// Register in relationship type column counter for this group -- bigger number wins
-								previousRelationshipsByType.setCount(typeId, Math.max(previousRelationships, currentRelationships));
-							});
+			// Collect relationship occurrence counts by type ID and group
+			if (!relationshipTypeIds.isEmpty()) {
+				concept.getRelationships()
+					.stream()
+					.filter(r -> {
+						if (!isApplicableRelationship(r)) {
+							return false;
+						}
 						
-						break;
-					}
-					
-					case DATAYPE: {
-						final ComponentIdSnomedDsvExportItem dataTypeItem = (ComponentIdSnomedDsvExportItem) exportItem;
-						final String typeId = dataTypeItem.getComponentId();
+						final String typeId = r.getTypeId();
+						return relationshipTypeIds.contains(typeId);
+					})
+					.forEachOrdered(r -> {
+						final String typeId = r.getTypeId();
+						final Integer relationshipGroup = r.getRelationshipGroup();
+						registerProperty(relationshipCountInChunk, typeId, relationshipGroup);
+					});
+	
+				if (!relationshipCountInChunk.isEmpty()) {
+					updateOccurrences(relationshipCountInChunk, relationshipCount);
+					relationshipCountInChunk.clear();
+				}
+			}
+			
+			// Collect CD member occurrence counts by type ID and group
+			if (!memberTypeIds.isEmpty()) {
+				concept.getMembers()
+					.stream()
+					.filter(m -> {
+						if (!isApplicableMember(m)) {
+							return false;
+						}
 						
-						// Find the number of active CD members with this type ID (refset type and status is included in expand filter)
-						// ...but only count inferred members and additional members in group 0
-						Map<Integer, Integer> currentMembersByGroup = concept.getMembers()
-							.stream()
-							.filter(m -> {
-								final String memberTypeId = (String) m.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID);
-								final String characteristicTypeId = (String) m.getProperties().get(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID);
-								final Integer memberGroup = (Integer) m.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
-								
-								return typeId.equals(memberTypeId) 
-									&& (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId) 
-										|| (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId) && memberGroup == 0));
-							})
-							.collect(Collectors.groupingBy(
-								// Results should be collected on a per-group basis
-								m -> (Integer) m.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP),
-								Collectors.summingInt(m -> 1)
-							));
-
-						currentMembersByGroup.entrySet()
-							.stream()
-							.forEach(entry -> {
-								final int relationshipGroup = entry.getKey();
-								// Number of properties encountered so far, for this type _and_ group number
-								final Multiset<String> previousMembersByType = propertyCountByGroup.computeIfAbsent(relationshipGroup, HashMultiset::create);
-								final int previousMembers = previousMembersByType.count(typeId);
-								final int currentMembers = entry.getValue();
-
-								// Register in relationship type column counter for this group -- bigger number wins
-								previousMembersByType.setCount(typeId, Math.max(previousMembers, currentMembers));
-							});
-						
-						break;
-					}
-					
-					default:
-						// Single-use fields don't need to be counted in advance
-						break;
+						final String typeId = (String) m.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID);
+						return memberTypeIds.contains(typeId);
+					})
+					.forEachOrdered(m -> {
+						final Map<String, Object> properties = m.getProperties();
+						final String typeId = (String) properties.get(SnomedRf2Headers.FIELD_TYPE_ID);
+						final Integer relationshipGroup = (Integer) properties.get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
+						registerProperty(memberCountInChunk, typeId, relationshipGroup);
+					});
+	
+				if (!memberCountInChunk.isEmpty()) {
+					updateOccurrences(memberCountInChunk, memberCount);
+					memberCountInChunk.clear();
 				}
 			}
 		}
 	}
-	
-	private void writeHeader(BufferedWriter writer) throws IOException {
-		Map<String, String> descriptionTypeIdMap = createTypeIdMap(Concepts.DESCRIPTION_TYPE_ROOT_CONCEPT);
-		Map<String, String> propertyTypeIdMap = createTypeIdMap(Concepts.CONCEPT_MODEL_ATTRIBUTE); // includes object and data attributes
-		List<String> propertyHeader = newArrayList();
-		List<String> detailHeader = newArrayList();
+
+	private boolean isApplicableRelationship(final SnomedRelationship r) {
+		// Allow inferred relationships regardless of group number
+		final String characteristicTypeId = r.getCharacteristicTypeId();
+		if (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId)) {
+			return true;
+		}
 		
-		for (AbstractSnomedDsvExportItem exportItem : exportItems) {
-			switch (exportItem.getType()) {
+		// Allow additional relationships but only from group 0
+		if (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId)) {
+			final int relationshipGroup = r.getRelationshipGroup();
+			return (relationshipGroup == 0);
+		}
+	
+		return false;
+	}
+
+	private boolean isApplicableMember(final SnomedReferenceSetMember m) {
+		final Map<String, Object> properties = m.getProperties();
+		
+		// Allow inferred CD members regardless of group number
+		final String characteristicTypeId = (String) properties.get(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID);
+		if (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId)) {
+			return true;
+		}
+
+		// Allow additional CD members but only from group 0
+		if (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId)) {
+			final int memberGroup = (int) properties.get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
+			return (memberGroup == 0);
+		}
+
+		return false;
+	}
+
+	private static void updateOccurrences(
+		final Map<String, Multiset<Integer>> source,
+		final Map<String, SortedMultiset<Integer>> destination
+	) {
+		for (final Map.Entry<String, Multiset<Integer>> entry : source.entrySet()) {
+			final String typeId = entry.getKey();
+			final Multiset<Integer> sourceCountForTypeId = entry.getValue();
+			final SortedMultiset<Integer> destinationCountForTypeId = destination.computeIfAbsent(typeId, key -> TreeMultiset.create());
+			updateOccurrences(sourceCountForTypeId, destinationCountForTypeId);
+		}
+	}
+
+	private static <T> void updateOccurrences(final Multiset<T> source, final Multiset<T> destination) {
+		for (final Multiset.Entry<T> entry : source.entrySet()) {
+			final T element = entry.getElement();
+			final int sourceOccurrence = entry.getCount();
+			final int destinationOccurrence = destination.count(element);
 			
+			if (sourceOccurrence > destinationOccurrence) {
+				destination.setCount(element, sourceOccurrence);
+			}
+		}
+	}
+
+	private void registerProperty(
+		final Map<String, Multiset<Integer>> propertyCountInChunk, 
+		final String typeId,
+		final Integer relationshipGroup
+	) {
+		// Multiset does not need to be sorted as maximum occurrence counts can be updated in arbitrary group order
+		final Multiset<Integer> propertyCountForGroup = propertyCountInChunk.computeIfAbsent(typeId, key -> HashMultiset.create());
+		propertyCountForGroup.add(relationshipGroup);
+	}
+	
+	private void writeHeader(final BufferedWriter writer) throws IOException {
+		final Map<String, String> descriptionTypeIdMap = createTypeIdMap(Concepts.DESCRIPTION_TYPE_ROOT_CONCEPT);
+
+		// Includes both object and data attributes
+		final Map<String, String> propertyTypeIdMap = createTypeIdMap(Concepts.CONCEPT_MODEL_ATTRIBUTE); 
+		
+		// First header row describes the export item itself
+		final List<String> propertyHeader = newArrayList();
+		
+		/* 
+		 * The second header row is only used when ID inclusion is requested - in this case the ID and the value to 
+		 * be displayed are shown side-by-side
+		 */
+		final List<String> detailHeader = newArrayList();
+		
+		for (final AbstractSnomedDsvExportItem exportItem : exportItems) {
+			switch (exportItem.getType()) {
+
 				case DESCRIPTION: {
 					final ComponentIdSnomedDsvExportItem descriptionItem = (ComponentIdSnomedDsvExportItem) exportItem;
 					final String typeId = descriptionItem.getComponentId();
 					final String displayName = descriptionTypeIdMap.getOrDefault(typeId, descriptionItem.getDisplayName());
 					final int occurrences = descriptionCount.count(typeId);
-					
-					if (occurrences < 2) {
-						// No numbered suffix required
-						if (includeDescriptionId) {
-							propertyHeader.add(displayName);
-							detailHeader.add("ID");
-							propertyHeader.add(displayName);
-							detailHeader.add("Term");
-						} else {
-							propertyHeader.add(displayName);
-							detailHeader.add("");
-						}
-					} else {
-						// Numbered suffixes should start at index 1
-						for (int j = 1; j <= occurrences; j++) {
-							final String numberedDisplayName = String.format("%s (%s)", displayName, j);
-							
-							if (includeDescriptionId) {
-								propertyHeader.add(numberedDisplayName);
-								detailHeader.add("ID");
-								propertyHeader.add(numberedDisplayName);
-								detailHeader.add("Term");
-							} else {
-								propertyHeader.add(numberedDisplayName);
-								detailHeader.add("");
-							}
-						}
-					}
-					
+					writeHeader(occurrences, propertyHeader, detailHeader, includeDescriptionId, displayName, "Term");
 					break;
 				}
 					
-				case RELATIONSHIP: {
-					final ComponentIdSnomedDsvExportItem relationshipItem = (ComponentIdSnomedDsvExportItem) exportItem;
-					final String typeId = relationshipItem.getComponentId();
-					final String displayName = propertyTypeIdMap.getOrDefault(typeId, relationshipItem.getDisplayName());
+				case RELATIONSHIP: //$FALL-THROUGH$
+				case DATAYPE: {
+					final ComponentIdSnomedDsvExportItem itemWithTypeId = (ComponentIdSnomedDsvExportItem) exportItem;
+					final String typeId = itemWithTypeId.getComponentId();
+					final String displayName = propertyTypeIdMap.getOrDefault(typeId, itemWithTypeId.getDisplayName());
 					
-					for (Integer group : propertyCountByGroup.keySet() ) {
-						final Multiset<String> occurrencesByType = propertyCountByGroup.getOrDefault(group, NO_OCCURRENCES);
-						final int occurrences = occurrencesByType.count(typeId);
-						
-						/*
-						 * It is possible that a particular relationship type does not appear in a
-						 * particular group at all, skip if this is the case.
-						 */
-						if (occurrences < 1) {
-							continue;
-						}
-							
+					final boolean includePropertyId;
+					final Multiset<Integer> propertyCountForType;
+					
+					if (SnomedDsvExportItemType.RELATIONSHIP.equals(itemWithTypeId.getType())) {
+						// ID can only be included for relationships (and only for these items will "Destination" appear in the second row)
+						includePropertyId = includeRelationshipId;
+						propertyCountForType = relationshipCount.getOrDefault(typeId, NO_OCCURRENCES);
+					} else {
+						includePropertyId = false;
+						propertyCountForType = memberCount.getOrDefault(typeId, NO_OCCURRENCES);
+					}
+					
+					for (final Multiset.Entry<Integer> groupAndCount : propertyCountForType.entrySet()) {
+						final int group = groupAndCount.getElement();
+						final int occurrences = groupAndCount.getCount();
 						final String groupTag = (group == 0) ? "" : String.format(" (AG%s)", group);
 						final String groupedDisplayName = displayName + groupTag;
-						
-						if (occurrences < 2) {
-							// No numbered suffix required
-							if (includeRelationshipId) {
-								propertyHeader.add(groupedDisplayName);
-								detailHeader.add("ID");
-								propertyHeader.add(groupedDisplayName);
-								detailHeader.add("Destination");
-							} else {
-								propertyHeader.add(groupedDisplayName);
-								detailHeader.add("");
-							}
-						} else {
-							// Numbered suffixes should start at index 1
-							for (int j = 1; j <= occurrences; j++) {
-								final String numberedDisplayName = String.format("%s (%s)", groupedDisplayName, j);
-								
-								if (includeRelationshipId) {
-									propertyHeader.add(numberedDisplayName);
-									detailHeader.add("ID");
-									propertyHeader.add(numberedDisplayName);
-									detailHeader.add("Destination");
-								} else {
-									propertyHeader.add(numberedDisplayName);
-									detailHeader.add("");
-								}
-							}
-						}
+						writeHeader(occurrences, propertyHeader, detailHeader, includePropertyId, groupedDisplayName, "Destination");
 					}
 					
 					break;
 				}
 				
-				case DATAYPE: {
-					final ComponentIdSnomedDsvExportItem dataTypeItem = (ComponentIdSnomedDsvExportItem) exportItem;
-					final String typeId = dataTypeItem.getComponentId();
-					final String displayName = propertyTypeIdMap.getOrDefault(typeId, dataTypeItem.getDisplayName());
-
-					for (Integer groupId : propertyCountByGroup.keySet() ) {
-						final Multiset<String> occurrencesByType = propertyCountByGroup.getOrDefault(groupId, NO_OCCURRENCES);
-						final int occurrences = occurrencesByType.count(typeId);
-						
-						/*
-						 * It is possible that a particular relationship type does not appear in a
-						 * particular group at all, skip if this is the case.
-						 */
-						if (occurrences < 1) {
-							continue;
-						}
-						
-						final String groupTag = (groupId == 0) ? "" : String.format(" (AG%s)", groupId);
-						final String groupedDisplayName = displayName + groupTag;
-						
-						if (occurrences < 2) {
-							// No numbered suffix required
-							propertyHeader.add(groupedDisplayName);
-							detailHeader.add("");
-						} else {
-							// Numbered suffixes should start at index 1
-							for (int j = 1; j <= occurrences; j++) {
-								final String numberedDisplayName = String.format("%s (%s)", groupedDisplayName, j);
-								
-								propertyHeader.add(numberedDisplayName);
-								detailHeader.add("");
-							}
-						}						
-					}
-					
+				case PREFERRED_TERM:
+					writeHeader(propertyHeader, detailHeader, includeDescriptionId, exportItem.getDisplayName(), "Term");
 					break;
-				}
 				
-				case PREFERRED_TERM: {
-					if (includeDescriptionId) {
-						propertyHeader.add(exportItem.getDisplayName());
-						detailHeader.add("ID");
-						propertyHeader.add(exportItem.getDisplayName());
-						detailHeader.add("Term");
-					} else {
-						propertyHeader.add(exportItem.getDisplayName());
-						detailHeader.add("");
-					}
-					
+				default:
+					writeHeader(propertyHeader, detailHeader, exportItem.getDisplayName());
 					break;
-				}
-	
-				default: {
-					propertyHeader.add(exportItem.getDisplayName());
-					detailHeader.add("");
-					
-					break;
-				}
 			}
 		}
 		
-		// write the header to the file
+		// Write the first row header to the file
 		writer.write(joiner.join(propertyHeader));
 		writer.write(lineSeparator);
 		
 		if (includeDescriptionId || includeRelationshipId) {
+			// Add the second row header only if IDs were requested in the export
 			writer.write(joiner.join(detailHeader));
 			writer.write(lineSeparator);
 		}
 	}
 
-	private Map<String, String> createTypeIdMap(String ancestorId) {
+	private void writeHeader(final List<String> propertyHeader, final List<String> detailHeader, final String propertyName) {
+		writeHeader(propertyHeader, detailHeader, false, propertyName, "");
+	}
+
+	private void writeHeader(
+		final int occurrences, 
+		final List<String> propertyHeader, 
+		final List<String> detailHeader, 
+		final boolean includeId,
+		final String propertyName, 
+		final String detailName
+	) {
+		if (occurrences < 2) {
+			// No numbered suffix required
+			writeHeader(propertyHeader, detailHeader, includeId, propertyName, detailName);
+		} else {
+			// Add numbered suffixes to the property name (it should start at index 1)
+			for (int j = 1; j <= occurrences; j++) {
+				final String numberedPropertyName = String.format("%s (%s)", propertyName, j);
+				writeHeader(propertyHeader, detailHeader, includeId, numberedPropertyName, detailName);								
+			}
+		}
+	}
+	
+	private void writeHeader(
+		final List<String> propertyHeader, 
+		final List<String> detailHeader, 
+		final boolean includeId, 
+		final String propertyName, 
+		final String detailName
+	) {
+		if (includeId) {
+			// Add property name twice in the first row for each column when IDs need to be included
+			propertyHeader.add(propertyName);
+			propertyHeader.add(propertyName);
+			// Add e.g. "ID" and "Term" for description columns in the second row  
+			detailHeader.add("ID");
+			detailHeader.add(detailName);
+		} else {
+			propertyHeader.add(propertyName);
+			detailHeader.add("");
+		}
+	}
+
+	private Map<String, String> createTypeIdMap(final String ancestorId) {
 		return createTypeIdMap(ancestorCollector.getAncestors(locales, ancestorId, context));
 	}
 
-	private Map<String, String> createTypeIdMap(SnomedConcepts concepts) {
+	private Map<String, String> createTypeIdMap(final SnomedConcepts concepts) {
 		return concepts.stream()
 			.collect(Collectors.toMap(
 				c -> c.getId(), 
 				c -> getPreferredTerm(c)));
 	}
 
-	private void writeValues(IProgressMonitor monitor, BufferedWriter writer) throws IOException {
+	private void writeValues(final IProgressMonitor monitor, final BufferedWriter writer) throws IOException {
 		final Iterable<SnomedConcepts> chunks = () -> getConceptStream(DATA_EXPAND).iterator();
 		final Optional<SnomedConceptRequestCache> cache = Optional.ofNullable(context)
 			.flatMap(v -> v.optionalService(SnomedConceptRequestCache.class));
 		
-		for (SnomedConcepts chunk : chunks) {
+		for (final SnomedConcepts chunk : chunks) {
 			// make sure we compute all requested expansions before we move forward
 			cache.ifPresent(service -> service.compute(context));
 			writeValues(writer, chunk);
@@ -497,13 +515,11 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 		}
 	}
 		
-	private void writeValues(BufferedWriter writer, SnomedConcepts chunk) throws IOException {
-		List<String> dataRow = newArrayList();
+	private void writeValues(final BufferedWriter writer, final SnomedConcepts chunk) throws IOException {
+		final List<String> dataRow = newArrayList();
 		
-		for (SnomedConcept concept : chunk) {
-			dataRow.clear();
-
-			for (AbstractSnomedDsvExportItem exportItem : exportItems) {
+		for (final SnomedConcept concept : chunk) {
+			for (final AbstractSnomedDsvExportItem exportItem : exportItems) {
 				switch (exportItem.getType()) {
 				
 					case DESCRIPTION: {
@@ -511,55 +527,51 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 						final String typeId = descriptionItem.getComponentId();
 						final int occurrences = descriptionCount.count(typeId);
 						
-						// Description ID keys, description term values (hopefully a 1:1 mapping, a Multimap is used only to satisfy other use cases)
+						// Description ID keys, description term for values
+						
 						final Multimap<String, String> termsById = concept.getDescriptions()
 							.stream()
 							.filter(d -> typeId.equals(d.getTypeId()))
 							.collect(Multimaps.toMultimap(
 								d -> d.getId(),
 								d -> d.getTerm(),
-								ArrayListMultimap::create
+								MULTIMAP_FACTORY
 							));
 						
-						addCells(dataRow, occurrences, includeDescriptionId, termsById);
+						addCells(occurrences, dataRow, includeDescriptionId, termsById);
 						break;
 					}
 
 					case RELATIONSHIP: {
 						final ComponentIdSnomedDsvExportItem relationshipItem = (ComponentIdSnomedDsvExportItem) exportItem;
 						final String typeId = relationshipItem.getComponentId();
+						final Multiset<Integer> propertyCountForType = relationshipCount.getOrDefault(typeId, NO_OCCURRENCES);
 						
-						for (Integer propertyGroup : propertyCountByGroup.keySet()) {
-							final Multiset<String> groupOccurrences = propertyCountByGroup.getOrDefault(propertyGroup, NO_OCCURRENCES);
-							final int occurrences = groupOccurrences.count(typeId);
-							
-							if (occurrences < 1) {
-								// No header has been allocated for this attribute group-type ID pair, skip
-								break;
-							}
+						for (final Multiset.Entry<Integer> groupAndCount : propertyCountForType.entrySet()) {
+							final Integer group = groupAndCount.getElement();
+							final int occurrences = groupAndCount.getCount();
 
-							// Destination ID keys, destination concept terms for values
+							// Destination ID as key, destination concept terms for values
 							// - OR -
-							// Empty string as key, relationships value literals for values
+							// Empty string as key, relationship value literals for values
+							
 							final Multimap<String, String> destinationsById = concept.getRelationships()
 								.stream()
 								.filter(r -> {
-									final String relationshipTypeId = r.getTypeId();
-									final String characteristicTypeId = r.getCharacteristicTypeId();
-									final Integer relationshipGroup = r.getRelationshipGroup();
+									if (!isApplicableRelationship(r)) {
+										return false;	
+									}
 									
-									return typeId.equals(relationshipTypeId) 
-										&& Objects.equals(propertyGroup, relationshipGroup) 
-										&& (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId) 
-											|| (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId) && relationshipGroup == 0));
+									return Objects.equals(r.getRelationshipGroup(), group) 
+										&& Objects.equals(r.getTypeId(), typeId);
 								})
 								.collect(Multimaps.toMultimap(
 									r -> r.hasValue() ? "" : r.getDestinationId(),
 									r -> r.hasValue() ? r.getValue() : getPreferredTerm(r.getDestination()),
-									ArrayListMultimap::create
+									MULTIMAP_FACTORY
 								));
 							
-							addCells(dataRow, occurrences, includeRelationshipId, destinationsById);
+							addCells(occurrences, dataRow, includeRelationshipId, destinationsById);
 						}
 						
 						break;
@@ -568,44 +580,36 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 					case DATAYPE: {
 						final DatatypeSnomedDsvExportItem datatypeItem = (DatatypeSnomedDsvExportItem) exportItem;
 						final String typeId = datatypeItem.getComponentId();
+						final Multiset<Integer> propertyCountForType = memberCount.getOrDefault(typeId, NO_OCCURRENCES);
 						
-						for (Integer propertyGroup : propertyCountByGroup.keySet()) {
-							final Multiset<String> groupOccurrences = propertyCountByGroup.getOrDefault(propertyGroup, NO_OCCURRENCES);
-							final int occurrences = groupOccurrences.count(typeId);
+						for (final Multiset.Entry<Integer> groupAndCount : propertyCountForType.entrySet()) {
+							final Integer group = groupAndCount.getElement();
+							final int occurrences = groupAndCount.getCount();
 							
-							if (occurrences < 1) {
-								// No header has been allocated for this attribute group-type ID pair, skip
-								break;
-							}
+							// Empty string as key, CD member value literals for values
 							
-							// Empty string for keys, CD member values for values (only collected this way to conform to the method signature below)
 							final Multimap<String, String> valuesById = concept.getMembers()
 								.stream()
 								.filter(m -> {
-									final String memberTypeId = (String) m.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID);
-									final String characteristicTypeId = (String) m.getProperties().get(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID);
-									final Integer memberGroup = (Integer) m.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
+									if (!isApplicableMember(m)) {
+										return false;
+									}
 									
-									return typeId.equals(memberTypeId) 
-										&& Objects.equals(propertyGroup, memberGroup) 
-										&& (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId) 
-											|| (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId) && memberGroup == 0));
+									final Map<String, Object> properties = m.getProperties();
+									final String memberTypeId = (String) properties.get(SnomedRf2Headers.FIELD_TYPE_ID);
+									final Integer memberGroup = (Integer) properties.get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
+
+									return Objects.equals(memberGroup, group)
+										&& Objects.equals(memberTypeId, typeId);	
 								})
 								.collect(Multimaps.toMultimap(
 									m -> "",
-									m -> {
-										final String serializedValue = (String) m.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
-										if (datatypeItem.isBooleanDatatype()) {
-											return "1".equals(serializedValue) ? "Yes" : "No";
-										} else {
-											return serializedValue;
-										}
-									},
-									ArrayListMultimap::create
+									m -> getSerializedValue(m, datatypeItem.isBooleanDatatype()),
+									MULTIMAP_FACTORY
 								));
 							
 							// "Destination IDs" are never included for CD members
-							addCells(dataRow, occurrences, false, valuesById);
+							addCells(occurrences, dataRow, false, valuesById);
 						}
 						
 						break;
@@ -618,6 +622,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 						} else {
 							dataRow.add(getPreferredTerm(concept));
 						}
+						
 						break;
 
 					case CONCEPT_ID:
@@ -647,16 +652,26 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 			
 			writer.write(joiner.join(dataRow));
 			writer.write(lineSeparator);
+			dataRow.clear();
 		}
 	}
 
-	private void addCells(List<String> dataRow, int occurrences, boolean includeIds, Multimap<String, String> idValuePairs) {
-		if (includeIds) {
-			SortedSet<String> sortedIds = ImmutableSortedSet.copyOf(idValuePairs.keySet());
+	private String getSerializedValue(final SnomedReferenceSetMember m, final boolean isBooleanDatatype) {
+		final String serializedValue = (String) m.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
+		
+		if (isBooleanDatatype) {
+			return "1".equals(serializedValue) ? "Yes" : "No";
+		} else {
+			return serializedValue;
+		}
+	}
+
+	private void addCells(int occurrences, final List<String> dataRow, final boolean includeId, final Multimap<String, String> valuesById) {
+		if (includeId) {
 			
-			for (String id : sortedIds) {
-				List<String> sortedValues = Ordering.natural().sortedCopy(idValuePairs.get(id));
-				for (String value : sortedValues) {
+			for (final String id : valuesById.keySet()) {
+				final List<String> valuesForId = Ordering.natural().sortedCopy(valuesById.get(id));
+				for (final String value : valuesForId) {
 					dataRow.add(id);
 					dataRow.add(value);
 					occurrences--;
@@ -671,9 +686,8 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 			
 		} else {
 			
-			List<String> sortedValues = Ordering.natural().sortedCopy(idValuePairs.values());
-			
-			for (String value : sortedValues) {
+			final List<String> sortedValues = Ordering.natural().sortedCopy(valuesById.values());
+			for (final String value : sortedValues) {
 				dataRow.add(value);
 				occurrences--;
 			}
@@ -685,11 +699,11 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 		}
 	}
 
-	private static String getPreferredTerm(SnomedConcept concept) {
+	private static String getPreferredTerm(final SnomedConcept concept) {
 		return (concept.getPt() == null) ? "" : concept.getPt().getTerm();
 	}
 	
-	private static String getPreferredTermId(SnomedConcept concept) {
+	private static String getPreferredTermId(final SnomedConcept concept) {
 		return (concept.getPt() == null) ? "" : concept.getPt().getId();
 	}
 }

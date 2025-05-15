@@ -475,6 +475,72 @@ public class SnomedSimpleTypeRefSetDSVExporterTest {
 			String.join(LS, expectedHeader, expectedDetails, expectedData1, expectedData2) + LS, exportContents);
 	}
 
+	@Test
+	public void exportTwoConceptsNonOverlappingTypes() throws IOException {
+		SnomedDescription handStructurePt = new SnomedDescription("d1");
+		handStructurePt.setTerm("Hand structure");
+	
+		SnomedConcept handStructure = new SnomedConcept("c1");
+		handStructure.setPt(handStructurePt);
+		
+		SnomedDescription legStructurePt = new SnomedDescription("d2");
+		legStructurePt.setTerm("Leg structure");
+		
+		SnomedConcept legStructure = new SnomedConcept("c2");
+		legStructure.setPt(legStructurePt);
+		
+		SnomedRelationship findingSite = new SnomedRelationship("r1");
+		findingSite.setRelationshipGroup(0);
+		findingSite.setTypeId(Concepts.FINDING_SITE);
+		findingSite.setDestination(handStructure);
+		findingSite.setCharacteristicTypeId(Concepts.INFERRED_RELATIONSHIP);
+		
+		SnomedRelationship morphology = new SnomedRelationship("r2");
+		morphology.setRelationshipGroup(0);
+		morphology.setTypeId(Concepts.MORPHOLOGY);
+		morphology.setDestination(legStructure);
+		morphology.setCharacteristicTypeId(Concepts.INFERRED_RELATIONSHIP);
+		
+		SnomedConcept concept1 = new SnomedConcept("c3");
+		concept1.setRelationships(new SnomedRelationships(List.of(findingSite), null, 1, 1));
+		
+		SnomedConcept concept2 = new SnomedConcept("c4");
+		concept2.setRelationships(new SnomedRelationships(List.of(morphology), null, 1, 1));
+		
+		SnomedConcepts chunk = new SnomedConcepts(List.of(concept1, concept2), null, 2, 2);
+		ConceptStreamFactory conceptStreamFactory = (expand, locales, context, includeInactiveMembers, refSetId) -> Stream.of(chunk);
+		AncestorCollector ancestorCollector = (locales, ancestorId, context) -> new SnomedConcepts(0, 0);
+		
+		SnomedRefSetDSVExportModel exportSetting = new SnomedRefSetDSVExportModel();
+		exportSetting.setDelimiter("\t");
+		exportSetting.addExportItem(new SimpleSnomedDsvExportItem(SnomedDsvExportItemType.CONCEPT_ID));
+		exportSetting.addExportItem(new ComponentIdSnomedDsvExportItem(SnomedDsvExportItemType.RELATIONSHIP, Concepts.FINDING_SITE, "Finding site"));
+		exportSetting.addExportItem(new ComponentIdSnomedDsvExportItem(SnomedDsvExportItemType.RELATIONSHIP, Concepts.MORPHOLOGY, "Morphology"));
+		
+		String expectedHeader = String.join(exportSetting.getDelimiter(), "Concept ID", "Finding site", "Morphology");
+		String expectedData1 = String.join(exportSetting.getDelimiter(), concept1.getId(), handStructurePt.getTerm(), "");
+		String expectedData2 = String.join(exportSetting.getDelimiter(), concept2.getId(), "", legStructurePt.getTerm());
+		
+		var exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
+		String exportContents = getContentsAndDelete(exporter);
+		assertEquals("Export file should have a header and data rows with relationship destination term", 
+			String.join(LS, expectedHeader, expectedData1, expectedData2) + LS, exportContents);
+		
+		// Second run: include the SCTID for destination concepts
+		exportSetting.setIncludeRelationshipTargetId(true);
+		
+		// As a result of the above setting, "Finding site" appears twice in the header (once for the ID and once for the description term)
+		expectedHeader = String.join(exportSetting.getDelimiter(), "Concept ID", "Finding site", "Finding site", "Morphology", "Morphology");
+		String expectedDetails = String.join(exportSetting.getDelimiter(), "", "ID", "Destination", "ID", "Destination");
+		expectedData1 = String.join(exportSetting.getDelimiter(), concept1.getId(), findingSite.getDestinationId(), handStructurePt.getTerm(), "", "");
+		expectedData2 = String.join(exportSetting.getDelimiter(), concept2.getId(), "", "", morphology.getDestinationId(), legStructurePt.getTerm());
+	
+		exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
+		exportContents = getContentsAndDelete(exporter);
+		assertEquals("Export file should have a header, a detail row and data rows with relationship destination SCTID and term", 
+			String.join(LS, expectedHeader, expectedDetails, expectedData1, expectedData2) + LS, exportContents);
+	}
+
 	private void exportSingleConceptMultipleRelationships(int relationshipGroup, String groupSuffix) throws IOException {
 		SnomedDescription handStructurePt = new SnomedDescription("d1");
 		handStructurePt.setTerm("Hand structure");
