@@ -15,6 +15,9 @@ RUN chmod 0660 configuration/snowowl.yml
 
 FROM ${BASE_IMAGE}
 
+# fix for uid clash between default ubuntu and snowowl user
+RUN touch /var/mail/ubuntu && chown ubuntu /var/mail/ubuntu && userdel -r ubuntu
+
 RUN groupadd -g 1000 snowowl && \
     useradd --uid 1000 --gid 1000 --home-dir /usr/share/snowowl --create-home --shell /bin/bash snowowl && \
     usermod --append --groups root snowowl && \
