@@ -48,6 +48,7 @@ if (params.isUnpublishedOnly) {
 			ids.addAll(relationshipsBySource.keySet())
 			ids.addAll(relationshipsByType.keySet())
 			ids.addAll(relationshipsByDestination.keySet())
+			ids.remove(null);	//Null can be introduced through value type relationships
 			
 			searcher
 				.search(Query.select(String.class)
