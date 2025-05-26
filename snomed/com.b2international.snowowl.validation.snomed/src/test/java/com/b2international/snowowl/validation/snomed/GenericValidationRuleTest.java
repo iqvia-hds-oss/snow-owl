@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.assertj.core.api.Assertions;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -813,6 +812,8 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		SnomedConceptDocument inactiveSourceConcept = concept(generateConceptId()).active(false).build();
 		SnomedConceptDocument inactiveTypeConcept = concept(generateConceptId()).active(false).build();
 		SnomedConceptDocument activeConcept = concept(generateConceptId()).build();
+		SnomedRelationshipIndexEntry validConcreteValueRelationship = concreteValue(activeConcept.getId(), Concepts.FINDING_SITE, new RelationshipValue("Arm")).build();
+		SnomedRelationshipIndexEntry invalidConcreteValueRelationship = concreteValue(inactiveSourceConcept.getId(), Concepts.FINDING_SITE, new RelationshipValue("Arm")).build();
 		SnomedRelationshipIndexEntry invalidSourceRelationship = relationship(inactiveSourceConcept.getId(), Concepts.IS_A, activeConcept.getId()).build();
 		SnomedRelationshipIndexEntry invalidDestinationRelationship = relationship(activeConcept.getId(), Concepts.IS_A, inactiveDestinationConcept.getId()).build();
 		SnomedRelationshipIndexEntry invalidTypeRelationship = relationship(activeConcept.getId(), inactiveTypeConcept.getId(), Concepts.FINDING_SITE).build();
@@ -826,12 +827,16 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			invalidSourceRelationship,
 			invalidDestinationRelationship,
 			invalidTypeRelationship,
-			validRelationship
+			validRelationship,
+			validConcreteValueRelationship,
+			invalidConcreteValueRelationship
 		);
 		
 		ValidationIssues validationIssues = validate(ruleId);
 		
-		assertAffectedComponents(validationIssues, ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, invalidSourceRelationship.getId()),
+		assertAffectedComponents(validationIssues, 
+				ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, invalidConcreteValueRelationship.getId()),
+				ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, invalidSourceRelationship.getId()),
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, invalidDestinationRelationship.getId()),
 				ComponentIdentifier.of(SnomedTerminologyComponentConstants.RELATIONSHIP_NUMBER, invalidTypeRelationship.getId()));
 	}
