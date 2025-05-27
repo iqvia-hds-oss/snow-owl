@@ -813,6 +813,8 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		SnomedConceptDocument inactiveSourceConcept = concept(generateConceptId()).active(false).build();
 		SnomedConceptDocument inactiveTypeConcept = concept(generateConceptId()).active(false).build();
 		SnomedConceptDocument activeConcept = concept(generateConceptId()).build();
+		SnomedRelationshipIndexEntry validConcreteValueRelationship = concreteValue(activeConcept.getId(), Concepts.FINDING_SITE, new RelationshipValue("Arm")).build();
+		SnomedRelationshipIndexEntry invalidConcreteValueRelationship = concreteValue(inactiveSourceConcept.getId(), Concepts.FINDING_SITE, new RelationshipValue("Arm")).build();
 		SnomedRelationshipIndexEntry invalidSourceRelationship = relationship(inactiveSourceConcept.getId(), Concepts.IS_A, activeConcept.getId()).build();
 		SnomedRelationshipIndexEntry invalidDestinationRelationship = relationship(activeConcept.getId(), Concepts.IS_A, inactiveDestinationConcept.getId()).build();
 		SnomedRelationshipIndexEntry invalidTypeRelationship = relationship(activeConcept.getId(), inactiveTypeConcept.getId(), Concepts.FINDING_SITE).build();
@@ -826,12 +828,16 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			invalidSourceRelationship,
 			invalidDestinationRelationship,
 			invalidTypeRelationship,
-			validRelationship
+			validRelationship,
+			validConcreteValueRelationship,
+			invalidConcreteValueRelationship
 		);
 		
 		ValidationIssues validationIssues = validate(ruleId);
 		
-		assertAffectedComponents(validationIssues, ComponentIdentifier.of(SnomedRelationship.TYPE, invalidSourceRelationship.getId()),
+		assertAffectedComponents(validationIssues, 
+				ComponentIdentifier.of(SnomedRelationship.TYPE, invalidConcreteValueRelationship.getId()),
+				ComponentIdentifier.of(SnomedRelationship.TYPE, invalidSourceRelationship.getId()),
 				ComponentIdentifier.of(SnomedRelationship.TYPE, invalidDestinationRelationship.getId()),
 				ComponentIdentifier.of(SnomedRelationship.TYPE, invalidTypeRelationship.getId()));
 	}
