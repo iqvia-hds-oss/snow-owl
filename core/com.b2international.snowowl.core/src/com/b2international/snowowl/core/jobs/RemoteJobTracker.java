@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -44,7 +45,6 @@ import com.b2international.snowowl.core.IDisposableService;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
@@ -154,8 +154,11 @@ public final class RemoteJobTracker implements IDisposableService {
 	}
 	
 	public void requestDeletes(Collection<String> jobIds) {
-		final RemoteJobs jobEntries = search(RemoteJobEntry.Expressions.ids(jobIds), jobIds.size());
-		final Set<String> existingJobIds = FluentIterable.from(jobEntries).transform(RemoteJobEntry::getId).toSet();
+		// search for existing job IDs in the index loading only the ID field and nothing else to avoid fetching large result objects and unneeded data
+		final Set<String> existingJobIds = search(RemoteJobEntry.Expressions.ids(jobIds), List.of(RemoteJobEntry.Fields.ID), SortBy.DEFAULT, jobIds.size())
+				.stream()
+				.map(RemoteJobEntry::getId)
+				.collect(Collectors.toSet());
 		Job[] existingJobs = Job.getJobManager().find(SingleRemoteJobFamily.create(existingJobIds));
 		// mark existing jobs as deleted and cancel them
 		final Set<String> remoteJobsToCancel = Sets.newHashSet();
@@ -167,11 +170,11 @@ public final class RemoteJobTracker implements IDisposableService {
 			}
 		}
 		// delete all other jobs, that dont need to be cancelled
-		final Set<String> remoteJobsToDelete = Sets.difference(Sets.newHashSet(jobIds), remoteJobsToCancel);
+		final Set<String> remoteJobIdssToDelete = Sets.difference(Sets.newHashSet(jobIds), remoteJobsToCancel);
 		index.write(writer -> {
 			// if the job still running or scheduled, then mark it deleted and the done handler will delete it
-			LOG.trace("Deleting jobs {}", remoteJobsToDelete);
-			writer.removeAll(Map.of(RemoteJobEntry.class, remoteJobsToDelete));
+			LOG.trace("Deleting jobs {}", remoteJobIdssToDelete);
+			writer.removeAll(Map.of(RemoteJobEntry.class, remoteJobIdssToDelete));
 			if (!remoteJobsToCancel.isEmpty()) {
 				LOG.trace("Marking deletable jobs {}", remoteJobsToCancel);
 				writer.bulkUpdate(new BulkUpdate<>(RemoteJobEntry.class, RemoteJobEntry.Expressions.ids(remoteJobsToCancel), RemoteJobEntry.WITH_DELETED));
