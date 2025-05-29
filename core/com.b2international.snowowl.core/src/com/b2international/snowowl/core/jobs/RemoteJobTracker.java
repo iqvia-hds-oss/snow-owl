@@ -170,11 +170,11 @@ public final class RemoteJobTracker implements IDisposableService {
 			}
 		}
 		// delete all other jobs, that dont need to be cancelled
-		final Set<String> remoteJobIdssToDelete = Sets.difference(Sets.newHashSet(jobIds), remoteJobsToCancel);
+		final Set<String> remoteJobIdsToDelete = Sets.difference(Sets.newHashSet(jobIds), remoteJobsToCancel);
 		index.write(writer -> {
 			// if the job still running or scheduled, then mark it deleted and the done handler will delete it
-			LOG.trace("Deleting jobs {}", remoteJobIdssToDelete);
-			writer.removeAll(Map.of(RemoteJobEntry.class, remoteJobIdssToDelete));
+			LOG.trace("Deleting jobs {}", remoteJobIdsToDelete);
+			writer.removeAll(Map.of(RemoteJobEntry.class, remoteJobIdsToDelete));
 			if (!remoteJobsToCancel.isEmpty()) {
 				LOG.trace("Marking deletable jobs {}", remoteJobsToCancel);
 				writer.bulkUpdate(new BulkUpdate<>(RemoteJobEntry.class, RemoteJobEntry.Expressions.ids(remoteJobsToCancel), RemoteJobEntry.WITH_DELETED));
