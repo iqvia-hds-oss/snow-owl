@@ -937,6 +937,10 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 					break;
 				default: throw new UnsupportedOperationException("Unsupported concrete domain data type: " + dataType);
 				}
+			} else {
+				if (value != null) {
+					throw new IllegalStateException(String.format("dataType field is required to be set otherwise the system is unable to determine the correct type and serialize/deserialize the concrete domain member: %s", this.id));
+				}
 			}
 			doc.relationshipGroup = relationshipGroup;
 			doc.characteristicTypeId = characteristicTypeId;

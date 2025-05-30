@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,10 @@ public abstract class SnomedMemberBuilder<B extends SnomedMemberBuilder<B>> exte
 	
 	protected final String getReferencedComponentId() {
 		return referencedComponent;
+	}
+	
+	protected final String getRefsetId() {
+		return refsetId;
 	}
 	
 	@Override
