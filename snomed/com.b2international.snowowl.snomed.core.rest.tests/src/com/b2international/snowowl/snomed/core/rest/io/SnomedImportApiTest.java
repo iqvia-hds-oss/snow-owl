@@ -779,6 +779,17 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
   		);
   		
   	}
+  	
+  	@Test
+	public void import41_ConcreteDomainRefSetContentImportedProperly() throws Exception {
+  		importArchive("SnomedCT_Release_CD_20250530_concrete_domain_refset_members.zip");
+  		SnomedConcept conceptWithCdMembers = getComponent(branchPath, SnomedComponentType.CONCEPT, "97379008", "members()")
+  			.extract()
+  			.as(SnomedConcept.class);
+  		
+  		System.err.println(conceptWithCdMembers);
+  		// TODO assert that concept with member expansion has proper concrete domain members with type Ids and values
+	}
 	
 	private void importDeltaAndValidateBranchHeadTimestampUpdate(IBranchPath branch, String importArchiveFileName,
 			boolean createVersions) {
