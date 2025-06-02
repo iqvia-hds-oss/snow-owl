@@ -1,4 +1,4 @@
-# <a href='https://docs.b2i.sg/snow-owl/'><img src='logo/logo-title.png' height='80' alt='Snow Owl Logo' /></a>
+# <a href='https://docs.b2ihealthcare.com/snow-owl/'><img src='logo/logo-title.png' height='80' alt='Snow Owl Logo' /></a>
 
 Snow Owl<sup>&reg;</sup> is a highly scalable, open source terminology server with revision-control capabilities and collaborative authoring platform features. It allows you to store, search and author high volumes of terminology artifacts quickly and efficiently.
 
@@ -45,7 +45,7 @@ Features include:
 * [DEB](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/7.17.6/com.b2international.snowowl.server.update-7.17.6-deb.deb) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/7.17.6/com.b2international.snowowl.server.update-7.17.6-deb.deb.sha1)
 
 {% hint style="info" %}
-This distribution only includes features licensed under the Apache 2.0 license. To get access to the full set of features, please contact [B2i Healthcare](mailto:info@b2i.sg).
+This distribution only includes features licensed under the Apache 2.0 license. To get access to the full set of features, please contact [B2i Healthcare](mailto:info@b2ihealthcare.com).
 {% endhint %}
 
 View the detailed release notes [here](https://github.com/b2ihealthcare/snow-owl/releases/tag/v7.17.6).
@@ -61,7 +61,7 @@ Once you have downloaded the appropriate package:
 * Run `bin/snowowl.sh` on unix, or `bin/snowowl.bat` on windows
 * Run `curl http://localhost:8080/snowowl/admin/info`
 * Navigate to `http://localhost:8080/snowowl`
-* See [SNOMED CT API docs](https://docs.b2i.sg/snow-owl/api/snomed), [FHIR API docs](https://docs.b2i.sg/snow-owl/api/fhir)
+* See [SNOMED CT API docs](https://docs.b2ihealthcare.com/snow-owl/api/snomed), [FHIR API docs](https://docs.b2ihealthcare.com/snow-owl/api/fhir)
 
 # Learn Snow Owl
 

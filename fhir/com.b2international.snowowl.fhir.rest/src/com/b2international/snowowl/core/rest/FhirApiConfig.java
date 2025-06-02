@@ -48,11 +48,11 @@ public class FhirApiConfig extends BaseApiConfig {
 			"1.0", 
 			"FHIR API", 
 			"https://b2ihealthcare.com/", 
-			"support@b2i.sg", 
+			"support@b2ihealthcare.com", 
 			"API License", 
 			"https://b2ihealthcare.com/", 
 			"This describes the resources that make up the official Snow Owl® Snow Owl® <a href=\\\"http://hl7.org/fhir/\\\">FHIR®</a> API.\r\n" + 
-			"Detailed documentation is available at the [official documentation site](https://docs.b2i.sg/snow-owl/api/fhir)."
+			"Detailed documentation is available at the [official documentation site](https://docs.b2ihealthcare.com/snow-owl/api/fhir)."
 		);
 
 	}
