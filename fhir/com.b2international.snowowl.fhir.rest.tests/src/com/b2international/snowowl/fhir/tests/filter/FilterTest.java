@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 B2i Healthcare Pte Ltd, http://b2i.sg
+ * Copyright 2011-2019 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class FilterTest extends FhirTest {
 					.languageCode("uk_en")
 					.use(Coding.builder()
 						.code("internal")
-						.system("http://b2i.sg/test")
+						.system("https://b2ihealthcare.com/test")
 						.build()
 						)
 					.value("conceptLabel_uk")
@@ -206,7 +206,7 @@ public class FilterTest extends FhirTest {
 		assertThat(jsonPath.getString("definition"), equalTo("This is a code definition"));
 		assertThat(jsonPath.getString("designation[0].language"), equalTo("uk_en"));
 		assertThat(jsonPath.getString("designation[0].use.code"), equalTo("internal"));
-		assertThat(jsonPath.getString("designation[0].use.system"), equalTo("http://b2i.sg/test"));
+		assertThat(jsonPath.getString("designation[0].use.system"), equalTo("https://b2ihealthcare.com/test"));
 		assertThat(jsonPath.getString("designation[0].value"), equalTo("conceptLabel_uk"));
 		assertThat(jsonPath.getString("designation[0].languageCode"), equalTo("uk_en"));
 
@@ -240,7 +240,7 @@ public class FilterTest extends FhirTest {
 					+ "\"definition\":\"This is a code definition\","
 					+ "\"designation\":"
 						+ "[{\"language\":\"uk_en\","
-						+ "\"use\":{\"code\":\"internal\",\"system\":\"http://b2i.sg/test\"},"
+						+ "\"use\":{\"code\":\"internal\",\"system\":\"https://b2ihealthcare.com/test\"},"
 					+ "\"value\":\"conceptLabel_uk\","
 					+ "\"languageCode\":\"uk_en\"}],"
 					+ "\"property\":[{\"code\":\"childConcept\",\"valueCode\":\"childId\"}]"

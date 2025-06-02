@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 B2i Healthcare Pte Ltd, http://b2i.sg
+ * Copyright 2011-2020 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public abstract class SnomedTerminologyComponentConstants {
 	public static final String SNOMED_B2I_SHORT_NAME = SNOMED_SHORT_NAME + "-B2I";
 	public static final String SNOMED_B2I_NAME = SNOMED_NAME + ", B2i extension";
 	public static final String SNOMED_B2I_OID = SNOMED_INT_OID + ".1000154";
-	public static final String SNOMED_B2I_LINK = "https://b2i.sg";
+	public static final String SNOMED_B2I_LINK = "https://b2ihealthcare.com";
 
 	private static final Pattern PATTERN = Pattern.compile("^\\d*$");
 
