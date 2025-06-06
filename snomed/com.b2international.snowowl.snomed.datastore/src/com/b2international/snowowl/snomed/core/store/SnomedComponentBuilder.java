@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,6 +82,10 @@ public abstract class SnomedComponentBuilder<B extends SnomedComponentBuilder<B,
 	public final B withEffectiveTime(LocalDate effectiveTime) {
 		this.effectiveTime = effectiveTime;
 		return getSelf();
+	}
+	
+	protected final String getId() {
+		return id;
 	}
 	
 	protected final boolean isActive() {
