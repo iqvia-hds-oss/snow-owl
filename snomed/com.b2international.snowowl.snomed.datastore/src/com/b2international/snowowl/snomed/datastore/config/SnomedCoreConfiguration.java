@@ -34,6 +34,8 @@ import jakarta.validation.constraints.NotNull;
  */
 public class SnomedCoreConfiguration {
 	
+	private static final Object SYNC_OBJECT = new Object();
+	
 	public static final String ELK_REASONER_ID = "org.semanticweb.elk.elk.reasoner.factory"; //$NON-NLS-1$
 	public static final String DEFAULT_REASONER = ELK_REASONER_ID;
 	public static final int DEFAULT_MAXIMUM_REASONER_COUNT = 2;
@@ -274,7 +276,7 @@ public class SnomedCoreConfiguration {
 	@JsonIgnore
 	public BiMap<DataType, String> getConcreteDomainRefSetMap() {
 		if (concreteDataTypeRefsetMap == null) {
-			synchronized (concreteDataTypeRefsetMap) {
+			synchronized (SYNC_OBJECT) {
 				if (concreteDataTypeRefsetMap == null) {
 					var concreteDataTypeRefsetMap = ImmutableBiMap.<DataType, String>builder()
 							.put(DataType.BOOLEAN, getBooleanDatatypeRefsetIdentifier())
