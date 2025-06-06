@@ -36,6 +36,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -72,7 +73,9 @@ import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
 import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2ImportRequestBuilder;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 
+import io.restassured.response.Response;
 import io.restassured.response.ValidatableResponse;
+import io.restassured.response.ValidatableResponseOptions;
 
 /**
  * @since 2.0
@@ -109,6 +112,20 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 	}
 
 	private void importArchive(final IBranchPath branchPath, Map<String, ?> importConfiguration, final String fileName) {
+		assertImportRf2(branchPath, importConfiguration, fileName)
+			.body("status", equalTo(RemoteJobState.FINISHED.name()));
+	}
+
+	private ValidatableResponseOptions<ValidatableResponse, Response> assertImportDeltaRf2(String fileName) {
+		var importConfiguration = Map.of(
+			"type", Rf2ReleaseType.DELTA,
+			"createVersions", false,
+			"ignoreMissingReferencesIn", Collections.emptyList()
+		);
+		return assertImportRf2(branchPath, importConfiguration, fileName);
+	}
+	
+	private ValidatableResponseOptions<ValidatableResponse, Response> assertImportRf2(IBranchPath branchPath, Map<String, ?> importConfiguration, String fileName) {
 		final String codeSystemId = branchPath.lastSegment();
 		
 		try {
@@ -131,10 +148,9 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 		
 		final String importId = lastPathSegment(doImport(branchPath, importConfiguration, getClass(), fileName).statusCode(201)
 				.extract().header("Location"));
-		waitForImportJob(branchPath, importId)
-			.statusCode(200)
-			.body("id", equalTo(importId))
-			.body("status", equalTo(RemoteJobState.FINISHED.name()));
+		return waitForImportJob(branchPath, importId)
+				.statusCode(200)
+				.body("id", equalTo(importId));
 	}
 
 	@Test
@@ -781,14 +797,9 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
   	}
   	
   	@Test
-	public void import41_ConcreteDomainRefSetContentImportedProperly() throws Exception {
-  		importArchive("SnomedCT_Release_CD_20250530_concrete_domain_refset_members.zip");
-  		SnomedConcept conceptWithCdMembers = getComponent(branchPath, SnomedComponentType.CONCEPT, "97379008", "members()")
-  			.extract()
-  			.as(SnomedConcept.class);
-  		
-  		System.err.println(conceptWithCdMembers);
-  		// TODO assert that concept with member expansion has proper concrete domain members with type Ids and values
+	public void import41_ConcreteDomainRefSetContentImportError_IfConfigIsMissing() throws Exception {
+  		assertImportDeltaRf2("SnomedCT_Release_CD_20250530_concrete_domain_refset_members.zip")
+  			.body("error.message", CoreMatchers.startsWith("Missing configuration for concrete domain data type refset id"));
 	}
 	
 	private void importDeltaAndValidateBranchHeadTimestampUpdate(IBranchPath branch, String importArchiveFileName,
