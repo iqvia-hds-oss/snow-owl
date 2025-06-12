@@ -171,50 +171,50 @@ public final class SnomedReferenceSetMemberConverter extends BaseRevisionResourc
 	}
 
 	@Override
-	protected SnomedReferenceSetMember toResource(SnomedRefSetMemberIndexEntry entry) {
+	protected SnomedReferenceSetMember toResource(SnomedRefSetMemberIndexEntry doc) {
 		final SnomedReferenceSetMember member = new SnomedReferenceSetMember();
-		member.setId(entry.getId());
-		member.setEffectiveTime(toEffectiveTime(entry.getEffectiveTime()));
-		member.setReleased(entry.isReleased());
-		member.setActive(entry.isActive());
-		member.setModuleId(entry.getModuleId());
-		member.setIconId(entry.getIconId());
-		member.setRefsetId(entry.getRefsetId());
-		member.setType(entry.getReferenceSetType());
-		member.setScore(entry.getScore());
+		member.setId(doc.getId());
+		member.setEffectiveTime(toEffectiveTime(doc.getEffectiveTime()));
+		member.setReleased(doc.isReleased());
+		member.setActive(doc.isActive());
+		member.setModuleId(doc.getModuleId());
+		member.setIconId(doc.getIconId());
+		member.setRefsetId(doc.getRefsetId());
+		member.setType(doc.getReferenceSetType());
+		member.setScore(doc.getScore());
 
-		final Map<String, Object> props = Maps.newHashMap(entry.getAdditionalFields());
+		final Map<String, Object> props = Maps.newHashMap(doc.getAdditionalFields());
 
 		// convert stored long values to short date format
 		props.computeIfPresent(SnomedRf2Headers.FIELD_SOURCE_EFFECTIVE_TIME, (key, currentValue) -> toEffectiveTime((long) currentValue));
 		props.computeIfPresent(SnomedRf2Headers.FIELD_TARGET_EFFECTIVE_TIME, (key, currentValue) -> toEffectiveTime((long) currentValue));
 
 		// convert concrete domain value to serialized String format
-		if (entry.getValue() != null) {
-			props.put(SnomedRf2Headers.FIELD_VALUE, SnomedRefSetUtil.serializeValue(entry.getDataType(), entry.getValue()));
+		if (doc.getValue() != null) {
+			props.put(SnomedRf2Headers.FIELD_VALUE, SnomedRefSetUtil.serializeValue(doc.getDataType(), doc.getValue()));
 		}
 		
 		member.setProperties(props);
 		
-		String owlExpression = entry.getOwlExpression();
-		if (Concepts.REFSET_OWL_AXIOM.equals(entry.getRefsetId()) &&
+		String owlExpression = doc.getOwlExpression();
+		if (Concepts.REFSET_OWL_AXIOM.equals(doc.getRefsetId()) &&
 				expand().containsKey(SnomedReferenceSetMember.Expand.OWL_RELATIONSHIPS) && 
 				!Strings.isNullOrEmpty(owlExpression)) {
 			
 			Options expandOptions = expand().getOptions(SnomedReferenceSetMember.Expand.OWL_RELATIONSHIPS).getOptions("expand");
 			
-			if (!CompareUtils.isEmpty(entry.getClassAxiomRelationships())) {
+			if (!CompareUtils.isEmpty(doc.getClassAxiomRelationships())) {
 				if (owlExpression.startsWith("EquivalentClasses")) {
-					member.setEquivalentOWLRelationships(toOwlRelationships(entry.getClassAxiomRelationships(), expandOptions));
+					member.setEquivalentOWLRelationships(toOwlRelationships(doc.getClassAxiomRelationships(), expandOptions));
 				} else {
-					member.setClassOWLRelationships(toOwlRelationships(entry.getClassAxiomRelationships(), expandOptions));
+					member.setClassOWLRelationships(toOwlRelationships(doc.getClassAxiomRelationships(), expandOptions));
 				}
-			} else if (!CompareUtils.isEmpty(entry.getGciAxiomRelationships())) {
-				member.setGciOWLRelationships(toOwlRelationships(entry.getGciAxiomRelationships(), expandOptions));
+			} else if (!CompareUtils.isEmpty(doc.getGciAxiomRelationships())) {
+				member.setGciOWLRelationships(toOwlRelationships(doc.getGciAxiomRelationships(), expandOptions));
 			}
 		}
 		
-		setReferencedComponent(member, entry.getReferencedComponentId(), entry.getReferencedComponentType());
+		setReferencedComponent(member, doc.getReferencedComponentId(), doc.getReferencedComponentType());
 		return member;
 	}
 	

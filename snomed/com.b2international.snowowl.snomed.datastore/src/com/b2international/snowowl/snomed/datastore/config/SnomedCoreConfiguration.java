@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,11 @@
 package com.b2international.snowowl.snomed.datastore.config;
 
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.core.domain.refset.DataType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.ImmutableBiMap;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -29,6 +33,8 @@ import jakarta.validation.constraints.NotNull;
  * @since 3.4
  */
 public class SnomedCoreConfiguration {
+	
+	private static final Object SYNC_OBJECT = new Object();
 	
 	public static final String ELK_REASONER_ID = "org.semanticweb.elk.elk.reasoner.factory"; //$NON-NLS-1$
 	public static final String DEFAULT_REASONER = ELK_REASONER_ID;
@@ -70,6 +76,9 @@ public class SnomedCoreConfiguration {
 	
 	@NotNull
 	private SnomedMrcmConfig mrcmConfiguration = new SnomedMrcmConfig();
+	
+	@JsonIgnore
+	private transient BiMap<DataType, String> concreteDataTypeRefsetMap;
 	
 	/**
 	 * @return the number of reasoners that are permitted to run simultaneously.
@@ -258,6 +267,29 @@ public class SnomedCoreConfiguration {
 	@JsonProperty("mrcm")
 	public void setMrcmConfiguration(SnomedMrcmConfig mrcmConfiguration) {
 		this.mrcmConfiguration = mrcmConfiguration;
+	}
+	
+	/**
+	 * @return a BiMap holding all configured and supported concrete domain data type reference set IDs.
+	 * @since 9.7.1
+	 */
+	@JsonIgnore
+	public BiMap<DataType, String> getConcreteDomainRefSetMap() {
+		if (concreteDataTypeRefsetMap == null) {
+			synchronized (SYNC_OBJECT) {
+				if (concreteDataTypeRefsetMap == null) {
+					var concreteDataTypeRefsetMap = ImmutableBiMap.<DataType, String>builder()
+							.put(DataType.BOOLEAN, getBooleanDatatypeRefsetIdentifier())
+							.put(DataType.DATE, getDatetimeDatatypeRefsetIdentifier())
+							.put(DataType.DECIMAL, getFloatDatatypeRefsetIdentifier())
+							.put(DataType.INTEGER, getIntegerDatatypeRefsetIdentifier())
+							.put(DataType.STRING, getStringDatatypeRefsetIdentifier())
+							.build();
+					this.concreteDataTypeRefsetMap = concreteDataTypeRefsetMap;
+				}
+			}
+		}
+		return concreteDataTypeRefsetMap;
 	}
 	
 }

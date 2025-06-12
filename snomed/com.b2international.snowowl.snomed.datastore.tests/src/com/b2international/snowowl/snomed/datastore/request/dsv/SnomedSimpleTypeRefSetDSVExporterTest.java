@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2024-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,7 @@ import org.junit.Test;
 
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.*;
@@ -56,13 +59,15 @@ public class SnomedSimpleTypeRefSetDSVExporterTest {
 	}
 
 	@BeforeClass
-	public static void populateCoreConfig() {
+	public static void setupMinimalEnv() {
+		Path root = Paths.get("target");
+		final Environment env = new Environment(root, root, root);
 		final SnowOwlConfiguration configuration = new SnowOwlConfiguration();
 		final SnomedCoreConfiguration coreConfiguration = configuration.getModuleConfig(SnomedCoreConfiguration.class);
 		coreConfiguration.setIntegerDatatypeRefsetIdentifier("rs1");
 		coreConfiguration.setBooleanDatatypeRefsetIdentifier("rs2");
 		
-		ApplicationContext.getInstance().registerService(SnowOwlConfiguration.class, configuration);
+		env.services().registerService(SnowOwlConfiguration.class, configuration);
 	}
 	
 	@Test

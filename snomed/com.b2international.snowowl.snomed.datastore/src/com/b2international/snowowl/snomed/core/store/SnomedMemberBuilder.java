@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 
+import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.domain.TransactionContext;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
@@ -73,6 +74,10 @@ public abstract class SnomedMemberBuilder<B extends SnomedMemberBuilder<B>> exte
 		return referencedComponent;
 	}
 	
+	protected final String getRefsetId() {
+		return refsetId;
+	}
+	
 	@Override
 	protected final Builder create() {
 		return SnomedRefSetMemberIndexEntry.builder();
@@ -90,7 +95,12 @@ public abstract class SnomedMemberBuilder<B extends SnomedMemberBuilder<B>> exte
 			.referenceSetType(refSet.getRefSetType());
 		
 		if (refSet.getRefSetType() == SnomedRefSetType.CONCRETE_DATA_TYPE) {
-			component.field(SnomedRefSetMemberIndexEntry.Fields.DATA_TYPE, SnomedRefSetUtil.getDataType(refsetId));
+			var dataType = SnomedRefSetUtil.getDataType(refsetId);
+			if (dataType == null) {
+				// XXX this refset member does not have a proper refsetId -> dataType mapping available in the config
+				throw new BadRequestException("Missing configuration for concrete domain data type refset id: %s at refset member: %s", this.refsetId, this.getId());
+			}
+			component.field(SnomedRefSetMemberIndexEntry.Fields.DATA_TYPE, dataType);
 		}
 	}
 	
