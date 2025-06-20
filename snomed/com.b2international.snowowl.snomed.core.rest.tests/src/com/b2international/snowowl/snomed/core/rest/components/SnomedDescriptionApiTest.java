@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,13 @@ import com.b2international.snowowl.core.branch.BranchPathUtils;
 import com.b2international.snowowl.core.domain.TransactionContext;
 import com.b2international.snowowl.core.events.bulk.BulkRequest;
 import com.b2international.snowowl.core.events.bulk.BulkRequestBuilder;
+import com.b2international.snowowl.core.identity.Permission;
+import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.request.RepositoryRequest;
 import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.terminology.ComponentCategory;
+import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.snomed.cis.ISnomedIdentifierService;
 import com.b2international.snowowl.snomed.cis.domain.IdentifierStatus;
 import com.b2international.snowowl.snomed.cis.domain.SctId;
@@ -84,6 +87,7 @@ import com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.ModuleRequest.ModuleIdProvider;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 import com.google.common.collect.Iterables;
 
@@ -1023,10 +1027,12 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void restoreEffectiveTimeOnReleasedDescription() throws Exception {
-		final String descriptionId = createNewDescription(branchPath);
-
 		final String shortName = "SNOMEDCT-DESC-1";
 		createCodeSystem(branchPath, shortName).statusCode(201);
+		
+		final String descriptionId = createNewDescription(branchPath);
+		
+		// create first version
 		final LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
 		createVersion(shortName, "v1", effectiveDate).statusCode(201);
 
@@ -1050,6 +1056,54 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 		);
 
 		updateComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId, reactivationRequestBody).statusCode(204);
+
+		// Getting the description back to its originally released state should restore the effective time
+		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).statusCode(200)
+			.body("active", equalTo(true))
+			.body("released", equalTo(true))
+			.body("effectiveTime", equalTo(effectiveDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+	}
+	
+	@Test
+	public void restoreEffectiveTimeOnReleasedDescription_ViaToken() throws Exception {
+		final String codeSystemId = "SNOMEDCT-DESC-EFFRESTORE-TOKEN";
+		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		
+		final String descriptionId = createNewDescription(branchPath);
+		// create first version
+		final LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
+
+		// After versioning, the description should be released and have an effective time set on it
+		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).statusCode(200)
+			.body("active", equalTo(true))
+			.body("released", equalTo(true))
+			.body("effectiveTime", equalTo(effectiveDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+
+		inactivateDescription(branchPath, descriptionId);
+
+		// An inactivation should unset the effective time field
+		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).statusCode(200)
+			.body("active", equalTo(false))
+			.body("released", equalTo(true))
+	 		.body("effectiveTime", nullValue());
+
+		// this update restore the effective time to the released value, it should break without the fix in AsyncRequest exec if executed with a write token
+		// see https://snowowl.atlassian.net/browse/SO-6429 
+		// executing via Java API as the rest api will execute the request on an authorized bus which always carries the accessToken
+		SnomedRequests.prepareUpdateDescription(descriptionId)
+			.setActive(true)
+			.build(codeSystemId, RestExtensions.USER, "Reactivated description")
+			.withContext(Map.of(
+				User.class, new User(RestExtensions.USER, List.of(
+					Permission.requireAll(Permission.OPERATION_READ, List.of(codeSystemId)),
+					Permission.requireAll(Permission.OPERATION_READ, List.of(SnomedContentRule.SNOMEDCT_ID)),
+					Permission.requireAll(Permission.OPERATION_EDIT, List.of(codeSystemId)),
+					Permission.requireAll(Permission.OPERATION_EDIT, List.of(SnomedContentRule.SNOMEDCT_ID))
+				))
+			))
+			.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+			.getSync(2, TimeUnit.MINUTES);
 
 		// Getting the description back to its originally released state should restore the effective time
 		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).statusCode(200)
