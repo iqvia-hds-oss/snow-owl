@@ -64,7 +64,7 @@ public final class JwksIdentityProvider implements IdentityProvider {
 				try {
 					return (RSAPublicKey) jwkProvider.get(kid).getPublicKey();
 				} catch (JwkException e) {
-					IdentityProvider.LOG.warn("Failed login attempt with an invalid authorization token. Error: %s", e.getMessage());
+					IdentityProvider.LOG.warn("Failed login attempt with an invalid authorization token. Error: {}", e.getMessage());
 					throw new BadRequestException(e.getMessage(), e);
 				}
 			}
