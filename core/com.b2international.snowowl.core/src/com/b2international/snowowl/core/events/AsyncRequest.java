@@ -121,30 +121,29 @@ public final class AsyncRequest<R> {
 	}
 	
 	/**
-	 * Execute the request and synchronously wait until it responds.
+	 * Execute the request (with the current context info) and synchronously wait until it responds.
 	 * @return the response
 	 */
 	public R get(ServiceProvider context) {
-		return execute(context.service(IEventBus.class)).getSync();
+		return executeWithContext(context).getSync();
 	}
 	
 	/**
-	 * Execute the request and synchronously wait until it responds or times out after the given milliseconds.
+	 * Execute the request (with the current context info) and synchronously wait until it responds or times out after the given milliseconds.
 	 * @param timeout - timeout value in milliseconds
 	 * @return the response
 	 */
 	public R get(ServiceProvider context, long timeout) {
 		return get(context, timeout, TimeUnit.MILLISECONDS);
 	}
-
 	/**
-	 * Execute the request and synchronously wait until it responds or times out after the given timeout config.
+	 * Execute the request (with the current context info) and synchronously wait until it responds or times out after the given timeout config.
 	 * @param timeout - timeout value
 	 * @param unit - the unit for the timeout value
 	 * @return the response
 	 */
 	private R get(ServiceProvider context, long timeout, TimeUnit unit) {
-		return execute(context.service(IEventBus.class)).getSync(timeout, unit);
+		return executeWithContext(context).getSync(timeout, unit);
 	}
 	
 	/**
