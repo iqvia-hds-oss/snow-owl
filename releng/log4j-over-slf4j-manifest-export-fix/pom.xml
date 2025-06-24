@@ -7,7 +7,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-		<slf4j.version>2.0.11</slf4j.version>
+		<slf4j.version>2.0.16</slf4j.version>
 		
 		<!-- Artifact distribution -->
 		<maven.repository.id>nexus_deployment</maven.repository.id>
@@ -39,7 +39,7 @@
 						<configuration>
 							<artifacts>
 								<artifact>
-									<id>org.slf4j:log4j-over-slf4j:2.0.11</id>
+									<id>org.slf4j:log4j-over-slf4j:2.0.16</id>
 									<override>true</override>
 									<instructions>
 										<Bundle-Description>Log4j implemented over SLF4J</Bundle-Description>
@@ -49,8 +49,8 @@
 										<Bundle-SymbolicName>log4j.over.slf4j</Bundle-SymbolicName>
 										<Bundle-Vendor>B2i Healthcare</Bundle-Vendor>
 										<Bundle-Version>${slf4j.version}</Bundle-Version>
-										<!-- This will ensure that packages will be exported without any version constraints -->
-										<Export-Package>*;version=1.2.24</Export-Package>
+										<!-- This will ensure that packages will be exported with a specific version constraint that matches the expected log4j 1.x import packages by other plugins, such as Xtext -->
+										<Export-Package>*;version=1.2.26</Export-Package>
 										<Import-Package>javax.xml.parsers,org.slf4j;version="[2.0,3)",org.slf4j.spi;version="[2.0,3)",org.w3c.dom</Import-Package>
 									</instructions>
 								</artifact>
