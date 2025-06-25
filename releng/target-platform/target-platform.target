@@ -7,10 +7,10 @@
 		<unit id="org.eclipse.justj.openjdk.hotspot.jre.full.feature.group" version="0.0.0"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.1000.v20231114-0937"/>
-		<unit id="org.eclipse.pde.feature.group" version="3.15.200.v20231201-0110"/>
-		<unit id="org.eclipse.platform.feature.group" version="4.30.0.v20231201-0512"/>
-		<repository location="https://download.eclipse.org/eclipse/updates/4.30/R-4.30-202312010110/"/>
+		<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.1600.v20250228-0640"/>
+		<unit id="org.eclipse.pde.feature.group" version="3.16.200.v20250228-0140"/>
+		<unit id="org.eclipse.platform.feature.group" version="4.35.0.v20250228-0640"/>
+		<repository location="https://download.eclipse.org/eclipse/updates/4.35/R-4.35-202502280140/"/>
 	</location>
 	<!-- NOTE: Orbit repository is required to fetch an OSGi version of tagsoup required by rest-assured library -->
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
@@ -18,32 +18,35 @@
 		<repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20210223232630/repository"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="bcpg" version="1.77.0"/>
-		<unit id="bcpkix" version="1.77.0"/>
-		<unit id="bcprov" version="1.77.0"/>
-		<unit id="bcutil" version="1.77.0"/>
-		<repository location="https://download.eclipse.org/tools/orbit/simrel/maven-osgi/release/4.30.0"/>
+		<unit id="bcpg" version="1.80.0"/>
+		<unit id="bcpkix" version="1.80.0"/>
+		<unit id="bcprov" version="1.80.0"/>
+		<unit id="bcutil" version="1.80.0"/>
+		<repository location="https://download.eclipse.org/tools/orbit/simrel/maven-osgi/release/4.35.0"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="org.eclipse.emf.base.feature.group" version="2.35.0.v20230829-0934"/>
-		<unit id="org.eclipse.emf.ecore.feature.group" version="2.35.0.v20230829-0934"/>
-		<repository location="https://download.eclipse.org/modeling/emf/emf/builds/release/2.35.0/"/>
+		<unit id="org.eclipse.emf.base.feature.group" version="2.40.0.v20241204-1554"/>
+		<unit id="org.eclipse.emf.ecore.feature.group" version="2.39.0.v20241018-1213"/>
+		<unit id="org.eclipse.emf.edit.feature.group" version="2.23.0.v20240604-0832"/>
+		<unit id="org.eclipse.emf.databinding.feature.group" version="1.12.0.v20240604-0832"/>
+		<unit id="org.eclipse.emf.databinding.edit.feature.group" version="1.12.0.v20240604-0832"/>
+		<repository location="https://download.eclipse.org/modeling/emf/emf/builds/release/2.41.0/"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="org.eclipse.xtext.redist.feature.group" version="2.33.0.v20231121-0955"/>
-		<unit id="org.eclipse.xtext.runtime.feature.group" version="2.33.0.v20231121-0955"/>
-		<unit id="org.eclipse.xtext.sdk.feature.group" version="2.33.0.v20231121-0955"/>
-		<unit id="org.eclipse.xtext.xbase.feature.group" version="2.33.0.v20231121-0955"/>
-		<unit id="org.eclipse.xtext.xbase.lib.feature.group" version="2.33.0.v20231121-0955"/>
-		<unit id="org.eclipse.xtext.testing" version="2.33.0.v20231121-0955"/>
+		<unit id="org.eclipse.xtext.redist.feature.group" version="2.38.0.v20250226-0658"/>
+		<unit id="org.eclipse.xtext.runtime.feature.group" version="2.38.0.v20250226-0658"/>
+		<unit id="org.eclipse.xtext.sdk.feature.group" version="2.38.0.v20250226-0658"/>
+		<unit id="org.eclipse.xtext.xbase.feature.group" version="2.38.0.v20250226-0658"/>
+		<unit id="org.eclipse.xtext.xbase.lib.feature.group" version="2.38.0.v20250226-0658"/>
+		<unit id="org.eclipse.xtext.testing" version="2.38.0.v20250226-0658"/>
 		<unit id="org.antlr.runtime" version="3.2.0.v20230929-1400"/>
-		<unit id="org.objectweb.asm" version="9.6.0"/>
-		<repository location="https://download.eclipse.org/modeling/tmf/xtext/updates/releases/2.33.0/"/>
+		<unit id="org.objectweb.asm" version="9.7.1"/>
+		<repository location="https://download.eclipse.org/modeling/tmf/xtext/updates/releases/2.38.0/"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="org.eclipse.emf.mwe.sdk.feature.group" version="1.10.0.v20231117-0522"/>
-		<unit id="org.eclipse.emf.mwe2.language.sdk.feature.group" version="2.16.0.v20231117-0522"/>
-		<repository location="https://download.eclipse.org/modeling/emft/mwe/updates/releases/2.16.0/"/>
+		<unit id="org.eclipse.emf.mwe.sdk.feature.group" version="1.15.0.v20250222-0818"/>
+		<unit id="org.eclipse.emf.mwe2.language.sdk.feature.group" version="2.21.0.v20250222-0818"/>
+		<repository location="https://download.eclipse.org/modeling/emft/mwe/updates/releases/2.21.0/"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 		<repository location="mvn:com.b2international:com.b2international.snomed.ecl.update:2.2.0:zip"/>
@@ -56,37 +59,37 @@
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>slf4j-api</artifactId>
-				<version>2.0.11</version>
+				<version>2.0.16</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>jcl-over-slf4j</artifactId>
-				<version>2.0.11</version>
+				<version>2.0.16</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.slf4j</groupId>
 				<artifactId>jul-to-slf4j</artifactId>
-				<version>2.0.11</version>
+				<version>2.0.16</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.b2international.snowowl</groupId>
 				<artifactId>log4j-over-slf4j</artifactId>
-				<version>2.0.11</version>
+				<version>2.0.16</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-classic</artifactId>
-				<version>1.4.14</version>
+				<version>1.5.16</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-core</artifactId>
-				<version>1.4.14</version>
+				<version>1.5.16</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Jackson CSV/JSON/YAML/XML parsing libraries -->
@@ -309,115 +312,115 @@
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-osgi</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-deploy</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-http</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-io</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-jmx</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-jndi</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-security</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-server</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 			    <groupId>org.eclipse.jetty</groupId>
 			    <artifactId>jetty-session</artifactId>
-			    <version>12.0.3</version>
+			    <version>12.0.21</version>
 			    <type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-util</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-xml</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-core-server</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-jetty-server</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-jetty-api</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-core-common</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-jetty-common</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-core-client</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-client</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-alpn-client</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -430,86 +433,86 @@
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-servlet</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.osgi</groupId>
 				<artifactId>jetty-ee10-osgi-boot</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-annotations</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-plus</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-webapp</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jetty-server</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jakarta-common</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-servlet</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jakarta-client</artifactId>
-				<version>12.0.3</version>
+				<version>12.0.21</version>
 				<type>jar</type>
 			</dependency>
 			<!-- OWL API and Protege dependencies for classification and reasoner support -->
 			<dependency>
 				<groupId>com.b2international.snowowl</groupId>
 				<artifactId>owlapi-osgidistribution</artifactId>
-				<version>4.5.26.b2i</version>
+				<version>4.5.27.b2i</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.b2international.snowowl</groupId>
 				<artifactId>protege-common</artifactId>
-				<version>5.0.7.b2i</version>
+				<version>5.0.8.b2i</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.b2international.snowowl</groupId>
 				<artifactId>protege-editor-core</artifactId>
-				<version>5.0.7.b2i</version>
+				<version>5.0.8.b2i</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.b2international.snowowl</groupId>
 				<artifactId>protege-editor-owl</artifactId>
-				<version>5.0.7.b2i</version>
+				<version>5.0.8.b2i</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Built-in reasoner, ELK based on the Protege bindings -->
@@ -549,7 +552,7 @@
 			<dependency>
 				<groupId>it.unimi.dsi</groupId>
 				<artifactId>fastutil</artifactId>
-				<version>8.5.12</version>
+				<version>8.5.16</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Testing libraries (REST API, Assertions and Mocking) -->
@@ -580,13 +583,7 @@
 			<dependency>
 				<groupId>org.assertj</groupId>
 				<artifactId>assertj-core</artifactId>
-				<version>3.25.1</version>
-				<type>jar</type>
-			</dependency>
-			<dependency>
-				<groupId>org.mockito</groupId>
-				<artifactId>mockito-core</artifactId>
-				<version>5.9.0</version>
+				<version>3.27.3</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -595,17 +592,29 @@
 				<version>3.14.0</version>
 				<type>jar</type>
 			</dependency>
-			<!-- ByteBuddy and Objenesis required by mockito-core (see pom.xml for exact versions) -->
+			<dependency>
+			    <groupId>org.hamcrest</groupId>
+			    <artifactId>hamcrest</artifactId>
+			    <version>2.2</version>
+   				<type>jar</type>
+			</dependency>
+			<!-- Mockito and its transitive dependencies, ByteBuddy and Objenesis (see mockito-core pom.xml for exact min versions) -->
+			<dependency>
+				<groupId>org.mockito</groupId>
+				<artifactId>mockito-core</artifactId>
+				<version>5.9.0</version>
+				<type>jar</type>
+			</dependency>
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy-agent</artifactId>
-				<version>1.14.11</version>
+				<version>1.17.6</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy</artifactId>
-				<version>1.14.11</version>
+				<version>1.17.6</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
