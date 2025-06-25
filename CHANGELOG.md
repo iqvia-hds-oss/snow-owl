@@ -1,6 +1,28 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.7.1
+
+### Bugs/Improvements
+- [snomed] fixed an issue where persisting certain changes from a server-side Groovy script could lead to missing authorization token issues (#1391)
+- [snomed] fix an issue where exporting a SNOMED CT References to DSV format could result in incorrectly formatted export when a given concept does not have a value for a selected property (#1387)
+- [snomed] fix a potential NPE when running validation rule 663 (#1389)
+- [snomed] fixed an issue where old concrete data type reference set members were incorrectly imported to the system in case of invalid or missing data type to refsetId configuration (#1390)
+
+### Packaging
+- Update base Docker image Ubuntu version to 24.04
+
+### Dependencies
+- Bump embedded Elasticsearch to 7.17.28
+- Bump Elasticsearch 8 client to 8.18.0
+- Bump Jackson to 2.18.3
+- Bump Spring to 6.2.6
+- Bump Spring Security to 6.4.5
+- Bump Spring Boot to 3.4.5
+- Bump SpringDoc to 2.8.6
+- Bump Swagger Jakarta to 2.2.29
+- Bump micrometer to 1.14.5
+
 ## 9.7.0
 
 ### Java 21
