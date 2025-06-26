@@ -210,7 +210,6 @@
         <setEntry value="org.eclipse.xtext@default:default"/>
         <setEntry value="org.glassfish.expressly@default:default"/>
         <setEntry value="org.hamcrest*2.2.0@default:default"/>
-        <setEntry value="org.hamcrest*3.0.0@default:default"/>
         <setEntry value="org.hdrhistogram.HdrHistogram@default:default"/>
         <setEntry value="org.jetbrains.kotlin.osgi-bundle@default:default"/>
         <setEntry value="org.jsr-305@default:default"/>
