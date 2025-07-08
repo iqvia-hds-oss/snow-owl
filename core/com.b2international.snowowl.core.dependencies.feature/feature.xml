@@ -674,4 +674,12 @@ Visit us at https://b2ihealthcare.com
          id="org.eclipse.jetty.plus"
          version="0.0.0"/>
 
+   <plugin
+         id="com.sun.jna"
+         version="0.0.0"/>
+
+   <plugin
+         id="com.sun.jna.platform"
+         version="0.0.0"/>
+
 </feature>
