@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import javax.annotation.OverridingMethodsMustInvokeSuper;
 
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 
 import com.b2international.collections.PrimitiveCollectionModule;
@@ -51,6 +52,7 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueDetailEx
 import com.b2international.snowowl.core.validation.issue.ValidationIssues;
 import com.b2international.snowowl.core.validation.rule.ValidationRule;
 import com.b2international.snowowl.core.validation.whitelist.ValidationWhiteList;
+import com.b2international.snowowl.test.commons.ClassPathScannerRule;
 import com.b2international.snowowl.test.commons.TestMethodNameRule;
 import com.b2international.snowowl.test.commons.snomed.TestBranchContext;
 import com.b2international.snowowl.test.commons.snomed.TestBranchContext.Builder;
@@ -67,6 +69,9 @@ import com.google.common.collect.Iterables;
  */
 public abstract class BaseValidationTest extends BaseRevisionIndexTest {
 
+	@ClassRule
+	public static final ClassPathScannerRule SCANNER_RULE = new ClassPathScannerRule();
+	
 	@Rule
 	public final TestMethodNameRule nameRule = new TestMethodNameRule();
 	
@@ -84,7 +89,8 @@ public abstract class BaseValidationTest extends BaseRevisionIndexTest {
 	
 	@Before
 	public final void setup() {
-		final ClassPathScanner scanner = new ClassPathScanner("com.b2international");
+		var scanner = SCANNER_RULE.getScanner();
+		
 		Builder context = TestBranchContext.on(MAIN)
 				.with(ClassLoader.class, getClass().getClassLoader())
 				.with(ClassPathScanner.class, scanner)
@@ -120,7 +126,7 @@ public abstract class BaseValidationTest extends BaseRevisionIndexTest {
 	
 	protected final void assertAffectedComponents(ValidationIssues issues, Iterable<ComponentIdentifier> expectedAffectedComponentIdentifiers) {
 		assertThat(issues).hasSize(Iterables.size(expectedAffectedComponentIdentifiers));
-		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet())).containsOnlyElementsOf(expectedAffectedComponentIdentifiers);
+		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet())).hasSameElementsAs(expectedAffectedComponentIdentifiers);
 	}
 
 	protected final ValidationIssues validate(String ruleId) {

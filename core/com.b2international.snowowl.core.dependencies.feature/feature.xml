@@ -67,10 +67,6 @@ Visit us at https://b2ihealthcare.com
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.osgi.services"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.osgi.util"
          version="0.0.0"/>
 
@@ -668,6 +664,22 @@ Visit us at https://b2ihealthcare.com
 
    <plugin
          id="org.apache.aries.spifly.dynamic.bundle"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.ee"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.plus"
+         version="0.0.0"/>
+
+   <plugin
+         id="com.sun.jna"
+         version="0.0.0"/>
+
+   <plugin
+         id="com.sun.jna.platform"
          version="0.0.0"/>
 
 </feature>
