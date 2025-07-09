@@ -126,7 +126,7 @@ public abstract class BaseValidationTest extends BaseRevisionIndexTest {
 	
 	protected final void assertAffectedComponents(ValidationIssues issues, Iterable<ComponentIdentifier> expectedAffectedComponentIdentifiers) {
 		assertThat(issues).hasSize(Iterables.size(expectedAffectedComponentIdentifiers));
-		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet())).isSubsetOf(expectedAffectedComponentIdentifiers);
+		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet())).hasSameElementsAs(expectedAffectedComponentIdentifiers);
 	}
 
 	protected final ValidationIssues validate(String ruleId) {
