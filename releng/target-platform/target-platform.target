@@ -92,6 +92,12 @@
 				<version>1.5.16</version>
 				<type>jar</type>
 			</dependency>
+			<dependency>
+				<groupId>net.logstash.logback</groupId>
+				<artifactId>logstash-logback-encoder</artifactId>
+				<version>8.1</version>
+				<type>jar</type>
+			</dependency>
 			<!-- Jackson CSV/JSON/YAML/XML parsing libraries -->
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>

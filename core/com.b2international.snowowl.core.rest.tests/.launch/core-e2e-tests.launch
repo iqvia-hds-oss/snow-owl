@@ -104,6 +104,7 @@
         <setEntry value="net.bytebuddy.byte-buddy-agent@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy@default:default"/>
         <setEntry value="net.jodah.typetools@default:default"/>
+        <setEntry value="net.logstash.logback.logstash-logback-encoder@default:false"/>
         <setEntry value="org.antlr.runtime@default:default"/>
         <setEntry value="org.aopalliance@default:default"/>
         <setEntry value="org.apache.ant@default:default"/>
