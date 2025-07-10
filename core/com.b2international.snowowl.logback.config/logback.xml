@@ -32,7 +32,6 @@
                 </nestedField>
                 <stackTrace>
                     <fieldName>stackTrace</fieldName>
-                     maxLength - limit the length of the stack trace 
                     <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
                         <maxDepthPerThrowable>200</maxDepthPerThrowable>
                         <maxLength>14000</maxLength>
