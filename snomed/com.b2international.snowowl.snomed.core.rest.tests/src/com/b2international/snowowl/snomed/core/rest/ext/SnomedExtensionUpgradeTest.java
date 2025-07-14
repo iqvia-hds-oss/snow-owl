@@ -1015,6 +1015,98 @@ public class SnomedExtensionUpgradeTest extends AbstractSnomedExtensionApiTest {
 	}
 	
 	@Test
+	public void upgrade32UpgradeFromCodeSystemVersionWithPublishedChanges() {
+		CodeSystemURI siWorkingBranch = new CodeSystemURI(SNOMEDCT);
+		
+		// Create extension on the latest SI VERSION
+		CodeSystem extension = createExtension(latestInternationalVersion, branchPath.lastSegment());
+		
+		// Create new SE concept
+		String extensionModuleId = createModule(extension);
+		String newConceptId = createConcept(extension.getCodeSystemURI(), createConceptRequestBody(Concepts.ROOT_CONCEPT, extensionModuleId));
+		
+		//Donate this concept to SI
+		Json createDonatedConcept = Json.object(
+				"id", newConceptId,
+				"active", true,
+				"moduleId", Concepts.MODULE_SCT_CORE,
+				"descriptions", Json.array(
+					Json.object(
+						"typeId", Concepts.FULLY_SPECIFIED_NAME,
+						"term", "FSN of concept",
+						"languageCode", DEFAULT_LANGUAGE_CODE,
+						"acceptability", SnomedApiTestConstants.UK_PREFERRED_MAP
+					),
+					Json.object(
+						"typeId", Concepts.SYNONYM,
+						"term", "PT of concept",
+						"languageCode", DEFAULT_LANGUAGE_CODE,
+						"acceptability", SnomedApiTestConstants.UK_PREFERRED_MAP
+					)
+				),
+				"relationships", Json.array( 
+					Json.object(
+						"active", true,
+						"typeId", Concepts.IS_A,
+						"destinationId", Concepts.ROOT_CONCEPT
+					)
+				)
+			);
+		assertThat(createConcept(siWorkingBranch, createDonatedConcept)).isEqualTo(newConceptId);
+		
+		// Create a new INT version
+		String effectiveDate = getNextAvailableEffectiveDateAsString(SNOMEDCT);
+		createVersion(SNOMEDCT, effectiveDate, effectiveDate).statusCode(201);
+		CodeSystemURI upgradeVersion = CodeSystemURI.branch(SNOMEDCT, effectiveDate);
+		
+		// Start upgrade to the new available upgrade version
+		CodeSystem upgradeCodeSystem = createExtensionUpgrade(extension.getCodeSystemURI(), upgradeVersion);
+		assertEquals(upgradeVersion, upgradeCodeSystem.getExtensionOf());
+				
+		// Complete the upgrade
+		Boolean successComplete = CodeSystemRequests.prepareComplete(upgradeCodeSystem.getShortName())
+				.build(upgradeCodeSystem.getRepositoryId())
+				.execute(getBus())
+				.getSync(1, TimeUnit.MINUTES);
+		assertTrue(successComplete);
+		
+		// Add two descriptions in another language reference set to the concept on SNOMEDCT
+		createComponent(upgradeVersion.getPath(), SnomedComponentType.DESCRIPTION, createDescriptionRequestBody(newConceptId, Concepts.FULLY_SPECIFIED_NAME, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.US_PREFERRED_MAP));
+		createComponent(upgradeVersion.getPath(), SnomedComponentType.DESCRIPTION, createDescriptionRequestBody(newConceptId, Concepts.SYNONYM, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.US_PREFERRED_MAP));
+		
+		// Create a new INT version
+		String effectiveDate2 = getNextAvailableEffectiveDateAsString(SNOMEDCT);
+		createVersion(SNOMEDCT, effectiveDate2, effectiveDate2).statusCode(201);
+		CodeSystemURI upgradeVersion2 = CodeSystemURI.branch(SNOMEDCT, effectiveDate2);
+		
+		// Start and complete upgrade to the next available upgrade version
+		CodeSystem upgradeCodeSystem2 = createExtensionUpgrade(extension.getCodeSystemURI(), upgradeVersion2);
+		assertEquals(upgradeVersion2, upgradeCodeSystem2.getExtensionOf());
+		Boolean successComplete2 = CodeSystemRequests.prepareComplete(upgradeCodeSystem2.getShortName())
+				.build(upgradeCodeSystem2.getRepositoryId())
+				.execute(getBus())
+				.getSync(1, TimeUnit.MINUTES);
+		assertTrue(successComplete2);
+
+		// Inactivate concept on INT
+		updateConcept(siWorkingBranch, newConceptId, Map.of("active", false));
+		SnomedConcept conceptOnMainBranch = getConcept(siWorkingBranch, newConceptId);
+		assertThat(conceptOnMainBranch.isActive()).isFalse();
+		
+		// Create a new INT version
+		String effectiveDate3 = getNextAvailableEffectiveDateAsString(SNOMEDCT);
+		createVersion(SNOMEDCT, effectiveDate3, effectiveDate3).statusCode(201);
+		CodeSystemURI upgradeVersion3 = CodeSystemURI.branch(SNOMEDCT, effectiveDate3);
+		
+		// Upgrade the extension code system to this new version
+		CodeSystem upgradeCodeSystem3 = createExtensionUpgrade(extension.getCodeSystemURI(), upgradeVersion3);
+		assertEquals(upgradeVersion3, upgradeCodeSystem3.getExtensionOf());
+		
+		SnomedConcept conceptOnUpgradeBranch = getConcept(upgradeCodeSystem3.getCodeSystemURI(), newConceptId);
+		assertThat(conceptOnUpgradeBranch.isActive()).isFalse();
+	}
+	
+	@Test
 	public void upgrade17UpgradeFromCodeSystemVersionWithPublishedChanges() {
 		// create extension on the latest SI VERSION
 		CodeSystem extension = createExtension(latestInternationalVersion, branchPath.lastSegment());
