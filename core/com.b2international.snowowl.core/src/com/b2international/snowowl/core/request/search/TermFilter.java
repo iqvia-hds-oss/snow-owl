@@ -83,6 +83,16 @@ public abstract class TermFilter implements Serializable {
 		return new MoreLikeThisTermFilter.Builder();
 	}
 
+	@JsonIgnore
+	public static RegexTermFilter.Builder regex() {
+		return new RegexTermFilter.Builder();
+	}
+
+	@JsonIgnore
+	public static WildcardTermFilter.Builder wild() {
+		return new WildcardTermFilter.Builder();
+	}
+
 	/**
 	 * Get the search term(s) from this term filter. Certain implementations only support a single term to be defined.
 	 * 
