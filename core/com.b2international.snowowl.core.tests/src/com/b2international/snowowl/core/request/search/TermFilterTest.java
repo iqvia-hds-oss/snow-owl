@@ -48,9 +48,9 @@ public class TermFilterTest {
 
 		@Field(
 			aliases = {
-				@FieldAlias(name = "text", type = FieldAliasType.TEXT, analyzer=Analyzers.CASE_SENSITIVE),
+				@FieldAlias(name = "text", type = FieldAliasType.TEXT, analyzer=Analyzers.TOKENIZED),
 				@FieldAlias(name = "prefix", type = FieldAliasType.TEXT, analyzer = Analyzers.PREFIX, searchAnalyzer = Analyzers.TOKENIZED),
-				@FieldAlias(name = "exact", type = FieldAliasType.KEYWORD)
+				@FieldAlias(name = "exact", type = FieldAliasType.KEYWORD, normalizer = Normalizers.LOWER_ASCII)
 			} 
 		)
 		private String analyzedField;
@@ -143,15 +143,21 @@ public class TermFilterTest {
 	@Test
 	public void testMatchTermFilter() {
 		indexDocuments("Heart Attack", "Stroke");
-		final TermFilter filter = TermFilter.match().term("Heart Attack").build();
-		assertMatchReturned(filter);
+		final TermFilter filter1 = TermFilter.match().term("Heart Attack").build();
+		assertMatchReturned(filter1);
+		
+		final TermFilter filter2 = TermFilter.match().term("hear att").build();
+		assertMatchReturned(filter2);
 	}
 
 	@Test
 	public void testExactTermFilter() {
 		indexDocuments("ExactMatch", "NotExactMatch");
-		final TermFilter filter = TermFilter.exact().term("ExactMatch").build();
-		assertMatchReturned(filter);
+		final TermFilter filter1 = TermFilter.exact().term("ExactMatch").build();
+		assertMatchReturned(filter1);
+
+		final TermFilter filter2 = TermFilter.exact().term("ExAcTmAtCh").caseSensitive(false).build();
+		assertMatchReturned(filter2);
 	}
 
 	@Test
@@ -164,8 +170,8 @@ public class TermFilterTest {
 	@Test
 	public void testMoreLikeThisTermFilter() {
 		indexDocuments("diabetes mellitus", "hypertension");
-		final TermFilter filter = TermFilter.mlt().likeTexts(List.of("diabetes mellitus")).build();
-		assertMatchReturned(filter);
+		final TermFilter filter1 = TermFilter.mlt().likeTexts(List.of("diabetes mellitus")).build();
+		assertMatchReturned(filter1);
 	}
 
 	@Test
