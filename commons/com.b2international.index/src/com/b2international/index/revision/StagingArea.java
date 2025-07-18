@@ -74,6 +74,7 @@ public final class StagingArea {
 	private boolean squashMerge;
 	private SetMultimap<Class<?>, String> revisionsToReviseOnMergeSource;
 	private SetMultimap<Class<?>, String> externalRevisionsToReviseOnMergeSource;
+	private SetMultimap<ObjectId, ObjectId> resolvedAddedInSourceTargetComponentsToIgnore;
 	private Object context;
 
 	StagingArea(DefaultRevisionIndex index, String branchPath, ObjectMapper mapper) {
@@ -538,6 +539,15 @@ public final class StagingArea {
 					}
 				}
 			});
+		} else if (!resolvedAddedInSourceTargetComponentsToIgnore.isEmpty()) {
+			details = new ArrayList<>(resolvedAddedInSourceTargetComponentsToIgnore.keySet().size());
+			// TODO group by container
+			resolvedAddedInSourceTargetComponentsToIgnore.forEach((container, component) -> {
+				details.add(CommitDetail.removed(container.type(), component.type())
+						.objects(container.id())
+						.components(Collections.singleton(component.id()))
+						.build());
+			});
 		} else {
 			details = Collections.emptyList();
 		}
@@ -660,6 +670,7 @@ public final class StagingArea {
 		stagedObjects = newHashMap();
 		revisionsToReviseOnMergeSource = HashMultimap.create();
 		externalRevisionsToReviseOnMergeSource = HashMultimap.create();
+		resolvedAddedInSourceTargetComponentsToIgnore = HashMultimap.create();
 	}
 
 	/**
