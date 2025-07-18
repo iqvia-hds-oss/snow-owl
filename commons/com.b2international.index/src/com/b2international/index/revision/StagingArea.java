@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ public final class StagingArea {
 	private boolean squashMerge;
 	private SetMultimap<Class<?>, String> revisionsToReviseOnMergeSource;
 	private SetMultimap<Class<?>, String> externalRevisionsToReviseOnMergeSource;
+	private SetMultimap<ObjectId, ObjectId> resolvedAddedInSourceTargetComponentsToIgnore;
 	private Object context;
 	
 	StagingArea(DefaultRevisionIndex index, String branchPath, ObjectMapper mapper) {
@@ -569,6 +570,15 @@ public final class StagingArea {
 					}
 				}
 			});
+		} else if (!resolvedAddedInSourceTargetComponentsToIgnore.isEmpty()) {
+			details = new ArrayList<>(resolvedAddedInSourceTargetComponentsToIgnore.keySet().size());
+			// TODO group by container
+			resolvedAddedInSourceTargetComponentsToIgnore.forEach((container, component) -> {
+				details.add(CommitDetail.removed(container.type(), component.type())
+						.objects(container.id())
+						.components(Collections.singleton(component.id()))
+						.build());
+			});
 		} else {
 			details = Collections.emptyList();
 		}
@@ -697,6 +707,7 @@ public final class StagingArea {
 		stagedObjects = newHashMap();
 		revisionsToReviseOnMergeSource = HashMultimap.create();
 		externalRevisionsToReviseOnMergeSource = HashMultimap.create();
+		resolvedAddedInSourceTargetComponentsToIgnore = HashMultimap.create();
 	}
 
 	/**
@@ -985,10 +996,14 @@ public final class StagingArea {
 					
 					RevisionDiff diff = new RevisionDiff(addedOnTargetObject, addedOnSourceObject);
 					// XXX check the tracked field diff, not the raw diff via diff.diff()
-					Conflict conflict = conflictProcessor.handleAddedInSourceAndTarget(ObjectId.of(type, revisionId), diff.diff(), addedOnSourceObject, addedOnTargetObject);
+					var componentKey = ObjectId.of(type, revisionId);
+					Conflict conflict = conflictProcessor.handleAddedInSourceAndTarget(componentKey, diff.diff(), addedOnSourceObject, addedOnTargetObject);
 					if (conflict != null) {
 						conflicts.add(conflict);
 					} else {
+						// make sure we inject a poison pill (removal entry) to the merge commit so when processed in compare it won't be visible
+						resolvedAddedInSourceTargetComponentsToIgnore.put(addedOnTargetObject.getContainerId(), componentKey);
+						
 						// ensure we revise the one coming from source (or target?)
 						revisionsToReviseOnMergeSource.put(type, revisionId);
 					}
