@@ -41,6 +41,7 @@ import com.b2international.snowowl.core.request.ExpandParserTest;
 import com.b2international.snowowl.core.request.SearchResourceRequestTest;
 import com.b2international.snowowl.core.request.SortParserTest;
 import com.b2international.snowowl.core.request.io.ImportResponseSerializationTest;
+import com.b2international.snowowl.core.request.search.TermFilterTest;
 import com.b2international.snowowl.core.scripts.GroovyScriptEngineTest;
 import com.b2international.snowowl.core.taxonomy.SimpleTaxonomyGraphTest;
 import com.b2international.snowowl.core.uri.ComponentURITest;
@@ -94,6 +95,7 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 	ValidationIssueApiTest.class,
 	ValidationRuleApiTest.class,
 	ValidationWhiteListApiTest.class,
+	TermFilterTest.class,
 })
 public class AllCoreTests {
 
