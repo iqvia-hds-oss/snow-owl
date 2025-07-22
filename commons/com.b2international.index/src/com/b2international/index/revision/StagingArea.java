@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,6 +79,7 @@ public final class StagingArea {
 	private boolean squashMerge;
 	private SetMultimap<Class<?>, String> revisionsToReviseOnMergeSource;
 	private SetMultimap<Class<?>, String> externalRevisionsToReviseOnMergeSource;
+	private SetMultimap<ObjectId, ObjectId> resolvedAddedInSourceTargetComponentsToIgnore;
 	private Object context;
 	
 	StagingArea(DefaultRevisionIndex index, String branchPath, ObjectMapper mapper) {
@@ -512,34 +514,7 @@ public final class StagingArea {
 				}
 			});
 			
-			final List<Pair<Multimap<ObjectId, ObjectId>, BiFunction<String, String, CommitDetail.Builder>>> maps = ImmutableList.of(
-				Pair.of(newComponentsByContainer, CommitDetail::added),
-				Pair.of(changedComponentsByContainer, CommitDetail::changed),
-				Pair.of(removedComponentsByContainer, CommitDetail::removed)
-			);
-			for (Pair<Multimap<ObjectId, ObjectId>, BiFunction<String, String, CommitDetail.Builder>> entry : maps) {
-				final Multimap<ObjectId, ObjectId> multimap = entry.getA();
-				if (!multimap.isEmpty()) {
-					BiFunction<String, String, CommitDetail.Builder> builderFactory = entry.getB();
-					Map<Pair<String, String>, CommitDetail.Builder> buildersByRelationship = newHashMap();
-					// collect hierarchical changes and register them by container ID
-					multimap.asMap().forEach((container, components) -> {
-						Multimap<String, String> componentsByType = HashMultimap.create();
-						components.forEach(c -> componentsByType.put(c.type(), c.id()));
-						componentsByType.asMap().forEach((componentType, componentIds) -> {
-							final Pair<String, String> typeKey = Pair.of(container.type(), componentType);
-							if (!buildersByRelationship.containsKey(typeKey)) {
-								buildersByRelationship.put(typeKey, builderFactory.apply(typeKey.getA(), typeKey.getB()));
-							}
-							buildersByRelationship.get(typeKey).putObjects(container.id(), componentIds);
-						});
-					});
-					buildersByRelationship.values()
-					.stream()
-					.map(CommitDetail.Builder::build)
-					.forEach(details::add);
-				}
-			}
+			groupDetailsByContainer(newComponentsByContainer, changedComponentsByContainer, removedComponentsByContainer, details::add);
 			
 			// add non-revision components as new/changed/removed as well
 			stagedObjects.entrySet().forEach( entry -> {
@@ -569,6 +544,11 @@ public final class StagingArea {
 					}
 				}
 			});
+		} else if (isMerge() && !resolvedAddedInSourceTargetComponentsToIgnore.isEmpty()) {
+			// in case of non-squash merge commit make sure every resolved added vs added conflict gets a removed entry in the merge commit detail list so that components cannot reappear as added when comparing
+			// https://snowowl.atlassian.net/browse/SO-6448
+			details = new ArrayList<>(resolvedAddedInSourceTargetComponentsToIgnore.keySet().size());
+			groupDetailsByContainer(null, null, resolvedAddedInSourceTargetComponentsToIgnore, details::add);
 		} else {
 			details = Collections.emptyList();
 		}
@@ -635,6 +615,50 @@ public final class StagingArea {
 		return commitDoc;
 	}
 
+	private void groupDetailsByContainer(
+			Multimap<ObjectId, ObjectId> newComponentsByContainer, 
+			Multimap<ObjectId, ObjectId> changedComponentsByContainer, 
+			Multimap<ObjectId, ObjectId> removedComponentsByContainer, 
+			Consumer<CommitDetail> onAccept) {
+		var maps = ImmutableList.<Pair<Multimap<ObjectId, ObjectId>, BiFunction<String, String, CommitDetail.Builder>>>builder();
+		
+		if (newComponentsByContainer != null) {
+			maps.add(Pair.of(newComponentsByContainer, CommitDetail::added));
+		}
+		
+		if (changedComponentsByContainer != null) {
+			maps.add(Pair.of(changedComponentsByContainer, CommitDetail::changed));
+		}
+		
+		if (removedComponentsByContainer != null) {
+			maps.add(Pair.of(removedComponentsByContainer, CommitDetail::removed));
+		}
+		
+		for (Pair<Multimap<ObjectId, ObjectId>, BiFunction<String, String, CommitDetail.Builder>> entry : maps.build()) {
+			final Multimap<ObjectId, ObjectId> multimap = entry.getA();
+			if (!multimap.isEmpty()) {
+				BiFunction<String, String, CommitDetail.Builder> builderFactory = entry.getB();
+				Map<Pair<String, String>, CommitDetail.Builder> buildersByRelationship = newHashMap();
+				// collect hierarchical changes and register them by container ID
+				multimap.asMap().forEach((container, components) -> {
+					Multimap<String, String> componentsByType = HashMultimap.create();
+					components.forEach(c -> componentsByType.put(c.type(), c.id()));
+					componentsByType.asMap().forEach((componentType, componentIds) -> {
+						final Pair<String, String> typeKey = Pair.of(container.type(), componentType);
+						if (!buildersByRelationship.containsKey(typeKey)) {
+							buildersByRelationship.put(typeKey, builderFactory.apply(typeKey.getA(), typeKey.getB()));
+						}
+						buildersByRelationship.get(typeKey).putObjects(container.id(), componentIds);
+					});
+				});
+				buildersByRelationship.values()
+					.stream()
+					.map(CommitDetail.Builder::build)
+					.forEach(onAccept);
+			}
+		}
+	}
+
 	private void reportWarningIfCommitWatermarkExceeded(final List<CommitDetail> details, String author, String commitComment) {
 		int numberOfCommitDetails = calculateCommitDetails(details);
 		if (numberOfCommitDetails > commitWatermarkHigh) {
@@ -697,6 +721,7 @@ public final class StagingArea {
 		stagedObjects = newHashMap();
 		revisionsToReviseOnMergeSource = HashMultimap.create();
 		externalRevisionsToReviseOnMergeSource = HashMultimap.create();
+		resolvedAddedInSourceTargetComponentsToIgnore = HashMultimap.create();
 	}
 
 	/**
@@ -985,10 +1010,14 @@ public final class StagingArea {
 					
 					RevisionDiff diff = new RevisionDiff(addedOnTargetObject, addedOnSourceObject);
 					// XXX check the tracked field diff, not the raw diff via diff.diff()
-					Conflict conflict = conflictProcessor.handleAddedInSourceAndTarget(ObjectId.of(type, revisionId), diff.diff(), addedOnSourceObject, addedOnTargetObject);
+					var componentKey = ObjectId.of(type, revisionId);
+					Conflict conflict = conflictProcessor.handleAddedInSourceAndTarget(componentKey, diff.diff(), addedOnSourceObject, addedOnTargetObject);
 					if (conflict != null) {
 						conflicts.add(conflict);
 					} else {
+						// make sure we inject a poison pill (removal entry) to the merge commit so when processed in compare it won't be visible
+						resolvedAddedInSourceTargetComponentsToIgnore.put(addedOnTargetObject.getContainerId(), componentKey);
+						
 						// ensure we revise the one coming from source (or target?)
 						revisionsToReviseOnMergeSource.put(type, revisionId);
 					}

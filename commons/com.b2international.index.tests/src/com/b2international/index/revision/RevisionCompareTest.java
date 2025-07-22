@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.b2international.index.revision.RevisionFixtures.ComponentRevisionData
 import com.b2international.index.revision.RevisionFixtures.ContainerRevisionData;
 import com.b2international.index.revision.RevisionFixtures.ObjectListPropertyData;
 import com.b2international.index.revision.RevisionFixtures.RevisionData;
+import com.b2international.index.util.JsonDiff;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -333,6 +334,37 @@ public class RevisionCompareTest extends BaseRevisionIndexTest {
 		assertThat(compare.getDetails()).containsOnly(
 			RevisionCompareDetail.componentChange(Operation.REMOVE, container.getObjectId(), component.getObjectId())
 		);
+	}
+	
+	@Test
+	public void compareUpgradedBranchStateAfterDonatingContentToParent() throws Exception {
+		var extensionBranch = createBranch(MAIN, "extensionDonate");
+		
+		var extensionContent = new RevisionData(STORAGE_KEY1, "field1", "field2");
+		indexRevision(extensionBranch, extensionContent);
+		
+		// using the same ID, donate the content with a bit different state to MAIN
+		var contentToDonate = new RevisionData(STORAGE_KEY1, "field1_changed", "field2_changed");
+		indexRevision(MAIN, contentToDonate);
+		
+		// create a new empty branch after the donation of content
+		var extensionUpgradeBranch = createBranch(MAIN, "extensionDonateUpgrade");
+		
+		// merge content from old extension branch into the upgrade one
+		index().branching()
+			.prepareMerge(extensionBranch, extensionUpgradeBranch)
+			.conflictProcessor(new RevisionConflictProcessor.Default() {
+				@Override
+				public Conflict handleAddedInSourceAndTarget(ObjectId objectId, JsonDiff diff, Revision sourceRevision, Revision targetRevision) {
+					// ignore added vs added conflict for the current content which simulates a basic donation of content
+					return STORAGE_KEY1.equals(objectId.id()) ? null : super.handleAddedInSourceAndTarget(objectId, diff, sourceRevision, targetRevision);
+				}
+			})
+			.squash(false)
+			.merge();
+		
+		RevisionCompare compare = index().compare(MAIN, extensionUpgradeBranch);
+		assertThat(compare.getDetails()).isEmpty();
 	}
 	
 }
