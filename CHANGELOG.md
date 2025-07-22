@@ -1,6 +1,35 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.7.2
+
+### Bugs/Improvements
+- [index] resolve upgrade issue with no longer applicable revisions considered during revision compare (#1398)
+- [core] additional term filter (regex, wildcard) infrastructure for request API implementors (#1397)
+- [log] support JSON log formatting via logback logstash encoder (#1395)
+
+### Security
+- GHSA-xffm-g5w8-qvg7, CVE-2025-7783, CVE-2025-48924, CVE-2025-22233, CVE-2025-41234 (#1400) and many others via Eclipse and Jetty upgrade (#1394)
+
+
+### Dependencies
+- Eclipse Platform to 4.35 (2025-03)
+- Bump Jetty to 12.0.21
+- Bump EMF to 2.42.0
+- Bump Xtext to 2.38.0
+- Bump Bouncycastle to 1.80.0
+- Bump SLF4J to 2.0.16 and Logback to 1.5.16
+- Bump OWLAPI to 4.5.27.b2i and Protege to 5.0.8.b2i
+- Bump fastutil to 8.5.16
+- FHIR Core to 0.3.2
+- Bump Spring to 6.2.9
+- Bump Spring Security to 6.5.2
+- Bump SpringDoc to 2.8.9
+- Bump Swagger to 2.2.30
+- Bump micrometer to 1.14.9
+- Bump Apache Commong Lang3 to 3.18.0
+- Bump AssertJ to 3.27.3
+
 ## 9.7.1
 
 ### Bugs/Improvements
