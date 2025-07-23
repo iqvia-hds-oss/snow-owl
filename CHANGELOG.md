@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Bugs/Improvements
 - [index] resolve upgrade issue with no longer applicable revisions considered during revision compare (#1398)
 - [core] additional term filter (regex, wildcard) infrastructure for request API implementors (#1397)
+- [api] ensure that large zip files properly get uploaded without making them broken (#1394)
 - [log] support JSON log formatting via logback logstash encoder (#1395)
 
 ### Security
