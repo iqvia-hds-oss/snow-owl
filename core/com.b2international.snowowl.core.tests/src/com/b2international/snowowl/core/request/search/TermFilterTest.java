@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * @since 9.8.0
+ * @since 9.7.2
  */
 public class TermFilterTest {
 

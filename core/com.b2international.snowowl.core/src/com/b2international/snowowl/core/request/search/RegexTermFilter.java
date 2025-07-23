@@ -22,7 +22,7 @@ import com.b2international.index.query.Expressions;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * @since 9.8.0
+ * @since 9.7.2
  */
 public final class RegexTermFilter extends TermFilter {
 

@@ -22,7 +22,7 @@ import com.b2international.snowowl.core.plugin.ClassPathScanner;
 /**
  * Simple JUnit Rule to cache and share a classpath scanner instance amongst many junit tests. 
  * 
- * @since 9.8.0
+ * @since 9.7.2
  */
 public final class ClassPathScannerRule extends ExternalResource {
 
