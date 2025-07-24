@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,7 @@ import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRe
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.getComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.updateComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRefSetRestRequests.updateRefSetComponent;
-import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.changeCaseSignificance;
-import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewConcept;
-import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewDescription;
-import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewRefSetMember;
-import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewRelationship;
-import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.merge;
+import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.*;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.getNextAvailableEffectiveDate;
 import static com.google.common.collect.Maps.newHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +34,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import com.b2international.commons.json.Json;
 import com.b2international.snowowl.core.api.IBranchPath;
 import com.b2international.snowowl.core.branch.BranchPathUtils;
 import com.b2international.snowowl.core.date.DateFormats;
@@ -53,6 +49,7 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
+import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
@@ -206,23 +203,25 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
 	}
 
 	@Test
-	public void addedInSourceAndTargetMergeConflict() {
+	public void addedInSourceAndTargetMergeConflict_DifferentConcepts() {
 		IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
 		branching.createBranch(a).statusCode(201);
 
 		String descriptionId = createNewDescription(branchPath);
+		SnomedDescription descriptionOnParent = getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).extract().as(SnomedDescription.class);
 
-		Map<?, ?> requestBody = ImmutableMap.builder()
-				.put("id", descriptionId)
-				.put("conceptId", Concepts.ROOT_CONCEPT)
-				.put("moduleId", Concepts.MODULE_SCT_CORE)
-				.put("typeId", Concepts.SYNONYM)
-				.put("term", "Synonym of root concept")
-				.put("languageCode", "en")
-				.put("acceptability", SnomedApiTestConstants.UK_ACCEPTABLE_MAP)
-				.put("caseSignificanceId", Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.put("commitComment", "Created new synonym with duplicate SCTID")
-				.build();
+
+		Map<?, ?> requestBody = Json.object(
+				"id", descriptionOnParent.getId(),
+				"conceptId", descriptionOnParent.getConceptId(),
+				"moduleId", descriptionOnParent.getModuleId(),
+				"typeId", descriptionOnParent.getTypeId(),
+				"term", "Synonym of root concept (different than parent to indicate added vs added conflict)",
+				"languageCode", descriptionOnParent.getLanguageCode(),
+				"acceptability", descriptionOnParent.getAcceptabilityMap(),
+				"caseSignificanceId", descriptionOnParent.getCaseSignificanceId(),
+				"commitComment", "Created new synonym with duplicate SCTID"
+			);
 
 		createComponent(a, SnomedComponentType.DESCRIPTION, requestBody).statusCode(201);
 
@@ -240,6 +239,32 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
 		assertEquals("description", conflict.getComponentType());
 		assertEquals(ConflictType.CONFLICTING_CHANGE, conflict.getType());
 		assertEquals(attribute.toDisplayName(), Iterables.getOnlyElement(conflict.getConflictingAttributes()).toDisplayName());
+	}
+	
+	@Test
+	public void addedInSourceAndTargetMergeConflict_IdenticalConcepts() {
+		IBranchPath childBranchA = BranchPathUtils.createPath(branchPath, "a");
+		branching.createBranch(childBranchA).statusCode(201);
+
+		String descriptionId = createNewDescription(branchPath);
+		SnomedDescription descriptionOnParent = getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).extract().as(SnomedDescription.class);
+
+		Map<?, ?> requestBody = Json.object(
+			"id", descriptionOnParent.getId(),
+			"conceptId", descriptionOnParent.getConceptId(),
+			"moduleId", descriptionOnParent.getModuleId(),
+			"typeId", descriptionOnParent.getTypeId(),
+			"term", descriptionOnParent.getTerm(),
+			"languageCode", descriptionOnParent.getLanguageCode(),
+			"acceptability", descriptionOnParent.getAcceptabilityMap(),
+			"caseSignificanceId", descriptionOnParent.getCaseSignificanceId(),
+			"commitComment", "Created new synonym with duplicate SCTID"
+		);
+
+		createComponent(childBranchA, SnomedComponentType.DESCRIPTION, requestBody).statusCode(201);
+
+		merge(branchPath, childBranchA, "Rebased new description over new description with same SCTID")
+				.body("status", equalTo(Merge.Status.COMPLETED.name()));
 	}
 
 	@Test

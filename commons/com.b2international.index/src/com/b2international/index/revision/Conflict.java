@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2023 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.b2international.index.revision;
+
+import java.util.Objects;
 
 /**
  * @since 7.0
@@ -40,5 +42,33 @@ public abstract class Conflict {
 	public String toString() {
 		return getMessage();
 	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(objectId, message);
+	}
+
+	@Override
+	public final boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (this == obj) return true;
+		if (getClass() != obj.getClass()) return false;
+		Conflict other = (Conflict) obj;
+		return Objects.equals(objectId, other.objectId) 
+				&& Objects.equals(message, other.message)
+				&& doEquals(other);
+	}
+
+	/**
+	 * Subclasses optionally override this method to provide additional equals checks when they have additional registered conflict properties.
+	 * <p><i>Please note if you override this method make sure you override the {@link #hashCode()} method as well to properly compute the hash value of the subclass.</i></p> 
+	 *  
+	 * @param obj
+	 * @return
+	 */
+	protected boolean doEquals(Conflict obj) {
+		return true;
+	}
+
 	
 }
