@@ -953,10 +953,14 @@ public final class StagingArea {
 
 					RevisionDiff diff = new RevisionDiff(addedOnTargetObject, addedOnSourceObject);
 					// XXX check the tracked field diff, not the raw diff via diff.diff()
-					Conflict conflict = conflictProcessor.handleAddedInSourceAndTarget(ObjectId.of(type, revisionId), diff.diff(), addedOnSourceObject, addedOnTargetObject);
+					var componentKey = ObjectId.of(type, revisionId);
+					Conflict conflict = conflictProcessor.handleAddedInSourceAndTarget(componentKey, diff.diff(), addedOnSourceObject, addedOnTargetObject);
 					if (conflict != null) {
 						conflicts.add(conflict);
 					} else {
+						// make sure we inject a poison pill (removal entry) to the merge commit so when processed in compare it won't be visible
+						resolvedAddedInSourceTargetComponentsToIgnore.put(addedOnTargetObject.getContainerId(), componentKey);
+						
 						// ensure we revise the one coming from source (or target?)
 						revisionsToReviseOnMergeSource.put(type, revisionId);
 					}
