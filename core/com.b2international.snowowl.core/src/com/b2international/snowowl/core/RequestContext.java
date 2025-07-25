@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.b2international.snowowl.core;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -23,6 +22,9 @@ import com.b2international.commons.metric.Metrics;
 import com.b2international.snowowl.core.domain.DelegatingContext;
 import com.b2international.snowowl.core.events.util.RequestHeaders;
 import com.b2international.snowowl.core.events.util.ResponseHeaders;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.MapMaker;
 
 /**
  * Request scoped execution context. Can be used to register request scoped services, caches, etc.
@@ -33,7 +35,7 @@ import com.b2international.snowowl.core.events.util.ResponseHeaders;
  */
 public final class RequestContext extends DelegatingContext implements Metrics {
 
-	private Map<String, Object> metrics;
+	private Supplier<Map<String, Object>> metrics = Suppliers.memoize(() -> new MapMaker().concurrencyLevel(4).makeMap());
 	
 	public RequestContext(ServiceProvider delegate, Map<String, String> requestHeaders) {
 		super(delegate);
@@ -45,15 +47,12 @@ public final class RequestContext extends DelegatingContext implements Metrics {
 	
 	@Override
 	public <T> void withMetric(String metricKey, T value, BiFunction<T, T, T> merge) {
-		if (this.metrics == null) {
-			this.metrics = new HashMap<>(2);
-		}
-		this.metrics.merge(metricKey, value, (BiFunction<? super Object, ? super Object, ? extends Object>) merge);
+		this.metrics.get().merge(metricKey, value, (BiFunction<? super Object, ? super Object, ? extends Object>) merge);
 	}
 	
 	@Override
 	public Map<String, Object> getMeasurements() {
-		return metrics;
+		return metrics.get();
 	}
 
 	public Map<String, String> requestHeaders() {
