@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ public abstract class Conflict {
 
 	private final ObjectId objectId;
 	private final String message;
+	
+	private ObjectId containerId;
 
 	public Conflict(ObjectId objectId, String message) {
 		this.objectId = objectId;
@@ -34,8 +36,16 @@ public abstract class Conflict {
 		return objectId;
 	}
 	
+	public ObjectId getContainerId() {
+		return containerId;
+	}
+	
 	public String getMessage() {
 		return message;
+	}
+	
+	public void setContainerId(ObjectId containerId) {
+		this.containerId = containerId;
 	}
 	
 	@Override

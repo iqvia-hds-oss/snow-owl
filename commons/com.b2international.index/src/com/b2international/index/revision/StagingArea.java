@@ -79,7 +79,7 @@ public final class StagingArea {
 	private boolean squashMerge;
 	private SetMultimap<Class<?>, String> revisionsToReviseOnMergeSource;
 	private SetMultimap<Class<?>, String> externalRevisionsToReviseOnMergeSource;
-	private SetMultimap<ObjectId, ObjectId> resolvedAddedInSourceTargetComponentsToIgnore;
+	private SetMultimap<ObjectId, ObjectId> resolvedAddedInSourceAndTargetComponentsToIgnore;
 	private Object context;
 	
 	StagingArea(DefaultRevisionIndex index, String branchPath, ObjectMapper mapper) {
@@ -544,11 +544,11 @@ public final class StagingArea {
 					}
 				}
 			});
-		} else if (isMerge() && !resolvedAddedInSourceTargetComponentsToIgnore.isEmpty()) {
+		} else if (isMerge() && !resolvedAddedInSourceAndTargetComponentsToIgnore.isEmpty()) {
 			// in case of non-squash merge commit make sure every resolved added vs added conflict gets a removed entry in the merge commit detail list so that components cannot reappear as added when comparing
 			// https://snowowl.atlassian.net/browse/SO-6448
-			details = new ArrayList<>(resolvedAddedInSourceTargetComponentsToIgnore.keySet().size());
-			groupDetailsByContainer(null, null, resolvedAddedInSourceTargetComponentsToIgnore, details::add);
+			details = new ArrayList<>(resolvedAddedInSourceAndTargetComponentsToIgnore.keySet().size());
+			groupDetailsByContainer(null, null, resolvedAddedInSourceAndTargetComponentsToIgnore, details::add);
 		} else {
 			details = Collections.emptyList();
 		}
@@ -721,7 +721,7 @@ public final class StagingArea {
 		stagedObjects = newHashMap();
 		revisionsToReviseOnMergeSource = HashMultimap.create();
 		externalRevisionsToReviseOnMergeSource = HashMultimap.create();
-		resolvedAddedInSourceTargetComponentsToIgnore = HashMultimap.create();
+		resolvedAddedInSourceAndTargetComponentsToIgnore = HashMultimap.create();
 	}
 
 	/**
@@ -869,6 +869,18 @@ public final class StagingArea {
 		}
 		return this;
 	}
+
+	/**
+	 * Makes the specified object's history on the merge source unavailable in certain operations. A poison pill (removal entry) will be placed in the underlying merge commit to avoid reappearance of change entries in revision compare for example. 
+	 * 
+	 * @param componentId - the object to ignore 
+	 * @param containerId - the object's container component id which is needed to group the removal entries properly and save space
+	 */
+	public void injectPoisonPillToMergeCommit(ObjectId componentId, ObjectId containerId) {
+		checkNotNull(containerId, "containerId may not be null");
+		checkNotNull(containerId, "componentId may not be null");
+		resolvedAddedInSourceAndTargetComponentsToIgnore.put(containerId, componentId);
+	}
 	
 	/**
 	 * Mark the object registered with the given type and ID revised on the current merge source.
@@ -1013,10 +1025,12 @@ public final class StagingArea {
 					var componentKey = ObjectId.of(type, revisionId);
 					Conflict conflict = conflictProcessor.handleAddedInSourceAndTarget(componentKey, diff.diff(), addedOnSourceObject, addedOnTargetObject);
 					if (conflict != null) {
+						// make sure we track the containerId for added vs added conflicts, be of any actual type
+						conflict.setContainerId(addedOnSourceObject.getContainerId());
 						conflicts.add(conflict);
 					} else {
 						// make sure we inject a poison pill (removal entry) to the merge commit so when processed in compare it won't be visible
-						resolvedAddedInSourceTargetComponentsToIgnore.put(addedOnTargetObject.getContainerId(), componentKey);
+						injectPoisonPillToMergeCommit(componentKey, addedOnSourceObject.getContainerId());
 						
 						// ensure we revise the one coming from source (or target?)
 						revisionsToReviseOnMergeSource.put(type, revisionId);
