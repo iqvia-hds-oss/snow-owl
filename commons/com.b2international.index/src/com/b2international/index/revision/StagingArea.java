@@ -841,7 +841,7 @@ public final class StagingArea {
 	 */
 	public void injectPoisonPillToMergeCommit(ObjectId componentId, ObjectId containerId) {
 		checkNotNull(containerId, "containerId may not be null");
-		checkNotNull(containerId, "componentId may not be null");
+		checkNotNull(componentId, "componentId may not be null");
 		resolvedAddedInSourceAndTargetComponentsToIgnore.put(containerId, componentId);
 	}
 	
