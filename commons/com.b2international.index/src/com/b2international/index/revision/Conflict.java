@@ -24,6 +24,8 @@ public abstract class Conflict {
 
 	private final ObjectId objectId;
 	private final String message;
+	
+	private ObjectId containerId;
 
 	public Conflict(ObjectId objectId, String message) {
 		this.objectId = objectId;
@@ -34,8 +36,16 @@ public abstract class Conflict {
 		return objectId;
 	}
 	
+	public ObjectId getContainerId() {
+		return containerId;
+	}
+	
 	public String getMessage() {
 		return message;
+	}
+	
+	public void setContainerId(ObjectId containerId) {
+		this.containerId = containerId;
 	}
 	
 	@Override
