@@ -279,7 +279,7 @@ public abstract class SnomedRefSetMemberParameterizedTest extends AbstractSnomed
 		final String referencedComponentId = member.getB();
 
 		final LocalDate effectiveTime = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, effectiveTime).statusCode(201);
+		createVersion(shortName, effectiveTime);
 
 		// update properties
 		final Json updateRequest = getUpdateProperties(referencedComponentId)

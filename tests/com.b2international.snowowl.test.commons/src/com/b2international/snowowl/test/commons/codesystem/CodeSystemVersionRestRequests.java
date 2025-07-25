@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.b2international.snowowl.test.commons.codesystem;
 
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.assertCreated;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 
 import java.time.LocalDate;
@@ -96,8 +97,12 @@ public abstract class CodeSystemVersionRestRequests {
 				.then();
 	}
 
-	public static ValidatableResponse createVersion(String codeSystemId, LocalDate effectiveTime) {
+	public static ValidatableResponse assertCreateVersion(String codeSystemId, LocalDate effectiveTime) {
 		return createVersion(codeSystemId, effectiveTime.toString(), effectiveTime);
+	}
+	
+	public static String createVersion(String codeSystemId, LocalDate effectiveTime) {
+		return assertCreated(createVersion(codeSystemId, effectiveTime.toString(), effectiveTime));
 	}
 	
 	public static ValidatableResponse createVersion(String codeSystemId, String version, LocalDate effectiveTime) {
