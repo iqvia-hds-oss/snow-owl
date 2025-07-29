@@ -63,10 +63,9 @@ public abstract class SnomedComponentSearchRequestBuilder<B extends SnomedCompon
 	}
 	
 	/**
-	 * Filter matches by namespace identifier (a section of the SCTID).
+	 * Filter matches by namespace (the 7-digit section of the SCTID).
 	 * 
-	 * @param namespaceId
-	 *            - the namespace identifier as a string
+	 * @param namespaceId - the namespace as a string
 	 * @return SnomedComponentSearchRequestBuilder
 	 * @see Concepts
 	 */
@@ -75,10 +74,9 @@ public abstract class SnomedComponentSearchRequestBuilder<B extends SnomedCompon
 	}
 	
 	/**
-	 * Filter matches by namespace identifiers (a section of the SCTID).
+	 * Filter matches by namespaces (the 7-digit sections of the SCTID).
 	 * 
-	 * @param namespaceIds 
-	 *            - the namespace identifiers
+	 * @param namespaceIds - the namespaces to match
 	 * @return SnomedComponentSearchRequestBuilder
 	 * @see Concepts
 	 */
@@ -87,10 +85,9 @@ public abstract class SnomedComponentSearchRequestBuilder<B extends SnomedCompon
 	}
 
 	/**
-	 * Filter matches by their namespace, using the corresponding metadata concept's SCTID.
+	 * Filter matches by namespace using the corresponding metadata concept's SCTID.
 	 * 
-	 * @param namespaceConceptId
-	 *            - the SCTID of the namespace concept
+	 * @param namespaceConceptId - the SCTID of the namespace concept
 	 * @return SnomedComponentSearchRequestBuilder
 	 * @see Concepts
 	 */
@@ -99,10 +96,9 @@ public abstract class SnomedComponentSearchRequestBuilder<B extends SnomedCompon
 	}
 	
 	/**
-	 * Filter matches by their namespace, using the SCTIDs of allowed metadata concepts.
+	 * Filter matches by namespace using the SCTIDs of allowed metadata concepts.
 	 * 
-	 * @param namespaceConceptIds
-	 *            - the SCTIDs of allowed namespace concepts
+	 * @param namespaceConceptIds - the SCTIDs of allowed namespace concepts
 	 * @return SnomedComponentSearchRequestBuilder
 	 * @see Concepts
 	 */
