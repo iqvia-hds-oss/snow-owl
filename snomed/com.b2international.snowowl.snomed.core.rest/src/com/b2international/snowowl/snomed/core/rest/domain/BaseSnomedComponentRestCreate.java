@@ -115,10 +115,10 @@ public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCre
 		
 		final boolean tooManyNamespaceParams = Stream.of(namespace, namespaceId, namespaceConceptId)
 			.filter(v -> !StringUtils.isEmpty(v))
-			.count() != 1;
+			.count() > 1;
 			
 		if (tooManyNamespaceParams) {
-			throw new BadRequestException("Exactly one of 'namespace', 'namespaceId' or 'namespaceConceptId' must be specified if 'id' is null.");
+			throw new BadRequestException("At most one of 'namespace', 'namespaceId' or 'namespaceConceptId' must be specified if 'id' is null.");
 		} 
 		
 		if (namespaceConceptId != null) {
@@ -126,6 +126,7 @@ public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCre
 		} else if (namespace != null) {
 			return new NamespaceIdStrategy(namespace);
 		} else {
+			// The default behavior is to use the namespaceId field even if set to null (creating identifiers in the core namespace).
 			return new NamespaceIdStrategy(namespaceId);
 		}
 	}
