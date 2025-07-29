@@ -396,7 +396,7 @@ public class SnomedConceptCreateApiTest extends AbstractSnomedApiTest {
 		ISnomedIdentifierService identifierService = ApplicationContext.getServiceForClass(ISnomedIdentifierService.class);
 		String namespaceConceptId = Iterables.getOnlyElement(identifierService.reserve(null, ComponentCategory.CONCEPT, 1));
 		String expectedNamespace = "1000999"; 
-		// create a namespace concept with a custom namespaceId (simulating a new INT addition of the namespace)
+		// create a namespace concept with a custom namespace (simulating a new INT addition of the namespace)
 		createConcept(branchPath, Json.object(
 			"id", namespaceConceptId,
 			"moduleId", Concepts.MODULE_SCT_CORE,

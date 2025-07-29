@@ -15,12 +15,17 @@
  */
 package com.b2international.snowowl.snomed.core.rest.domain;
 
+import java.util.stream.Stream;
+
+import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.snomed.core.domain.ConstantIdStrategy;
 import com.b2international.snowowl.snomed.core.domain.IdGenerationStrategy;
 import com.b2international.snowowl.snomed.core.domain.NamespaceConceptIdStrategy;
 import com.b2international.snowowl.snomed.core.domain.NamespaceIdStrategy;
 import com.b2international.snowowl.snomed.datastore.request.SnomedComponentCreateRequestBuilder;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects.ToStringHelper;
 
 /**
@@ -31,6 +36,7 @@ public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCre
 	private String id;
 	private Boolean active = Boolean.TRUE;
 	private String moduleId;
+	private String namespace;
 	private String namespaceId;
 	private String namespaceConceptId;
 
@@ -50,8 +56,17 @@ public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCre
 		return moduleId;
 	}
 	
+	/**
+	 * @deprecated Use {@link #getNamespace()} instead.
+	 */
+	@JsonIgnore
+	@Deprecated
 	public String getNamespaceId() {
 		return namespaceId;
+	}
+	
+	public String getNamespace() {
+		return namespace;
 	}
 	
 	public String getNamespaceConceptId() {
@@ -66,8 +81,17 @@ public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCre
 		this.moduleId = moduleId;
 	}
 	
+	/**
+	 * @deprecated Use {@link #setNamespace(String)} instead.
+	 */
+	@JsonProperty
+	@Deprecated
 	public void setNamespaceId(final String namespaceId) {
 		this.namespaceId = namespaceId;
+	}
+	
+	public void setNamespace(String namespace) {
+		this.namespace = namespace;
 	}
 	
 	public void setNamespaceConceptId(String namespaceConceptId) {
@@ -85,16 +109,24 @@ public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCre
 	}
 
 	protected IdGenerationStrategy createIdGenerationStrategy(String idOrNull) {
-		if (idOrNull == null) {
-			if (namespaceId != null && namespaceConceptId != null) {
-				throw new BadRequestException("Either namespaceId or namespaceConceptId needs to be specified, but not both.");
-			} else if (namespaceConceptId != null) {
-				return new NamespaceConceptIdStrategy(namespaceConceptId);
-			} else {
-				return new NamespaceIdStrategy(namespaceId);
-			}
-		} else {
+		if (idOrNull != null) {
 			return new ConstantIdStrategy(idOrNull);
+		}
+		
+		final boolean tooManyNamespaceParams = Stream.of(namespace, namespaceId, namespaceConceptId)
+			.filter(v -> !StringUtils.isEmpty(v))
+			.count() != 1;
+			
+		if (tooManyNamespaceParams) {
+			throw new BadRequestException("Exactly one of 'namespace', 'namespaceId' or 'namespaceConceptId' must be specified if 'id' is null.");
+		} 
+		
+		if (namespaceConceptId != null) {
+			return new NamespaceConceptIdStrategy(namespaceConceptId);
+		} else if (namespace != null) {
+			return new NamespaceIdStrategy(namespace);
+		} else {
+			return new NamespaceIdStrategy(namespaceId);
 		}
 	}
 	
@@ -104,6 +136,7 @@ public abstract class BaseSnomedComponentRestCreate<I extends SnomedComponentCre
 		toStringHelper.add("id", getId());
 		toStringHelper.add("active", isActive());
 		toStringHelper.add("moduleId", getModuleId());
+		toStringHelper.add("namespace", getNamespace());
 		toStringHelper.add("namespaceId", getNamespaceId());
 		toStringHelper.add("namespaceConceptId", getNamespaceConceptId());
 	}
