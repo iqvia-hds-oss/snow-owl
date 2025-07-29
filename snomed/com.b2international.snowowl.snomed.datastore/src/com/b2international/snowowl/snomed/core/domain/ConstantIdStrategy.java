@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.snomed.core.domain;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.google.common.base.MoreObjects;
@@ -31,6 +33,7 @@ public final class ConstantIdStrategy implements IdGenerationStrategy {
 	private final String id;
 
 	public ConstantIdStrategy(final String id) {
+		checkArgument(!StringUtils.isEmpty(id), "ID cannot be null or empty.");
 		this.id = id;
 	}
 

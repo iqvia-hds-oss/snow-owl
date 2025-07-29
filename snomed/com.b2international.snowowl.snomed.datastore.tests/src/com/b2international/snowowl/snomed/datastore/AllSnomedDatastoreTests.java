@@ -19,6 +19,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import com.b2international.snowowl.snomed.core.domain.ConstantIdStrategyTest;
+import com.b2international.snowowl.snomed.core.domain.NamespaceConceptIdStrategyTest;
+import com.b2international.snowowl.snomed.core.domain.NamespaceIdStrategyTest;
 import com.b2international.snowowl.snomed.core.ecl.*;
 import com.b2international.snowowl.snomed.core.request.SnomedQueryOptimizerTest;
 import com.b2international.snowowl.snomed.core.tree.TerminologyTreeTest;
@@ -46,6 +49,10 @@ import com.b2international.snowowl.snomed.validation.SnomedQueryValidationRuleEv
 	SnomedIdentifierReservationServiceImplTest.class,
 	DefaultSnomedIdentifierServiceTest.class,
 	DefaultSnomedIdentifierServiceRegressionTest.class,
+	// ID strategy exercises
+	ConstantIdStrategyTest.class,
+	NamespaceIdStrategyTest.class,
+	NamespaceConceptIdStrategyTest.class,
 	// index document test cases 
 	SnomedConceptDocumentSerializationTest.class,
 	SnomedRelationshipIndexEntrySerializationTest.class,
