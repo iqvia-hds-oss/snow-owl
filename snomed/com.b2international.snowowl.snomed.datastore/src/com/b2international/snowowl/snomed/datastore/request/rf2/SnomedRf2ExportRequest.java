@@ -255,7 +255,7 @@ final class SnomedRf2ExportRequest extends ResourceRequest<BranchContext, Attach
 	
 	private String getNamespace(TerminologyResource resource) {
 		final String namespace = (String) resource.getSettings().get(Settings.NAMESPACE);
-		return Strings.emptyToNull(namespace);
+		return Strings.nullToEmpty(namespace);
 	}
 
 	@Override
