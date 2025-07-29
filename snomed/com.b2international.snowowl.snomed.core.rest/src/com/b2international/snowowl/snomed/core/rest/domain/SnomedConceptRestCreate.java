@@ -86,9 +86,9 @@ public class SnomedConceptRestCreate extends BaseSnomedComponentRestCreate<Snome
 				restDescription.setNamespace(getNamespace());
 			}
 			
-			// Propagate namespaceId from concept (deprecated)
+			// Propagate namespaceId from concept (deprecated property)
 			if (null == restDescription.getNamespaceId()) {
-				restDescription.setNamespaceId(getNamespace());
+				restDescription.setNamespaceId(getNamespaceId());
 			}
 
 			req.addDescription(restDescription.toRequestBuilder());
@@ -105,9 +105,9 @@ public class SnomedConceptRestCreate extends BaseSnomedComponentRestCreate<Snome
 				restRelationship.setNamespace(getNamespace());
 			}
 			
-			// Propagate namespaceId from concept (deprecated)
+			// Propagate namespaceId from concept (deprecated property)
 			if (null == restRelationship.getNamespaceId()) {
-				restRelationship.setNamespaceId(getNamespace());
+				restRelationship.setNamespaceId(getNamespaceId());
 			}
 			
 			req.addRelationship(restRelationship.toRequestBuilder());
