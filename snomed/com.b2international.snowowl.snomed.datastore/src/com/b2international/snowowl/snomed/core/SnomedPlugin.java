@@ -110,7 +110,7 @@ public final class SnomedPlugin extends TerminologyRepositoryPlugin {
 				if (context instanceof BranchContext) {
 					BranchContext branchContext = (BranchContext) context;
 					branchContext.bind(ModuleIdProvider.class, c -> c.getModuleId());
-					branchContext.bind(NamespaceIdProvider.class, NamespaceIdProvider.DEFAULT);
+					branchContext.bind(NamespaceProvider.class, NamespaceProvider.DEFAULT);
 					// bind request scoped content caches
 					branchContext.bind(Synonyms.class, new Synonyms(branchContext));
 					branchContext.bind(SnomedAssociationReferenceSets.class, new SnomedAssociationReferenceSets(branchContext));
