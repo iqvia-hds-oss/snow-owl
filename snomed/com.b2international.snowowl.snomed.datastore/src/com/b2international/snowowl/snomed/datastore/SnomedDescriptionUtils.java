@@ -28,7 +28,7 @@ import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.domain.BranchContext;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.datastore.config.SnomedLanguageConfig;
@@ -182,10 +182,11 @@ public final class SnomedDescriptionUtils {
 	 * @return a {@link List} that has all the configured language settings, never <code>null</code>
 	 */
 	public static List<SnomedLanguageConfig> getLanguagesConfiguration(final ObjectMapper mapper, final TerminologyResource resource) {
-		return ((List<Map<String, Object>>) resource.getSettings().getOrDefault(SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY, List.of()))
-				.stream()
-				.map(config -> mapper.convertValue(config, SnomedLanguageConfig.class))
-				.collect(Collectors.toList());
+		return ((List<Map<String, Object>>) resource.getSettings()
+			.getOrDefault(Settings.LANGUAGES, List.of()))
+			.stream()
+			.map(config -> mapper.convertValue(config, SnomedLanguageConfig.class))
+			.collect(Collectors.toList());
 	}
 	
 	private SnomedDescriptionUtils() {}

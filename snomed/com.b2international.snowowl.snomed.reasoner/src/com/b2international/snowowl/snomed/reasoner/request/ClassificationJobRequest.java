@@ -15,17 +15,12 @@
  */
 package com.b2international.snowowl.snomed.reasoner.request;
 
-import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.REASONER_EXCLUDE_MODULE_IDS;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
-import jakarta.validation.constraints.NotEmpty;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -47,6 +42,7 @@ import com.b2international.snowowl.core.internal.locks.DatastoreLockContextDescr
 import com.b2international.snowowl.core.jobs.RemoteJob;
 import com.b2international.snowowl.core.locks.Locks;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
@@ -59,6 +55,9 @@ import com.b2international.snowowl.snomed.reasoner.exceptions.ReasonerApiExcepti
 import com.b2international.snowowl.snomed.reasoner.normalform.NormalFormGenerator;
 import com.b2international.snowowl.snomed.reasoner.ontology.DelegateOntology;
 import com.b2international.snowowl.snomed.reasoner.ontology.DelegateOntologyFactory;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Encapsulates the computation-intensive part of a classification.
@@ -131,7 +130,8 @@ final class ClassificationJobRequest implements Request<BranchContext, Boolean>,
 		TerminologyResource resource = context.service(TerminologyResource.class);
 		
 		@SuppressWarnings("unchecked")
-		final Set<String> reasonerExcludedModuleIds = Collections3.toImmutableSet((Iterable) resource.getSettings().getOrDefault(REASONER_EXCLUDE_MODULE_IDS, Collections.emptySet()));
+		final Set<String> reasonerExcludedModuleIds = Collections3.toImmutableSet((Iterable) resource.getSettings()
+			.getOrDefault(Settings.REASONER_EXCLUDED_MODULE_IDS, Collections.emptySet()));
 		final SnomedCoreConfiguration configuration = context.service(SnomedCoreConfiguration.class);
 		final boolean concreteDomainSupported = configuration.isConcreteDomainSupported();
 

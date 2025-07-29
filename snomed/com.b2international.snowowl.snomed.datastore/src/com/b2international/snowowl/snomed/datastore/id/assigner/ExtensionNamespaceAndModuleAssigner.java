@@ -31,6 +31,7 @@ import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedComponentDocument;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
@@ -100,7 +101,7 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 		if (!currentCodeSystem.isEmpty()) {
 			final Collection<String> moduleIds = (Collection<String>) currentCodeSystem.get()
 				.getSettings()
-				.getOrDefault(SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of());
+				.getOrDefault(Settings.MODULE_IDS, List.of());
 			
 			extensionModuleIds.addAll(moduleIds);
 		}

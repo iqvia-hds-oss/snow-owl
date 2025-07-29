@@ -16,7 +16,6 @@
 package com.b2international.snowowl.snomed.reasoner.request;
 
 import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.DEFAULT_NAMESPACE_AND_MODULE_ASSIGNER;
-import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.NAMESPACE_AND_MODULE_ASSIGNER;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 
@@ -49,6 +48,7 @@ import com.b2international.snowowl.core.locks.Locks;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.request.CommitResult;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
@@ -557,8 +557,8 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 			selectedType = assignerType;
 		} else {
 			final TerminologyResource resource = context.service(TerminologyResource.class);
-			
-			selectedType = (String) resource.getSettings().getOrDefault(NAMESPACE_AND_MODULE_ASSIGNER, DEFAULT_NAMESPACE_AND_MODULE_ASSIGNER);
+			selectedType = (String) resource.getSettings()
+				.getOrDefault(Settings.NAMESPACE_MODULE_ASSIGNER, DEFAULT_NAMESPACE_AND_MODULE_ASSIGNER);
 		}
 		
 		final SnomedNamespaceAndModuleAssigner assigner = SnomedNamespaceAndModuleAssigner.create(context, selectedType, moduleId, namespace);

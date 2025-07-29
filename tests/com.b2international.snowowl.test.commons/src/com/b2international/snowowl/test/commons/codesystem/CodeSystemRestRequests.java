@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.b2international.commons.json.Json;
 import com.b2international.snowowl.core.Dependency;
+import com.b2international.snowowl.core.Resource;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.api.IBranchPath;
@@ -34,6 +35,7 @@ import com.b2international.snowowl.core.codesystem.CodeSystems;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.test.commons.ApiTestConstants;
 import com.b2international.snowowl.test.commons.Services;
 import com.google.common.base.Strings;
@@ -118,8 +120,8 @@ public abstract class CodeSystemRestRequests {
 
 	private static Map<String, Object> configureLanguageAndPublisher(Map<String, Object> settings) {
 		settings = settings == null ? Maps.newHashMap() : Maps.newHashMap(settings);
-		settings.putIfAbsent("publisher", "SNOMED International");
-		settings.putIfAbsent(SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY, List.of(
+		settings.putIfAbsent(Resource.Settings.PUBLISHER, "SNOMED International");
+		settings.putIfAbsent(Settings.LANGUAGES, List.of(
 			Map.of(
 				"languageTag", "en",
 				"languageRefSetIds", Lists.newArrayList(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_US)

@@ -46,7 +46,7 @@ import com.b2international.snowowl.core.ecl.EclSerializer;
 import com.b2international.snowowl.core.request.BranchSnapshotContentRequest;
 import com.b2international.snowowl.core.request.ecl.EclRewriter;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.tree.Trees;
 import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
@@ -116,7 +116,7 @@ public abstract class BaseSnomedEclEvaluationRequestTest extends BaseRevisionInd
 		codeSystem.setId("SNOMEDCT");
 		codeSystem.setBranchPath(main);
 		codeSystem.setSettings(Map.of(
-			SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY, List.of(
+			Settings.LANGUAGES, List.of(
 				Map.of(
 					"languageTag", "en",
 					"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_US)

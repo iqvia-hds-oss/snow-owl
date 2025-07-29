@@ -48,7 +48,7 @@ import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.repository.JsonSupport;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcepts;
@@ -496,7 +496,7 @@ public class SnomedClassificationApiTest extends AbstractSnomedApiTest {
 		final String extensionModuleId = createNewConcept(branchPath, Concepts.MODULE_ROOT);
 		createNewRelationship(branchPath, extensionModuleId, Concepts.IS_A, Concepts.MODULE_ROOT, Concepts.INFERRED_RELATIONSHIP);
 		
-		Map<String, Object> settings = Map.of(SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of(nationalModuleId));
+		Map<String, Object> settings = Map.of(Settings.MODULE_IDS, List.of(nationalModuleId));
 		createCodeSystem(createCodeSystemBody(null, branchPath.getPath(), nationalShortName, settings)).statusCode(201);
 		
 		// Child concept needs to be put into the national extension's module
@@ -535,9 +535,7 @@ public class SnomedClassificationApiTest extends AbstractSnomedApiTest {
 		// Create code system that is an extension of the national extension
 		createCodeSystem(createCodeSystemBody(ResourceURI.branch(CodeSystem.RESOURCE_TYPE, nationalShortName, "v1"), null, "SNOMEDCT-EXT-4985", null)
 			.merge(Json.object(
-				"settings", Json.object(
-					SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of(extensionModuleId)
-				)
+				"settings", Json.object(Settings.MODULE_IDS, List.of(extensionModuleId))
 			)))
 			.statusCode(201);
 

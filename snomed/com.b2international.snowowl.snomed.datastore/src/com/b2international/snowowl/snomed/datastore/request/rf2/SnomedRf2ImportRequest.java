@@ -75,6 +75,7 @@ import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
@@ -527,7 +528,7 @@ final class SnomedRf2ImportRequest implements Request<BranchContext, ImportRespo
 		ResourceRequests.prepareUpdate(resourceUri.getResourceId())
 				.setSettings(Map.of(
 					CodeSystem.CommonSettings.LOCALES, currentLocales,
-					SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY, List.copyOf(mergedLanguagesConfiguration.values())
+					Settings.LANGUAGES, List.copyOf(mergedLanguagesConfiguration.values())
 				))
 				.build(author, String.format("Update '%s' settings based on RF2 import", resourceUri.getResourceId()))
 				.execute(context.service(IEventBus.class))

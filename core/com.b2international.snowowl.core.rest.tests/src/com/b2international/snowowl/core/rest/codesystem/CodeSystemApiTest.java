@@ -53,6 +53,7 @@ import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.rest.BaseResourceApiTest;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests;
@@ -208,8 +209,8 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 		final Json body = prepareCodeSystemCreateRequestBody(codeSystemId)
 			.with(Json.object(
 				"settings", Json.object(
-					SnomedTerminologyComponentConstants.CODESYSTEM_NAMESPACE_CONFIG_KEY, "1000198",
-					SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of("123456781000198103", "876543211000198107"),
+					Settings.NAMESPACE, "1000198",
+					Settings.MODULE_IDS, List.of("123456781000198103", "876543211000198107"),
 					CodeSystem.CommonSettings.LOCALES, List.of("en-us", "en-gb")
 				)
 			));
@@ -218,8 +219,8 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 		
 		assertCodeSystemGet(codeSystemId)
 			.statusCode(200)
-			.body("settings." + SnomedTerminologyComponentConstants.CODESYSTEM_NAMESPACE_CONFIG_KEY, equalTo("1000198"))
-			.body("settings." + SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, equalTo(List.of("123456781000198103", "876543211000198107")))
+			.body("settings." + Settings.NAMESPACE, equalTo("1000198"))
+			.body("settings." + Settings.MODULE_IDS, equalTo(List.of("123456781000198103", "876543211000198107")))
 			.body("settings." + CodeSystem.CommonSettings.LOCALES, equalTo(List.of("en-us", "en-gb")));
 	}
 	
@@ -273,20 +274,20 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 		
 		final Json requestBody = prepareCodeSystemCreateRequestBody(codeSystemId).with(
 				"settings", Map.of(
-					SnomedTerminologyComponentConstants.CODESYSTEM_NAMESPACE_CONFIG_KEY, "1000198",
-					SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of("1234567891000198103", "9876543211000198107"),
+					Settings.NAMESPACE, "1000198",
+					Settings.MODULE_IDS, List.of("1234567891000198103", "9876543211000198107"),
 					"locked", true)
 				);
 		assertCodeSystemCreate(requestBody).statusCode(201);
 		
 		final Json updateRequestBody = Json.object("settings", Json.object(
-			SnomedTerminologyComponentConstants.CODESYSTEM_NAMESPACE_CONFIG_KEY, "1000197"
+			Settings.NAMESPACE, "1000197"
 		).with("locked", null));
 		assertCodeSystemUpdated(codeSystemId, updateRequestBody);
 		assertCodeSystemGet(codeSystemId)
 			.statusCode(200)
-			.and().body("settings." + SnomedTerminologyComponentConstants.CODESYSTEM_NAMESPACE_CONFIG_KEY, equalTo("1000197"))
-			.and().body("settings." + SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, equalTo(List.of("1234567891000198103", "9876543211000198107")))
+			.and().body("settings." + Settings.NAMESPACE, equalTo("1000197"))
+			.and().body("settings." + Settings.MODULE_IDS, equalTo(List.of("1234567891000198103", "9876543211000198107")))
 			.and().body("settings", not(hasKey("locked")));
 	}
 	
