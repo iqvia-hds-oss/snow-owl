@@ -226,7 +226,7 @@ public class FhirSnomedConceptMapGenerator {
 	private static String createRefsetConcept(String branchPath, String refsetName, SnomedRefSetType refsetType) {
 		
 		return SnomedRequests.prepareNewConcept()
-			.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+			.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 			.setActive(true)
 			.setModuleId(Concepts.MODULE_SCT_CORE)
 			.addDescription(createDescription(refsetName + " (foundation metadata concept)", FULLY_SPECIFIED_NAME))
@@ -246,7 +246,7 @@ public class FhirSnomedConceptMapGenerator {
 	private static SnomedDescriptionCreateRequestBuilder createDescription(final String term, final String type) {
 		
 		return SnomedRequests.prepareNewDescription()
-			.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+			.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 			.setActive(true)
 			.setModuleId(Concepts.MODULE_SCT_CORE)
 			.setLanguageCode("en")
@@ -258,7 +258,7 @@ public class FhirSnomedConceptMapGenerator {
 
 	private static SnomedRelationshipCreateRequestBuilder createIsaRelationship(final String characteristicTypeId, String destinationId) {
 		return SnomedRequests.prepareNewRelationship() 
-			.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+			.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 			.setActive(true)
 			.setModuleId(Concepts.MODULE_SCT_CORE)
 			.setDestinationId(destinationId)

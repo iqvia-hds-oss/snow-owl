@@ -117,7 +117,7 @@ public class ValueSetMemberSearchSnomedReferenceSetTest {
 	
 	private String createSimpleMapTypeRefSet() {
 		return SnomedRequests.prepareNewConcept()
-				.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+				.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 				.setActive(true)
 				.setModuleId(Concepts.MODULE_SCT_CORE)
 				.addDescription(createDescription("filterByComponentMapTypeRefset" + " (foundation metadata concept)", SnomedConstants.Concepts.FULLY_SPECIFIED_NAME))
@@ -135,7 +135,7 @@ public class ValueSetMemberSearchSnomedReferenceSetTest {
 	
 	private static SnomedDescriptionCreateRequestBuilder createDescription(final String term, final String type) {
 		return SnomedRequests.prepareNewDescription()
-			.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+			.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 			.setActive(true)
 			.setModuleId(Concepts.MODULE_SCT_CORE)
 			.setLanguageCode("en")
@@ -147,7 +147,7 @@ public class ValueSetMemberSearchSnomedReferenceSetTest {
 	
 	private static SnomedRelationshipCreateRequestBuilder createIsaRelationship(final String characteristicTypeId, String destinationId) {
 		return SnomedRequests.prepareNewRelationship() 
-			.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+			.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 			.setActive(true)
 			.setModuleId(Concepts.MODULE_SCT_CORE)
 			.setDestinationId(destinationId)
