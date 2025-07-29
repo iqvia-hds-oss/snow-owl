@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.b2international.snowowl.snomed.core.domain;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.google.common.base.MoreObjects;
 
 /**
+ * An identifier generation strategy that always returns a constant identifier.
+ * 
  * @since 4.6
  */
 public final class ConstantIdStrategy implements IdGenerationStrategy {
@@ -35,18 +38,28 @@ public final class ConstantIdStrategy implements IdGenerationStrategy {
 		return id;
 	}
 	
-	@Override
-	public String getNamespace() {
+	private String getNamespace() {
 		return SnomedIdentifiers.getNamespace(id);
+	}
+	
+	@Override
+	public String getNamespaceKey() {
+		final String namespace = getNamespace();
+		return !StringUtils.isEmpty(namespace) 
+			? namespace 
+			: SnomedIdentifiers.INT_NAMESPACE;
 	}
 
 	@Override
 	public String toString() {
-		return MoreObjects.toStringHelper(this).add("id", id).toString();
+		return MoreObjects.toStringHelper(this)
+			.add("id", id)
+			.toString();
 	}
 	
 	@Override
 	public IdGenerationStrategy toNamespaceStrategy() {
+		// Overridden to convert this strategy into a namespace strategy
 		return new NamespaceIdStrategy(getNamespace());
 	}
 	
