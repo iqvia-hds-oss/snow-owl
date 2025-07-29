@@ -29,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
@@ -40,6 +41,7 @@ import com.b2international.snowowl.snomed.core.domain.Rf2RefSetExportLayout;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedRf2ExportConfiguration;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2ExportRequestBuilder;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -68,25 +70,27 @@ public class SnomedRf2ExportRestService extends AbstractRestService {
 	})
 	@GetMapping(produces = {OCTET_STREAM_MEDIA_TYPE})
 	public @ResponseBody ResponseEntity<?> export(
-			@Parameter(description = "The branch path", required = true)
-			@PathVariable(value="path")
-			final String branch,
-
-			@ParameterObject
-			final SnomedRf2ExportConfiguration params,
 			
-			@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
-			@RequestHeader(value=HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required=false) 
-			final String acceptLanguage) {
+		@Parameter(description = "The branch path", required = true)
+		@PathVariable(value="path")
+		final String branch,
+
+		@ParameterObject
+		final SnomedRf2ExportConfiguration params,
 		
-		final Attachment exportedFile = SnomedRequests.rf2().prepareExport()
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value=HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required=false) 
+		final String acceptLanguage
+		
+	) {
+		
+		final SnomedRf2ExportRequestBuilder exportRequestBuilder = SnomedRequests.rf2().prepareExport()
 			.setReleaseType(params.getType() == null ? null : Rf2ReleaseType.getByNameIgnoreCase(params.getType()))
 			.setExtensionOnly(params.isExtensionOnly())
 			.setLocales(acceptLanguage)
 			.setIncludePreReleaseContent(params.isIncludeUnpublished())
 			.setModules(params.getModuleIds())
 			.setRefSets(params.getRefSetIds())
-			.setCountryNamespaceElement(params.getNamespaceId())
 			.setMaintainerType(Strings.isNullOrEmpty(params.getMaintainerType()) ? null : Rf2MaintainerType.getByNameIgnoreCase(params.getMaintainerType()))
 			.setNrcCountryCode(params.getNrcCountryCode())
 			// .setNamespaceFilter(namespaceFilter) is not supported on REST, yet
@@ -94,8 +98,19 @@ public class SnomedRf2ExportRestService extends AbstractRestService {
 			.setStartEffectiveTime(params.getStartEffectiveTime())
 			.setEndEffectiveTime(params.getEndEffectiveTime())
 			.setRefSetExportLayout(params.getRefSetLayout() == null ? null : Rf2RefSetExportLayout.getByNameIgnoreCase(params.getRefSetLayout()))
-			.setComponentTypes(params.getComponentTypes())
-			.build(branch)
+			.setComponentTypes(params.getComponentTypes());
+		
+		if (!StringUtils.isEmpty(params.getNamespaceId()) && !StringUtils.isEmpty(params.getCountryNamespaceElement())) {
+			throw new IllegalArgumentException("Both 'namespaceId' and 'countryNamespaceElement' parameters are set, please use only one of them.");
+		}
+		
+		if (!StringUtils.isEmpty(params.getNamespaceId())) {
+			exportRequestBuilder.setCountryNamespaceElement(params.getNamespaceId());
+		} else if (!StringUtils.isEmpty(params.getCountryNamespaceElement())) {
+			exportRequestBuilder.setCountryNamespaceElement(params.getCountryNamespaceElement());
+		}
+			
+		final Attachment exportedFile = exportRequestBuilder.build(branch)
 			.execute(getBus())
 			.getSync();
 		
@@ -103,7 +118,6 @@ public class SnomedRf2ExportRestService extends AbstractRestService {
 		final Resource exportZipResource = new FileSystemResource(file);
 		
 		final HttpHeaders httpHeaders = new HttpHeaders();
-		
 		httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 		httpHeaders.setContentDispositionFormData("attachment", exportedFile.getFileName());
 
