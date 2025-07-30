@@ -171,8 +171,9 @@ public class SnomedExtensionUpgradeTest extends AbstractSnomedExtensionApiTest {
 		createConcept(extension.getCodeSystemURI(), createConceptRequestBody(Concepts.ROOT_CONCEPT, Concepts.MODULE_SCT_CORE).with("id", newConceptId));
 		createVersion(extension.getCodeSystemURI().getCodeSystem(), "v1", Dates.now(DateFormats.SHORT)).statusCode(201);
 		
-		// start upgrade but it fails due to same content present on both sides
-		assertCodeSystemUpgrade(extension.getCodeSystemURI(), upgradeVersion).statusCode(409);
+		// start upgrade
+		// now (starting from 7.27.0) it succeeds if the exact same component revisions are being added
+		assertCodeSystemUpgrade(extension.getCodeSystemURI(), upgradeVersion).statusCode(201);
 	}
 	
 	@Test
