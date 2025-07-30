@@ -37,13 +37,17 @@ import io.restassured.response.ValidatableResponse;
 public abstract class SnomedRefSetRestRequests {
 
 	public static ValidatableResponse updateRefSetComponent(IBranchPath branchPath, SnomedComponentType type, String id, Map<?, ?> requestBody, boolean force) {
+		return updateRefSetComponent(branchPath.getPath(), type, id, requestBody, force);
+	}
+	
+	public static ValidatableResponse updateRefSetComponent(String branchPath, SnomedComponentType type, String id, Map<?, ?> requestBody, boolean force) {
 		assertThat(type, anyOf(equalTo(SnomedComponentType.REFSET), equalTo(SnomedComponentType.MEMBER)));
 
 		return givenAuthenticatedRequest(SnomedApiTestConstants.SCT_API)
 				.contentType(ContentType.JSON)
 				.body(requestBody)
 				.queryParam("force", force)
-				.put("/{path}/{componentType}/{id}", branchPath.getPath(), type.toLowerCasePlural(), id)
+				.put("/{path}/{componentType}/{id}", branchPath, type.toLowerCasePlural(), id)
 				.then();
 	}
 
