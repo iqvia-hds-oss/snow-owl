@@ -73,7 +73,7 @@ public abstract class FhirRestTest extends FhirTest {
 	}
 	
 	protected final String createCodeSystem(String codeSystemId) {
-		CodeSystemRestRequests.createCodeSystem(codeSystemId).statusCode(201);
+		CodeSystemRestRequests.createCodeSystem(codeSystemId);
 		createdCodeSystems.add(codeSystemId);
 		return codeSystemId;
 	}

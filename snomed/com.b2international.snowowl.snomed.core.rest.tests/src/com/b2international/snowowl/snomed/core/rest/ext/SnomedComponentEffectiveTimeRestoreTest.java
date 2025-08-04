@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,10 +47,9 @@ public class SnomedComponentEffectiveTimeRestoreTest extends AbstractSnomedExten
 	public void restoreEffectiveTimeOnReleasedConcept() throws Exception {
 		String conceptId = createNewConcept(branchPath);
 
-		String shortName = "SNOMEDCT-CON-1";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-CON-1");
+		LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		// After versioning, the concept should be released and have an effective time set on it
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId).statusCode(200)

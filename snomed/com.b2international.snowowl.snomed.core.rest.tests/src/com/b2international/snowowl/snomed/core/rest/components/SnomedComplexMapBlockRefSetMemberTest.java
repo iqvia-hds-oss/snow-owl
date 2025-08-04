@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.b2international.snowowl.test.commons.rest.BranchBase;
 public class SnomedComplexMapBlockRefSetMemberTest extends SnomedRefSetMemberParameterizedTest {
 
 	// Single CodeSystem for all refset member tests initialized on first access
-	private static String CODESYSTEM_SHORTNAME;
+	private static String CODESYSTEM_ID;
 	
 	@Parameters(name = "{0}")
 	public static Collection<Object[]> data() {
@@ -52,13 +52,12 @@ public class SnomedComplexMapBlockRefSetMemberTest extends SnomedRefSetMemberPar
 
 	@Override
 	protected String getOrCreateCodeSystem() {
-		if (CODESYSTEM_SHORTNAME == null) {
+		if (CODESYSTEM_ID == null) {
 			// This will create a code system on the branch MAIN/className
-			final String shortName = getClass().getSimpleName();
-			createCodeSystem(branchPath, shortName).statusCode(201);
-			CODESYSTEM_SHORTNAME = shortName;
+			final String codeSystemId = getClass().getSimpleName();
+			CODESYSTEM_ID = createCodeSystem(branchPath, codeSystemId);
 		}
-		return CODESYSTEM_SHORTNAME;
+		return CODESYSTEM_ID;
 	}
 	
 }

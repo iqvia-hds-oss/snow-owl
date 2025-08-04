@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,10 +316,9 @@ public class SnomedConceptApiTest extends AbstractSnomedApiTest {
 	public void deleteReleasedConcept() {
 		String conceptId = createNewConcept(branchPath);
 
-		String shortName = "SNOMEDCT-CON-2";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-CON-2");
+		LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		deleteComponent(branchPath, SnomedComponentType.CONCEPT, conceptId, false).statusCode(409);
 	}
@@ -328,10 +327,9 @@ public class SnomedConceptApiTest extends AbstractSnomedApiTest {
 	public void forceDeleteConcept() {
 		String conceptId = createNewConcept(branchPath);
 
-		String shortName = "SNOMEDCT-CON-3";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-CON-3");
+		LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		deleteComponent(branchPath, SnomedComponentType.CONCEPT, conceptId, true).statusCode(204);
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId).statusCode(404);

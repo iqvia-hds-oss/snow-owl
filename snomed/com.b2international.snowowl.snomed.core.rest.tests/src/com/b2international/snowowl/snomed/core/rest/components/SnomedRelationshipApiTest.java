@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -476,10 +476,9 @@ public class SnomedRelationshipApiTest extends AbstractSnomedApiTest {
 	public void restoreEffectiveTimeOnReleasedRelationship() throws Exception {
 		final String relationshipId = createNewRelationship(branchPath);
 
-		final String shortName = "SNOMEDCT-REL-1";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		final LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-REL-1");
+		final LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		// After versioning, the relationship should be released and have an effective time set on it
 		getComponent(branchPath, SnomedComponentType.RELATIONSHIP, relationshipId).statusCode(200)

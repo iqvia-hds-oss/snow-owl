@@ -466,8 +466,7 @@ public class ResourceApiTest {
 	@Test
 	public void ensureIdIsUniqueGlobally() throws Exception {
 		// create a resource with ID
-		var codeSystemId = IDs.base62UUID();
-		CodeSystemRestRequests.createCodeSystem(codeSystemId).statusCode(201);
+		var codeSystemId = CodeSystemRestRequests.createCodeSystem(IDs.base62UUID());
 		
 		// simulate that the user only has access to another resource
 		String token = RestExtensions.generateToken(Permission.requireAll(Permission.OPERATION_READ, "another-resource"));
@@ -500,8 +499,7 @@ public class ResourceApiTest {
 	@Test
 	public void ensureUrlIsUniqueGlobally() throws Exception {
 		// create a resource with ID
-		var codeSystemId = IDs.base62UUID();
-		CodeSystemRestRequests.createCodeSystem(codeSystemId).statusCode(201);
+		var codeSystemId = CodeSystemRestRequests.createCodeSystem(IDs.base62UUID());
 		var codeSystemUrlToUse = CodeSystemRestRequests.getSnomedIntUrl(codeSystemId);
 		
 		// simulate that the user only has access to another resource
