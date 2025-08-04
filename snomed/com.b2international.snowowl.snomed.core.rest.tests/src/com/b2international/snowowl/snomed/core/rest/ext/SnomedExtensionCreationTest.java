@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,7 @@ public class SnomedExtensionCreationTest extends AbstractSnomedApiTest {
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId).statusCode(200)
 			.body("released", equalTo(false));
 
-		String codeSystemId = "SNOMEDCT-CV1";
-		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-CV1");
 
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId).statusCode(200)
 			.body("released", equalTo(false));
@@ -81,8 +80,7 @@ public class SnomedExtensionCreationTest extends AbstractSnomedApiTest {
 
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId).statusCode(404);
 
-		String codeSystemId = "SNOMEDCT-CV2";
-		createCodeSystem(a, codeSystemId).statusCode(201);
+		String codeSystemId = createCodeSystem(a, "SNOMEDCT-CV2");
 
 		getComponent(a, SnomedComponentType.CONCEPT, conceptId).statusCode(200)
 			.body("released", equalTo(false));

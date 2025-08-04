@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.b2international.snowowl.test.commons.codesystem;
 
-import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -50,41 +50,57 @@ import io.restassured.response.ValidatableResponse;
  */
 public abstract class CodeSystemRestRequests {
 	
-	public static ValidatableResponse createCodeSystem(String codeSystemId) {
+	public static String createCodeSystem(String codeSystemId) {
+		return assertCreated(assertCreateCodeSystem(codeSystemId));
+	}
+	
+	public static ValidatableResponse assertCreateCodeSystem(String codeSystemId) {
 		String branchPath = RepositoryRequests.branching().prepareCreate()
 			.setParent(Branch.MAIN_PATH)
 			.setName(codeSystemId)
 			.build(SnomedTerminologyComponentConstants.TOOLING_ID)
 			.execute(Services.bus())
 			.getSync(1, TimeUnit.MINUTES);
-		return createCodeSystem(null, branchPath, codeSystemId);
+		return assertCreateCodeSystem(null, branchPath, codeSystemId);
 	}
 	
-	public static ValidatableResponse createCodeSystem(IBranchPath branchPath, String codeSystemId) {
-		return createCodeSystem(branchPath.getPath(), codeSystemId);
+	public static String createCodeSystem(IBranchPath branchPath, String codeSystemId) {
+		return assertCreated(assertCreateCodeSystem(branchPath.getPath(), codeSystemId));
 	}
 	
-	public static ValidatableResponse createCodeSystem(String branchPath, String codeSystemId) {
-		return createCodeSystem(null, branchPath, codeSystemId);
+	public static ValidatableResponse assertCreateCodeSystem(IBranchPath branchPath, String codeSystemId) {
+		return assertCreateCodeSystem(branchPath.getPath(), codeSystemId);
+	}
+	
+	public static ValidatableResponse assertCreateCodeSystem(String branchPath, String codeSystemId) {
+		return assertCreateCodeSystem(null, branchPath, codeSystemId);
 	}
 
-	public static ValidatableResponse createCodeSystem(ResourceURI extensionOf, String codeSystemId) {
-		return createCodeSystem(extensionOf, null, codeSystemId);
+	public static String createCodeSystem(ResourceURI extensionOf, String codeSystemId) {
+		return assertCreated(assertCreateCodeSystem(extensionOf, null, codeSystemId));
 	}
 	
-	public static ValidatableResponse createCodeSystem(ResourceURI extensionOf, String branchPath, String codeSystemId) {
-		return createCodeSystem(extensionOf, branchPath, codeSystemId, Map.of());
+	public static ValidatableResponse assertCreateCodeSystem(ResourceURI extensionOf, String codeSystemId) {
+		return assertCreateCodeSystem(extensionOf, null, codeSystemId);
+	}
+	
+	public static ValidatableResponse assertCreateCodeSystem(ResourceURI extensionOf, String branchPath, String codeSystemId) {
+		return assertCreateCodeSystem(extensionOf, branchPath, codeSystemId, Map.of());
 	}
 	
 	public static ValidatableResponse createCodeSystem(ResourceURI extensionOf, String codeSystemId,  Map<String, Object> settings) {
-		return createCodeSystem(extensionOf, null, codeSystemId, settings);
+		return assertCreateCodeSystem(extensionOf, null, codeSystemId, settings);
 	}
 	
-	public static ValidatableResponse createCodeSystem(ResourceURI extensionOf, String branchPath, String codeSystemId,  Map<String, Object> settings) {				
-		return createCodeSystem(createCodeSystemBody(extensionOf, branchPath, codeSystemId, settings));
+	public static String createCodeSystem(ResourceURI extensionOf, String branchPath, String codeSystemId,  Map<String, Object> settings) {				
+		return assertCreated(assertCreateCodeSystem(prepareCodeSystemCreateBody(extensionOf, branchPath, codeSystemId, settings)));
 	}
 	
-	public static ValidatableResponse createCodeSystem(Json requestBody) {
+	public static ValidatableResponse assertCreateCodeSystem(ResourceURI extensionOf, String branchPath, String codeSystemId,  Map<String, Object> settings) {				
+		return assertCreateCodeSystem(prepareCodeSystemCreateBody(extensionOf, branchPath, codeSystemId, settings));
+	}
+	
+	public static ValidatableResponse assertCreateCodeSystem(Json requestBody) {
 		return givenAuthenticatedRequest(ApiTestConstants.CODESYSTEMS_API)
 				.contentType(ContentType.JSON)
 				.body(requestBody)
@@ -92,7 +108,7 @@ public abstract class CodeSystemRestRequests {
 				.then();
 	}
 
-	public static Json createCodeSystemBody(ResourceURI extensionOf, String branchPath, String codeSystemId,  Map<String, Object> settings) {
+	public static Json prepareCodeSystemCreateBody(ResourceURI extensionOf, String branchPath, String codeSystemId,  Map<String, Object> settings) {
 		Json requestBody = Json.object(
 			"id", codeSystemId,
 			"title", "Title of " + codeSystemId,
@@ -182,7 +198,7 @@ public abstract class CodeSystemRestRequests {
 	}
 	
 	public static void createCodeSystemAndVersion(final IBranchPath branchPath, String codeSystemId, String versionId, LocalDate effectiveTime) {
-		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		assertCreateCodeSystem(branchPath, codeSystemId).statusCode(201);
 		CodeSystemVersionRestRequests.createVersion(codeSystemId, versionId, effectiveTime).statusCode(201);
 	}
 

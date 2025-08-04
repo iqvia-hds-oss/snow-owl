@@ -228,10 +228,9 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 	public void deleteReleasedDescription() {
 		String descriptionId = createNewDescription(branchPath);
 
-		String shortName = "SNOMEDCT-DSC-3";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-DSC-3");
+		LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		deleteComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId, false).statusCode(409);
 	}
@@ -240,10 +239,9 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 	public void forceDeleteDescription() {
 		String descriptionId = createNewDescription(branchPath);
 
-		String shortName = "SNOMEDCT-DSC-4";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-DSC-4");
+		LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		deleteComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId, true).statusCode(204);
 		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).statusCode(404);
@@ -269,10 +267,9 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 		String descriptionId = createNewDescription(branchPath);
 		inactivateDescription(branchPath, descriptionId);
 
-		String shortName = "SNOMEDCT-DSC-1";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-DSC-1");
+		LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		Json requestBody = Json.object(
 			"active", true,
@@ -295,10 +292,9 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 		String descriptionId = createNewDescription(branchPath);
 		inactivateDescription(branchPath, descriptionId);
 
-		String shortName = "SNOMEDCT-DSC-2";
-		createCodeSystem(branchPath, shortName).statusCode(201);
-		LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-DSC-2");
+		LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		Json reactivateRequestBody = Json.object(
 			"active", true,
@@ -1027,14 +1023,13 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void restoreEffectiveTimeOnReleasedDescription() throws Exception {
-		final String shortName = "SNOMEDCT-DESC-1";
-		createCodeSystem(branchPath, shortName).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-DESC-1");
 		
 		final String descriptionId = createNewDescription(branchPath);
 		
 		// create first version
-		final LocalDate effectiveDate = getNextAvailableEffectiveDate(shortName);
-		createVersion(shortName, "v1", effectiveDate).statusCode(201);
+		final LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
 
 		// After versioning, the description should be released and have an effective time set on it
 		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId).statusCode(200)
@@ -1066,8 +1061,7 @@ public class SnomedDescriptionApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void restoreEffectiveTimeOnReleasedDescription_ViaToken() throws Exception {
-		final String codeSystemId = "SNOMEDCT-DESC-EFFRESTORE-TOKEN";
-		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-DESC-EFFRESTORE-TOKEN");
 		
 		final String descriptionId = createNewDescription(branchPath);
 		// create first version

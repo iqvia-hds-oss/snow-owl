@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,7 @@ public class SnomedModuleDependencyRefsetTest extends AbstractSnomedApiTest {
 	@Test
 	public void updateRelevantModDepMembersForExtensionVersions() {
 
-		final String shortName = "SNOMEDCT-MODULEDEPENDENCY";
-		createCodeSystem(branchPath, shortName).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-MODULEDEPENDENCY");
 
 		Set<String> INT_MODULE_IDS = Set.of(Concepts.MODULE_SCT_MODEL_COMPONENT, Concepts.MODULE_SCT_CORE, ICD_10_MAPPING_MODULE);
 		Map<Pair<String, String>, LocalDate> moduleToReferencedComponentAndEffectiveDateMap = Maps.newHashMap();
@@ -138,10 +137,10 @@ public class SnomedModuleDependencyRefsetTest extends AbstractSnomedApiTest {
 			.forEach(c -> assertEquals("Effective time must still be null", null, c.getEffectiveTime()));
 				
 		// version branch
-		final LocalDate effectiveTime = getNextAvailableEffectiveDate(shortName);
+		final LocalDate effectiveTime = getNextAvailableEffectiveDate(codeSystemId);
 		final String versionId = "testForModuleDependencyMembers";
-		createVersion(shortName, versionId, effectiveTime).statusCode(201);
-		assertGetVersion(shortName, versionId).statusCode(200);
+		createVersion(codeSystemId, versionId, effectiveTime).statusCode(201);
+		assertGetVersion(codeSystemId, versionId).statusCode(200);
 		
 		// check for the newly created module concept after versioning to have effectiveTime set to the correct date
 		SnomedConcept norwegianModule = SnomedRequests.prepareGetConcept(NORWEGIAN_MODULE_CONCEPT_ID)

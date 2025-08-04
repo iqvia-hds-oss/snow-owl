@@ -20,8 +20,8 @@ import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRe
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.deleteComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.getComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.*;
-import static com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests.createCodeSystem;
-import static com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests.createCodeSystemBody;
+import static com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests.assertCreateCodeSystem;
+import static com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests.prepareCodeSystemCreateBody;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.createVersion;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.getNextAvailableEffectiveDate;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.assertCreated;
@@ -342,7 +342,7 @@ public class SnomedClassificationApiTest extends AbstractSnomedApiTest {
 	public void testRedundantRelationshipModuleChange() throws Exception {
 		
 		final String codeSystemShortName = "SNOMEDCT-CLASSIFY-RSHIPS-MOD";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		assertCreateCodeSystem(branchPath, codeSystemShortName).statusCode(201);
 		
 		String parentConceptId = createNewConcept(branchPath);
 		String childConceptId = createNewConcept(branchPath, parentConceptId);
@@ -497,7 +497,7 @@ public class SnomedClassificationApiTest extends AbstractSnomedApiTest {
 		createNewRelationship(branchPath, extensionModuleId, Concepts.IS_A, Concepts.MODULE_ROOT, Concepts.INFERRED_RELATIONSHIP);
 		
 		Map<String, Object> settings = Map.of(SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of(nationalModuleId));
-		createCodeSystem(createCodeSystemBody(null, branchPath.getPath(), nationalShortName, settings)).statusCode(201);
+		assertCreateCodeSystem(prepareCodeSystemCreateBody(null, branchPath.getPath(), nationalShortName, settings)).statusCode(201);
 		
 		// Child concept needs to be put into the national extension's module
 		final String parentConceptId = createNewConcept(branchPath);
@@ -533,7 +533,7 @@ public class SnomedClassificationApiTest extends AbstractSnomedApiTest {
 			.statusCode(201);
 
 		// Create code system that is an extension of the national extension
-		createCodeSystem(createCodeSystemBody(ResourceURI.branch(CodeSystem.RESOURCE_TYPE, nationalShortName, "v1"), null, "SNOMEDCT-EXT-4985", null)
+		assertCreateCodeSystem(prepareCodeSystemCreateBody(ResourceURI.branch(CodeSystem.RESOURCE_TYPE, nationalShortName, "v1"), null, "SNOMEDCT-EXT-4985", null)
 			.merge(Json.object(
 				"settings", Json.object(
 					SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY, List.of(extensionModuleId)

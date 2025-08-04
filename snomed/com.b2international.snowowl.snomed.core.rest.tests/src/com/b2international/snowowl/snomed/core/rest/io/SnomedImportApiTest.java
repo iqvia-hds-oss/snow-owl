@@ -247,8 +247,8 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 			.body("active", equalTo(false))
 			.body("pt.id", equalTo("11320138110"));
 
-		createCodeSystem(branchPath, "SNOMEDCT-EXT").statusCode(201);
-		createVersion("SNOMEDCT-EXT", "v1", EffectiveTimes.parse("20170301", DateFormats.SHORT)).statusCode(201);
+		var codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-EXT");
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse("20170301", DateFormats.SHORT)).statusCode(201);
 		
 		// sanity check that versioning did not mess with the descriptions
 		getComponent(branchPath, SnomedComponentType.CONCEPT, "63961392103", "pt()").statusCode(200)
@@ -273,7 +273,7 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 
 	@Test
 	public void import11ExtensionConceptWithVersion() throws Exception {
-		createCodeSystem(branchPath, "SNOMEDCT-NE").statusCode(201);
+		var codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-NE");
 		getComponent(branchPath, SnomedComponentType.CONCEPT, "555231000005107").statusCode(404);
 
 		var importConfiguration = Map.of(
@@ -283,7 +283,7 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 
 		importArchive(branchPath, importConfiguration, "SnomedCT_Release_INT_20150205_new_extension_concept.zip");
 		getComponent(branchPath, SnomedComponentType.CONCEPT, "555231000005107").statusCode(200);
-		assertGetVersion("SNOMEDCT-NE", "2015-02-05").statusCode(200);
+		assertGetVersion(codeSystemId, "2015-02-05").statusCode(200);
 	}
 	
 	@Test
@@ -617,7 +617,7 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void import34ImportWithAuthor() throws Exception {
-		createCodeSystem(branchPath, "SNOMEDCT-AUTR").statusCode(201);
+		createCodeSystem(branchPath, "SNOMEDCT-AUTR");
 		
 		var importConfiguration = Map.of(
 			"type", Rf2ReleaseType.DELTA.name(),

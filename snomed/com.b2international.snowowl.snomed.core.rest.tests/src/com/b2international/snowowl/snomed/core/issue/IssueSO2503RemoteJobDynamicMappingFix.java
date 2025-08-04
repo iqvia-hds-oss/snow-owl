@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,13 +35,12 @@ public class IssueSO2503RemoteJobDynamicMappingFix extends AbstractSnomedApiTest
 	@Test
 	public void verify() throws Exception {
 		// create a codesystem to test on
-		String codeSystemShortName = "SNOMEDCT-ISSUESO2503";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-ISSUESO2503");
 		
 		// 1. create a version with a datelike versionId
-		LocalDate nextAvailableEffectiveDate1 = getNextAvailableEffectiveDate(codeSystemShortName);
+		LocalDate nextAvailableEffectiveDate1 = getNextAvailableEffectiveDate(codeSystemId);
 		ResourceRequests.prepareNewVersion()
-			.setResource(CodeSystem.uri(codeSystemShortName))
+			.setResource(CodeSystem.uri(codeSystemId))
 			// XXX use default format, ES will likely try to convert this to a date field, unless we disable it in the mapping
 			.setVersion(nextAvailableEffectiveDate1.toString())
 			.setEffectiveTime(nextAvailableEffectiveDate1)
@@ -51,9 +50,9 @@ public class IssueSO2503RemoteJobDynamicMappingFix extends AbstractSnomedApiTest
 			.then(this::waitDone)
 			.thenWith(unused -> {
 				// 2. create another version with a non-datelike versionId
-				LocalDate nextAvailableEffectiveDate2 = getNextAvailableEffectiveDate(codeSystemShortName);
+				LocalDate nextAvailableEffectiveDate2 = getNextAvailableEffectiveDate(codeSystemId);
 				return ResourceRequests.prepareNewVersion()
-					.setResource(CodeSystem.uri(codeSystemShortName))
+					.setResource(CodeSystem.uri(codeSystemId))
 					.setVersion("xx-" + nextAvailableEffectiveDate2.toString())
 					.setEffectiveTime(nextAvailableEffectiveDate2)
 					.buildAsync()
