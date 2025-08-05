@@ -159,18 +159,18 @@ public class ValidationThreadPoolTest {
 
 				long allRunningJobs = runningExpensiveJobs + runningFastJobs + runningNormalJobs;
 
-				assertTrue(allRunningJobs <= VALIDATION_THREAD_COUNT);
+				assertTrue(String.format("Number of concurrent jobs is higher than the allowed. All: %s vs. Allowed: %s", allRunningJobs, VALIDATION_THREAD_COUNT), allRunningJobs <= VALIDATION_THREAD_COUNT);
 				System.out.println(
 						String.format(
 						"Number of expensive ones are [%d], number of normal ones [%d], number of fast ones [%d]",
 						 runningExpensiveJobs, runningNormalJobs, runningFastJobs)
 						);
 				if (CheckType.EXPENSIVE == checkType) {
-					assertTrue(runningExpensiveJobs <= MAXIMUM_AMOUNT_OF_RUNNING_EXPENSIVE_JOBS);
+					assertTrue(String.format("Number of concurrent expensive jobs is higher than the allowed. All: %s vs. Allowed: %s", runningExpensiveJobs, MAXIMUM_AMOUNT_OF_RUNNING_EXPENSIVE_JOBS), runningExpensiveJobs <= MAXIMUM_AMOUNT_OF_RUNNING_EXPENSIVE_JOBS);
 				}
 
 				if (CheckType.NORMAL == checkType) {
-					assertTrue(runningNormalJobs <= MAXIMUM_AMOUNT_OF_RUNNING_NORMAL_JOBS);
+					assertTrue(String.format("Number of concurrent normal jobs is higher than the validation thread count. All: %s vs. Allowed: %s", runningNormalJobs, MAXIMUM_AMOUNT_OF_RUNNING_NORMAL_JOBS), runningNormalJobs <= MAXIMUM_AMOUNT_OF_RUNNING_NORMAL_JOBS);
 				}
 				Thread.sleep(runTime);
 			} catch (InterruptedException e) {

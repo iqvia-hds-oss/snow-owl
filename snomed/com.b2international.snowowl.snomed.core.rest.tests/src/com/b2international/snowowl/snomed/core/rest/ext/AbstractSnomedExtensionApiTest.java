@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.b2international.snowowl.snomed.core.rest.ext;
 
 import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createConceptRequestBody;
+import static com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests.*;
 
 import java.util.concurrent.TimeUnit;
 
@@ -63,9 +64,7 @@ public abstract class AbstractSnomedExtensionApiTest extends AbstractSnomedApiTe
 
 	// branch have been already created by the outer rules, so we are just reusing it to create an extension branch
 	protected final CodeSystem createExtension(ResourceURI extensionOf, String codeSystemId) {
-		CodeSystemRestRequests.createCodeSystem(extensionOf, codeSystemId)
-			.assertThat()
-			.statusCode(201);
+		createCodeSystem(extensionOf, codeSystemId);
 		return CodeSystemRestRequests.getCodeSystem(codeSystemId);
 	}
 

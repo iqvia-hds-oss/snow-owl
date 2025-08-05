@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,15 +223,14 @@ public class SnomedEclLabelerApiTest extends AbstractSnomedApiTest {
 	public void ecl_label_api() throws Exception {
 		String conceptId = createNewConcept(branchPath);
 
-		String shortName = "SNOMEDCT-Test";
-		createCodeSystem(branchPath, shortName).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-Test");
 		
 		List<String> expressionLabels = givenAuthenticatedRequest("/")
 				.contentType(ContentType.JSON)
 				.body(Map.of(
 					"expressions", List.of(conceptId),
 					"descriptionType", "fsn",
-					"codeSystemUri", shortName
+					"codeSystemUri", codeSystemId
 				))
 				.post("/label-expressions")
 				.then()

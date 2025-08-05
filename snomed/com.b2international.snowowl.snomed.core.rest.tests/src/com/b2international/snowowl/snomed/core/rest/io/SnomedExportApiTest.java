@@ -342,14 +342,14 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void exportDeltaInDateRangeFromVersion() throws Exception {
-		createCodeSystem(branchPath, "SNOMEDCT-DELTA").statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-DELTA");
 
 		String statedRelationshipId = createNewRelationship(branchPath, Concepts.ROOT_CONCEPT, Concepts.PART_OF, Concepts.NAMESPACE_ROOT, Concepts.STATED_RELATIONSHIP);
 		String inferredRelationshipId = createNewRelationship(branchPath, Concepts.ROOT_CONCEPT, Concepts.PART_OF, Concepts.NAMESPACE_ROOT, Concepts.INFERRED_RELATIONSHIP);
 		String additionalRelationshipId = createNewRelationship(branchPath, Concepts.ROOT_CONCEPT, Concepts.PART_OF, Concepts.NAMESPACE_ROOT, Concepts.ADDITIONAL_RELATIONSHIP);
 
 		String versionEffectiveTime = "20170302";
-		createVersion("SNOMEDCT-DELTA", "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 		IBranchPath versionPath = BranchPathUtils.createPath(branchPath, "v1");
 
 		Map<String, Object> config = ImmutableMap.<String, Object>builder()
@@ -407,7 +407,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 
 	@Test
 	public void exportDeltaInDateRangeAndUnpublishedComponents() throws Exception {
-		createCodeSystem(branchPath, "SNOMEDCT-GAMMA").statusCode(201);
+		createCodeSystem(branchPath, "SNOMEDCT-GAMMA");
 
 		String statedRelationshipId = createNewRelationship(branchPath, Concepts.ROOT_CONCEPT, Concepts.PART_OF, Concepts.NAMESPACE_ROOT, Concepts.STATED_RELATIONSHIP);
 		String inferredRelationshipId = createNewRelationship(branchPath, Concepts.ROOT_CONCEPT, Concepts.PART_OF, Concepts.NAMESPACE_ROOT, Concepts.INFERRED_RELATIONSHIP);
@@ -498,8 +498,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void exportContentFromVersionFixerTask() throws Exception {
-		String codeSystemShortName = "SNOMEDCT-FIXERTASK";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-FIXERTASK");
 		
 		// create a refset, a concept, and reference the concept from the refset
 		final String createdRefSetId = createNewRefSet(branchPath, SnomedRefSetType.SIMPLE);
@@ -507,7 +506,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 		final String memberId = createNewRefSetMember(branchPath, createdConceptId, createdRefSetId);
 		
 		final String versionEffectiveTime = "20170301";
-		createVersion(codeSystemShortName, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 
 		IBranchPath versionPath = BranchPathUtils.createPath(branchPath, "v1");
 		IBranchPath taskBranch = BranchPathUtils.createPath(versionPath, "Fix01");
@@ -557,8 +556,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void exportContentFromVersionFixerTaskTransEffTime() throws Exception {
 		
-		String codeSystemShortName = "SNOMEDCT-FIXERTASK-TRANSIENT";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-FIXERTASK-TRANSIENT");
 		
 		// create a refset, a concept, and reference the concept from the refset
 		final String createdRefSetId = createNewRefSet(branchPath, SnomedRefSetType.SIMPLE);
@@ -566,7 +564,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 		final String memberId = createNewRefSetMember(branchPath, createdConceptId, createdRefSetId);
 		
 		final String versionEffectiveTime = "20170301";
-		createVersion(codeSystemShortName, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 		
 		IBranchPath versionPath = BranchPathUtils.createPath(branchPath, "v1");
 		IBranchPath taskBranch = BranchPathUtils.createPath(versionPath, "Fix01");
@@ -618,8 +616,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void exportPublishedAndUnpublishedTextDef() throws Exception {
-		final String codeSystemShortName = "SNOMEDCT-PUB-UNPUB-TEXTDEF";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-PUB-UNPUB-TEXTDEF");
 		
 		// create new concept
 		final String conceptId = createNewConcept(branchPath, ROOT_CONCEPT);
@@ -628,7 +625,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 
 		// version new concept
 		final String versionEffectiveTime = "20170301";
-		createVersion(codeSystemShortName, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 
 		// create new text definition
 		final String unpublishedTextDefinitionId = createNewDescription(branchPath, conceptId, Concepts.TEXT_DEFINITION, UK_ACCEPTABLE_MAP);
@@ -663,13 +660,12 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void exportAlwaysCreatesTextDef_DescAndLangRefsetFiles() throws Exception {
-		final String codeSystemShortName = "SNOMEDCT-EMPTY-FILES";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-EMPTY-FILES");
 
 		final String conceptId = createNewConcept(branchPath);
 		final String versionEffectiveTime = "20170301";
 		
-		createVersion(codeSystemShortName, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId).statusCode(200)
 			.body("definitionStatusId", equalTo(Concepts.PRIMITIVE));
@@ -681,7 +677,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 		
 		// create new version
 		final String newVersionEffectiveTime = "20170302";
-		createVersion(codeSystemShortName, "v2", EffectiveTimes.parse(newVersionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v2", EffectiveTimes.parse(newVersionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 		
 		final Map<String, Object> config = ImmutableMap.<String, Object>builder()
 				.put("type", Rf2ReleaseType.DELTA.name())
@@ -702,8 +698,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	
 	@Test
 	public void exportTextDef_DescAndLangRefSetsPerLanguageCode() throws Exception {
-		final String codeSystemShortName = "SNOMEDCT-EXPORT-PER-LANGUAGE";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-EXPORT-PER-LANGUAGE");
 		
 		// create new concept
 		final String conceptId = createNewConcept(branchPath);
@@ -714,7 +709,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 		
 		// version new concept
 		final String versionEffectiveTime = "20170301";
-		createVersion(codeSystemShortName, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 
 		final String unpublishedEnglishTextDefinitionId = createNewDescription(branchPath, conceptId, Concepts.TEXT_DEFINITION, UK_ACCEPTABLE_MAP, "en");
 		final String unpublishedDanishTextDefinitionId = createNewDescription(branchPath, conceptId, Concepts.TEXT_DEFINITION, UK_ACCEPTABLE_MAP, "da");
@@ -831,8 +826,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void exportLangRefset_acceptabilityChangesOnly() throws Exception {
 		
-		final String codeSystemShortName = "SNOMEDCT-EXPORT-UNPUBLISHED-LANG-REFSET-MEMBERS";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-EXPORT-UNPUBLISHED-LANG-REFSET-MEMBERS");
 		
 		// create new concept
 		final String conceptId = createNewConcept(branchPath);
@@ -846,7 +840,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 		
 		// version new concept
 		final String versionEffectiveTime = "20170801";
-		createVersion(codeSystemShortName, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 		
 		SnomedReferenceSetMembers versionedMembers = getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionId, "members()")
 				.statusCode(200)
@@ -902,8 +896,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void exportLangRefset_acceptabilityAndDescChanges() throws Exception {
 		
-		final String codeSystemShortName = "SNOMEDCT-ACCEPTABILITY-CHANGES";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-ACCEPTABILITY-CHANGES");
 		
 		// create new concept
 		final String conceptId = createNewConcept(branchPath);
@@ -916,7 +909,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 		
 		// version new concept
 		final String versionEffectiveTime = "20170801";
-		createVersion(codeSystemShortName, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
+		createVersion(codeSystemId, "v1", EffectiveTimes.parse(versionEffectiveTime, DateFormats.SHORT)).statusCode(201);
 		
 		Map<?, ?> caseSignificanceChangeRequestBody = ImmutableMap.builder()
 				.put("caseSignificance", Concepts.ENTIRE_TERM_CASE_SENSITIVE)
@@ -1008,8 +1001,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void exportConceptsAndRelationshipsOnly() throws Exception {
 		
-		final String codeSystemShortName = "SNOMEDCT-CONCEPTS-AND-RELATIONSHIPS-ONLY";
-		createCodeSystem(branchPath, codeSystemShortName).statusCode(201);
+		createCodeSystem(branchPath, "SNOMEDCT-CONCEPTS-AND-RELATIONSHIPS-ONLY");
 		
 		// create new concept
 		final String conceptId = createNewConcept(branchPath);
@@ -1291,8 +1283,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 			Settings.RF2_EXPORT_LAYOUT, Rf2RefSetExportLayout.COMBINED
 		);
 		
-		String codeSystemId = "SNOMEDCT-custom-rf2-export-config";
-		createCodeSystem(null, branchPath.getPath(), codeSystemId, codeSystemExportSettings).statusCode(201);
+		String codeSystemId = createCodeSystem(null, branchPath.getPath(), "SNOMEDCT-custom-rf2-export-config", codeSystemExportSettings);
 		
 		final Map<String, Object> config = Map.of(
 			"type", Rf2ReleaseType.SNAPSHOT.name(),
@@ -1323,8 +1314,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 				"refSetLayout", Rf2RefSetExportLayout.COMBINED
 				);
 		
-		String codeSystemId = "SNOMEDCT-custom-int-rf2-export-config";
-		createCodeSystem(null, branchPath.getPath(), codeSystemId, codeSystemExportSettings).statusCode(201);
+		String codeSystemId = createCodeSystem(null, branchPath.getPath(), "SNOMEDCT-custom-int-rf2-export-config", codeSystemExportSettings);
 		
 		final Map<String, Object> config = Map.of(
 				"type", Rf2ReleaseType.DELTA.name(),
@@ -1349,20 +1339,19 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	public void exportRf2WithFullConfiguration() throws Exception {
 		
 		final Map<String, Object> codeSystemExportSettings = Map.of(
-				"maintainerType",  Rf2MaintainerType.SNOMED_INTERNATIONAL,
-				"nrcCountryCode", "GB",
-				"extensionNamespaceId", "370137002",
-				"refSetLayout", Rf2RefSetExportLayout.COMBINED
-				);
+			"maintainerType",  Rf2MaintainerType.SNOMED_INTERNATIONAL,
+			"nrcCountryCode", "GB",
+			"extensionNamespaceId", "370137002",
+			"refSetLayout", Rf2RefSetExportLayout.COMBINED
+		);
 		
-		String codeSystemId = "SNOMEDCT-custom-full-rf2-export-config";
-		createCodeSystem(null, branchPath.getPath(), codeSystemId, codeSystemExportSettings).statusCode(201);
+		String codeSystemId = createCodeSystem(null, branchPath.getPath(), "SNOMEDCT-custom-full-rf2-export-config", codeSystemExportSettings);
 		
 		final Map<String, Object> config = Map.of(
-				"type", Rf2ReleaseType.FULL.name(),
-				"includeUnpublished", true,
-				"codeSystemId", codeSystemId
-				);
+			"type", Rf2ReleaseType.FULL.name(),
+			"includeUnpublished", true,
+			"codeSystemId", codeSystemId
+		);
 		
 		final File exportArchive = doExport(codeSystemId, config);
 		
@@ -1387,8 +1376,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 				"refSetLayout", Rf2RefSetExportLayout.COMBINED
 				);
 		
-		String codeSystemId = "SNOMEDCT-custom-Nrc-GB-rf2-export-config";
-		createCodeSystem(null, branchPath.getPath(), codeSystemId, codeSystemExportSettings).statusCode(201);
+		String codeSystemId = createCodeSystem(null, branchPath.getPath(), "SNOMEDCT-custom-Nrc-GB-rf2-export-config", codeSystemExportSettings);
 		
 		final Map<String, Object> config = Map.of(
 				"type", Rf2ReleaseType.DELTA.name(),
@@ -1419,8 +1407,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 				"refSetLayout", Rf2RefSetExportLayout.COMBINED
 				);
 		
-		String codeSystemId = "SNOMEDCT-custom-NRC-rf2-export-config";
-		createCodeSystem(null, branchPath.getPath(), codeSystemId, codeSystemExportSettings).statusCode(201);
+		String codeSystemId = createCodeSystem(null, branchPath.getPath(), "SNOMEDCT-custom-NRC-rf2-export-config", codeSystemExportSettings);
 		
 		final Map<String, Object> config = Map.of(
 				"type", Rf2ReleaseType.DELTA.name(),
@@ -1445,8 +1432,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void exportRf2WithoutConfiguration() throws Exception {
 		
-		String codeSystemId = "SNOMEDCT-default-rf2-export-config";
-		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-default-rf2-export-config");
 		
 		CodeSystem codeSystem = CodeSystemRestRequests.getCodeSystem(codeSystemId);
 		
@@ -1466,8 +1452,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void exportDeltaWithBranchPoint() throws Exception {
 		
-		String codeSystemId = "SNOMEDCT-delta-with-branch-at";
-		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-delta-with-branch-at");
 		
 		final Map<String, Object> config = Map.of("type", Rf2ReleaseType.DELTA.name());
 		export(codeSystemId + "@1234567", config).then()
@@ -1477,8 +1462,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void exportSnapshotWithBranchPoint() throws Exception {
 		
-		final String codeSystemId = "SNOMEDCT-snapshot-with-branch-at";
-		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-snapshot-with-branch-at");
 		
 		final CommitResult commitResult = SnomedRequests.prepareCommit()
 			.setBody(SnomedRequests.prepareNewRelationship()
@@ -1590,8 +1574,7 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	public void exportSnapshotContentFromBranchWithUnpublishedComponents() throws Exception {
 		
 		// treat the current branch as an extension branch
-		String codeSystemId = "SNOMEDCT-exportSnapshotContentFromBranchWithUnpublishedComponents";
-		createCodeSystem(branchPath, codeSystemId).statusCode(201);
+		String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-exportSnapshotContentFromBranchWithUnpublishedComponents");
 		
 		// create a relationship and version it
 		final String relationship1ToExport = createNewRelationship(branchPath, Concepts.ROOT_CONCEPT, Concepts.PART_OF, Concepts.NAMESPACE_ROOT, Concepts.INFERRED_RELATIONSHIP, 0);
