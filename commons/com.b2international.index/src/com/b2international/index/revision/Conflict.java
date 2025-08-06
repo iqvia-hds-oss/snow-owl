@@ -25,7 +25,7 @@ public abstract class Conflict {
 	private final ObjectId objectId;
 	private final String message;
 	
-	private ObjectId containerId;
+	private ObjectId containerId; //Auxiliary field, need not be part of equals()/hashCode()
 
 	public Conflict(ObjectId objectId, String message) {
 		this.objectId = objectId;
