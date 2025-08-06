@@ -78,7 +78,7 @@ public abstract class SnomedComponentSearchRequest<R, D extends SnomedComponentD
 	protected final void addNamespaceConceptIdFilter(BranchContext context, ExpressionBuilder queryBuilder) {
 		if (containsKey(OptionKey.NAMESPACE_CONCEPT_ID)) {
 			final Collection<String> namespaceConceptIds = getCollection(OptionKey.NAMESPACE_CONCEPT_ID, String.class);
-			final Collection<String> namespaces = context.service(NamespaceIdProvider.class).extractNamespaceIds(context, namespaceConceptIds, true).values();
+			final Collection<String> namespaces = context.service(NamespaceProvider.class).getNamespacesByConceptId(context, namespaceConceptIds, true).values();
 			queryBuilder.filter(namespaces(namespaces));
 		}
 	}

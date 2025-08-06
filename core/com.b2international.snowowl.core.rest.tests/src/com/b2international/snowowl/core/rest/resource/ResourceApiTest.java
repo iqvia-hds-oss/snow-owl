@@ -15,9 +15,6 @@
  */
 package com.b2international.snowowl.core.rest.resource;
 
-import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY;
-import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.CODESYSTEM_MODULES_CONFIG_KEY;
-import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.CODESYSTEM_NAMESPACE_CONFIG_KEY;
 import static com.b2international.snowowl.test.commons.ApiTestConstants.RESOURCES_API;
 import static com.b2international.snowowl.test.commons.rest.CodeSystemApiAssert.prepareCodeSystemCreateRequestBody;
 import static com.b2international.snowowl.test.commons.rest.ResourceApiAssert.assertResourceGet;
@@ -53,6 +50,7 @@ import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.request.resource.ResourceConverter;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.test.commons.ApiTestConstants;
 import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
@@ -206,18 +204,18 @@ public class ResourceApiTest {
 		final String module2 = "9876543211000198107";
 		final String languageRefsetId = "450828004";
 
-		createCodeSystemWitSettings(codesystemId1, namespace, module1, module2, languageRefsetId);
+		createCodeSystemWithSettings(codesystemId1, namespace, module1, module2, languageRefsetId);
 		createCodeSystemWithOid(codesystemId2, oid2);
 				
-		assertResourceSearch(Map.of("settings", String.format("%s#%s", CODESYSTEM_NAMESPACE_CONFIG_KEY, namespace)))
+		assertResourceSearch(Map.of("settings", String.format("%s#%s", Settings.NAMESPACE, namespace)))
 			.statusCode(200).body("total", equalTo(1)).body("items[0].id", equalTo(codesystemId1));
-		assertResourceSearch(Map.of("settings", String.format("%s#%s", CODESYSTEM_MODULES_CONFIG_KEY, module1)))
+		assertResourceSearch(Map.of("settings", String.format("%s#%s", Settings.MODULE_IDS, module1)))
 			.statusCode(200).body("total", equalTo(1)).body("items[0].id", equalTo(codesystemId1));
-		assertResourceSearch(Map.of("settings", String.format("%s#%s", CODESYSTEM_MODULES_CONFIG_KEY, module2)))
+		assertResourceSearch(Map.of("settings", String.format("%s#%s", Settings.MODULE_IDS, module2)))
 			.statusCode(200).body("total", equalTo(1)).body("items[0].id", equalTo(codesystemId1));
-		assertResourceSearch(Map.of("settings", String.format("%s.%s#%s", CODESYSTEM_LANGUAGE_CONFIG_KEY, "languageRefSetIds", languageRefsetId)))
+		assertResourceSearch(Map.of("settings", String.format("%s.%s#%s", Settings.LANGUAGES, "languageRefSetIds", languageRefsetId)))
 			.statusCode(200).body("total", equalTo(1)).body("items[0].id", equalTo(codesystemId1));
-		assertResourceSearch(Map.of("settings", String.format("%s#", CODESYSTEM_LANGUAGE_CONFIG_KEY)))
+		assertResourceSearch(Map.of("settings", String.format("%s#", Settings.LANGUAGES)))
 			.statusCode(400);
 	}
 	
@@ -269,25 +267,32 @@ public class ResourceApiTest {
 			.getSync();
 	}
 	
-	private CommitResult createCodeSystemWitSettings(final String codeSystemId, final String namespace,
-			final String module1, final String module2, final String languageRefsetId) {
+	private CommitResult createCodeSystemWithSettings(
+		final String codeSystemId, 
+		final String namespace,
+		final String module1, 
+		final String module2, 
+		final String languageRefsetId
+	) {
+		
 		return CodeSystemRequests.prepareNewCodeSystem()
-				.setId(codeSystemId)
-				.setTitle(codeSystemId)
-				.setUrl(SnomedTerminologyComponentConstants.SNOMED_URI_DEV + "/" + codeSystemId)
-				.setDescription(DEFAULT_CODE_SYSTEM_DESCRIPTION)
-				.setLanguage(DEFAULT_CODE_SYSTEM_LANGUAGE)
-				.setToolingId(DEFAULT_CODE_SYSTEM_TOOLING_ID)
-				.setOid("https://b2ihealthcare.com/" + codeSystemId)
-				.setSettings( Map.of(
-					CODESYSTEM_NAMESPACE_CONFIG_KEY, namespace,
-					CODESYSTEM_MODULES_CONFIG_KEY, List.of(module1, module2),
-					CODESYSTEM_LANGUAGE_CONFIG_KEY, 
-						List.of(Map.of("languageRefSetIds", List.of(languageRefsetId)))
-					))
-				.build(RestExtensions.USER, String.format("New code system %s", codeSystemId))
-				.execute(bus)
-				.getSync();
+			.setId(codeSystemId)
+			.setTitle(codeSystemId)
+			.setUrl(SnomedTerminologyComponentConstants.SNOMED_URI_DEV + "/" + codeSystemId)
+			.setDescription(DEFAULT_CODE_SYSTEM_DESCRIPTION)
+			.setLanguage(DEFAULT_CODE_SYSTEM_LANGUAGE)
+			.setToolingId(DEFAULT_CODE_SYSTEM_TOOLING_ID)
+			.setOid("https://b2ihealthcare.com/" + codeSystemId)
+			.setSettings(Map.of(
+				Settings.NAMESPACE, namespace,
+				Settings.MODULE_IDS, List.of(module1, module2),
+				Settings.LANGUAGES, List.of(
+					Map.of("languageRefSetIds", List.of(languageRefsetId))
+				)
+			))
+			.build(RestExtensions.USER, String.format("New code system %s", codeSystemId))
+			.execute(bus)
+			.getSync();
 	}
 
 	@Test

@@ -27,7 +27,7 @@ import com.b2international.snowowl.core.terminology.ComponentCategory;
 import com.b2international.snowowl.snomed.cis.ISnomedIdentifierService;
 import com.b2international.snowowl.snomed.cis.domain.IdentifierStatus;
 import com.b2international.snowowl.snomed.cis.domain.SctId;
-import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.google.common.collect.Sets;
 
 /**
@@ -35,7 +35,7 @@ import com.google.common.collect.Sets;
  */
 public abstract class AbstractIdentifierServiceTest {
 
-	protected static final String B2I_NAMESPACE = Concepts.B2I_NAMESPACE;
+	protected static final String B2I_NAMESPACE = SnomedConstants.B2I_NAMESPACE;
 
 	protected abstract ISnomedIdentifierService getIdentifierService();
 

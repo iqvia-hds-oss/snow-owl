@@ -37,7 +37,7 @@ import org.junit.Test;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.test.commons.Resources;
 import com.b2international.snowowl.test.commons.SnomedContentRule;
@@ -119,7 +119,7 @@ public class SnomedRf2ContentImportTest extends AbstractSnomedApiTest {
 			.getSync(1, TimeUnit.MINUTES)
 			.getSettings();
 		assertThat(settings)
-			.containsEntry(SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY, List.of(
+			.containsEntry(Settings.LANGUAGES, List.of(
 				// this entry is pre-configured, should be kept after import
 				Map.of(
 					"languageTag", "en",

@@ -34,6 +34,7 @@ import com.b2international.snowowl.core.request.CommitResult;
 import com.b2international.snowowl.core.terminology.ComponentCategory;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.snomed.cis.domain.SctId;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
@@ -260,7 +261,7 @@ public class SnomedRefSetDSVExportTest {
 	private String generateId() {
 		return SnomedRequests.identifiers()
 					.prepareGenerate()
-					.setNamespace(Concepts.B2I_NAMESPACE)
+					.setNamespace(SnomedConstants.B2I_NAMESPACE)
 					.setCategory(ComponentCategory.CONCEPT)
 					.setQuantity(1)
 					.buildAsync()
@@ -273,7 +274,7 @@ public class SnomedRefSetDSVExportTest {
 
 	private SnomedRelationshipCreateRequestBuilder toRelationshipRequest(String typeId, String characteristicTypeId, String desctinationId) {
 		return SnomedRequests.prepareNewRelationship()
-				.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+				.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 				.setModuleId(Concepts.MODULE_SCT_CORE)
 				.setDestinationId(desctinationId)
 				.setTypeId(typeId)
@@ -282,7 +283,7 @@ public class SnomedRefSetDSVExportTest {
 
 	private SnomedDescriptionCreateRequestBuilder toDescriptionRequest(String typeId, String term) {
 		return SnomedRequests.prepareNewDescription()
-				.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+				.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 				.setModuleId(Concepts.MODULE_SCT_CORE)
 				.setTerm(term)
 				.setTypeId(typeId)

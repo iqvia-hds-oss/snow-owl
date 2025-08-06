@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,21 +32,21 @@ import com.google.common.collect.Sets;
 /**
  * @since 8.0
  */
-public interface NamespaceIdProvider {
+public interface NamespaceProvider {
 
-	Pattern NAMESPACE_PATTERN = Pattern.compile(SnomedTerminologyComponentConstants.DEFAULT_NAMESPACE_PATTERN);
+	Pattern COMPILED_PATTERN = Pattern.compile(SnomedTerminologyComponentConstants.DEFAULT_NAMESPACE_PATTERN);
 	
-	NamespaceIdProvider DEFAULT = new NamespaceIdProvider() {};
+	NamespaceProvider DEFAULT = new NamespaceProvider() {};
 
-	default Map<String, String> extractNamespaceIds(BranchContext context, final Collection<String> namespaceConceptIds, boolean ignoreInvalidValues) {
-		final Set<String> mutableNamespaceConceptIds = Sets.newHashSet(namespaceConceptIds);
-		final Map<String, String> namespacesByNamespaceConceptId = new HashMap<>(mutableNamespaceConceptIds.size());  
+	default Map<String, String> getNamespacesByConceptId(BranchContext context, final Collection<String> namespaceConceptIds, boolean ignoreInvalidValues) {
+		final Set<String> validConceptIds = Sets.newHashSet(namespaceConceptIds);
+		final Map<String, String> namespaceByConceptId = HashMap.newHashMap(validConceptIds.size());  
 				
 		// Keep only valid SCTIDs passed in to the filter
 		if (ignoreInvalidValues) {
-			mutableNamespaceConceptIds.removeIf(id -> !SnomedIdentifiers.isValid(id));
+			validConceptIds.removeIf(id -> !SnomedIdentifiers.isValid(id));
 		} else {
-			final Set<String> invalidNamespaceConceptIds = mutableNamespaceConceptIds.stream().filter(id -> !SnomedIdentifiers.isValid(id)).collect(ImmutableSortedSet.toImmutableSortedSet(Comparator.naturalOrder()));
+			final Set<String> invalidNamespaceConceptIds = validConceptIds.stream().filter(id -> !SnomedIdentifiers.isValid(id)).collect(ImmutableSortedSet.toImmutableSortedSet(Comparator.naturalOrder()));
 			if (!invalidNamespaceConceptIds.isEmpty()) {
 				throw new BadRequestException("The following namespaceConceptId values are invalid SNOMED CT Concept identifiers, %s", invalidNamespaceConceptIds.toString());
 			}
@@ -56,28 +56,28 @@ public interface NamespaceIdProvider {
 		 * The International core namespace concept will not have an FSN matching the pattern,
 		 * so remove it from the set, and convert it to the empty namespace directly. 
 		 */
-		if (mutableNamespaceConceptIds.remove(Concepts.CORE_NAMESPACE)) {
-			namespacesByNamespaceConceptId.put(Concepts.CORE_NAMESPACE, "");
+		if (validConceptIds.remove(Concepts.CORE_NAMESPACE_ID)) {
+			namespaceByConceptId.put(Concepts.CORE_NAMESPACE_ID, "");
 		}
 		
 		// Find the FSN of namespace SCTIDs
 		SnomedRequests.prepareSearchDescription()
 			.filterByActive(true)
 			.filterByType(Concepts.FULLY_SPECIFIED_NAME)
-			.filterByConcepts(mutableNamespaceConceptIds)
+			.filterByConcepts(validConceptIds)
 			.setFields(SnomedDescriptionIndexEntry.Fields.ID, SnomedDescriptionIndexEntry.Fields.CONCEPT_ID, SnomedDescriptionIndexEntry.Fields.TERM)
 			.setLimit(1000)
 			.stream(context)
 			.flatMap(SnomedDescriptions::stream)
 			.forEach(fsn -> {
 				// Extract namespace from description terms
-				final Matcher matcher = NAMESPACE_PATTERN.matcher(fsn.getTerm());
+				final Matcher matcher = COMPILED_PATTERN.matcher(fsn.getTerm());
 				if (matcher.matches()) {
-					namespacesByNamespaceConceptId.put(fsn.getConceptId(), matcher.group(1));
+					namespaceByConceptId.put(fsn.getConceptId(), matcher.group(1));
 				}
 			});
 		
-		return Map.copyOf(namespacesByNamespaceConceptId);
+		return Map.copyOf(namespaceByConceptId);
 	}
 	
 }

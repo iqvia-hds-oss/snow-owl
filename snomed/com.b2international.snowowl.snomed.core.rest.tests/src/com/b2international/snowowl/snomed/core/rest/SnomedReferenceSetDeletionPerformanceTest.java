@@ -36,6 +36,7 @@ import com.b2international.snowowl.core.events.bulk.BulkRequest;
 import com.b2international.snowowl.core.events.bulk.BulkRequestBuilder;
 import com.b2international.snowowl.core.terminology.ComponentCategory;
 import com.b2international.snowowl.snomed.cis.domain.SctId;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.datastore.request.*;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
@@ -126,7 +127,7 @@ public class SnomedReferenceSetDeletionPerformanceTest extends AbstractSnomedApi
 	private Set<String> generateConceptIds(int quantity) {
 		return SnomedRequests.identifiers()
 				.prepareGenerate()
-				.setNamespace(Concepts.B2I_NAMESPACE)
+				.setNamespace(SnomedConstants.B2I_NAMESPACE)
 				.setCategory(ComponentCategory.CONCEPT)
 				.setQuantity(quantity)
 				.buildAsync()
@@ -139,7 +140,7 @@ public class SnomedReferenceSetDeletionPerformanceTest extends AbstractSnomedApi
 	
 	private SnomedRelationshipCreateRequestBuilder createRelationshipRequest(String typeId, String characteristicTypeId, String desctinationId) {
 		return SnomedRequests.prepareNewRelationship()
-				.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+				.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 				.setModuleId(Concepts.MODULE_SCT_CORE)
 				.setDestinationId(desctinationId)
 				.setTypeId(typeId)
@@ -148,7 +149,7 @@ public class SnomedReferenceSetDeletionPerformanceTest extends AbstractSnomedApi
 
 	private SnomedDescriptionCreateRequestBuilder createDescriptionRequest(String typeId, String term) {
 		return SnomedRequests.prepareNewDescription()
-				.setIdFromNamespace(Concepts.B2I_NAMESPACE)
+				.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 				.setModuleId(Concepts.MODULE_SCT_CORE)
 				.setTerm(term)
 				.setTypeId(typeId)

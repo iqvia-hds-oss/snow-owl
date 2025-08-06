@@ -24,6 +24,7 @@ import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.terminology.ComponentCategory;
 import com.b2international.snowowl.snomed.cis.domain.SctId;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
@@ -46,7 +47,7 @@ public abstract class AbstractSnomedExtensionApiTest extends AbstractSnomedApiTe
 		// generate ID for the module first
 		String moduleId = SnomedRequests.identifiers().prepareGenerate()
 				.setCategory(ComponentCategory.CONCEPT)
-				.setNamespace(Concepts.B2I_NAMESPACE)
+				.setNamespace(SnomedConstants.B2I_NAMESPACE)
 				.setQuantity(1)
 				.buildAsync()
 				.execute(getBus())

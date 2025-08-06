@@ -38,10 +38,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.validation.constraints.NotNull;
-
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.FileUtils;
 import com.b2international.commons.exceptions.BadRequestException;
@@ -74,7 +70,7 @@ import com.b2international.snowowl.core.version.Versions;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
@@ -89,6 +85,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.*;
 import com.google.common.collect.ImmutableList.Builder;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 5.7
@@ -233,13 +232,13 @@ final class SnomedRf2ExportRequest extends ResourceRequest<BranchContext, Attach
 		this.nrcCountryCode = nrcCountryCode;
 	}
 	
-	private String getCountryNamespaceElement(BranchContext context, TerminologyResource codeSystem, Rf2MaintainerType maintainerType, String nrcCountryCode) {
+	private String getCountryNamespaceElement(Rf2MaintainerType maintainerType, String nrcCountryCode, TerminologyResource codeSystem) {
 		final StringBuilder builder = new StringBuilder();
 		
 		switch (maintainerType) {
 			case NRC:
 				builder.append(nrcCountryCode);
-				builder.append(getNamespace(context, codeSystem));
+				builder.append(getNamespace(codeSystem));
 				break;
 			case OTHER_EXTENSION_PROVIDER:
 				// Nothing to append
@@ -254,20 +253,9 @@ final class SnomedRf2ExportRequest extends ResourceRequest<BranchContext, Attach
 		return builder.toString();
 	}
 	
-	private String getNamespace(BranchContext context, TerminologyResource resource) {
-		String namespaceConceptId = (String) resource.getSettings().get(SnomedTerminologyComponentConstants.CODESYSTEM_NAMESPACE_CONFIG_KEY);
-		if (CompareUtils.isEmpty(namespaceConceptId)) {
-			return "";
-		} else {
-			String locales = resource.getLocales().stream().collect(Collectors.joining(","));
-			return SnomedTerminologyComponentConstants.getNamespace(namespaceConceptId, SnomedRequests.prepareGetConcept(namespaceConceptId)
-					.setExpand("fsn()")
-					.setLocales(locales)
-					.build()
-					.execute(context)
-					.getFsn()
-					.getTerm());
-		}
+	private String getNamespace(TerminologyResource resource) {
+		final String namespace = (String) resource.getSettings().get(Settings.NAMESPACE);
+		return Strings.nullToEmpty(namespace);
 	}
 
 	@Override
@@ -295,20 +283,20 @@ final class SnomedRf2ExportRequest extends ResourceRequest<BranchContext, Attach
 
 				if (maintainerType == null) {
 
-					String maintainerType = (String) referenceCodeSystem.getSettings().get(SnomedTerminologyComponentConstants.CODESYSTEM_MAINTAINER_TYPE_CONFIG_KEY);
-					String nrcCountryCode = (String) referenceCodeSystem.getSettings().get(SnomedTerminologyComponentConstants.CODESYSTEM_NRC_COUNTRY_CODE_CONFIG_KEY);
+					String maintainerType = (String) referenceCodeSystem.getSettings().get(Settings.MAINTAINER_TYPE);
+					String nrcCountryCode = (String) referenceCodeSystem.getSettings().get(Settings.NRC_COUNTRY_CODE);
 
 					if(!Strings.isNullOrEmpty(maintainerType)) {
-						String customCountryNamespaceElement = getCountryNamespaceElement(context, referenceCodeSystem, Rf2MaintainerType.getByNameIgnoreCase(maintainerType), Strings.nullToEmpty(nrcCountryCode));
+						String customCountryNamespaceElement = getCountryNamespaceElement(Rf2MaintainerType.getByNameIgnoreCase(maintainerType), Strings.nullToEmpty(nrcCountryCode), referenceCodeSystem);
 						countryNamespaceElement = customCountryNamespaceElement;
 					}
 				} else {
-					countryNamespaceElement = getCountryNamespaceElement(context, referenceCodeSystem, maintainerType, Strings.nullToEmpty(nrcCountryCode));
+					countryNamespaceElement = getCountryNamespaceElement(maintainerType, Strings.nullToEmpty(nrcCountryCode), referenceCodeSystem);
 				}
 			}
 
-			if (refSetExportLayout == null && referenceCodeSystem.getSettings().containsKey(SnomedTerminologyComponentConstants.CODESYSTEM_RF2_EXPORT_LAYOUT_CONFIG_KEY)) {
-				String refSetLayout = (String) referenceCodeSystem.getSettings().get(SnomedTerminologyComponentConstants.CODESYSTEM_RF2_EXPORT_LAYOUT_CONFIG_KEY);
+			if (refSetExportLayout == null && referenceCodeSystem.getSettings().containsKey(Settings.RF2_EXPORT_LAYOUT)) {
+				String refSetLayout = (String) referenceCodeSystem.getSettings().get(Settings.RF2_EXPORT_LAYOUT);
 				Rf2RefSetExportLayout rf2RefSetExportLayout = Rf2RefSetExportLayout.getByNameIgnoreCase(refSetLayout);
 
 				refSetExportLayout = rf2RefSetExportLayout;
@@ -316,7 +304,7 @@ final class SnomedRf2ExportRequest extends ResourceRequest<BranchContext, Attach
 		}
 
 		if (Strings.isNullOrEmpty(countryNamespaceElement)) {
-			countryNamespaceElement = getCountryNamespaceElement(context, referenceCodeSystem, DEFAULT_MAINTAINER_TYPE, "");
+			countryNamespaceElement = getCountryNamespaceElement(DEFAULT_MAINTAINER_TYPE, "", referenceCodeSystem);
 		}
 		
 		if (refSetExportLayout == null) {

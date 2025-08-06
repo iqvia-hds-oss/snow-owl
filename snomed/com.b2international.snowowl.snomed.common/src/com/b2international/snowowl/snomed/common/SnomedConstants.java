@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,14 @@ import com.google.common.collect.ImmutableSet;
 
 /**
  * Constant class for SNOMED CT specific constants.
- * 
  */
 public abstract class SnomedConstants {
+
 	// suppress constructor to avoid instantiation 
 	private SnomedConstants() { }
 
 	/**
 	 * Constant class for frequently used SNOMED CT concept IDs.
-	 * 
 	 */
 	public static abstract class Concepts {
 
@@ -313,8 +312,6 @@ public abstract class SnomedConstants {
 		public static final String MODULE_SCT_CORE = "900000000000207008";
 		public static final String MODULE_SCT_MODEL_COMPONENT = "900000000000012004";
 		public static final String MODULE_B2I_EXTENSION = "636635721000154103";
-		public static final String CORE_NAMESPACE = "373872000";
-		public static final String B2I_NAMESPACE = "1000154";
 		
 		// UK modules
 		public static final String UK_MAINTAINED_CLINICAL_MODULE = "999003121000000100";
@@ -353,7 +350,9 @@ public abstract class SnomedConstants {
 		public static final String HAS_COMPONENT = "246093002";
 		public static final String HAS_SDD_CLASS = "8921000132109";
 
+		// Namespace concepts
 		public static final String NAMESPACE_ROOT = "370136006";
+		public static final String CORE_NAMESPACE_ID = "373872000";
 		
 		public static final String ACCEPTABILITY = "900000000000511003";
 		public static final String REFINABILITY_VALUE = "900000000000226000";
@@ -443,4 +442,7 @@ public abstract class SnomedConstants {
 	
 	// RF2 effective time format
 	public static final String RF2_EFFECTIVE_TIME_FORMAT = "yyyyMMdd";
+	
+	// 7-digit namespace part for SCTIDs in the B2i namespace
+	public static final String B2I_NAMESPACE = "1000154";
 }

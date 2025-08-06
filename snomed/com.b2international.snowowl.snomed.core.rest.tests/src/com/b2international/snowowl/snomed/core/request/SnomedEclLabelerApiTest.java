@@ -31,6 +31,7 @@ import org.junit.Test;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.ecl.LabeledEclExpressions;
+import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
@@ -80,7 +81,7 @@ public class SnomedEclLabelerApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void conceptReferenceMissingConcept() throws Exception {
 		// no indexed concept document can be found for the given ID, labeler just returns the ID
-		String randomId = RandomSnomedIdentiferGenerator.generateConceptId(Concepts.B2I_NAMESPACE);
+		String randomId = RandomSnomedIdentiferGenerator.generateConceptId(SnomedConstants.B2I_NAMESPACE);
 		String result = label(randomId);
 		assertEquals(randomId, result);
 	}

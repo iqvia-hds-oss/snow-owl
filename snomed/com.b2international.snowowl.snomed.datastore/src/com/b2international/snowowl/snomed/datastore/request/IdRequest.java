@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.b2international.snowowl.core.terminology.ComponentCategory;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.b2international.snowowl.snomed.cis.action.IdActionRecorder;
 import com.b2international.snowowl.snomed.core.domain.ConstantIdStrategy;
-import com.b2international.snowowl.snomed.core.domain.IdGenerationStrategy;
 import com.b2international.snowowl.snomed.core.domain.NamespaceConceptIdStrategy;
 import com.b2international.snowowl.snomed.core.domain.NamespaceIdStrategy;
 import com.b2international.snowowl.snomed.datastore.index.entry.*;
@@ -130,7 +129,8 @@ public final class IdRequest<C extends BranchContext, R> extends DelegatingReque
 								.map(BaseSnomedComponentCreateRequest.class::cast)
 								.filter(request -> request.getIdGenerationStrategy() instanceof NamespaceIdStrategy)
 								.forEach(request -> {
-									requestsByNamespace.put(getNamespaceKey(request), request);
+									final String namespaceKey = request.getIdGenerationStrategy().getNamespaceKey();
+									requestsByNamespace.put(namespaceKey, request);
 								});
 						
 						// convert requests that define a namespaceConceptId by extracting the namespaceId from the namespaceConcept's FSN
@@ -140,21 +140,31 @@ public final class IdRequest<C extends BranchContext, R> extends DelegatingReque
 							.map(BaseSnomedComponentCreateRequest.class::cast)
 							.filter(request -> request.getIdGenerationStrategy() instanceof NamespaceConceptIdStrategy)
 							.forEach(request -> {
-								requestsByNamespaceConceptId.put(request.getIdGenerationStrategy().getNamespace(), request);
+								final String namespaceKey = request.getIdGenerationStrategy().getNamespaceKey();
+								
+								// We don't need to extract the namespace for the core namespace concept
+								if (SnomedIdentifiers.INT_NAMESPACE.equals(namespaceKey)) {
+									requestsByNamespace.put(namespaceKey, request);
+								} else {
+									requestsByNamespaceConceptId.put(namespaceKey, request);
+								}
 							});
 						
 						if (!requestsByNamespaceConceptId.isEmpty()) {
-							final Map<String, String> namespacesByNamespaceConceptId = context.service(NamespaceIdProvider.class).extractNamespaceIds(context, requestsByNamespaceConceptId.keySet(), false);
+							final NamespaceProvider namespaceProvider = context.service(NamespaceProvider.class);
+							final Map<String, String> namespacesByConceptId = namespaceProvider.getNamespacesByConceptId(context, requestsByNamespaceConceptId.keySet(), false);
 							for (String namespaceConceptId : Set.copyOf(requestsByNamespaceConceptId.keySet())) {
 								Collection<BaseSnomedComponentCreateRequest> requests = requestsByNamespaceConceptId.removeAll(namespaceConceptId);
-								if (!namespacesByNamespaceConceptId.containsKey(namespaceConceptId)) {
+								if (!namespacesByConceptId.containsKey(namespaceConceptId)) {
 									throw new BadRequestException("There is no namespace value associated with the '%s' namespaceConcept's FSN.", namespaceConceptId);
 								}
- 								requestsByNamespace.putAll(namespacesByNamespaceConceptId.get(namespaceConceptId), requests);
+ 								final String namespace = namespacesByConceptId.get(namespaceConceptId);
+								requestsByNamespace.putAll(namespace, requests);
 							}
 						}
 						
 						for (final String namespace : requestsByNamespace.keySet()) {
+							// Convert the non-null map key placeholder back to null
 							final String convertedNamespace = SnomedIdentifiers.INT_NAMESPACE.equals(namespace) ? null : namespace;
 							final Collection<BaseSnomedComponentCreateRequest> namespaceRequests = requestsByNamespace.get(namespace);
 							final int count = namespaceRequests.size();
@@ -275,13 +285,4 @@ public final class IdRequest<C extends BranchContext, R> extends DelegatingReque
 		}
 	}
 
-	/**
-	 * @return a namespace key intended to be used as a key in a collection;
-	 *         <code>null</code> values are converted to {@link SnomedIdentifiers#INT_NAMESPACE}.
-	 */
-	private String getNamespaceKey(final SnomedCoreComponentCreateRequest createRequest) {
-		final IdGenerationStrategy idGenerationStrategy = createRequest.getIdGenerationStrategy();
-		final String namespace = idGenerationStrategy.getNamespace();
-		return namespace == null ? SnomedIdentifiers.INT_NAMESPACE : namespace;
-	}
 }

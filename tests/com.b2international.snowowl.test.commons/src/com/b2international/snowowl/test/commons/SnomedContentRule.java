@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.rules.ExternalResource;
 
 import com.b2international.snowowl.core.Dependency;
+import com.b2international.snowowl.core.Resource;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.attachments.Attachment;
@@ -44,6 +45,7 @@ import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2Requests;
@@ -157,8 +159,8 @@ public class SnomedContentRule extends ExternalResource {
 			.setContact("https://b2ihealthcare.com")
 			.setToolingId(SnomedTerminologyComponentConstants.TOOLING_ID)
 			.setSettings(Map.of(
-				"publisher", "SNOMED International",
-				SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY, List.of(
+				Resource.Settings.PUBLISHER, "SNOMED International",
+				Settings.LANGUAGES, List.of(
 					Map.of(
 						"languageTag", "en",
 						"languageRefSetIds", Lists.newArrayList(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_US)

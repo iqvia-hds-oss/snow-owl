@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,20 @@ import java.io.Serializable;
 public interface IdGenerationStrategy extends Serializable {
 
 	/**
-	 * @return the namespace of the identifier to be used
+	 * Returns one of the following values:
+	 * <ul>
+	 * <li>"INT" for the International (core) namespace (to avoid having to use a <code>null</code> key in maps or multimaps)
+	 * <li>A 7-digit namespace identifier for a specific namespace e.g. "1000000"
+	 * <li>An SCTID corresponding to a namespace concept e.g. "370137002" which is 
+	 * the identifier of "Extension namespace {1000000}"
+	 * </ul>
+	 * 
+	 * @return a "namespace key" that uniquely identifies the namespace associated with this strategy
 	 */
-	String getNamespace();
+	String getNamespaceKey();
 
 	/**
-	 * Converts this {@link IdGenerationStrategy} to a namespace based ID generation strategy.
-	 * @return
+	 * @return an identifier generation strategy that uses the same namespace key as this strategy
 	 */
 	IdGenerationStrategy toNamespaceStrategy();
 }

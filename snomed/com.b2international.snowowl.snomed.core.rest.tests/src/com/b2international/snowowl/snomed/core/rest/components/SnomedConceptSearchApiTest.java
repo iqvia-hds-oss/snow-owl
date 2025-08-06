@@ -145,7 +145,7 @@ public class SnomedConceptSearchApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void searchByNamespace() throws Exception {
 		String conceptId = createNewConcept(branchPath, createConceptRequestBody(Concepts.ROOT_CONCEPT)
-			.with("namespaceId", "1000001")
+			.with("namespace", "1000001")
 			.with("commitComment", "Create new concept"));
 		
 		SnomedConcepts hits = givenAuthenticatedRequest(getApiBaseUrl())
@@ -163,7 +163,7 @@ public class SnomedConceptSearchApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void searchByNamespaceConceptId() throws Exception {
 		String conceptId = createNewConcept(branchPath, createConceptRequestBody(Concepts.ROOT_CONCEPT)
-			.with("namespaceId", "1000001")
+			.with("namespace", "1000001")
 			.with("commitComment", "Create new concept"));
 		
 		SnomedConcepts hits = givenAuthenticatedRequest(getApiBaseUrl())

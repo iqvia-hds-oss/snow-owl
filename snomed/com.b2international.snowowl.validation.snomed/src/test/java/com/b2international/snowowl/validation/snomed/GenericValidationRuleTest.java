@@ -342,7 +342,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		SnomedRelationshipIndexEntry badRel2 = relationship(Concepts.MODULE_ROOT, Concepts.IS_A, Concepts.CONCEPT_INACTIVATION_VALUE).active(true)
 				.relationshipGroup(2).build();
 
-		SnomedRelationshipIndexEntry goodRel2 = relationship(Concepts.MODULE_ROOT, Concepts.IS_A, Concepts.CORE_NAMESPACE).active(true).relationshipGroup(0)
+		SnomedRelationshipIndexEntry goodRel2 = relationship(Concepts.MODULE_ROOT, Concepts.IS_A, Concepts.CORE_NAMESPACE_ID).active(true).relationshipGroup(0)
 				.build();
 		
 		final SnomedRelationshipIndexEntry concreteValue1 = concreteValue(Concepts.FINDING_SITE, Concepts.IS_A, new RelationshipValue("Test value")).relationshipGroup(0).build();

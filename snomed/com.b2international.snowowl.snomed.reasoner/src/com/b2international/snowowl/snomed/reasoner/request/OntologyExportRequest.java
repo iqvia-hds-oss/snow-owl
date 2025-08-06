@@ -15,8 +15,6 @@
  */
 package com.b2international.snowowl.snomed.reasoner.request;
 
-import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.REASONER_EXCLUDE_MODULE_IDS;
-
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
@@ -25,9 +23,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinTask;
 
-import jakarta.validation.constraints.NotNull;
-
-import jakarta.validation.constraints.NotEmpty;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.FunctionalSyntaxDocumentFormat;
 import org.semanticweb.owlapi.formats.ManchesterSyntaxDocumentFormat;
@@ -42,12 +37,16 @@ import com.b2international.snowowl.core.authorization.AccessControl;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.Permission;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.ReasonerTaxonomy;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.ReasonerTaxonomyBuilder;
 import com.b2international.snowowl.snomed.reasoner.exceptions.OntologyException;
 import com.b2international.snowowl.snomed.reasoner.ontology.DelegateOntology;
 import com.b2international.snowowl.snomed.reasoner.ontology.DelegateOntologyFactory;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 7.0
@@ -80,7 +79,7 @@ final class OntologyExportRequest implements Request<BranchContext, String>, Acc
 			
 		@SuppressWarnings("unchecked")
 		final Set<String> reasonerExcludedModuleIds = Collections3.toImmutableSet((Iterable) resource.getSettings()
-				.getOrDefault(REASONER_EXCLUDE_MODULE_IDS, Collections.emptySet()));
+			.getOrDefault(Settings.REASONER_EXCLUDED_MODULE_IDS, Collections.emptySet()));
 		final SnomedCoreConfiguration configuration = context.service(SnomedCoreConfiguration.class);
 		final boolean concreteDomainSupportEnabled = configuration.isConcreteDomainSupported();
 		

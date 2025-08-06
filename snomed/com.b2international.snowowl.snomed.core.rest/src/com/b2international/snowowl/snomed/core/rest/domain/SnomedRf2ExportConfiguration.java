@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,38 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 public final class SnomedRf2ExportConfiguration {
 
+	/**
+	 * Holds constants corresponding to configuration property names used in the enclosing class.
+	 */
+	public static final class Fields {
+		
+		// suppress instantiation
+		private Fields() { }
+		
+		public static final String TYPE = "type";
+		public static final String NAMESPACE_ID = "namespaceId";
+		public static final String COUNTRY_NAMESPACE_ELEMENT = "countryNamespaceElement";
+		public static final String MODULE_IDS = "moduleIds";
+		public static final String REF_SET_IDS = "refSetIds";
+		public static final String START_EFFECTIVE_TIME = "startEffectiveTime";
+		public static final String END_EFFECTIVE_TIME = "endEffectiveTime";
+		public static final String TRANSIENT_EFFECTIVE_TIME = "transientEffectiveTime";
+		public static final String INCLUDE_UNPUBLISHED = "includeUnpublished";
+		public static final String EXTENSION_ONLY = "extensionOnly";
+		public static final String REFSET_LAYOUT = "refSetLayout";
+		public static final String NRC_COUNTRY_CODE = "nrcCountryCode";
+		public static final String MAINTAINER_TYPE = "maintainerType";
+		public static final String COMPONENT_TYPES = "componentTypes";
+	}
+	
 	@Parameter(description = "The expected RF2 release type", schema = @Schema(allowableValues = { "full", "snapshot", "delta" }, defaultValue = "snapshot"))
 	private String type = Rf2ReleaseType.SNAPSHOT.name();
 	
-	@Parameter(description = "The namespaceId to use in the release archive name")
+	@Parameter(description = "The namespaceId to use in the release archive name. Deprecated, use 'countryNamespaceElement' instead.", deprecated = true)
 	private String namespaceId = "";
+	
+	@Parameter(description = "The country-namespace element to use in the release archive name")
+	private String countryNamespaceElement = "";
 	
 	@Parameter(description = "Optional moduleIds to restrict the exported content")
 	private Collection<String> moduleIds;
@@ -105,17 +132,44 @@ public final class SnomedRf2ExportConfiguration {
 	}
 	
 	/**
-	 * Returns with the namespace ID.
-	 * <p>The namespace ID will be used when generating the folder structure 
-	 * for the RF2 release format export.
-	 * @return the namespace ID.
+	 * @deprecated Use {@link #getCountryNamespaceElement()} instead.
+	 * @return the country-namespace element to use in the release archive name
 	 */
+	@Deprecated
 	public String getNamespaceId() {
+		/*
+		 * XXX: The naming of this field is a bit misleading because when it is set it
+		 * will override the entire country-namespace portion of the file name!
+		 */
 		return namespaceId;
 	}
-	
+
+	@Deprecated
 	public void setNamespaceId(String namespaceId) {
 		this.namespaceId = namespaceId;
+	}
+	
+	/**
+	 * Returns the country-namespace element to use in the release archive name.
+	 * <p>
+	 * This element will be used to form the country-namespace portion of the file name
+	 * of the RF2 release archive. The country-namespace element is expected to be a
+	 * two-letter country code, such as "NL" or "BE" and optionally followed by a
+	 * 7-digit namespace, eg. "DK1000005".
+	 * <p>
+	 * If the country-namespace element is not set, the export will use the
+	 * maintainer type and NRC country code values to form the country-namespace
+	 * portion of the file name (either from this export configuration or from 
+	 * code system settings).
+	 * 
+	 * @return the country-namespace element to use in the release archive name
+	 */
+	public String getCountryNamespaceElement() {
+		return countryNamespaceElement;
+	}
+	
+	public void setCountryNamespaceElement(String countryNamespaceElement) {
+		this.countryNamespaceElement = countryNamespaceElement;
 	}
 	
 	/**

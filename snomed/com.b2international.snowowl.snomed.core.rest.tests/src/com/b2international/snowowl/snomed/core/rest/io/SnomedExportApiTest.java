@@ -70,6 +70,7 @@ import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.request.CommitResult;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
@@ -1276,11 +1277,11 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	public void exportRf2WithConfiguration() throws Exception {
 		
 		final Map<String, Object> codeSystemExportSettings = Map.of(
-				"maintainerType",  Rf2MaintainerType.NRC,
-				"nrcCountryCode", "GB",
-				"extensionNamespaceId", "370137002",
-				"refSetLayout", Rf2RefSetExportLayout.COMBINED
-				);
+			Settings.MAINTAINER_TYPE, Rf2MaintainerType.NRC,
+			Settings.NRC_COUNTRY_CODE, "GB",
+			Settings.NAMESPACE_CONCEPT_ID, "370137002",
+			Settings.RF2_EXPORT_LAYOUT, Rf2RefSetExportLayout.COMBINED
+		);
 		
 		String codeSystemId = createCodeSystem(null, branchPath.getPath(), "SNOMEDCT-custom-rf2-export-config", codeSystemExportSettings);
 		

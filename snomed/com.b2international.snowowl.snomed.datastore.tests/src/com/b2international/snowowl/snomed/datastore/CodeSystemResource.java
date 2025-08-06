@@ -24,7 +24,7 @@ import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.snomed.TestBranchContext;
 import com.google.common.collect.Lists;
@@ -57,7 +57,7 @@ public class CodeSystemResource {
 		final CodeSystem cs = new CodeSystem();
 		cs.setBranchPath(Branch.MAIN_PATH);
 		cs.setId(SnomedContentRule.SNOMEDCT_ID);
-		cs.setSettings(Map.of(SnomedTerminologyComponentConstants.CODESYSTEM_LANGUAGE_CONFIG_KEY, languageMap));
+		cs.setSettings(Map.of(Settings.LANGUAGES, languageMap));
 
 		context
 			.with(TerminologyResource.class, cs)
