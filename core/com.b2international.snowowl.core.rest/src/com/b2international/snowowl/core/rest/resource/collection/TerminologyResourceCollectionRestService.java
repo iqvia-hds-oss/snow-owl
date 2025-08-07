@@ -227,7 +227,7 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	@Operation(
 			summary="Delete a terminology resource collection by id",
 			description="""
-				If there is an associated content branch, then that will be marked deleted. The contained resource are currently not deleted.
+				If there is an associated content branch, then that will be marked deleted. NOTE: The contained resources are currently not deleted.
 			""")
 	@ApiResponses({
 		@ApiResponse(responseCode = "204", description = "No content"),
