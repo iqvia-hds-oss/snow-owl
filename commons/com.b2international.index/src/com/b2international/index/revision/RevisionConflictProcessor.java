@@ -42,6 +42,17 @@ import com.google.common.collect.Streams;
  */
 public interface RevisionConflictProcessor {
 	
+ 	/**
+	 * Resolves or reports a conflict between two revisions that have been added on both the merge source and target branches.
+	 * 
+	 * @param objectId
+	 * @param diff
+	 * @param sourceRevision
+	 * @param targetRevision
+	 * @return
+	 */
+	Conflict handleAddedInSourceAndTarget(ObjectId objectId, JsonDiff diff, Revision sourceRevision, Revision targetRevision);
+
 	/**
 	 * Checks if the specified {@link RevisionPropertyDiff} from the source change set conflicts with the corresponding {@code RevisionPropertyDiff} on the target.
 	 * @param revisionId - the affected revision identifier
@@ -108,6 +119,15 @@ public interface RevisionConflictProcessor {
 	 */
 	class Default implements RevisionConflictProcessor {
 		
+ 		@Override
+ 		public Conflict handleAddedInSourceAndTarget(ObjectId objectId, JsonDiff diff, Revision sourceRevision, Revision targetRevision) {
+			if (diff.hasChanges()) {
+				return new AddedInSourceAndTargetConflict(objectId);
+			} else {
+				return null;
+			}
+		}
+
 		@Override
 		public RevisionPropertyDiff handleChangedInSourceAndTarget(String revisionId, DocumentMapping mapping, RevisionPropertyDiff sourceChange, RevisionPropertyDiff targetChange, ObjectMapper mapper) {
 			String property = sourceChange.getProperty();

@@ -50,19 +50,19 @@ public final class Json extends ForwardingMap<String, Object> {
 	}
 	
 	public Json with(String property, Object value) {
-		final Map<String, Object> newJson = Maps.newHashMap(source);
+		final Map<String, Object> newJson = Maps.newLinkedHashMap(source);
 		newJson.put(property, value);
 		return new Json(newJson);
 	}
 	
 	public Json without(String property) {
-		final Map<String, Object> newJson = Maps.newHashMap(source);
+		final Map<String, Object> newJson = Maps.newLinkedHashMap(source);
 		newJson.remove(property);
 		return new Json(newJson);
 	}
 	
 	public Json with(Map<String, Object> object) {
-		final Map<String, Object> newJson = Maps.newHashMap(source);
+		final Map<String, Object> newJson = Maps.newLinkedHashMap(source);
 		newJson.putAll(object);
 		return new Json(newJson);
 	}

@@ -15,13 +15,30 @@
  */
 package com.b2international.index.revision;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.SortedSet;
+
+import com.google.common.collect.ImmutableSortedSet;
+
 /**
  * @since 7.0
  */
 public final class AddedInSourceAndTargetConflict extends Conflict {
 
+	private final SortedSet<String> differentProperties;
+
 	public AddedInSourceAndTargetConflict(ObjectId objectId) {
+		this(objectId, Collections.emptySet());
+	}
+	
+	public AddedInSourceAndTargetConflict(ObjectId objectId, final Set<String> differentProperties) {
 		super(objectId, String.format("'%s' has been added on both source and target", objectId));
+		this.differentProperties = ImmutableSortedSet.copyOf(differentProperties);
+	}
+	
+	public SortedSet<String> getDifferentProperties() {
+		return differentProperties;
 	}
 
 }

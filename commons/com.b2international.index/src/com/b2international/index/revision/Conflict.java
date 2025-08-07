@@ -15,6 +15,8 @@
  */
 package com.b2international.index.revision;
 
+import java.util.Objects;
+
 /**
  * @since 7.0
  */
@@ -22,6 +24,8 @@ public abstract class Conflict {
 
 	private final ObjectId objectId;
 	private final String message;
+	
+	private ObjectId containerId; //Auxiliary field, need not be part of equals()/hashCode()
 
 	public Conflict(ObjectId objectId, String message) {
 		this.objectId = objectId;
@@ -32,13 +36,49 @@ public abstract class Conflict {
 		return objectId;
 	}
 	
+	public ObjectId getContainerId() {
+		return containerId;
+	}
+	
 	public String getMessage() {
 		return message;
+	}
+	
+	public void setContainerId(ObjectId containerId) {
+		this.containerId = containerId;
 	}
 	
 	@Override
 	public String toString() {
 		return getMessage();
 	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(objectId, message);
+	}
+
+	@Override
+	public final boolean equals(Object obj) {
+		if (obj == null) return false;
+		if (this == obj) return true;
+		if (getClass() != obj.getClass()) return false;
+		Conflict other = (Conflict) obj;
+		return Objects.equals(objectId, other.objectId) 
+				&& Objects.equals(message, other.message)
+				&& doEquals(other);
+	}
+
+	/**
+	 * Subclasses optionally override this method to provide additional equals checks when they have additional registered conflict properties.
+	 * <p><i>Please note if you override this method make sure you override the {@link #hashCode()} method as well to properly compute the hash value of the subclass.</i></p> 
+	 *  
+	 * @param obj
+	 * @return
+	 */
+	protected boolean doEquals(Conflict obj) {
+		return true;
+	}
+
 	
 }

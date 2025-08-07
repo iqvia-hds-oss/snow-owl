@@ -15,6 +15,8 @@
  */
 package com.b2international.index.revision;
 
+import java.util.Objects;
+
 import com.b2international.index.revision.StagingArea.RevisionPropertyDiff;
 
 /**
@@ -37,6 +39,18 @@ public final class ChangedInSourceAndTargetConflict extends Conflict {
 	
 	public RevisionPropertyDiff getTargetChange() {
 		return targetChange;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(getObjectId(), getMessage(), getSourceChange(), getTargetChange());
+	}
+
+	@Override
+	protected boolean doEquals(Conflict obj) {
+		ChangedInSourceAndTargetConflict other = (ChangedInSourceAndTargetConflict) obj;
+		return Objects.equals(sourceChange, other.sourceChange)
+				&& Objects.equals(targetChange, other.targetChange);
 	}
 
 }

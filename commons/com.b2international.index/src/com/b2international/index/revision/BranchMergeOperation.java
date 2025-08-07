@@ -66,7 +66,11 @@ public final class BranchMergeOperation {
 		return this;
 	}
 	
-	public Commit merge() {
+	/**
+	 * @return the commit associated with the merge
+	 * @throws BranchMergeConflictException - if there is a conflict which client can optionally handle if they would like to
+	 */
+	public Commit merge() throws BranchMergeConflictException {
 		return branching.doMerge(this);
 	}
 

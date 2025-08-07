@@ -15,6 +15,8 @@
  */
 package com.b2international.index.revision;
 
+import java.util.Objects;
+
 /**
  * @since 7.0
  */
@@ -49,6 +51,18 @@ public final class AddedInTargetAndDetachedInSourceConflict extends Conflict {
 	public AddedInTargetAndDetachedInSourceConflict withFeatureName(String featureName) {
 		this.featureName = featureName;
 		return this;
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(getObjectId(), getMessage(), getFeatureName(), getAddedOnTarget());
+	}
+
+	@Override
+	protected boolean doEquals(Conflict obj) {
+		AddedInTargetAndDetachedInSourceConflict other = (AddedInTargetAndDetachedInSourceConflict) obj;
+		return Objects.equals(featureName, other.featureName)
+				&& Objects.equals(addedOnTarget, other.addedOnTarget);
 	}
 
 }
