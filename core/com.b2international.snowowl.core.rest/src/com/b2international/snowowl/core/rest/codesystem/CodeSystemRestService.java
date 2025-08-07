@@ -51,8 +51,7 @@ public class CodeSystemRestService extends AbstractRestService {
 	@Operation(
 		summary="Retrieve a list of code systems", 
 		description="""
-			Returns a collection resource containing all/filtered registered code systems.
-			Results are sorted by ID by default.
+			Returns a collection resource containing all/filtered registered code systems. Results are sorted by ID by default.
 			
 			The following additional data can be expanded:
 			* `versions` - a list of versions created so far for a resource 
