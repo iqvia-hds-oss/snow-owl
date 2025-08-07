@@ -49,12 +49,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public class CodeSystemRestService extends AbstractRestService {
 
 	@Operation(
-		summary="Retrieve CodeSystems", 
-		description="Returns a collection resource containing all/filtered registered CodeSystems."
-			+ "<p>Results are by default sorted by ID."
-			+ "<p>The following properties can be expanded:"
-			+ "<p>"
-			+ "&bull; availableUpgrades() &ndash; a list of possible code system resource URIs that can be used as an 'extensionOf' property"
+		summary="Retrieve a list of code systems", 
+		description="""
+			Returns a collection resource containing all/filtered registered code systems.
+			Results are sorted by ID by default.
+			
+			The following additional data can be expanded:
+			* `versions` - a list of versions created so far for a resource 
+			* `commits` - a list of commits pushed to the repository changing a resource's contents
+			* `branch` - the current working branch state from the underlying revision control repository
+			* `dependencies_upgrades()` - expands the possible upgrade versions available for each dependency reference
+			* `dependencies_resource()` - expands the resource of each dependency reference
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
@@ -84,17 +90,22 @@ public class CodeSystemRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve Code Systems", 
-		description="Returns a collection resource containing all/filtered registered Code Systems."
-		    + "<p>Results are always sorted by repositoryUuid first, sort keys only apply per repository."
-			+ "<p>The following properties can be expanded:"
-			+ "<p>"
-			+ "&bull; availableUpgrades() &ndash; a list of possible code system URIs that can be used as an 'extensionOf' property"
+		summary="Retrieve a list of code systems", 
+		description="""
+			Returns a collection resource containing all/filtered registered code systems.
+			Results are sorted by ID by default.
+			
+			The following additional data can be expanded:
+			* `versions` - a list of versions created so far for a resource 
+			* `commits` - a list of commits pushed to the repository changing a resource's contents
+			* `branch` - the current working branch state from the underlying revision control repository
+			* `dependencies_upgrades()` - expands the possible upgrade versions available for each dependency reference
+			* `dependencies_resource()` - expands the resource of each dependency reference
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
-		@ApiResponse(responseCode = "400", description = "Invalid search config"),
-		@ApiResponse(responseCode = "404", description = "Branch not found")
+		@ApiResponse(responseCode = "400", description = "Bad Request")
 	})
 	@PostMapping(value="/search", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<CodeSystems> searchByPost(@RequestBody(required = false) final TerminologyResourceRestSearch params) {
@@ -102,23 +113,23 @@ public class CodeSystemRestService extends AbstractRestService {
 	}
 
 	@Operation(
-		summary="Retrieve code system by its unique identifier",
-		description="Returns generic information about a single code system associated to the given unique identifier."
+		summary="Retrieve a code system by id",
+		description="Returns metadata information about a single code system associated with the given unique identifier."
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "404", description = "Not found")
 	})
-	@GetMapping(value = "/{codeSystemId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
+	@GetMapping(value = "/{id}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<CodeSystem> get(
 		@Parameter(description="The code system identifier")
-		@PathVariable(value="codeSystemId", required = true) 
-		final String codeSystemId,
+		@PathVariable(value="id", required = true) 
+		final String id,
 		
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
-		return CodeSystemRequests.prepareGetCodeSystem(CodeSystem.uri(codeSystemId))
+		return CodeSystemRequests.prepareGetCodeSystem(CodeSystem.uri(id))
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.buildAsync()
@@ -126,18 +137,18 @@ public class CodeSystemRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve a versioned code system by its unique identifier",
-		description="Returns generic information about a single code system associated to the given unique identifier."
+		summary="Retrieve a versioned code system by id and version",
+		description="Returns metadata information about a single code system associated with the given unique identifier and version."
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "404", description = "Not found")
 	})
-	@GetMapping(value = "/{codeSystemId}/{versionId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
+	@GetMapping(value = "/{id}/{versionId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<CodeSystem> getVersioned(
 		@Parameter(description="The code system identifier")
-		@PathVariable(value="codeSystemId", required = true) 
-		final String codeSystemId,
+		@PathVariable(value="id", required = true) 
+		final String id,
 		
 		@Parameter(description="The code system version")
 		@PathVariable(value="versionId", required = true) 
@@ -146,7 +157,7 @@ public class CodeSystemRestService extends AbstractRestService {
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
-		return CodeSystemRequests.prepareGetCodeSystem(CodeSystem.uri(codeSystemId, versionId))
+		return CodeSystemRequests.prepareGetCodeSystem(CodeSystem.uri(id, versionId))
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.buildAsync()
@@ -160,7 +171,7 @@ public class CodeSystemRestService extends AbstractRestService {
 	@ApiResponses({
 		@ApiResponse(responseCode = "201", description = "Created"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"),
-		@ApiResponse(responseCode = "409", description = "CodeSystem already exists in the system")
+		@ApiResponse(responseCode = "409", description = "Already exists")
 	})
 	@PostMapping(consumes = { AbstractRestService.JSON_MEDIA_TYPE })
 	@ResponseStatus(HttpStatus.CREATED)
@@ -183,51 +194,53 @@ public class CodeSystemRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary = "Update a code system",
-		description = "Update a Code System with the given parameters"
+		summary = "Update a code system by id",
+		description = "Update a code system with the given parameters"
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "204", description = "No content"),
 		@ApiResponse(responseCode = "400", description = "Bad Request")
 	})
-	@PutMapping(value = "/{codeSystemId}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
+	@PutMapping(value = "/{id}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void update(
 			@Parameter(description = "The code system identifier")
-			@PathVariable(value="codeSystemId") 
-			final String codeSystemId,
+			@PathVariable(value="id") 
+			final String id,
 			
 			@RequestBody
 			final CodeSystemUpdateRestInput body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
-		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Code System %s", codeSystemId) : body.getCommitComment();
-		body.toCodeSystemUpdateRequest(codeSystemId)
+		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Code System %s", id) : body.getCommitComment();
+		body.toCodeSystemUpdateRequest(id)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);
 	}
 	
 	@Operation(
-			summary="Delete a CodeSystem",
-			description="Deletes a CodeSystem permanently from the server")
+			summary="Delete a code system by id",
+			description="""
+				The associated content branch will be marked deleted.
+			""")
 	@ApiResponses({
 		@ApiResponse(responseCode = "204", description = "No content"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"),
 		@ApiResponse(responseCode = "409", description = "CodeSystem cannot be deleted")
 	})
-	@DeleteMapping(value = "/{codeSystemId}")
+	@DeleteMapping(value = "/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(
 			@Parameter(description = "The code system identifier")
-			@PathVariable(value="codeSystemId") 
-			final String codeSystemId,
+			@PathVariable(value="id") 
+			final String id,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		try {
-			final CodeSystem codeSystem = CodeSystemRequests.prepareGetCodeSystem(codeSystemId)
+			final CodeSystem codeSystem = CodeSystemRequests.prepareGetCodeSystem(id)
 					.buildAsync()
 					.execute(getBus())
 					.getSync(1, TimeUnit.MINUTES);

@@ -78,19 +78,25 @@ public abstract class TerminologyResource extends Resource {
 		
 		public static final String COMMITS = "commits";
 		// Expand parameters for expand option "commits" (both inclusive) 
-		public static final String TIMESTAMP_FROM_OPTION_KEY = "timestampFrom";
-		public static final String TIMESTAMP_TO_OPTION_KEY = "timestampTo";
-		public static final String RELATIVE_BRANCH_OPTION_KEY = "relativeBranch";
+		public static final String COMMITS_TIMESTAMP_FROM_OPTION_KEY = "timestampFrom";
+		public static final String COMMITS_TIMESTAMP_TO_OPTION_KEY = "timestampTo";
+		public static final String COMMITS_RELATIVE_BRANCH_OPTION_KEY = "relativeBranch";
 
 		/**
-		 * Expand option to expand dependencies of a resource.
+		 * Expand option to expand the resource object of a dependency reference. 
 		 */
-		public static final String DEPENDENCIES = "dependencies";
+		public static final String DEPENDENCIES_RESOURCE = "dependencies_resource";
+		
+		/**
+		 * Expand option to expand the possible upgrade versions available for a dependency reference.
+		 */
+		public static final String DEPENDENCIES_UPGRADES = "dependencies_upgrades";
 
 		/**
 		 * Expand option to expand the current latest branch information based on the current {@link TerminologyResource#getBranchPath()} value.
 		 */
 		public static final String BRANCH = "branch";
+
 
 	}
 	
