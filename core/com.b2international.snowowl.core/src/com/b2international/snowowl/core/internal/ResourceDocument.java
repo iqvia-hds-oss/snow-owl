@@ -463,7 +463,7 @@ public final class ResourceDocument extends RevisionDocument implements CommitSu
 		@Override
 		public ResourceDocument build() {
 			// when reading back a document from the index without the new dependencies array, but with the old extensionOf/upgradeOf field values, convert them to dependencies here to auto-migrate to the new model
-			if (CompareUtils.isEmpty(dependencies)) {
+			if (CompareUtils.isEmpty(dependencies) && (extensionOf != null || upgradeOf != null)) {
 				var migratedDependencies = new TreeSet<DependencyDocument>();
 				if (extensionOf != null) {
 					migratedDependencies.add(new DependencyDocument(ResourceURIWithQuery.of(extensionOf), TerminologyResource.DependencyScope.EXTENSION_OF));
