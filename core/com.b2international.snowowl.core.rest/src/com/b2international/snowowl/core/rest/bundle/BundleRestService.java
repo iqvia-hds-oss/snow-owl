@@ -51,12 +51,14 @@ public class BundleRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve bundles", 
-		description="Returns a collection resource containing all/filtered registered bundles."
-			+ "<p>Results are by default sorted by ID."
-			+ "<p>The following properties can be expanded:"
-			+ "<p>"
-			+ "&bull; resources() &ndash; this list of resources this bundle contains"
+		summary="Retrieve a list of bundles", 
+		description="""
+			Returns a collection resource containing all/filtered registered bundles. Results are sorted by ID by default.
+			
+			The following properties can be expanded:
+			
+			* `resources()` - the list of resources this bundle directly contains
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
@@ -78,16 +80,18 @@ public class BundleRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve bundles", 
-		description="Returns a collection resource containing all/filtered registered bundles."
-			+ "<p>Results are by default sorted by ID."
-			+ "<p>The following properties can be expanded:"
-			+ "<p>"
-			+ "&bull; resources() &ndash; this list of resources this bundle contains"
+		summary="Retrieve a list of bundles", 
+		description="""
+			Returns a collection resource containing all/filtered registered bundles. Results are sorted by ID by default.
+			
+			The following properties can be expanded:
+			
+			* `resources()` - the list of resources this bundle directly contains
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
-		@ApiResponse(responseCode = "400", description = "Invalid search config"),
+		@ApiResponse(responseCode = "400", description = "Bad Request"),
 	})
 	@PostMapping(value="/search", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<Bundles> searchByPost(@RequestBody(required = false) final BundleRestSearch params) {
@@ -95,23 +99,23 @@ public class BundleRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve bundle by its unique identifier",
-		description="Returns generic information about a single bundle associated to the given unique identifier."
+		summary="Retrieve bundle by idr",
+		description="Returns metadata information about a single bundle associated with the given unique identifier."
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "404", description = "Not found")
 	})
-	@GetMapping(value = "/{bundleId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
+	@GetMapping(value = "/{id}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<Bundle> get(
 		@Parameter(description="The bundle identifier")
-		@PathVariable(value="bundleId", required = true) 
-		final String bundleId,
+		@PathVariable(value="id", required = true) 
+		final String id,
 
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
-		return ResourceRequests.bundles().prepareGet(Bundle.uri(bundleId))
+		return ResourceRequests.bundles().prepareGet(Bundle.uri(id))
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.buildAsync()
@@ -119,18 +123,18 @@ public class BundleRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve bundle by its unique identifier",
-		description="Returns generic information about a single bundle associated to the given unique identifier."
+		summary="Retrieve a versioned bundle by id and version",
+		description="Returns metadata information about a single bundle associated with the given unique identifier and version."
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "404", description = "Not found")
 	})
-	@GetMapping(value = "/{bundleId}/{versionId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
+	@GetMapping(value = "/{id}/{versionId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<Bundle> getVersioned(
 		@Parameter(description="The bundle identifier")
-		@PathVariable(value="bundleId", required = true) 
-		final String bundleId,
+		@PathVariable(value="id", required = true) 
+		final String id,
 		
 		@Parameter(description="The bundle version")
 		@PathVariable(value="versionId", required = true) 
@@ -139,7 +143,7 @@ public class BundleRestService extends AbstractRestService {
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
-		return ResourceRequests.bundles().prepareGet(Bundle.uri(bundleId, versionId))
+		return ResourceRequests.bundles().prepareGet(Bundle.uri(id, versionId))
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.buildAsync()
@@ -152,8 +156,8 @@ public class BundleRestService extends AbstractRestService {
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "201", description = "Created"),
-		@ApiResponse(responseCode = "400", description = "Invalid input arguments"),
-		@ApiResponse(responseCode = "409", description = "Bundle already exists in the system")
+		@ApiResponse(responseCode = "400", description = "Bad Request"),
+		@ApiResponse(responseCode = "409", description = "Already exists")
 	})
 	@PostMapping(consumes = { AbstractRestService.JSON_MEDIA_TYPE })
 	@ResponseStatus(HttpStatus.CREATED)
@@ -176,18 +180,19 @@ public class BundleRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-			summary = "Update a bundle",
-			description="Update a bundle with the given parameters")
+		summary = "Update a bundle by id",
+		description="Update a bundle with the given parameters"
+	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "204", description = "No content"),
 		@ApiResponse(responseCode = "400", description = "Bad Request")
 	})
-	@PutMapping(value = "/{bundleId}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
+	@PutMapping(value = "/{id}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void update(
 			@Parameter(description = "The bundle identifier")
-			@PathVariable(value="bundleId") 
-			final String bundleId,
+			@PathVariable(value="id") 
+			final String id,
 			
 			@RequestBody
 			final BundleRestUpdate body,
@@ -195,9 +200,9 @@ public class BundleRestService extends AbstractRestService {
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		
-		final String commitComment = body.getCommitComment() == null ? String.format("Update bundle %s", getBundleTitle(bundleId, body)) : body.getCommitComment();
+		final String commitComment = body.getCommitComment() == null ? String.format("Update bundle %s", getBundleTitle(id, body)) : body.getCommitComment();
 		
-		body.toUpdateRequest(bundleId)
+		body.toUpdateRequest(id)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);
@@ -208,28 +213,28 @@ public class BundleRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-			summary = "Delete a bundle",
+			summary = "Delete a bundle by id",
 			description = "Delete a bundle with the given parameters")
 	@ApiResponses({
-		@ApiResponse(responseCode = "204", description = "Deletion successful"),
+		@ApiResponse(responseCode = "204", description = "No content"),
 		@ApiResponse(responseCode = "409", description = "Bundle cannot be deleted")
 	})
-	@DeleteMapping(value = "/{bundleId}")
+	@DeleteMapping(value = "/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(
 			@Parameter(description = "The bundle identifier")
-			@PathVariable(value="bundleId") 
-			final String bundleId,
+			@PathVariable(value="id") 
+			final String id,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		try {
-			final Bundle bundle = ResourceRequests.bundles().prepareGet(bundleId)
+			final Bundle bundle = ResourceRequests.bundles().prepareGet(id)
 					.buildAsync()
 					.execute(getBus())
 					.getSync(1, TimeUnit.MINUTES);
 			
-			ResourceRequests.bundles().prepareDelete(bundleId)
+			ResourceRequests.bundles().prepareDelete(id)
 				.commit()
 				.setAuthor(author)
 				.setCommitComment(String.format("Deleted Bundle %s", bundle.getTitle()))
