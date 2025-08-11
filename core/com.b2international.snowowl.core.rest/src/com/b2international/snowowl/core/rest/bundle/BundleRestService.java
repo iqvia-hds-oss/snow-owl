@@ -99,7 +99,7 @@ public class BundleRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve bundle by idr",
+		summary="Retrieve bundle by id",
 		description="Returns metadata information about a single bundle associated with the given unique identifier."
 	)
 	@ApiResponses({
