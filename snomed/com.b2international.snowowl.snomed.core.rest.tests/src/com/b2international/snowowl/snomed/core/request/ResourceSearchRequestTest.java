@@ -68,8 +68,8 @@ public class ResourceSearchRequestTest {
 		
 		final Resource resource = ResourceRequests.prepareGet(CODE_SYSTEM_ID)
 			.setExpand(String.format("commits(%s:%d, %s:%d)", 
-				TerminologyResource.Expand.TIMESTAMP_FROM_OPTION_KEY, firstCommit,
-				TerminologyResource.Expand.TIMESTAMP_TO_OPTION_KEY, secondCommit - 1L
+				TerminologyResource.Expand.COMMITS_TIMESTAMP_FROM_OPTION_KEY, firstCommit,
+				TerminologyResource.Expand.COMMITS_TIMESTAMP_TO_OPTION_KEY, secondCommit - 1L
 			))
 			.buildAsync()
 			.execute(Services.bus())

@@ -50,9 +50,18 @@ public class ResourceRestService extends AbstractRestService {
 	}
 
 	@Operation(
-		summary = "Retrieve Resources", 
-		description = "Returns a collection resource containing all/filtered registered Resources."
-			+ "<p>Results are by default sorted by ID.")
+		summary = "Retrieve a list of resources", 
+		description = """
+			Returns a collection resource containing all/filtered registered resources. Results are sorted by ID by default.
+			
+			The following additional data can be expanded (where applicable):
+			* `versions` - a list of versions created so far for a resource 
+			* `commits` - a list of commits pushed to the repository changing a resource's contents
+			* `branch` - the current working branch state from the underlying revision control repository
+			* `dependencies_upgrades()` - expands the possible upgrade versions available for each dependency reference
+			* `dependencies_resource()` - expands the resource of each dependency reference
+		"""
+	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "400", description = "Bad Request") 
@@ -84,9 +93,18 @@ public class ResourceRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary = "Retrieve Resources", 
-		description = "Returns a collection resource containing all/filtered registered Resources."
-			+ "<p>Results are by default sorted by ID.")
+		summary = "Retrieve a list of resources", 
+		description = """
+			Returns a collection resource containing all/filtered registered Resources. Results are sorted by ID by default.
+			
+			The following additional data can be expanded (where applicable):
+			* `versions` - a list of versions created so far for a resource 
+			* `commits` - a list of commits pushed to the repository changing a resource's contents
+			* `branch` - the current working branch state from the underlying revision control repository
+			* `dependencies_upgrades()` - expands the possible upgrade versions available for each dependency reference
+			* `dependencies_resource()` - expands the resource of each dependency reference
+		""" 
+	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "400", description = "Bad Request") 
@@ -97,25 +115,25 @@ public class ResourceRestService extends AbstractRestService {
 	}
 
 	@Operation(
-		summary = "Retrieve resource by its unique identifier", 
-		description = "Returns generic information about a single resource associated to the given unique identifier."
+		summary = "Retrieve a resource by id", 
+		description = "Returns metadata information about a single resource associated with the given unique identifier."
 	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"), 
 		@ApiResponse(responseCode = "404", description = "Not Found") 
 	})
-	@GetMapping("/{resourceId}")
+	@GetMapping("/{id}")
 	public Promise<Resource> get(
 		@Parameter(description = "The resource identifier") 
-		@PathVariable(value = "resourceId") 
-		final String resourceId,
+		@PathVariable(value = "id") 
+		final String id,
 		
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
 		return ResourceRequests
-			.prepareGet(resourceId)
+			.prepareGet(id)
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.buildAsync()
@@ -123,29 +141,29 @@ public class ResourceRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary = "Retrieve versioned resource by its unique identifier and version", 
-		description = "Returns generic information about a single resource associated to the given unique identifier."
+		summary = "Retrieve versioned resource by id and version", 
+		description = "Returns metadata information about a single resource associated with the given id and version."
 	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"), 
 		@ApiResponse(responseCode = "404", description = "Not Found") 
 	})
-	@GetMapping("/{resourceId}/{versionId}")
+	@GetMapping("/{id}/{versionId}")
 	public Promise<Resource> getVersioned(
 		@Parameter(description = "The resource identifier") 
-		@PathVariable(value = "resourceId") 
-		final String resourceId,
+		@PathVariable(value = "id") 
+		final String id,
 		
 		@Parameter(description = "The version identifier") 
-		@PathVariable(value = "versionId") 
+		@PathVariable(value = "versionId")
 		final String versionId,
 		
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
 		return ResourceRequests
-			.prepareGet(ResourceURI.branch("any", resourceId, versionId))
+			.prepareGet(ResourceURI.branch("any", id, versionId))
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.setAllowHiddenResources(false)
@@ -154,51 +172,54 @@ public class ResourceRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary = "Update a resource by its unique identifier", 
-		description = "Updates a resource definition in the system using its identifier and the given patch update."
+		summary = "Update a resource by id", 
+		description = "Updates a resource with the given parameters"
 	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "204", description = "No Content"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"), 
 	})
-	@PutMapping(value = "/{resourceId}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
+	@PutMapping(value = "/{id}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void update(
 			@Parameter(description = "The resource identifier") 
-			@PathVariable(value = "resourceId") 
-			final String resourceId,
+			@PathVariable(value = "id") 
+			final String id,
 			
 			@RequestBody
 			final ResourceRestUpdate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
-		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Resource %s", resourceId) : body.getCommitComment();
-		body.toUpdateRequest(resourceId)
+		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Resource %s", id) : body.getCommitComment();
+		body.toUpdateRequest(id)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);
 	}
 	
 	@Operation(
-			summary="Delete a Resource",
-			description="Deletes a Resource permanently from the server")
+		summary="Delete a resource by id",
+		description="""
+			If there is an associated content branch, then that will be marked deleted.
+		"""
+	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "204", description = "No content"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"),
 		@ApiResponse(responseCode = "409", description = "Resource cannot be deleted")
 	})
-	@DeleteMapping(value = "/{resourceId}")
+	@DeleteMapping(value = "/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(
 			@Parameter(description = "The resource identifier")
-			@PathVariable(value="resourceId") 
-			final String resourceId,
+			@PathVariable(value="id") 
+			final String id,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		try {
-			final Resource resource = ResourceRequests.prepareGet(resourceId)
+			final Resource resource = ResourceRequests.prepareGet(id)
 					.buildAsync()
 					.execute(getBus())
 					.getSync(1, TimeUnit.MINUTES);

@@ -115,11 +115,11 @@ public abstract class BaseMetadataResourceConverter<R extends Resource, CR exten
 	}
 	
 	protected final void expandDependencyResources(List<R> results) {
-		if (!expand().containsKey("dependencies_resource")) {
+		if (!expand().containsKey(TerminologyResource.Expand.DEPENDENCIES_RESOURCE)) {
 			return;
 		}
 		
-		final Options expandOptions = expand().getOptions("dependencies_resource");
+		final Options expandOptions = expand().getOptions(TerminologyResource.Expand.DEPENDENCIES_RESOURCE);
 		
 		// index result dependencies by their Resource IDs in a Multimap to easily update them later on when we get back resource data
 		// FIXME it would be great to fetch the versioned state of the resource but that can only be executed one-by-one, which slows things down
@@ -161,11 +161,11 @@ public abstract class BaseMetadataResourceConverter<R extends Resource, CR exten
 	}
 
 	protected final void expandDependencyUpgrades(List<R> results) {
-		if (!expand().containsKey("dependencies_upgrades")) {
+		if (!expand().containsKey(TerminologyResource.Expand.DEPENDENCIES_UPGRADES)) {
 			return;
 		}
 		
-		final Options expandOptions = expand().getOptions("dependencies_upgrades");
+		final Options expandOptions = expand().getOptions(TerminologyResource.Expand.DEPENDENCIES_UPGRADES);
 		
 		// index result dependencies by their URIs in a Multimap to easily update them later on when we get back newer dependency versions
 		Multimap<ResourceURI, Dependency> dependenciesToExpand = ArrayListMultimap.create();
@@ -249,14 +249,14 @@ public abstract class BaseMetadataResourceConverter<R extends Resource, CR exten
 				.filter(TerminologyResource.class::isInstance)
 				.map(TerminologyResource.class::cast)
 				.map(res -> {
-					final String branchFilter = expandOptions.containsKey(TerminologyResource.Expand.RELATIVE_BRANCH_OPTION_KEY)
-								? res.getRelativeBranchPath(expandOptions.getString(TerminologyResource.Expand.RELATIVE_BRANCH_OPTION_KEY))
+					final String branchFilter = expandOptions.containsKey(TerminologyResource.Expand.COMMITS_RELATIVE_BRANCH_OPTION_KEY)
+								? res.getRelativeBranchPath(expandOptions.getString(TerminologyResource.Expand.COMMITS_RELATIVE_BRANCH_OPTION_KEY))
 								: res.getBranchPath();
 					return RepositoryRequests.commitInfos().prepareSearchCommitInfo()
 						.filterByBranch(branchFilter)
 						.filterByTimestamp(
-							expandOptions.get(TerminologyResource.Expand.TIMESTAMP_FROM_OPTION_KEY, Long.class), 
-							expandOptions.get(TerminologyResource.Expand.TIMESTAMP_TO_OPTION_KEY, Long.class))
+							expandOptions.get(TerminologyResource.Expand.COMMITS_TIMESTAMP_FROM_OPTION_KEY, Long.class), 
+							expandOptions.get(TerminologyResource.Expand.COMMITS_TIMESTAMP_TO_OPTION_KEY, Long.class))
 						.setLimit(getLimit(expandOptions))
 						.setFields(expandOptions.containsKey(FIELD_OPTION_KEY) ? expandOptions.getList(FIELD_OPTION_KEY, String.class) : CommitInfo.Fields.DEFAULT_FIELD_SELECTION)
 						.sortBy(expandOptions.containsKey(SORT_OPTION_KEY) ? expandOptions.getString(SORT_OPTION_KEY) : null)

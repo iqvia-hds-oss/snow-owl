@@ -52,9 +52,18 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	}
 	
 	@Operation(
-		summary = "Retrieve Terminology Resource Collections", 
-		description = "Returns a collection resource containing all/filtered registered Terminology Collection Resources."
-			+ "<p>Default sort order of results are by ID.")
+		summary = "Retrieve a list of terminology resource collections", 
+		description = """
+			Returns a collection resource containing all/filtered registered terminology resource collections. Results are sorted by ID by default.
+			
+			The following additional data can be expanded:
+			* `versions` - a list of versions created so far for a resource 
+			* `commits` - a list of commits pushed to the repository changing a resource's contents
+			* `branch` - the current working branch state from the underlying revision control repository
+			* `dependencies_upgrades()` - expands the possible upgrade versions available for each dependency reference
+			* `dependencies_resource()` - expands the resource of each dependency reference
+		"""
+	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "400", description = "Bad Request") 
@@ -84,9 +93,18 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	}
 	
 	@Operation(
-		summary = "Retrieve Terminology Resource Collections", 
-		description = "Returns a collection resource containing all/filtered registered Terminology Collection Resources."
-			+ "<p>Default sort order of results are by ID.")
+		summary = "Retrieve a list of terminology resource collections", 
+		description = """
+			Returns a collection resource containing all/filtered registered terminology resource collection. Results are sorted by ID by default.
+			
+			The following additional data can be expanded:
+			* `versions` - a list of versions created so far for a resource 
+			* `commits` - a list of commits pushed to the repository changing a resource's contents
+			* `branch` - the current working branch state from the underlying revision control repository
+			* `dependencies_upgrades()` - expands the possible upgrade versions available for each dependency reference
+			* `dependencies_resource()` - expands the resource of each dependency reference
+		"""
+	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "400", description = "Bad Request") 
@@ -97,25 +115,25 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	}
 	
 	@Operation(
-		summary = "Retrieve a terminology collection resource by its unique identifier", 
-		description = "Returns generic information about a single terminology collection resource identified by the given unique identifier."
+		summary = "Retrieve a terminology resource collection by id", 
+		description = "Returns metadata information about a single terminology resource collection associated with the given unique identifier."
 	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"), 
 		@ApiResponse(responseCode = "404", description = "Not Found") 
 	})
-	@GetMapping(value = "/{collectionId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
+	@GetMapping(value = "/{id}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<TerminologyResourceCollection> get(
 		@Parameter(description = "The collection resource identifier") 
-		@PathVariable(value = "collectionId") 
-		final String collectionId,
+		@PathVariable(value = "id") 
+		final String id,
 		
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
 		return TerminologyResourceCollectionRequests
-			.prepareGet(collectionId)
+			.prepareGet(id)
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.buildAsync()
@@ -123,18 +141,18 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	}
 	
 	@Operation(
-		summary="Retrieve a versioned terminology resource collection by its unique identifier",
-		description="Returns generic information about a single terminology collection identified by the given unique identifier."
+		summary="Retrieve a versioned terminology resource collection by id and version",
+		description="Returns metadata information about a single terminology resource collection associated with the by the given unique identifier."
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
 		@ApiResponse(responseCode = "404", description = "Not found")
 	})
-	@GetMapping(value = "/{collectionId}/{versionId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
+	@GetMapping(value = "/{id}/{versionId}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<TerminologyResourceCollection> getVersioned(
 		@Parameter(description="The resource collection identifier")
-		@PathVariable(value="collectionId", required = true) 
-		final String collectionId,
+		@PathVariable(value="id", required = true) 
+		final String id,
 		
 		@Parameter(description="The resource collection version")
 		@PathVariable(value="versionId", required = true) 
@@ -143,7 +161,7 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 		@ParameterObject
 		final ResourceSelectors selectors) {
 		
-		return TerminologyResourceCollectionRequests.prepareGet(TerminologyResourceCollection.uri(collectionId, versionId))
+		return TerminologyResourceCollectionRequests.prepareGet(TerminologyResourceCollection.uri(id, versionId))
 			.setExpand(selectors.getExpand())
 			.setFields(selectors.getField())
 			.buildAsync()
@@ -157,7 +175,7 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	@ApiResponses({
 		@ApiResponse(responseCode = "201", description = "Created"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"),
-		@ApiResponse(responseCode = "409", description = "Resource already exists in the system")
+		@ApiResponse(responseCode = "409", description = "Already exists")
 	})
 	@PostMapping(consumes = { AbstractRestService.JSON_MEDIA_TYPE })
 	@ResponseStatus(HttpStatus.CREATED)
@@ -180,56 +198,58 @@ public class TerminologyResourceCollectionRestService extends AbstractRestServic
 	}
 	
 	@Operation(
-		summary = "Update a terminology collection resource by its unique identifier", 
-		description = "Updates a terminology resource collection definition in the system using its identifier and the given patch update."
+		summary = "Update a terminology resource collection by id", 
+		description = "Updates a terminology resource collection with the given parameters"
 	)
 	@ApiResponses({ 
 		@ApiResponse(responseCode = "204", description = "No Content"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"), 
 	})
-	@PutMapping(value = "/{collectionId}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
+	@PutMapping(value = "/{id}", consumes = { AbstractRestService.JSON_MEDIA_TYPE })
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void update(
 			@Parameter(description = "The collection resource identifier") 
-			@PathVariable(value = "collectionId") 
-			final String collectionId,
+			@PathVariable(value = "id") 
+			final String id,
 			
 			@RequestBody
 			final ResourceRestUpdate body,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
-		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Terminology Collection Resource %s", collectionId) : body.getCommitComment();
-		body.toUpdateRequest(collectionId)
+		final String commitComment = Strings.isNullOrEmpty(body.getCommitComment()) ? String.format("Updated Terminology Collection Resource %s", id) : body.getCommitComment();
+		body.toUpdateRequest(id)
 				.build(author, commitComment)
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);
 	}
 	
 	@Operation(
-			summary="Delete a Terminology Collection Resource",
-			description="Deletes a Terminology Collection Resource permanently from the server")
+			summary="Delete a terminology resource collection by id",
+			description="""
+				If there is an associated content branch, then that will be marked deleted. NOTE: The contained resources are currently not deleted.
+			""")
 	@ApiResponses({
 		@ApiResponse(responseCode = "204", description = "No content"),
 		@ApiResponse(responseCode = "400", description = "Bad Request"),
 		@ApiResponse(responseCode = "409", description = "Resource cannot be deleted")
 	})
-	@DeleteMapping(value = "/{collectionId}")
+	@DeleteMapping(value = "/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(
 			@Parameter(description = "The collection resource identifier")
-			@PathVariable(value="collectionId") 
-			final String collectionId,
+			@PathVariable(value="id") 
+			final String id,
 			
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) {
 		try {
-			final TerminologyResourceCollection resource = TerminologyResourceCollectionRequests.prepareGet(collectionId)
+			final TerminologyResourceCollection resource = TerminologyResourceCollectionRequests.prepareGet(id)
 					.buildAsync()
 					.execute(getBus())
 					.getSync(1, TimeUnit.MINUTES);
 			
-			TerminologyResourceCollectionRequests.prepareDelete(collectionId)
+			TerminologyResourceCollectionRequests.prepareDelete(id)
 				.build(author, String.format("Deleted resource %s", resource.getTitle()))
 				.execute(getBus())
 				.getSync(COMMIT_TIMEOUT, TimeUnit.MINUTES);

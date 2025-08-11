@@ -60,12 +60,14 @@ public class VersionRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve all resource versions",
-		description="Returns a list containing all published resource versions."
+		summary="Retrieve a list of resource versions",
+		description="""
+			Returns a collection resource containing all/filtered version. Results are sorted by ID by default.
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
-		@ApiResponse(responseCode = "400", description = "Invalid search config")
+		@ApiResponse(responseCode = "400", description = "Bad Request")
 	})
 	@GetMapping(produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<Versions> searchVersionsByGet(
@@ -89,8 +91,10 @@ public class VersionRestService extends AbstractRestService {
 	}
 	
 	@Operation(
-		summary="Retrieve all resource versions",
-		description="Returns a list containing all published resource versions."
+		summary="Retrieve a list of resource versions",
+		description="""
+			Returns a collection resource containing all/filtered version. Results are sorted by ID by default.
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
@@ -102,8 +106,10 @@ public class VersionRestService extends AbstractRestService {
 	}
 
 	@Operation(
-		summary="Retrieve a resource version by identifier (<resourceType/resourceId/version>)",
-		description="Returns a published resource version for the specified resource with the given version identifier."
+		summary="Retrieve a resource version by URI",
+		description="""
+			Returns a single resource version by its unique version URI (<resourceType/resourceId/version>).
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "200", description = "OK"),
@@ -119,9 +125,11 @@ public class VersionRestService extends AbstractRestService {
 	
 	@Operation(
 		summary="Create a new resource version",
-		description="Creates a new resource version. "
-				+ "The version tag (represented by an empty branch) is created on the resource's current working branch. "
-				+ "Where applicable, effective times are set on the unpublished content as part of this operation."
+		description="""
+			Creates a new resource version.
+			
+			The version tag (represented by an empty branch) is created on the resource's current working branch. Where applicable, effective times are set on the unpublished content as part of this operation to the version's effective time.
+		"""
 	)
 	@ApiResponses({
 		@ApiResponse(responseCode = "201", description = "Created"),
