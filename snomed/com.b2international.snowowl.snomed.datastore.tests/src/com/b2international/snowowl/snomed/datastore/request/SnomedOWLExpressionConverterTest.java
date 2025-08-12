@@ -18,8 +18,8 @@ package com.b2international.snowowl.snomed.datastore.request;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Set;
 
-import org.elasticsearch.core.Set;
 import org.junit.Test;
 
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -47,7 +47,7 @@ public class SnomedOWLExpressionConverterTest {
 	}
 	
 	private void testSubPropertyOf(String subPropertyOfAxiom) {
-		SnomedOWLExpressionConverter converter = new SnomedOWLExpressionConverter(() -> Set.of());
+		SnomedOWLExpressionConverter converter = new SnomedOWLExpressionConverter(Set::of);
 		
 		// XXX: Using nonsensical but valid SCTIDs
 		SnomedOWLExpressionConverterResult converterResult = converter.toSnomedOWLRelationships(

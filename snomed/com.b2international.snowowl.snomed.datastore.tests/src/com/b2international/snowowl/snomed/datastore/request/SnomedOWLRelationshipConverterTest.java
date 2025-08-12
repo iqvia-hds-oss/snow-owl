@@ -19,8 +19,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
-import org.elasticsearch.core.Set;
 import org.junit.Test;
 
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;

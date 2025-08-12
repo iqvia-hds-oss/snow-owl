@@ -19,9 +19,8 @@ import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.elasticsearch.core.Set;
 
 import com.b2international.collections.PrimitiveCollectionModule;
 import com.b2international.commons.metric.Metrics;

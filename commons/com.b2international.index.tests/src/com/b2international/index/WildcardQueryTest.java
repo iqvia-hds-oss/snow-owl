@@ -18,8 +18,8 @@ package com.b2international.index;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
+import java.util.List;
 
-import org.elasticsearch.core.List;
 import org.junit.Before;
 import org.junit.Test;
 

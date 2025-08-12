@@ -21,8 +21,8 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.fail;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
-import org.elasticsearch.core.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;

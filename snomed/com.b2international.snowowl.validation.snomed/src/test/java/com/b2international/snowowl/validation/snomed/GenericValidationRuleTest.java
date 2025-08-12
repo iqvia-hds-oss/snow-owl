@@ -22,11 +22,11 @@ import static com.b2international.snowowl.test.commons.snomed.RandomSnomedIdenti
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
-import org.elasticsearch.core.List;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;

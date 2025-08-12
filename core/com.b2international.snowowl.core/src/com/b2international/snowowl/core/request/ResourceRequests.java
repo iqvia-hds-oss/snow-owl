@@ -15,7 +15,7 @@
  */
 package com.b2international.snowowl.core.request;
 
-import org.elasticsearch.core.List;
+import java.util.List;
 
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.bundle.Bundle;

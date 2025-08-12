@@ -17,7 +17,8 @@ package com.b2international.snowowl.snomed.core.rest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.elasticsearch.core.Map;
+import java.util.Map;
+
 import org.junit.Test;
 
 import com.b2international.commons.json.Json;

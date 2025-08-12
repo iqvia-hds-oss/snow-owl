@@ -18,11 +18,11 @@ package com.b2international.snowowl.snomed.core.commit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.elasticsearch.core.Map;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;

@@ -15,9 +15,8 @@
  */
 package com.b2international.snowowl.core.request.search;
 
+import java.util.List;
 import java.util.Set;
-
-import org.elasticsearch.core.List;
 
 import com.b2international.commons.collections.Collections3;
 import com.b2international.index.query.Expression;
