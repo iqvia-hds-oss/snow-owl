@@ -22,9 +22,9 @@ import static com.b2international.snowowl.test.commons.rest.RestExtensions.given
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenRequestWithToken;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Map;
 import java.util.UUID;
 
-import org.elasticsearch.core.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 

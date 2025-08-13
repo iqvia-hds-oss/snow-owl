@@ -21,6 +21,7 @@ import java.io.StringReader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.impl.ResourceImpl;
@@ -33,7 +34,6 @@ import org.eclipse.xtext.util.CancelIndicator;
 import org.eclipse.xtext.validation.CheckMode;
 import org.eclipse.xtext.validation.IResourceValidator;
 import org.eclipse.xtext.validation.Issue;
-import org.elasticsearch.core.Set;
 
 import com.b2international.commons.Pair;
 import com.b2international.commons.StringUtils;

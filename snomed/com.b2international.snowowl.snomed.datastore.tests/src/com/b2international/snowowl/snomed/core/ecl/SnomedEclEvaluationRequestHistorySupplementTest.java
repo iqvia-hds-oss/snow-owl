@@ -17,9 +17,9 @@ package com.b2international.snowowl.snomed.core.ecl;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Set;
 import java.util.UUID;
 
-import org.elasticsearch.core.Set;
 import org.junit.Before;
 import org.junit.Test;
 

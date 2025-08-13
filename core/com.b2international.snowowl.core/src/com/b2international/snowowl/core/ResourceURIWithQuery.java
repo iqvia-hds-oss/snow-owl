@@ -20,13 +20,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.Serializable;
 import java.util.Objects;
 
-import org.elasticsearch.common.Strings;
-
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.branch.Branch;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 

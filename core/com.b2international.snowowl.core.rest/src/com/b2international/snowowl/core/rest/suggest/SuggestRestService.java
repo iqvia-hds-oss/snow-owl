@@ -17,7 +17,6 @@ package com.b2international.snowowl.core.rest.suggest;
 
 import java.util.List;
 
-import org.elasticsearch.common.Strings;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +29,7 @@ import com.b2international.snowowl.core.request.suggest.ConceptSuggestionRequest
 import com.b2international.snowowl.core.request.suggest.Suggestions;
 import com.b2international.snowowl.core.rest.AbstractRestService;
 import com.b2international.snowowl.core.rest.CoreApiConfig;
+import com.google.common.base.Strings;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

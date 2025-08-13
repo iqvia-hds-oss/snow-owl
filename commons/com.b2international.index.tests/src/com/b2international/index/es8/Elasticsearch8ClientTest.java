@@ -18,9 +18,9 @@ package com.b2international.index.es8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
-import org.elasticsearch.core.List;
 import org.junit.Test;
 
 import com.b2international.collections.PrimitiveCollectionModule;

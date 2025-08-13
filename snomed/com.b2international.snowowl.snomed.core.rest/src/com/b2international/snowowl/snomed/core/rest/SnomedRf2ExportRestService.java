@@ -17,7 +17,6 @@ package com.b2international.snowowl.snomed.core.rest;
 
 import java.io.File;
 
-import org.elasticsearch.common.Strings;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -42,6 +41,7 @@ import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.core.rest.domain.SnomedRf2ExportConfiguration;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2ExportRequestBuilder;
+import com.google.common.base.Strings;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -18,9 +18,6 @@ package com.b2international.snowowl.core.rest.resource;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.assertGetVersion;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.createVersion;
 import static com.b2international.snowowl.test.commons.collections.TerminologyResourceCollectionRestRequests.*;
-import static com.b2international.snowowl.test.commons.collections.TerminologyResourceCollectionRestRequests.assertTerminologyResourceCollectionGet;
-import static com.b2international.snowowl.test.commons.collections.TerminologyResourceCollectionRestRequests.createTerminologyResourceCollection;
-import static com.b2international.snowowl.test.commons.collections.TerminologyResourceCollectionRestRequests.prepareTerminologyResourceCollectionCreateBody;
 import static com.b2international.snowowl.test.commons.rest.BundleApiAssert.assertBundleGet;
 import static com.b2international.snowowl.test.commons.rest.BundleApiAssert.createBundle;
 import static com.b2international.snowowl.test.commons.rest.CodeSystemApiAssert.assertCodeSystemCreate;
@@ -31,10 +28,10 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.nullValue;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-import org.elasticsearch.core.List;
-import org.elasticsearch.core.Map;
 import org.junit.After;
 import org.junit.Test;
 

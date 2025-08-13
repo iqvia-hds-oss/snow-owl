@@ -26,9 +26,9 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 
-import org.elasticsearch.core.List;
 import org.junit.Test;
 
 import com.b2international.snowowl.core.ResourceURI;

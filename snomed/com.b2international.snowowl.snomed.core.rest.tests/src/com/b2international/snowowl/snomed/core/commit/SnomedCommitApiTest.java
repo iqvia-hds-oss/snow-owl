@@ -20,10 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.elasticsearch.core.Map;
 import org.junit.Before;
 import org.junit.Test;
 

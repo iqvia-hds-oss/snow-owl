@@ -17,12 +17,12 @@ package com.b2international.snowowl.core.request.suggest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-import org.elasticsearch.core.Map;
 import jakarta.validation.constraints.NotEmpty;
 
 import com.b2international.snowowl.core.ServiceProvider;
