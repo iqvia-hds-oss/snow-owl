@@ -88,6 +88,12 @@ public class EclRewriter extends EclSwitch<EObject> {
 		object.setConstraint(rewrite(object.getConstraint()));
 		return object;
 	}
+	
+	@Override
+	public EObject caseReverseMemberOf(ReverseMemberOf object) {
+		object.setConstraint(rewrite(object.getConstraint()));
+		return object;
+	}
 
 	@Override
 	public EObject caseEclConceptReference(EclConceptReference object) {
