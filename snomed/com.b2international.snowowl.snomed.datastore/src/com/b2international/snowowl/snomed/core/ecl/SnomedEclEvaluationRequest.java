@@ -141,6 +141,26 @@ final class SnomedEclEvaluationRequest extends EclEvaluationRequest<BranchContex
 		}
 	}
 	
+	/**
+	 * Handles ReverseMemberOf simple expression constraints
+	 * @see TODO add doc link
+	 */
+	protected Promise<Expression> eval(BranchContext context, ReverseMemberOf reverseMemberOf) {
+		final ExpressionConstraint inner = reverseMemberOf.getConstraint();
+		if (inner instanceof EclConceptReference) {
+			final EclConceptReference concept = (EclConceptReference) inner;
+			return collectRefsetMemberMatches(context, SnomedRf2Headers.FIELD_REFSET_ID, Set.of(concept.getId()));
+		} else if (isAnyExpression(inner)) {
+			return collectRefsetMemberMatches(context, SnomedRf2Headers.FIELD_REFSET_ID, ALL_MEMBERSHIPS);
+		} else if (inner instanceof NestedExpression) {
+			return EclExpression.of(inner, expressionForm)
+					.resolve(context)
+					.thenWith(ids -> collectRefsetMemberMatches(context, SnomedRf2Headers.FIELD_REFSET_ID, ids));
+		} else {
+			return throwUnsupported(inner);
+		}
+	}
+	
 	private Promise<Expression> collectRefsetMemberMatches(BranchContext context, String refsetFieldNameToLoad, Set<String> focusConcepts) {
 		// when the special Set is provided load all matches efficiently
 		final boolean loadAll = ALL_MEMBERSHIPS == focusConcepts;

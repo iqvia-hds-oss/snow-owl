@@ -235,6 +235,17 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 	}
 	
 	@Test
+	public void reverseMemberOf() throws Exception {
+		indexRevision(MAIN, concept(Concepts.ROOT_CONCEPT)
+				.activeMemberOf(List.of(Concepts.REFSET_B2I_EXAMPLE))
+				.memberOf(List.of(Concepts.REFSET_B2I_EXAMPLE))
+				.build());
+		final Expression actual = eval("^R " + Concepts.ROOT_CONCEPT);
+		final Expression expected = Revision.Expressions.ids(List.of(Concepts.REFSET_B2I_EXAMPLE));
+		assertEquals(expected, actual);
+	}
+	
+	@Test
 	public void descendantOf() throws Exception {
 		final Expression actual = eval("<"+ROOT_ID);
 		final Expression expected = descendantsOf(ROOT_ID);
