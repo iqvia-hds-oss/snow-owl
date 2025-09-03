@@ -18,11 +18,7 @@ package com.b2international.index.es.log;
 import java.io.Serializable;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Core;
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.*;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
@@ -58,6 +54,14 @@ public final class Slf4jAppender extends AbstractAppender {
 		} else if (Level.INFO == event.getLevel()) {
 			log.info(event.getMessage().getFormattedMessage());
 		} else if ("DEPRECATION".equals(event.getLevel().name())) {
+			/* 
+			 * The deprecation logger used this level around version 7.10 to indicate that 
+			 * the feature in use will be phased out, but not in the next major version. 
+			 * Later releases use a regular WARN level message for this purpose.
+			 */
+			log.warn(event.getMessage().getFormattedMessage());
+		} else if ("CRITICAL".equals(event.getLevel().name())) {
+			// Similar to "DEPRECATION" but the feature goes away in the next major version
 			log.warn(event.getMessage().getFormattedMessage());
 		} else {
 			log.error("Unhandled level: {}\t{}", event.getLevel().name(), event.getMessage().getFormattedMessage());
@@ -65,10 +69,10 @@ public final class Slf4jAppender extends AbstractAppender {
 	}
 
 	@PluginFactory
-  public static Slf4jAppender createAppender(
-    		@PluginAttribute("name") String name, 
-    		@PluginElement("Layout") Layout<? extends Serializable> layout) {
+	public static Slf4jAppender createAppender(
+    	@PluginAttribute("name") String name, 
+    	@PluginElement("Layout") Layout<? extends Serializable> layout
+	) {
 		return new Slf4jAppender(name, null, layout);
-  }
-
+	}
 }
