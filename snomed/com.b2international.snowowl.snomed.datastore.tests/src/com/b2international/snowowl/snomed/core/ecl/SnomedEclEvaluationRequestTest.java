@@ -206,20 +206,32 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 	}
 	
 	@Test
-	public void memberOfSupportedRefsetField() throws Exception {
-		final Expression actual = eval("^ [referencedComponentId]"+Concepts.REFSET_DESCRIPTION_TYPE);
+	public void memberOfSupportedRefsetField_ReferencedComponentId() throws Exception {
+		// this is the default memberOf expression as well
+		final Expression actual = eval("^ [referencedComponentId]" + Concepts.REFSET_DESCRIPTION_TYPE);
 		final Expression expected = activeMemberOf(Concepts.REFSET_DESCRIPTION_TYPE);
+		assertEquals(expected, actual);
+	}
+	
+	@Test
+	public void memberOfSupportedRefsetField_RefsetId() throws Exception {
+		indexRevision(MAIN, concept(Concepts.ROOT_CONCEPT)
+				.activeMemberOf(List.of(Concepts.REFSET_B2I_EXAMPLE))
+				.memberOf(List.of(Concepts.REFSET_B2I_EXAMPLE))
+				.build());
+		final Expression actual = eval("^ [refsetId]" + Concepts.ROOT_CONCEPT);
+		final Expression expected = Revision.Expressions.ids(List.of(Concepts.REFSET_B2I_EXAMPLE));
 		assertEquals(expected, actual);
 	}
 	
 	@Test(expected = BadRequestException.class)
 	public void memberOfUnsupportedRefsetField() throws Exception {
-		eval("^ [moduleId, mapTarget]"+Concepts.REFSET_DESCRIPTION_TYPE);
+		eval("^ [moduleId, mapTarget]" + Concepts.REFSET_DESCRIPTION_TYPE);
 	}
 	
 	@Test(expected = BadRequestException.class)
 	public void memberOfUnsupportedWildcard() throws Exception {
-		eval("^ [*]"+Concepts.REFSET_DESCRIPTION_TYPE);
+		eval("^ [*]" + Concepts.REFSET_DESCRIPTION_TYPE);
 	}
 	
 	@Test

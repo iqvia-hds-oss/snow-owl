@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 
+import com.b2international.commons.CompareUtils;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.options.Options;
@@ -36,14 +37,17 @@ import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.index.query.Query;
 import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.snomed.ecl.ecl.*;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.events.util.Promise;
+import com.b2international.snowowl.core.repository.RevisionDocument;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.ecl.EclEvaluationRequest;
 import com.b2international.snowowl.core.request.search.MatchTermFilter;
+import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
@@ -81,6 +85,11 @@ final class SnomedEclEvaluationRequest extends EclEvaluationRequest<BranchContex
 		Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_PREFERRED, "preferredIn",
 		Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_ACCEPTABLE, "acceptableIn"
 	);
+	
+	private static final Set<String> SUPPORTED_REFSET_FIELDS = Set.of(SnomedRf2Headers.FIELD_REFERENCED_COMPONENT_ID, SnomedRf2Headers.FIELD_REFSET_ID);
+
+	// special singleton object that selects all content during a MemberOf operator
+	private static final Set<String> ALL_MEMBERSHIPS = Set.of();
 
 	@NotNull
 	@JsonProperty
@@ -99,22 +108,72 @@ final class SnomedEclEvaluationRequest extends EclEvaluationRequest<BranchContex
 	 */
 	protected Promise<Expression> eval(BranchContext context, MemberOf memberOf) {
 		List<String> refsetFields = Collections3.toImmutableList(memberOf.getRefsetFields());
-		if (refsetFields.size() > 1 || (!refsetFields.isEmpty() && !refsetFields.contains(SnomedRf2Headers.FIELD_REFERENCED_COMPONENT_ID))) {
-			return throwUnsupported(memberOf, "Unsupported refsetFieldName selection: " + refsetFields);
+		String refsetFieldNameToLoad;
+		if (refsetFields.isEmpty()) {
+			// no explicit selection, this will "select" the referencedComponentId field and check for activeMemberOf
+			refsetFieldNameToLoad = SnomedRf2Headers.FIELD_REFERENCED_COMPONENT_ID;
+		} else if (refsetFields.size() == 1) { 
+			// we allow only a single refsetField selection, explicit referencedComponentId due avoid incorrect data type returns from unknown refset fields
+			// TODO later support non-conceptId fields
+			if (SUPPORTED_REFSET_FIELDS.contains(refsetFields.getFirst())) {
+				refsetFieldNameToLoad = refsetFields.getFirst();
+			} else {
+				return throwUnsupported(memberOf, "Unsupported refsetFieldName selection: " + refsetFields);
+			}
+		} else {
+			// selecting more than one field is not supported, as we need a single conceptId like column value to be able to put it into an ID filter
+			// TODO support returning non-concept responses from ECL
+			return throwUnsupported(memberOf, "Selecting more than one refset fields is not supported. Selected fields: " + refsetFields);
 		}
 		
 		final ExpressionConstraint inner = memberOf.getConstraint();
 		if (inner instanceof EclConceptReference) {
 			final EclConceptReference concept = (EclConceptReference) inner;
-			return Promise.immediate(activeMemberOf(concept.getId()));
+			return collectRefsetMemberMatches(context, refsetFieldNameToLoad, Set.of(concept.getId()));
 		} else if (isAnyExpression(inner)) {
-			return Promise.immediate(Expressions.exists(ACTIVE_MEMBER_OF));
+			return collectRefsetMemberMatches(context, refsetFieldNameToLoad, ALL_MEMBERSHIPS);
 		} else if (inner instanceof NestedExpression) {
 			return EclExpression.of(inner, expressionForm)
 					.resolve(context)
-					.then(ids -> activeMemberOf(ids));
+					.thenWith(ids -> collectRefsetMemberMatches(context, refsetFieldNameToLoad, ids));
 		} else {
 			return throwUnsupported(inner);
+		}
+	}
+	
+	private Promise<Expression> collectRefsetMemberMatches(BranchContext context, String refsetFieldNameToLoad, Set<String> focusConcepts) {
+		// when the special Set is provided load all matches efficiently
+		final boolean loadAll = ALL_MEMBERSHIPS == focusConcepts;
+		
+		// if not loading all and no focus concepts selected, match none
+		if (!loadAll && CompareUtils.isEmpty(focusConcepts)) {
+			return Promise.immediate(Expressions.matchNone());
+		}
+		
+		
+		// must match the SUPPORTED_REFSET_FIELDS set
+		switch (refsetFieldNameToLoad) {
+		case SnomedRf2Headers.FIELD_REFERENCED_COMPONENT_ID:
+			if (loadAll) {
+				return Promise.immediate(Expressions.exists(ACTIVE_MEMBER_OF));
+			} else {
+				return Promise.immediate(activeMemberOf(focusConcepts));
+			}
+		case SnomedRf2Headers.FIELD_REFSET_ID:
+			// loading all is effectively the same as loading only a portion
+			// we have only one efficient solution, loading the focus concepts and gathering all activeMemberOf field values into a single set
+			return SnomedRequests.prepareSearchConcept()
+				.all() // TODO change this to streaming
+				.filterByIds(focusConcepts)
+				.setFields(SnomedConcept.Fields.ID, SnomedConceptDocument.Fields.ACTIVE_MEMBER_OF)
+				.build(context.service(ResourceURI.class))
+				.execute(context.service(IEventBus.class))
+				.then(concepts -> {
+					final Set<String> allRefsetIds = concepts.stream().flatMap(c -> c.getActiveMemberOf().stream()).collect(Collectors.toSet());
+					return RevisionDocument.Expressions.ids(allRefsetIds);
+				});
+		default:
+			throw new IllegalStateException("Missing implementation on how to effectively fetch members for: " + refsetFieldNameToLoad);
 		}
 	}
 	
