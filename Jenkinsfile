@@ -32,8 +32,7 @@ properties(
 				)
 			]
 		),
-		buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '3')),
-		pipelineTriggers([pollSCM('H/5 * * * 1-5')])
+		buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '3'))
 	]
 )
 
