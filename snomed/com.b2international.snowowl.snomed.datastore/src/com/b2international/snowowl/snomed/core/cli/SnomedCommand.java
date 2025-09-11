@@ -16,16 +16,18 @@
 package com.b2international.snowowl.snomed.core.cli;
 
 import java.io.*;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.b2international.commons.exceptions.NotFoundException;
+import com.b2international.commons.time.TimeUtil;
 import com.b2international.index.Hits;
+import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Query;
 import com.b2international.index.revision.Commit;
 import com.b2international.index.revision.RevisionBranch;
@@ -36,6 +38,8 @@ import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.console.Command;
 import com.b2international.snowowl.core.console.CommandLineStream;
 import com.b2international.snowowl.core.date.Dates;
@@ -51,11 +55,18 @@ import com.b2international.snowowl.snomed.cis.domain.SctId;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.datastore.SnomedDatastoreActivator;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedComponentDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
 import picocli.CommandLine;
@@ -75,6 +86,7 @@ import picocli.CommandLine.Parameters;
 		HelpCommand.class,
 		SnomedCommand.ImportCommand.class,
 		SnomedCommand.IdentifiersCommand.class,
+		SnomedCommand.SyncIdentifiersCommand.class,
 		SnomedCommand.RevisionCheckCommand.class
 	}
 )
@@ -217,6 +229,233 @@ public final class SnomedCommand extends Command {
 		private void handleException(Exception e, CommandLineStream out) {
 			out.println("An error occurred while exporting SctIds.");
 			throw SnowowlRuntimeException.wrap(e);
+		}
+		
+	}
+	
+	@picocli.CommandLine.Command(
+			name = "sync-ids",
+			header = "Synchronizes SNOMED CT core component identifiers with the built-in CIS store",
+			description = "Synchronize SNOMED CT identifiers"
+			)
+	private static final class SyncIdentifiersCommand extends Command {
+				
+		@Override
+		public void run(CommandLineStream out) {
+			
+			Stopwatch watch = Stopwatch.createStarted();
+			
+			ISnomedIdentifierService identifierService = getContext().service(ISnomedIdentifierService.class);
+			
+			if (!(identifierService instanceof InternalSnomedIdentifierService)) {
+				out.println("The current Component Identifier Service is not a local store, synchronization is not available");
+				return;
+			}
+			
+			out.println("Collecting published SNOMED component identifiers ...");
+			
+			Set<String> publishedIds = Sets.newHashSet();
+			
+			((InternalSnomedIdentifierService) identifierService).cisStore().read( searcher -> {
+					
+				Query<String> idQuery = Query.select(String.class)
+						.from(SctId.class)
+						.fields("sctid")
+						.where(SctId.Expressions.status(IdentifierStatus.PUBLISHED.getSerializedName()))
+						.limit(100_000)
+						.build();
+				
+				searcher.scroll(idQuery).forEach( hits -> {
+					hits.forEach(publishedIds::add);
+					if (publishedIds.size() % 1_000_000 == 0) {
+						out.println("\tcollected " + publishedIds.size() + " identifiers ...");
+					}
+				});
+				
+			    return null;
+			    
+			});
+			
+			out.println("");
+			out.println("Collecting assigned SNOMED component identifiers ...");
+			
+			Set<String> assignedIds = Sets.newHashSet();
+			
+			((InternalSnomedIdentifierService) identifierService).cisStore().read( searcher -> {
+					
+				Query<String> idQuery = Query.select(String.class)
+						.from(SctId.class)
+						.fields("sctid")
+						.where(SctId.Expressions.status(IdentifierStatus.ASSIGNED.getSerializedName()))
+						.limit(100_000)
+						.build();
+				
+				searcher.scroll(idQuery).forEach( hits -> {
+					hits.forEach(assignedIds::add);
+					if (assignedIds.size() % 1_000_000 == 0) {
+						out.println("\tcollected " + assignedIds.size() + " identifiers ...");
+					}
+				});
+				
+			    return null;
+			    
+			});
+			
+			out.println("");
+			out.println("Total number of published identifiers in the local store: " + publishedIds.size());
+			out.println("Total number of assigned identifiers in the local store: " + assignedIds.size());
+			
+			out.println("");
+			out.println("Collecting SNOMED component identifiers not yet registered ...");
+			
+			List<Class<? extends SnomedComponentDocument>> types = ImmutableList.of(
+					SnomedConceptDocument.class,
+					SnomedDescriptionIndexEntry.class, 
+					SnomedRelationshipIndexEntry.class
+				);
+			
+			List<CodeSystem> codeSystems = CodeSystemRequests.prepareSearchCodeSystem()
+					.all()
+					.build(SnomedDatastoreActivator.REPOSITORY_UUID)
+					.execute(getBus())
+					.getSync()
+					.stream()
+					.sorted( (cs1,cs2) -> Ints.compare(cs1.getShortName().length(), cs2.getShortName().length()))
+					.collect(Collectors.toList());
+				
+			out.println("");
+			out.println("Found the following SNOMED code systems:");
+			codeSystems.forEach(cs -> out.println("\t" + cs.getShortName() + " -> " + cs.getBranchPath()));
+			out.println("");
+			out.println("");
+			
+			Set<String> allReleasedSnomedComponentIdentifiers = Sets.newHashSet();
+			Set<String> allUnreleasedSnomedComponentIdentifiers = Sets.newHashSet();
+			
+			RevisionIndex index = getContext().service(RepositoryManager.class)
+					.get(SnomedDatastoreActivator.REPOSITORY_UUID)
+					.service(RevisionIndex.class);
+			
+			for (CodeSystem codeSystem : codeSystems) {
+				
+				Set<String> releasedCodeSystemIdentifiers = Sets.newHashSet();
+				Set<String> unreleasedCodeSystemIdentifiers = Sets.newHashSet();
+				
+				index.read(codeSystem.getBranchPath(), searcher -> {
+					
+					for (Class<? extends SnomedComponentDocument> type : types) {
+						
+						out.println("Collecting identifiers of '" + type.getSimpleName() + "(s)' using branch '" + codeSystem.getBranchPath() + "' ...");
+						
+						Query<String[]> idQuery = Query.select(String[].class)
+								.from(type)
+								.fields(SnomedComponentDocument.Fields.ID, SnomedComponentDocument.Fields.RELEASED)
+								.where(Expressions.matchAll())
+								.limit(100_000)
+								.build();
+						
+						int count = 0;
+						
+						for (Hits<String[]> hits : searcher.scroll(idQuery)) {
+							
+							for (String[] hit : hits) {
+								
+								String id = hit[0];
+								String released = hit[1];
+								
+								if (Boolean.valueOf(released)) {
+									releasedCodeSystemIdentifiers.add(id);
+								} else {
+									unreleasedCodeSystemIdentifiers.add(id);
+								}
+								
+							}
+							
+							count+=hits.getHits().size();
+							
+							if (hits.getTotal() < 1_000_000 || count == hits.getTotal()) {
+								out.println("\tprocessed " + count + " / " + hits.getTotal() + " identifiers");
+							} else if (count % 1_000_000 == 0) {
+								out.println("\tprocessed " + count + " / " + hits.getTotal() + " identifiers");
+							}
+							
+						}
+						
+					}
+					
+					return null;
+					
+				});
+				
+				out.println("");
+				out.println("Total number of released identifiers in '" + codeSystem.getShortName() + "': " + releasedCodeSystemIdentifiers.size());
+				out.println("Total number of unreleased identifiers in '" + codeSystem.getShortName() + "': " + unreleasedCodeSystemIdentifiers.size());
+				out.println("");
+				
+				allReleasedSnomedComponentIdentifiers.addAll(releasedCodeSystemIdentifiers);
+				allUnreleasedSnomedComponentIdentifiers.addAll(unreleasedCodeSystemIdentifiers);
+			
+			}
+			
+			out.println("");
+			out.println("Total number of released identifiers in all SNOMED code systems: " + allReleasedSnomedComponentIdentifiers.size());
+			out.println("Total number of unreleased identifiers in all SNOMED code systems: " + allUnreleasedSnomedComponentIdentifiers.size());
+			out.println("");
+			
+			Set<String> notRegisteredPublishedIds = Sets.difference(allReleasedSnomedComponentIdentifiers, publishedIds);
+			
+			if (!notRegisteredPublishedIds.isEmpty()) {
+				
+				int publishCount = 0;
+				
+				for (List<String> ids : Iterables.partition(notRegisteredPublishedIds, 100_000)) {
+					
+					SnomedRequests.identifiers()
+						.preparePublish()
+						.setComponentIds(ids)
+						.buildAsync()
+						.execute(getBus())
+						.getSync();
+					
+					publishCount+=ids.size();
+					
+					out.println("Publishing ids (" + publishCount + " / " + notRegisteredPublishedIds.size() + ") ...");
+					
+				}
+				
+			} else {
+				out.println("All existing released SNOMED identifiers are present in the local identifier service");
+			}
+			
+			Set<String> notRegisteredUnpublishedIds = Sets.difference(allUnreleasedSnomedComponentIdentifiers, assignedIds);
+			
+			if (!notRegisteredUnpublishedIds.isEmpty()) {
+				
+				int unpublishCount = 0;
+				
+				for (List<String> ids : Iterables.partition(notRegisteredUnpublishedIds, 100_000)) {
+					
+					SnomedRequests.identifiers()
+						.prepareRegister()
+						.setComponentIds(ids)
+						.buildAsync()
+						.execute(getBus())
+						.getSync();
+					
+					unpublishCount+=ids.size();
+					
+					out.println("Registering ids (" + unpublishCount + " / " + notRegisteredUnpublishedIds.size() + ") ...");
+					
+				}
+				
+			} else {
+				out.println("All existing unreleased SNOMED identifiers are present in the local identifier service");
+			}
+
+			out.println("");
+			out.println("Execution took: " + TimeUtil.toString(watch));
+			out.println("");
+			
 		}
 		
 	}
