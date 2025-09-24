@@ -36,7 +36,7 @@ public final class DefaultRepositoryContext implements RepositoryContext {
 	private final ServiceProvider serviceProvider;
 	private final RepositoryInfo info;
 
-	DefaultRepositoryContext(ServiceProvider serviceProvider, RepositoryInfo info) {
+	public DefaultRepositoryContext(ServiceProvider serviceProvider, RepositoryInfo info) {
 		this.info = checkNotNull(info, "info");
 		this.serviceProvider = checkNotNull(serviceProvider, "serviceProvider");
 	}
