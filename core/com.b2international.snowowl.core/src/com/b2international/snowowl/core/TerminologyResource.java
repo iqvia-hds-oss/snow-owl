@@ -24,6 +24,8 @@ import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.index.revision.RevisionIndex;
 import com.b2international.snowowl.core.branch.Branch;
+import com.b2international.snowowl.core.branch.BranchInfo;
+import com.b2international.snowowl.core.codesystem.UpgradeInfo;
 import com.b2international.snowowl.core.commit.CommitInfos;
 import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.internal.ResourceDocument.Builder;
@@ -81,6 +83,8 @@ public abstract class TerminologyResource extends Resource {
 		public static final String COMMITS_TIMESTAMP_FROM_OPTION_KEY = "timestampFrom";
 		public static final String COMMITS_TIMESTAMP_TO_OPTION_KEY = "timestampTo";
 		public static final String COMMITS_RELATIVE_BRANCH_OPTION_KEY = "relativeBranch";
+		public static final String EXTENSION_OF_BRANCH_INFO = "extensionOfBranchInfo";
+		public static final String UPGRADE_INFO = "upgradeInfo";
 
 		/**
 		 * Expand option to expand the resource object of a dependency reference. 
@@ -128,6 +132,9 @@ public abstract class TerminologyResource extends Resource {
 
 	private Versions versions;
 	private CommitInfos commits;
+	private BranchInfo extensionOfBranchInfo;
+	private UpgradeInfo upgradeInfo;
+
 
 	/**
 	 * @return the assigned object identifier (OID) of this code system, eg. "{@code 3.4.5.6.10000}" (can be {@code null})
@@ -169,6 +176,20 @@ public abstract class TerminologyResource extends Resource {
 	public List<Dependency> getDependencies() {
 		return dependencies;
 	}
+	
+	public List<ResourceURI> getAvailableUpgrades() {
+		List<ResourceURI> availableUpgrades = new ArrayList<>();
+		dependencies.stream().filter(dep -> dep.isExtensionOf() && dep.getUpgrades() != null).forEach(dep -> availableUpgrades.addAll(dep.getUpgrades()));
+		return availableUpgrades;
+	}
+	
+	public BranchInfo getExtensionOfBranchInfo() {
+		return extensionOfBranchInfo;
+	}
+	
+	public UpgradeInfo getUpgradeInfo() {
+		return upgradeInfo;
+	}
 
 	/**
 	 * Searches the dependency array for the first dependency that has the matching scope.
@@ -191,6 +212,14 @@ public abstract class TerminologyResource extends Resource {
 
 	public void setDependencies(List<Dependency> dependencies) {
 		this.dependencies = dependencies;
+	}
+	
+	public void setExtensionOfBranchInfo(BranchInfo extensionOfBranchInfo) {
+		this.extensionOfBranchInfo = extensionOfBranchInfo;
+	}
+	
+	public void setUpgradeInfo(UpgradeInfo upgradeInfo) {
+		this.upgradeInfo = upgradeInfo;
 	}
 	
 	/**

@@ -25,8 +25,14 @@ import javax.annotation.OverridingMethodsMustInvokeSuper;
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.commons.options.Options;
+import com.b2international.index.revision.BaseRevisionBranching;
+import com.b2international.index.revision.RevisionBranch;
+import com.b2international.index.revision.RevisionBranch.BranchState;
 import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.branch.Branch;
+import com.b2international.snowowl.core.branch.BranchInfo;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.UpgradeInfo;
 import com.b2international.snowowl.core.commit.CommitInfo;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.domain.PageableCollectionResource;
@@ -37,10 +43,12 @@ import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.request.BaseResourceConverter;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.request.resource.BaseResourceSearchRequest.ResourceHiddenFilter;
+import com.b2international.snowowl.core.uri.ResourceURIPathResolver;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.Versions;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import com.google.common.collect.*;
 
 /**
@@ -110,6 +118,9 @@ public abstract class BaseMetadataResourceConverter<R extends Resource, CR exten
 		expandDependencyUpgrades(results);
 		expandDependencyResources(results);
 		
+		expandExtensionOfBranchState(results);
+		expandUpgradeOfInfo(results);
+
 		// expand additional fields via pluggable converters
 		converters.expand(context(), expand(), locales(), results);
 	}
@@ -217,6 +228,115 @@ public abstract class BaseMetadataResourceConverter<R extends Resource, CR exten
 			});
 	
 			dep.setUpgrades(upgradeUris.orElseGet(List::of));
+		}
+	}
+	
+	private void expandExtensionOfBranchState(List<R> results) {
+		if (!expand().containsKey(CodeSystem.Expand.EXTENSION_OF_BRANCH_INFO)) {
+			return;
+		}
+		
+		// extensionOf branches are the parent branches of the CodeSystem, so simple branch state calculation is enough
+		for (R result : results) {
+			if (!(result instanceof CodeSystem)) {
+				continue;
+			}
+			
+			CodeSystem codeSystem = (CodeSystem) result;
+			Branch branch = RepositoryRequests.branching().prepareGet(codeSystem.getBranchPath()).build(codeSystem.getToolingId()).execute(context());
+			BranchState branchState = branch.state();
+			codeSystem.setExtensionOfBranchInfo(new BranchInfo(branch.path(), branchState, branch.baseTimestamp(), branch.headTimestamp()));				
+		}
+	}
+
+	private void expandUpgradeOfInfo(List<R> results) {
+		if (!expand().containsKey(CodeSystem.Expand.UPGRADE_INFO)) {
+			return;
+		}
+		
+		final List<ResourceURI> upgradeOfURIs = results.stream()
+				.filter(resource -> resource instanceof CodeSystem)
+				.map(r -> (CodeSystem) r)
+				.filter(codeSystem -> codeSystem.getUpgradeOf() != null)
+				.map(codeSystem -> codeSystem.getUpgradeOf().withoutPath())
+				.collect(Collectors.toList());
+		
+		// nothing to expand, quit early
+		if (upgradeOfURIs.isEmpty()) {
+			return;
+		}
+		
+		final List<String> upgradeOfBranches = context().service(ResourceURIPathResolver.class).resolve(context(), upgradeOfURIs);
+		
+		final Map<ResourceURI, String> branchesByUpgradeOf = Maps.newHashMap();
+		Iterator<ResourceURI> uriIterator = upgradeOfURIs.iterator();
+		Iterator<String> branchIterator = upgradeOfBranches.iterator();
+		while (uriIterator.hasNext() && branchIterator.hasNext()) {
+			ResourceURI uri = uriIterator.next();
+			String branch = branchIterator.next();
+			branchesByUpgradeOf.put(uri, branch);
+		}
+
+		for (R result : results) {
+			
+			if (!(result instanceof CodeSystem)) {
+				continue;
+			}
+			
+			CodeSystem cs = (CodeSystem) result;
+			if (cs.getUpgradeOf() == null) {
+				continue;
+			}
+			String upgradeOfCodeSystemBranchPath = branchesByUpgradeOf.get(cs.getUpgradeOf().withoutPath());
+			
+			if (!Strings.isNullOrEmpty(upgradeOfCodeSystemBranchPath)) {
+				RepositoryContext ctx = context().service(RepositoryManager.class).getContext(cs.getToolingId());
+				BaseRevisionBranching branching = ctx.service(BaseRevisionBranching.class);
+				
+				RevisionBranch branch = branching.getBranch(cs.getBranchPath());
+				BranchState branchState = branching.getBranchState(cs.getBranchPath(), upgradeOfCodeSystemBranchPath);
+				BranchInfo mainInfo = new BranchInfo(branch.getPath(), branchState, branch.getBaseTimestamp(), branch.getHeadTimestamp());
+				
+				List<ResourceURI> availableVersions = Lists.newArrayList();
+				List<BranchInfo> versionBranchInfo = Lists.newArrayList();
+
+				if (!cs.getUpgradeOf().isHead()) {
+					long startTimestamp;
+					final String upgradeOfVersionBranch = context().service(ResourceURIPathResolver.class).resolve(context(), List.of(cs.getUpgradeOf())).stream().findFirst().orElse("");
+
+					if (!Strings.isNullOrEmpty(upgradeOfVersionBranch)) {
+						startTimestamp = branching.getBranch(upgradeOfVersionBranch).getBaseTimestamp() + 1;
+					} else {
+						startTimestamp = Long.MIN_VALUE;
+					}
+					
+					ResourceRequests.prepareSearchVersion()
+						.all()
+						.filterByResource(cs.getUpgradeOf().withoutPath())
+						.build()
+						.execute(context())
+						.stream()
+						.filter(csv -> !csv.getVersionResourceURI().isHead())
+						.forEach(csv -> {
+							RevisionBranch versionBranch = branching.getBranch(csv.getBranchPath());
+							
+							if (versionBranch.getParentPath().equals(upgradeOfCodeSystemBranchPath)) {
+								
+								if (versionBranch.getBaseTimestamp() > startTimestamp) {
+									BranchState versionBranchState = branching.getBranchState(cs.getBranchPath(), versionBranch.getPath());
+									if (versionBranchState == BranchState.BEHIND || versionBranchState == BranchState.DIVERGED) {
+										availableVersions.add(csv.getVersionResourceURI());
+									}
+									
+									versionBranchInfo.add(new BranchInfo(branch.getPath(), versionBranchState, versionBranch.getBaseTimestamp(), versionBranch.getHeadTimestamp()));
+								}
+								
+							}
+						});
+				}
+				
+				cs.setUpgradeInfo(new UpgradeInfo(mainInfo, versionBranchInfo, availableVersions));
+			}
 		}
 	}
 	
