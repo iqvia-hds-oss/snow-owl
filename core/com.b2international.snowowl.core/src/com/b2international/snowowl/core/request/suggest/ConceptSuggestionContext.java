@@ -16,12 +16,14 @@
 package com.b2international.snowowl.core.request.suggest;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.tartarus.snowball.ext.EnglishStemmer;
 
 import com.b2international.commons.collections.Collections3;
+import com.b2international.commons.exceptions.ApiException;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.index.compat.TextConstants;
@@ -30,12 +32,16 @@ import com.b2international.snowowl.core.ResourceTypeConverter;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ResourceURIWithQuery;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.domain.DelegatingContext;
 import com.b2international.snowowl.core.domain.Description;
 import com.google.common.base.Splitter;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.*;
 
 /**
@@ -52,6 +58,32 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	private final SortedSet<String> likes;
 	private final SortedSet<String> unlikes;
 	private final List<ExtendedLocale> locales;
+	
+	// provides a cache to avoid loading the same content again from the stores and compute the topTokens only once per run for a given config
+	private final LoadingCache<TopTokenConfig, List<String>> topTokenCache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+		@Override
+		public List<String> load(TopTokenConfig config) throws Exception {
+			
+			// Gather tokens based on the config and the English language characteristics
+			final Multiset<String> tokenOccurrences = HashMultiset.create();
+			final EnglishStemmer stemmer = new EnglishStemmer();
+			
+			// tokens to consider are streamed based on the like parameter configuration
+			streamLikes()
+				.map(term -> term.toLowerCase(Locale.US))
+				.flatMap(lowerCaseTerm -> TOKEN_SPLITTER.splitToList(lowerCaseTerm).stream())
+				.filter(token -> token.length() >= config.minTokenLength) // skip short tokens
+				.filter(token -> !TextConstants.STOP_WORDS_EN.contains(token)) // ignore stopwords from top tokens, so they won't interfere with minShouldMatch
+				.map(token -> config.stemming ? stemToken(stemmer, token) : token)
+				.forEach(tokenOccurrences::add);
+			
+			return Multisets.copyHighestCountFirst(tokenOccurrences)
+				.elementSet()
+				.stream()
+				.limit(config.topTokenCount)
+				.collect(Collectors.toList());
+		}
+	});
 	
 	// dynamically computed exclusion items during like item computation
 	private Multimap<ResourceURI, String> exclusionQueriesPerResourceUri = HashMultimap.create();
@@ -185,23 +217,15 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	}
 
 	public List<String> topTokens(int topTokenCount, int minTokenLength, boolean stemming) {
-		// Gather tokens
-		final Multiset<String> tokenOccurrences = HashMultiset.create(); 
-		final EnglishStemmer stemmer = new EnglishStemmer();
-		
-		this.streamLikes()
-			.map(term -> term.toLowerCase(Locale.US))
-			.flatMap(lowerCaseTerm -> TOKEN_SPLITTER.splitToList(lowerCaseTerm).stream())
-			.filter(token -> token.length() >= minTokenLength) // skip short tokens
-			.filter(token -> !TextConstants.STOP_WORDS_EN.contains(token)) // ignore stopwords from top tokens, so they won't interfere with minShouldMatch
-			.map(token -> stemming ? stemToken(stemmer, token) : token)
-			.forEach(tokenOccurrences::add);
-		
-		return Multisets.copyHighestCountFirst(tokenOccurrences)
-			.elementSet()
-			.stream()
-			.limit(topTokenCount)
-			.collect(Collectors.toList());
+		try {
+			return topTokenCache.get(new TopTokenConfig(topTokenCount, minTokenLength, stemming));
+		} catch (ExecutionException e) {
+			if (e.getCause() instanceof ApiException) {
+				throw (ApiException) e.getCause();
+			} else {
+				throw new SnowowlRuntimeException("Couldn't compute top tokens based on requested config: ", e);
+			}
+		}
 	}
 	
 	private String stemToken(EnglishStemmer stemmer, String token) {
@@ -209,5 +233,7 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 		stemmer.stem();
 		return stemmer.getCurrent();
 	}
+	
+	private record TopTokenConfig(int topTokenCount, int minTokenLength, boolean stemming) {}
 	
 }
