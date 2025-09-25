@@ -33,6 +33,8 @@ import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ResourceURIWithQuery;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
+import com.b2international.snowowl.core.branch.Branch;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
@@ -91,7 +93,12 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	public ConceptSuggestionContext(ServiceProvider context, String from, List<String> likes, List<String> unlikes, List<ExtendedLocale> locales) {
 		super(context);
 		this.locales = locales;
-		this.from = resolveUri(context, from);
+		var resolvedUri = resolveUri(context, from);
+		if (resolvedUri == null) {
+			// treat unresolved URIs as CodeSystems for now, it would be better to lookup a resource if present with this ID and throw an error if not
+			resolvedUri = CodeSystem.uriWithQuery(from);
+		}
+		this.from = resolvedUri;
 		this.likes = Collections3.toImmutableSortedSet(likes);
 		this.unlikes = Collections3.toImmutableSortedSet(unlikes);
 	}
@@ -207,7 +214,7 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	private ResourceURIWithQuery resolveUri(ServiceProvider context, String uriToResolve) {
 		// find the appropriate resource for this URI by looking at the plugged in resources types
 		for (ResourceTypeConverter resourceTypeConverter : context.service(ResourceTypeConverter.Registry.class).getResourceTypeConverters().values()) {
-			if (uriToResolve.startsWith(resourceTypeConverter.getResourceType())) {
+			if (uriToResolve.startsWith(resourceTypeConverter.getResourceType() + Branch.SEPARATOR)) {
 				return resourceTypeConverter.resolveToCodeSystemUriWithQuery(context, uriToResolve);
 			}
 		}
