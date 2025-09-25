@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
+import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator;
 
 import io.restassured.response.ValidatableResponse;
@@ -41,8 +42,6 @@ import io.restassured.response.ValidatableResponse;
  */
 public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 
-	private static final String CODE_SYSTEM_PATH = "SNOMEDCT";
-	
 	private static final String BODY_STRUCTURE_ID = "123037004";
 	private static final String CLINICAL_FINDING_ID = "404684003";
 	private static final String SPECIAL_CONCEPT_ID = "370115009";
@@ -55,7 +54,7 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestTerm() {
 		suggest(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
+				"from", SnomedContentRule.SNOMEDCT.toString(),
 				"like", Json.array("body structure"),
 				"suggester", Json.object(
 					"type", "term"
@@ -74,7 +73,7 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestMlt() {
 		suggest(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
+				"from", SnomedContentRule.SNOMEDCT.toString(),
 				"like", Json.array("body structure"),
 				"suggester", Json.object(
 					"type", "mlt"
@@ -87,6 +86,25 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 			.body("limit", equalTo(1))
 			.body("total", greaterThanOrEqualTo(1))
 			.body("items[0].id", equalTo("118956008"));
+	}
+	
+	@Test
+	public void suggestLexical() {
+		suggest(
+			Json.object(
+				"from", SnomedContentRule.SNOMEDCT.toString(),
+				"like", Json.array("body structure"),
+				"suggester", Json.object(
+					"type", "lexical"
+				)
+			)
+		)
+			.statusCode(200)
+			.assertThat()
+			// Use default limit
+			.body("limit", equalTo(1))
+			.body("total", greaterThanOrEqualTo(1))
+			.body("items[0].id", equalTo(BODY_STRUCTURE_ID));
 	}
 	
 	@Test
@@ -151,8 +169,8 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 		// suggest should still work without any errors
 		suggest(
 			Json.object(
-				"from", getDefaultSnomedResourceUri().withoutResourceType(),
-				"like", Json.array(String.format("%s?ecl=%s", getDefaultSnomedResourceUri().withoutResourceType(), baseConceptId)),
+				"from", getDefaultSnomedResourceUri().toString(),
+				"like", Json.array(getDefaultSnomedResourceUri().withQuery(String.format("ecl=%s", baseConceptId))),
 				"suggester", Json.object(
 					"type", "term"
 				)
@@ -170,7 +188,7 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestTerm_Post() {
 		suggest(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
+				"from", SnomedContentRule.SNOMEDCT.toString(),
 				"like", Json.array("finding clinical"),
 				"suggester", Json.object(
 					"type", "term"
@@ -189,7 +207,7 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestNoMatch() {
 		suggest(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
+				"from", SnomedContentRule.SNOMEDCT.toString(),
 				"like", Json.array("empty result term"),
 				"suggester", Json.object(
 					"type", "term"
@@ -207,7 +225,7 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestTermMinOccurrence() {
 		suggest(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
+				"from", SnomedContentRule.SNOMEDCT.toString(),
 				"like", Json.array("special concept"),
 				"suggester", Json.object(
 					"type", "term",
@@ -228,8 +246,8 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestQueryMinOccurrence() {
 		suggest(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
-				"like", Json.array(String.format("%s?ecl=%s", CODE_SYSTEM_PATH, Ecl.or(SPECIAL_CONCEPT_ID, ATTRIBUTE_ID))),
+				"from", SnomedContentRule.SNOMEDCT.toString(),
+				"like", Json.array(String.format("%s?ecl=%s", SnomedContentRule.SNOMEDCT.toString(), Ecl.or(SPECIAL_CONCEPT_ID, ATTRIBUTE_ID))),
 				"suggester", Json.object(
 					"type", "term",
 					"minOccurenceCount", 2
@@ -247,9 +265,9 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestMustNotQueryMinOccurrence() {
 		suggest(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
-				"like", Json.array(String.format("%s?ecl=%s", CODE_SYSTEM_PATH, Ecl.or(SPECIAL_CONCEPT_ID, ATTRIBUTE_ID))),
-				"unlike", Json.array(String.format("%s?ecl=%s", CODE_SYSTEM_PATH, "<<" + Concepts.FOUNDATION_METADATA_CONCEPTS)),
+				"from", SnomedContentRule.SNOMEDCT.toString(),
+				"like", Json.array(String.format("%s?ecl=%s", SnomedContentRule.SNOMEDCT.toString(), Ecl.or(SPECIAL_CONCEPT_ID, ATTRIBUTE_ID))),
+				"unlike", Json.array(String.format("%s?ecl=%s", SnomedContentRule.SNOMEDCT.toString(), "<<" + Concepts.FOUNDATION_METADATA_CONCEPTS)),
 				"suggester", Json.object(
 					"type", "term",
 					"minOccurenceCount", 2
@@ -267,7 +285,7 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	public void suggestBulk() {
 		final List<Json> body = List.of(
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
+				"from", SnomedContentRule.SNOMEDCT.toString(),
 				"like", Json.array("STRUCTURE BODY"),
 				"suggester", Json.object(
 					"type", "term"
@@ -276,7 +294,7 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 				"preferredDisplay", "ID_ONLY"
 			),
 			Json.object(
-				"from", CODE_SYSTEM_PATH,
+				"from", SnomedContentRule.SNOMEDCT.toString(),
 				"like", Json.array("clinical finding"),
 				"suggester", Json.object(
 					"type", "term"
