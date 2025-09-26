@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.index.query.TextPredicate.MatchType;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
@@ -242,9 +243,10 @@ public class Expressions {
 	}
 	
 	public static Expression dismaxWithScoreCategories(List<Expression> disjuncts) {
+		Preconditions.checkNotNull(disjuncts, "Must provide a list of disjunct query clauses");
 		return new DisMaxPredicate(
 			IntStream.range(0, disjuncts.size())
-				.mapToObj(i -> scriptScore(disjuncts.get(i), "normalizeWithOffset", Map.of("offset", disjuncts.size() - 1 - i)))
+				.mapToObj(i -> normalizeScores(disjuncts.get(i), disjuncts.size() - 1 - i))
 				.collect(Collectors.toList()),
 			0.0f
 		);
@@ -272,6 +274,10 @@ public class Expressions {
 	
 	public static Expression scriptQuery(String script, Map<String, Object> params) {
 		return new ScriptQueryExpression(script, params);
+	}
+	
+	public static Expression normalizeScores(Expression query, float minScore) {
+		return scriptScore(query, "normalizeWithOffset", Map.of("offset", minScore)); 
 	}
 
 	public static Expression matchAnyObject(String field, Iterable<?> values) {
