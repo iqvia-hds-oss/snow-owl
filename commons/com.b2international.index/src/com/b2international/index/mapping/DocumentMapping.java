@@ -207,7 +207,7 @@ public final class DocumentMapping {
 				
 				@Override
 				public String script() {
-					return "(_score / (_score + 1.0f)) + params.offset";
+					return "saturation(_score, 1) + params.offset";
 				}
 				
 				@Override
