@@ -25,7 +25,6 @@ import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.index.revision.RevisionIndex;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.branch.BranchInfo;
-import com.b2international.snowowl.core.codesystem.UpgradeInfo;
 import com.b2international.snowowl.core.commit.CommitInfos;
 import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.internal.ResourceDocument.Builder;
@@ -133,8 +132,6 @@ public abstract class TerminologyResource extends Resource {
 	private Versions versions;
 	private CommitInfos commits;
 	private BranchInfo extensionOfBranchInfo;
-	private UpgradeInfo upgradeInfo;
-
 
 	/**
 	 * @return the assigned object identifier (OID) of this code system, eg. "{@code 3.4.5.6.10000}" (can be {@code null})
@@ -186,10 +183,6 @@ public abstract class TerminologyResource extends Resource {
 	public BranchInfo getExtensionOfBranchInfo() {
 		return extensionOfBranchInfo;
 	}
-	
-	public UpgradeInfo getUpgradeInfo() {
-		return upgradeInfo;
-	}
 
 	/**
 	 * Searches the dependency array for the first dependency that has the matching scope.
@@ -216,10 +209,6 @@ public abstract class TerminologyResource extends Resource {
 	
 	public void setExtensionOfBranchInfo(BranchInfo extensionOfBranchInfo) {
 		this.extensionOfBranchInfo = extensionOfBranchInfo;
-	}
-	
-	public void setUpgradeInfo(UpgradeInfo upgradeInfo) {
-		this.upgradeInfo = upgradeInfo;
 	}
 	
 	/**
