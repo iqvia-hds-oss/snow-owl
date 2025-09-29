@@ -58,17 +58,21 @@ public abstract class ImportRequestBuilder<T extends ImportRequestBuilder<T>>
 	}
 	
 	public AsyncRequest<CommitResult> build(CodeSystemURI codeSystemUri) {
-		return new RepositoryCommitRequestBuilder()
+		return commit()
 				.setBody(build())
 				.setCommitComment(String.format("Imported components from source file '%s'", attachment.getFileName()))
 				.build(codeSystemUri);
 	}
 	
 	public AsyncRequest<CommitResult> build(String repositoryId, String branch) {
-		return new RepositoryCommitRequestBuilder()
+		return commit()
 				.setBody(build())
 				.setCommitComment(String.format("Imported components from source file '%s'", attachment.getFileName()))
 				.build(repositoryId, branch);
 	} 
-	
+
+	protected RepositoryCommitRequestBuilder commit() {
+		return new RepositoryCommitRequestBuilder();
+	}
+
 }
