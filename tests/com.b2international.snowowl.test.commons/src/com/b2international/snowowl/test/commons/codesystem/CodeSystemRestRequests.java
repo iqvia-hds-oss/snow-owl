@@ -15,7 +15,8 @@
  */
 package com.b2international.snowowl.test.commons.codesystem;
 
-import static com.b2international.snowowl.test.commons.rest.RestExtensions.*;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.assertCreated;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -170,6 +171,14 @@ public abstract class CodeSystemRestRequests {
 	
 	public static CodeSystem getCodeSystem(String codeSystemId) {
 		return assertGetCodeSystem(codeSystemId).statusCode(200).extract().as(CodeSystem.class);
+	}
+	
+	public static CodeSystem getCodeSystem(String codeSystemId, List<String> expand) {
+		 return givenAuthenticatedRequest(ApiTestConstants.CODESYSTEMS_API)
+			.param("expand", expand)
+		 	.get("/{id}", codeSystemId)
+			.then().assertThat()
+			.statusCode(200).extract().as(CodeSystem.class);
 	}
 
 	public static ValidatableResponse updateCodeSystem(String id, Map<?, ?> requestBody) {
