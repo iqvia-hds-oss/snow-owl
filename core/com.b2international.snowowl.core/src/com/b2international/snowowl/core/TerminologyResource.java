@@ -171,12 +171,6 @@ public abstract class TerminologyResource extends Resource {
 	public List<Dependency> getDependencies() {
 		return dependencies;
 	}
-	
-	public List<ResourceURI> getAvailableUpgrades() {
-		List<ResourceURI> availableUpgrades = new ArrayList<>();
-		dependencies.stream().filter(dep -> dep.isExtensionOf() && dep.getUpgrades() != null).forEach(dep -> availableUpgrades.addAll(dep.getUpgrades()));
-		return availableUpgrades;
-	}
 
 	/**
 	 * Searches the dependency array for the first dependency that has the matching scope.
