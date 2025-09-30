@@ -34,6 +34,16 @@ public final class CodeSystem extends TerminologyResource {
 	
 	public static final String RESOURCE_TYPE = "codesystems";
 	
+	private UpgradeInfo upgradeInfo;
+	
+	public UpgradeInfo getUpgradeInfo() {
+		return upgradeInfo;
+	}
+	
+	public void setUpgradeInfo(UpgradeInfo upgradeInfo) {
+		this.upgradeInfo = upgradeInfo;
+	}
+
 	@Override
 	public String getResourceType() {
 		return RESOURCE_TYPE;
@@ -49,10 +59,6 @@ public final class CodeSystem extends TerminologyResource {
 	
 	public static ResourceURIWithQuery uriWithQuery(String codeSystemIdWithQuery) {
 		return codeSystemIdWithQuery.startsWith(RESOURCE_TYPE + Branch.SEPARATOR) ? new ResourceURIWithQuery(codeSystemIdWithQuery) : ResourceURIWithQuery.of(RESOURCE_TYPE, codeSystemIdWithQuery);
-	}
-	
-	public UpgradeInfo getUpgradeInfo() {
-		return getDependency(TerminologyResource.DependencyScope.UPGRADE_OF).map(Dependency::getUpgradeInfo).orElse(null);
 	}
 	
 	public static CodeSystem from(ResourceDocument doc) {

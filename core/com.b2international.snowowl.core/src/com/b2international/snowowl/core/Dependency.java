@@ -20,7 +20,6 @@ import java.util.*;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.collections.Collections3;
-import com.b2international.snowowl.core.codesystem.UpgradeInfo;
 import com.b2international.snowowl.core.internal.DependencyDocument;
 import com.b2international.snowowl.core.internal.DependencyEntry;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -44,7 +43,6 @@ public final class Dependency implements Serializable, DependencyEntry {
 	// expandable props
 	private TerminologyResource resource;
 	private List<ResourceURI> upgrades;
-	private UpgradeInfo upgradeInfo;
 
 	@JsonCreator
 	Dependency(@JsonProperty("uri") ResourceURIWithQuery uri, @JsonProperty("scope") String scope) {
@@ -99,14 +97,6 @@ public final class Dependency implements Serializable, DependencyEntry {
 	 */
 	public void setUpgrades(List<ResourceURI> upgrades) {
 		this.upgrades = upgrades;
-	}
-
-	public UpgradeInfo getUpgradeInfo() {
-		return upgradeInfo;
-	}
-	
-	public void setUpgradeInfo(UpgradeInfo upgradeInfo) {
-		this.upgradeInfo = upgradeInfo;
 	}
 
 	/**
