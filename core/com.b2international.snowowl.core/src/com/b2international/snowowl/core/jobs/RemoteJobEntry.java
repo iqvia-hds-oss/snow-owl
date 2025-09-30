@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public final class RemoteJobEntry implements Serializable {
 	public static class Fields {
 		public static final String ID = "id";
 		public static final String KEY = "key";
+		public static final String TYPE = "type";
 		public static final String DELETED = "deleted";
 		public static final String USER = "user";
 		public static final String STATE = "state";
@@ -79,6 +80,7 @@ public final class RemoteJobEntry implements Serializable {
 		public static final String PARAMETERS = "parameters";
 		public static final Set<String> SORT_FIELDS = ImmutableSet.of(
 			ID,
+			TYPE,
 			DELETED,
 			USER,
 			STATE,
@@ -111,6 +113,14 @@ public final class RemoteJobEntry implements Serializable {
 
 		public static Expression keys(Collection<String> keys) {
 			return matchAny(Fields.KEY, keys);
+		}
+		
+		public static Expression type(String type) {
+			return exactMatch(Fields.TYPE, type);
+		}
+		
+		public static Expression types(Collection<String> types) {
+			return matchAny(Fields.TYPE, types);
 		}
 
 		public static Expression deleted(boolean deleted) {
@@ -172,6 +182,7 @@ public final class RemoteJobEntry implements Serializable {
 
 		private String id;
 		private String key;
+		private String type;
 		private String description;
 		private String user;
 		private Date scheduleDate;
@@ -194,6 +205,11 @@ public final class RemoteJobEntry implements Serializable {
 
 		public Builder key(String key) {
 			this.key = key;
+			return this;
+		}
+		
+		public Builder type(String type) {
+			this.type = type;
 			return this;
 		}
 		
@@ -248,7 +264,7 @@ public final class RemoteJobEntry implements Serializable {
 		}
 		
 		public RemoteJobEntry build() {
-			return new RemoteJobEntry(id, key, description, user, scheduleDate, startDate, finishDate, state, completionLevel, deleted, result, parameters);
+			return new RemoteJobEntry(id, key, type, description, user, scheduleDate, startDate, finishDate, state, completionLevel, deleted, result, parameters);
 		}
 		
 	}
@@ -256,6 +272,8 @@ public final class RemoteJobEntry implements Serializable {
 	@ID
 	private final String id;
 	private final String key;
+	
+	private final String type;
 	
 	@Field(aliases = {
 		@FieldAlias(name = "text", type = FieldAliasType.TEXT, analyzer = Analyzers.TOKENIZED, searchAnalyzer = Analyzers.TOKENIZED_SYNONYMS),
@@ -279,6 +297,7 @@ public final class RemoteJobEntry implements Serializable {
 	private RemoteJobEntry(
 			final String id,
 			final String key,
+			final String type,
 			final String description, 
 			final String user, 
 			final Date scheduleDate, 
@@ -291,6 +310,7 @@ public final class RemoteJobEntry implements Serializable {
 			final String parameters) {
 		this.id = id;
 		this.key = key;
+		this.type = type;
 		this.description = description;
 		this.user = user;
 		this.scheduleDate = scheduleDate;
@@ -309,6 +329,10 @@ public final class RemoteJobEntry implements Serializable {
 
 	public String getKey() {
 		return key;
+	}
+	
+	public String getType() {
+		return type;
 	}
 	
 	public String getDescription() {

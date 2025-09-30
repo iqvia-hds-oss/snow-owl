@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 package com.b2international.snowowl.core.jobs;
-
-import static com.b2international.snowowl.core.jobs.RemoteJobEntry.Expressions.states;
-import static com.b2international.snowowl.core.jobs.RemoteJobEntry.Expressions.users;
 
 import java.util.Collections;
 
@@ -44,6 +41,11 @@ final class SearchJobRequest extends SearchIndexResourceRequest<ServiceProvider,
 		 * Filter matches unique job keys.
 		 */
 		KEY,
+
+		/**
+		 * Filter matches based on their executed request type 
+		 */
+		TYPE,
 		
 		/**
 		 * Filter matches by description, status, user and created/started/finished date.
@@ -67,9 +69,8 @@ final class SearchJobRequest extends SearchIndexResourceRequest<ServiceProvider,
 		
 		addIdFilter(queryBuilder, RemoteJobEntry.Expressions::ids);
 
-		if (containsKey(OptionKey.KEY)) {
-			queryBuilder.filter(RemoteJobEntry.Expressions.keys(getCollection(OptionKey.KEY, String.class)));
-		}
+		addFilter(queryBuilder, OptionKey.KEY, String.class, RemoteJobEntry.Expressions::keys);
+		addFilter(queryBuilder, OptionKey.TYPE, String.class, RemoteJobEntry.Expressions::types);
 		
 		if (containsKey(OptionKey.TERM)) {
 			String searchTerm = getString(OptionKey.TERM);
@@ -82,17 +83,8 @@ final class SearchJobRequest extends SearchIndexResourceRequest<ServiceProvider,
 			);
 		}
 		
-		if (containsKey(OptionKey.USER)) {
-			queryBuilder.filter(users(getCollection(OptionKey.USER, String.class)));
-		}
-		
-		if (containsKey(OptionKey.STATE)) {
-			queryBuilder.filter(states(getCollection(OptionKey.STATE, RemoteJobState.class)));
-		}
-		
-		if (options().containsKey("type")) {
-			queryBuilder.filter(Expressions.nestedMatch("parameters", Expressions.matchAny("", options().getCollection("type", String.class))));
-		}
+		addFilter(queryBuilder, OptionKey.USER, String.class, RemoteJobEntry.Expressions::users);
+		addFilter(queryBuilder, OptionKey.STATE, RemoteJobState.class, RemoteJobEntry.Expressions::states);
 		
 		return queryBuilder.build();
 	}
