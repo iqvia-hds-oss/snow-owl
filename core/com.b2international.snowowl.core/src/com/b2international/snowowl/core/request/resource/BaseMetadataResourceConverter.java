@@ -25,11 +25,8 @@ import javax.annotation.OverridingMethodsMustInvokeSuper;
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.commons.options.Options;
-import com.b2international.index.revision.RevisionBranch.BranchState;
 import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.branch.Branch;
-import com.b2international.snowowl.core.branch.BranchInfo;
-import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.commit.CommitInfo;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.domain.PageableCollectionResource;
@@ -113,8 +110,6 @@ public abstract class BaseMetadataResourceConverter<R extends Resource, CR exten
 		expandDependencyUpgrades(results);
 		expandDependencyResources(results);
 		
-		expandExtensionOfBranchState(results);
-
 		// expand additional fields via pluggable converters
 		converters.expand(context(), expand(), locales(), results);
 	}
@@ -222,24 +217,6 @@ public abstract class BaseMetadataResourceConverter<R extends Resource, CR exten
 			});
 	
 			dep.setUpgrades(upgradeUris.orElseGet(List::of));
-		}
-	}
-	
-	private void expandExtensionOfBranchState(List<R> results) {
-		if (!expand().containsKey(CodeSystem.Expand.EXTENSION_OF_BRANCH_INFO)) {
-			return;
-		}
-		
-		// extensionOf branches are the parent branches of the CodeSystem, so simple branch state calculation is enough
-		for (R result : results) {
-			if (!(result instanceof CodeSystem)) {
-				continue;
-			}
-			
-			CodeSystem codeSystem = (CodeSystem) result;
-			Branch branch = RepositoryRequests.branching().prepareGet(codeSystem.getBranchPath()).build(codeSystem.getToolingId()).execute(context());
-			BranchState branchState = branch.state();
-			codeSystem.setExtensionOfBranchInfo(new BranchInfo(branch.path(), branchState, branch.baseTimestamp(), branch.headTimestamp()));				
 		}
 	}
 	
