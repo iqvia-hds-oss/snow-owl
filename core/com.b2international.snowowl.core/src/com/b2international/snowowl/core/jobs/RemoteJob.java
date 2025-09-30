@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,12 @@ import com.b2international.commons.exceptions.ApiException;
 import com.b2international.snowowl.core.CoreActivator;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
+import com.b2international.snowowl.core.authorization.AuthorizedRequest;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.events.RequestInitializationRequired;
 import com.b2international.snowowl.core.identity.User;
+import com.b2international.snowowl.core.monitoring.MonitoredRequest;
+import com.b2international.snowowl.core.rate.RateLimitingRequest;
 import com.b2international.snowowl.core.status.Statuses;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Predicate;
@@ -82,12 +86,23 @@ public final class RemoteJob extends Job {
 		final IProgressMonitor trackerMonitor = this.context.service(RemoteJobTracker.class).createMonitor(id, monitor);
 		try {
 			// seed the monitor instance into the current context, so the request can use it for progress reporting
-			final ServiceProvider context = this.context.inject()
+			final ServiceProvider executionContext = this.context.inject()
 					.bind(IProgressMonitor.class, trackerMonitor)
 					.bind(RemoteJob.class, this)
 					.bind(User.class, user)
 					.build();
-			final Object response = request.execute(context);
+			// simulate the same normal request execution execution flow to verify authorization, gather and print metrics, etc.
+			// monitor each request execution
+			final Object response = new MonitoredRequest<>(
+				// authorize each request execution
+				new AuthorizedRequest<>(
+					// rate limit all requests
+					new RateLimitingRequest<>(
+						// actual request
+						request
+					)
+				)
+			).execute(executionContext);
 			if (response != null) {
 				final Class<? extends Object> responseType = response.getClass();
 				if (Primitives.isWrapperType(responseType) || String.class.isAssignableFrom(responseType) || UUID.class.isAssignableFrom(responseType)) {
@@ -167,6 +182,22 @@ public final class RemoteJob extends Job {
 	@SuppressWarnings("unchecked")
 	public Map<String, Object> getParameters(ObjectMapper mapper) {
 		return mapper.convertValue(request, Map.class);
+	}
+
+	public void initializeRequest() {
+		initializeRequest(this.context, this.request);
+	}
+
+	private void initializeRequest(ServiceProvider context, Request<?, ?> request) {
+		if (request instanceof RequestInitializationRequired reqWithInit) {
+			reqWithInit.initializeRequestContext(context);
+		}
+		for (Request<?, ?> nested : request.getNestedRequests()) {
+			// XXX certain request implementations might return themselves in getNestedRequests()
+			if (nested != request) {
+				initializeRequest(context, nested);
+			}
+		}
 	}
 	
 }
