@@ -46,6 +46,11 @@ public interface ApiTestConstants {
 	 * The context-relative base URL for the bundle controller.
 	 */
 	String BUNDLE_API = "/bundles";
+
+	/**
+	 * The context-relative base URL for the jobs controller.
+	 */
+	String JOBS_API = "/jobs";
 	
 	/**
 	 * The context-relative base URL for the suggest controller.
