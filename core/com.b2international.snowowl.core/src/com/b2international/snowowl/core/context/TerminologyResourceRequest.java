@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.repository.PathTerminologyResourceResolver;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 /**
@@ -52,6 +53,7 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 		super(next);
 		this.toolingId = toolingId;
 		this.resourcePath = resourcePath;
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(resourcePath), "Resource path may not be null or empty");
 		if (resourcePath.startsWith(Branch.MAIN_PATH) && Strings.isNullOrEmpty(toolingId)) {
 			throw new BadRequestException("Reflective access ('repositoryId/path') to terminology resource content is not supported in this API.")
 				.withDeveloperMessage("No toolingId is specified on API level to ensure the correct reflective access to underlying terminology.");
