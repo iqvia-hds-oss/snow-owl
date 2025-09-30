@@ -59,12 +59,16 @@ public abstract class ImportRequestBuilder<T extends ImportRequestBuilder<T>>
 	}
 	
 	public AsyncRequest<CommitResult> build(ResourceURI codeSystemUri) {
-		return new TerminologyResourceCommitRequestBuilder()
+		return commit()
 			.setBody(build())
 			.setCommitComment(String.format("Imported components from source file '%s'", attachment.getFileName()))
 			// ImportRequest will take care of acquiring this lock before commits are run
 			.setParentContextDescription(DatastoreLockContextDescriptions.IMPORT)
 			.build(codeSystemUri);
+	}
+
+	protected TerminologyResourceCommitRequestBuilder commit() {
+		return new TerminologyResourceCommitRequestBuilder();
 	}
 	
 }
