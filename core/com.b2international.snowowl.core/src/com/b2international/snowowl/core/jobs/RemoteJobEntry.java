@@ -30,6 +30,8 @@ import com.b2international.index.Script;
 import com.b2international.index.mapping.Field;
 import com.b2international.index.mapping.FieldAlias;
 import com.b2international.index.mapping.FieldAlias.FieldAliasType;
+import com.b2international.index.migrate.DocumentMappingMigrationStrategy;
+import com.b2international.index.migrate.SchemaRevision;
 import com.b2international.index.query.Expression;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -42,7 +44,12 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSet;
 
-@Doc(type = "job")
+@Doc(
+	type = "job",
+	revisions = {
+		@SchemaRevision(version = 2, description = "add type field to properly identify job types", strategy = DocumentMappingMigrationStrategy.NO_REINDEX)
+	}
+)
 @JsonDeserialize(builder=RemoteJobEntry.Builder.class)
 @Script(name=RemoteJobEntry.WITH_DELETED, script="ctx._source.deleted = true")
 @Script(name=RemoteJobEntry.WITH_STATE, script=""
