@@ -42,8 +42,7 @@ public class MrcmExporterImpl implements MrcmExporter {
 	
 	@Override
 	public void doExport(User user, OutputStream content, MrcmExportFormat exportFormat, String branch) {
-		String authorizationToken = ApplicationContext.getServiceForClass(JWTGenerator.class).generate(user);
-		doExport(authorizationToken, content, exportFormat, branch);
+		doExport(getAuthorizationToken(user), content, exportFormat, branch);
 	}
 	
 	@Override
@@ -58,4 +57,16 @@ public class MrcmExporterImpl implements MrcmExporter {
 		}
 	}
 
+	private String getAuthorizationToken(User user) {
+		
+		// the user's precomputed access token must be used if present (e.g. on the client side)
+		if (user.getAccessToken() != null) {
+			return user.getAccessToken().getToken();
+		}
+
+		// otherwise a token should be generated (e.g. when invoked from the server side via a CLI command)
+		return ApplicationContext.getServiceForClass(JWTGenerator.class).generate(user);
+		
+	}
+	
 }

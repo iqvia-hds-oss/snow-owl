@@ -15,11 +15,7 @@
  */
 package com.b2international.snowowl.snomed.core.mrcm.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -100,10 +96,10 @@ public final class MrcmCommand extends Command {
 	)
 	private static final class ExportCommand extends Command {
 
-		@Parameters(paramLabel = "PATH", description = "Output directory to export the MRCM rules to. The output file will be automatically created.")
+		@Parameters(index = "0", paramLabel = "PATH", description = "Output directory to export the MRCM rules to. The output file will be automatically created.")
 		String path;
 		
-		@Parameters(paramLabel = "BRANCH", description = "SNOMEDCT branchpath to export the MRCM rules from.")
+		@Parameters(index = "1", paramLabel = "BRANCH", description = "SNOMEDCT branchpath to export the MRCM rules from.")
 		String branch;
 		
 		@Option(names = { "-f", "--format" }, defaultValue = "JSON", description = "MRCM Export Format option. CSV and JSON are supported.")
