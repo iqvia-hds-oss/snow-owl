@@ -171,7 +171,7 @@ public abstract class CodeSystemRestRequests {
 	}
 	
 	public static CodeSystem getCodeSystem(String codeSystemId, String...expand) {
-		return assertGetCodeSystem(codeSystemId).statusCode(200).extract().as(CodeSystem.class);
+		return assertGetCodeSystem(codeSystemId, expand).statusCode(200).extract().as(CodeSystem.class);
 	}
 	
 	public static ValidatableResponse updateCodeSystem(String id, Map<?, ?> requestBody) {
