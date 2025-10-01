@@ -38,14 +38,14 @@ public final class MatchTermFilter extends TermFilter {
 	private final Integer minShouldMatch;
 	
 	private final Boolean ignoreStopwords;
-	private final boolean caseSensitive;
+	private final Boolean caseSensitive;
 	private final Boolean synonyms;
 	
 	private final String fuzziness;
 	private final Integer prefixLength;
 	private final Integer maxExpansions;
 	
-	MatchTermFilter(final String term, final Integer minShouldMatch, final Boolean ignoreStopwords, final boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
+	MatchTermFilter(final String term, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
 		if (term == null) {
 			throw new BadRequestException("'term' filter parameter was null.");
 		}
@@ -71,7 +71,7 @@ public final class MatchTermFilter extends TermFilter {
 		return ignoreStopwords;
 	}
 	
-	public boolean isCaseSensitive() {
+	public Boolean isCaseSensitive() {
 		return caseSensitive;
 	}
 	
@@ -126,7 +126,7 @@ public final class MatchTermFilter extends TermFilter {
 		private Integer minShouldMatch;
 		
 		private Boolean ignoreStopwords;
-		private boolean caseSensitive;
+		private Boolean caseSensitive;
 		private Boolean synonyms;
 		
 		private String fuzziness;
@@ -162,7 +162,7 @@ public final class MatchTermFilter extends TermFilter {
 			return this;
 		}
 		
-		public Builder caseSensitive(boolean caseSensitive) {
+		public Builder caseSensitive(Boolean caseSensitive) {
 			this.caseSensitive = caseSensitive;
 			return this;
 		}

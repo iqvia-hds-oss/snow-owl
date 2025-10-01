@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,8 +73,8 @@ public final class ExactTermFilter extends TermFilter {
 			return this;
 		}
 		
-		public Builder caseSensitive(boolean caseSensitive) {
-			this.caseSensitive = caseSensitive;
+		public Builder caseSensitive(Boolean caseSensitive) {
+			this.caseSensitive = caseSensitive == null ? false : caseSensitive;
 			return this;
 		}
 		
