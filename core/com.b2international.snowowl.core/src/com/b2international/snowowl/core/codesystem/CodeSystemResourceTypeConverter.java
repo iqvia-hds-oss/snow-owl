@@ -122,9 +122,9 @@ public final class CodeSystemResourceTypeConverter implements ResourceTypeConver
 				RepositoryContext ctx = context.service(RepositoryManager.class).getContext(cs.getToolingId());
 				BaseRevisionBranching branching = ctx.service(BaseRevisionBranching.class);
 				
-				RevisionBranch branch = branching.getBranch(cs.getBranchPath());
-				BranchState branchState = branching.getBranchState(cs.getBranchPath(), upgradeOfCodeSystemBranchPath);
-				BranchInfo mainInfo = new BranchInfo(branch.getPath(), branchState, branch.getBaseTimestamp(), branch.getHeadTimestamp());
+				RevisionBranch codeSystemWorkingBranch = branching.getBranch(cs.getBranchPath());
+				BranchState codeSystemWorkingBranchStateCompareToUpgradeOfBranch = branching.getBranchState(cs.getBranchPath(), upgradeOfCodeSystemBranchPath);
+				BranchInfo codeSystemWorkingBranchInfo = new BranchInfo(codeSystemWorkingBranch.getPath(), codeSystemWorkingBranchStateCompareToUpgradeOfBranch, codeSystemWorkingBranch.getBaseTimestamp(), codeSystemWorkingBranch.getHeadTimestamp());
 				
 				List<ResourceURI> availableVersions = Lists.newArrayList();
 				List<BranchInfo> versionBranchInfo = Lists.newArrayList();
@@ -164,7 +164,7 @@ public final class CodeSystemResourceTypeConverter implements ResourceTypeConver
 						});
 				}
 				
-				cs.setUpgradeInfo(new UpgradeInfo(mainInfo, versionBranchInfo, availableVersions));
+				cs.setUpgradeInfo(new UpgradeInfo(codeSystemWorkingBranchInfo, versionBranchInfo, availableVersions));
 			}
 		}
 	}
