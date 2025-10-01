@@ -163,24 +163,17 @@ public abstract class CodeSystemRestRequests {
 		}
 	}
 
-	public static ValidatableResponse assertGetCodeSystem(String codeSystemId) {
+	public static ValidatableResponse assertGetCodeSystem(String codeSystemId, String...expand) {
 		return givenAuthenticatedRequest(ApiTestConstants.CODESYSTEMS_API)
+				.queryParam("expand", expand == null ? null : List.of(expand))
 				.get("/{id}", codeSystemId)
 				.then().assertThat();
 	}
 	
-	public static CodeSystem getCodeSystem(String codeSystemId) {
+	public static CodeSystem getCodeSystem(String codeSystemId, String...expand) {
 		return assertGetCodeSystem(codeSystemId).statusCode(200).extract().as(CodeSystem.class);
 	}
 	
-	public static CodeSystem getCodeSystem(String codeSystemId, List<String> expand) {
-		 return givenAuthenticatedRequest(ApiTestConstants.CODESYSTEMS_API)
-			.param("expand", expand)
-		 	.get("/{id}", codeSystemId)
-			.then().assertThat()
-			.statusCode(200).extract().as(CodeSystem.class);
-	}
-
 	public static ValidatableResponse updateCodeSystem(String id, Map<?, ?> requestBody) {
 		return givenAuthenticatedRequest(ApiTestConstants.CODESYSTEMS_API)
 				.contentType(ContentType.JSON)
