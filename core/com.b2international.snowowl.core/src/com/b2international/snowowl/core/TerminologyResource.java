@@ -81,7 +81,6 @@ public abstract class TerminologyResource extends Resource {
 		public static final String COMMITS_TIMESTAMP_FROM_OPTION_KEY = "timestampFrom";
 		public static final String COMMITS_TIMESTAMP_TO_OPTION_KEY = "timestampTo";
 		public static final String COMMITS_RELATIVE_BRANCH_OPTION_KEY = "relativeBranch";
-		public static final String EXTENSION_OF_BRANCH_INFO = "extensionOfBranchInfo";
 		public static final String UPGRADE_INFO = "upgradeInfo";
 
 		/**
