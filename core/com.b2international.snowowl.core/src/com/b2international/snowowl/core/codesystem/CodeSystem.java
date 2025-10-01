@@ -34,6 +34,16 @@ public final class CodeSystem extends TerminologyResource {
 	
 	public static final String RESOURCE_TYPE = "codesystems";
 	
+	private UpgradeInfo upgradeInfo;
+	
+	public UpgradeInfo getUpgradeInfo() {
+		return upgradeInfo;
+	}
+	
+	public void setUpgradeInfo(UpgradeInfo upgradeInfo) {
+		this.upgradeInfo = upgradeInfo;
+	}
+
 	@Override
 	public String getResourceType() {
 		return RESOURCE_TYPE;

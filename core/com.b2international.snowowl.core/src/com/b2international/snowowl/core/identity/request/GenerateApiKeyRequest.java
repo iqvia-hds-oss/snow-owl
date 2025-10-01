@@ -73,20 +73,25 @@ final class GenerateApiKeyRequest implements Request<ServiceProvider, User> {
 		
 		if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
 			user = context.service(IdentityProvider.class).auth(username, password);
-			newTokenPermissions = this.permissions == null ? user.getPermissions() : this.permissions.stream().map(Permission::valueOf).collect(Collectors.toList());
+			if (user != null) {
+				newTokenPermissions = this.permissions == null ? user.getPermissions() : this.permissions.stream().map(Permission::valueOf).collect(Collectors.toList());
+			}
 		} else if (!Strings.isNullOrEmpty(token)) {
 			user = context.service(AuthorizationHeaderVerifier.class).authJWT(token);
-			// at this point the token is valid but it might happen that it was issued by another authority allowed via JWKS provider, ensure that we only allow refreshing for the same issuer
-			final String serverIssuer = context.config().getModuleConfig(IdentityConfiguration.class).getIssuer();
-			final String tokenIssuer = JWT.decode(token).getIssuer();
-			if (!Objects.equals(tokenIssuer, serverIssuer)) {
-				throw new BadRequestException("Token cannot be refreshed as it was issued by another server: '%s'", tokenIssuer);
+			
+			if (user != null) { 
+				// at this point the token is valid but it might happen that it was issued by another authority allowed via JWKS provider, ensure that we only allow refreshing for the same issuer
+				final String serverIssuer = context.config().getModuleConfig(IdentityConfiguration.class).getIssuer();
+				final String tokenIssuer = JWT.decode(token).getIssuer();
+				if (!Objects.equals(tokenIssuer, serverIssuer)) {
+					throw new BadRequestException("Token cannot be refreshed as it was issued by another server: '%s'", tokenIssuer);
+				}
+				// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
+				if (!CompareUtils.isEmpty(this.permissions)) {
+					throw new BadRequestException("Token cannot be refreshed when permissions argument is also set.");
+				}
+				newTokenPermissions = user.getPermissions();
 			}
-			// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
-			if (!CompareUtils.isEmpty(this.permissions)) {
-				throw new BadRequestException("Token cannot be refreshed when permissions argument is also set.");
-			}
-			newTokenPermissions = user.getPermissions();
 		} else {
 			// check if there is an authorization token header and use that to login the user 
 			final RequestHeaders requestHeaders = context.service(RequestHeaders.class);
@@ -95,19 +100,21 @@ final class GenerateApiKeyRequest implements Request<ServiceProvider, User> {
 			if (!Strings.isNullOrEmpty(authorizationToken)) {
 				user = context.service(AuthorizationHeaderVerifier.class).auth(authorizationToken);
 				
-				// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
-				if (!CompareUtils.isEmpty(this.permissions)) {
-					throw new BadRequestException("Token cannot be refreshed when permissions argument is also set.");
+				if (user != null) {
+					// in case of token based auth, we only allow refreshing the token with the same permissions, to generate new tokens, the user/client has to provide its username and password again
+					if (!CompareUtils.isEmpty(this.permissions)) {
+						throw new BadRequestException("Token cannot be refreshed when permissions argument is also set.");
+					}
+					
+					newTokenPermissions = user.getPermissions();
 				}
-				
-				newTokenPermissions = user.getPermissions();
 			}
 		}
 		
 		if (user == null) {
 			throw new BadRequestException("Invalid authentication credentials provided.");
 		}
-
+		
 		// generate and attach the new token
 		user = user.withPermissions(newTokenPermissions);
 		return user.withAccessToken(context.service(JWTSupport.class).generate(user, expiration));
