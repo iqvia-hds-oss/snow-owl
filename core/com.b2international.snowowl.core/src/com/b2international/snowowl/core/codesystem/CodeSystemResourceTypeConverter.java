@@ -75,12 +75,11 @@ public final class CodeSystemResourceTypeConverter implements ResourceTypeConver
 			});
 		}
 		
-		expandUpgradeOfInfo(context, expand, results);
+		expandUpgradeInfo(context, expand, results);
 		
 	}
 
-	@SuppressWarnings("deprecation")
-	private <T extends Resource> void expandUpgradeOfInfo(RepositoryContext context, Options expand, Collection<T> results) {
+	private <T extends Resource> void expandUpgradeInfo(RepositoryContext context, Options expand, Collection<T> results) {
 		if (!expand.containsKey(CodeSystem.Expand.UPGRADE_INFO)) {
 			return;
 		}
