@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -351,13 +351,16 @@ public final class VersionCreateRequest implements Request<RepositoryContext, Bo
 	
 	@Override
 	public List<Permission> getPermissions(ServiceProvider context, Request<ServiceProvider, ?> req) {
-		return List.of(
-			Permission.requireAny(
-				getOperation(), 
-				resource.toString(),
-				resource.withoutResourceType()
-			)
-		);
+		if (resourcesById == null) {
+			resourcesById = fetchResources(context);
+		}
+		
+		return this.resourcesById.values().stream().map(resource -> {
+			List<String> accessedResourceUris = new ArrayList<>();
+			AccessControl.registerAccessedResourceUri(accessedResourceUris, resource.getResourceURI());
+			AccessControl.registerBundleAccess(accessedResourceUris, resource);
+			return Permission.requireAny(getOperation(), accessedResourceUris);
+		}).toList();
 	}
 	
 	@Override

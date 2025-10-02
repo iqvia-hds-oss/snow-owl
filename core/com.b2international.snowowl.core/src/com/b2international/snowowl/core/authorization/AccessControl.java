@@ -80,21 +80,30 @@ public interface AccessControl {
 
 			// if the user is accessing a version branch or subbranch of the resource always check for authorization of the entire resource and then check for direct version/branch access only
 			if (!accessedResourceUri.equals(resourceUri)) {
-				// accept both full resourceURI as resource and without resource type (as ID/path is often enough), but always check the typeless ID first, then the full one
 				registerAccessedResourceUri(accessedResources, resourceUri);
 			}
-			// accept both full resourceURI as resource and without resource type (as ID/path is often enough), but always check the typeless ID first, then the full one
 			registerAccessedResourceUri(accessedResources, accessedResourceUri);
-			
-			
-			// if a resource that is being accessed is part of a bundle and the user has access to that bundle then it has access to the resource as well
-			accessedResources.add(resource.getBundleId());
-			accessedResources.addAll(Collections3.toImmutableSet(resource.getBundleAncestorIds()));
-			// ensure Root bundle is not present when checking access
-			accessedResources.remove(IComponent.ROOT_ID);
+			registerBundleAccess(accessedResources, resource);
 		}
 	}
-	
+
+	static void registerBundleAccess(final List<String> accessedResources, final TerminologyResource resource) {
+		// if a resource that is being accessed is part of a bundle and the user has access to that bundle then it has access to the resource as well
+		accessedResources.add(resource.getBundleId());
+		accessedResources.addAll(Collections3.toImmutableSet(resource.getBundleAncestorIds()));
+		// ensure Root bundle is not present when checking access
+		accessedResources.remove(IComponent.ROOT_ID);
+	}
+
+	/**
+	 * Accepts both the typeless and the typed form so that we can verify both when
+	 * checking against the authorization system. As the accessedResources is a
+	 * priority list, we always check the typeless first, that is more common in
+	 * operations.
+	 * 
+	 * @param accessedResources
+	 * @param resourceUri
+	 */
 	static void registerAccessedResourceUri(List<String> accessedResources, ResourceURI resourceUri) {
 		accessedResources.add(Permission.asResource(resourceUri.withoutResourceType()));
 		accessedResources.add(Permission.asResource(resourceUri.toString()));		
