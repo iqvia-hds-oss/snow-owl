@@ -15,8 +15,7 @@
  */
 package com.b2international.snowowl.core.request.search;
 
-import static com.b2international.index.query.Expressions.dismaxWithScoreCategories;
-import static com.b2international.index.query.Expressions.matchBooleanPrefix;
+import static com.b2international.index.query.Expressions.dismax;
 import static com.b2international.index.query.Expressions.matchTextAll;
 import static com.b2international.index.query.Expressions.matchTextAny;
 
@@ -110,35 +109,42 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 	
 	@Override
 	public Expression toExpression(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
-		// lexical similarity based on the following queries
-		return dismaxWithScoreCategories(
-			// exact match overrides anything and should be scored the highest
-			TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix),
+		// exact match overrides anything and should be scored the highest
+		var exactMatch = TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix);
 
-			// matching based on synonyms and tokenized text, less score than exact but more than the other (??? not sure for fuzziness though)
-			matchTextAll(fieldAlias(field, textFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
-			matchBooleanPrefix(fieldAlias(field, textFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
+		// matching based on fuzziness should receive a higher scores than matching words in different order or leaving out words
+		var fuzzyExactMatch = matchTextAll(fieldAlias(field, exactFieldSuffix), getTerm()).withFuzziness(fuzziness, prefixLength, maxExpansions);
+		
+		// matching based on synonyms and tokenized text where order does not matter anymore
+		var matchAllWithSynonymsIgnoreStopwords = matchTextAll(fieldAlias(field, textFieldSuffix), getTerm())
+			.withIgnoreStopwords(isIgnoreStopwords())
+			.withSynonymsEnabled(isSynonyms());
+		
+		// leaving out words but still matching some completely should generate a better similarity than prefix only
+		var matchAnyWithSynonymsIgnoreStopwords = matchTextAny(fieldAlias(field, textFieldSuffix), getTerm(), getMinShouldMatch())
+			.withIgnoreStopwords(isIgnoreStopwords())
+			.withSynonymsEnabled(isSynonyms());
+		
+		var allPrefixMatch = matchTextAll(fieldAlias(field, prefixFieldSuffix), getTerm());
+		var anyPrefixMatch = matchTextAny(fieldAlias(field, prefixFieldSuffix), getTerm(), getMinShouldMatch());
 
-			// matching based on fuzziness should receive higher scores than leaving out words
-			matchTextAll(fieldAlias(field, textFieldSuffix), getTerm()).withFuzziness(fuzziness, prefixLength, maxExpansions),
+		// using dismax to select the best score from a single matching route as should would generate scores from each matching routes
+		return dismax(
+			// as per suggester contract, the highest score is 1.0f, meaning the best possible match, 100%
+			exactMatch.constantScore(1.0f),
+			// almost as good as the exact but a bit fuzzy gets the second best score, 95%
+			fuzzyExactMatch.constantScore(0.95f),
 			
-			// leaving out words but still matching some completely should generate a better similarity than prefix only
-			matchTextAny(fieldAlias(field, textFieldSuffix), getTerm(), getMinShouldMatch())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
-
-			// then all prefixes match
-			matchTextAll(fieldAlias(field, prefixFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords()),
-				
-			// and last some prefixes match
-			matchTextAny(fieldAlias(field, prefixFieldSuffix), getTerm(), getMinShouldMatch())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms())
+			// TODO for the next four we should check if we can reuse the computed score from ES somehow in a sensible way
+			
+			// then word order does not matter anymore but we still need to match all words and the input text can use synonyms and we can ignore stopwords, 90%
+			matchAllWithSynonymsIgnoreStopwords.constantScore(0.90f),
+			// then word order does not matter and we can leave out some words from the match, 75%
+			matchAnyWithSynonymsIgnoreStopwords.constantScore(0.75f),
+			// then try to match the input on the prefix indexed fields, scoring 65%
+			allPrefixMatch.constantScore(0.65f),
+			// then again on the prefix indexed fields, but some words can be left out, 50%
+			anyPrefixMatch.constantScore(0.50f)
 		);
 	}
 	

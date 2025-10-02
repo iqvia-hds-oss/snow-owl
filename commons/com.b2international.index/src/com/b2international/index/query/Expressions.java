@@ -187,6 +187,10 @@ public class Expressions {
 		return new BoostPredicate(expression, boost);
 	}
 	
+	public static Expression constantScore(Expression expression, float score) {
+		return new ConstantScorePredicate(expression, score);
+	}
+	
 	public static TextPredicate matchTextAll(String field, String term) {
 		return new TextPredicate(field, term, MatchType.ALL);
 	}
