@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,14 @@ public final class RateLimitingRequest<R> extends DelegatingRequest<ServiceProvi
 		if (user != User.SYSTEM) {
 			// rate limit only non-system user requests
 			final String username = user.getUserId();
-			final RateLimitConsumption consumption = context.service(RateLimiter.class).consume(username);
-			if (consumption.isConsumed()) {
-				context.service(ResponseHeaders.class)
-					.set("X-Rate-Limit-Remaining", Long.toString(consumption.getRemainingTokens()));
-			} else {
-				throw new TooManyRequestsException(consumption.getSecondsToWait());
-			}
+			context.optionalService(RateLimiter.class).ifPresent(rateLimiter -> {
+				final RateLimitConsumption consumption = rateLimiter.consume(username);
+				if (consumption.isConsumed()) {
+					context.service(ResponseHeaders.class).set("X-Rate-Limit-Remaining", Long.toString(consumption.getRemainingTokens()));
+				} else {
+					throw new TooManyRequestsException(consumption.getSecondsToWait());
+				}
+			});
 		}
 		
 		return next(context);

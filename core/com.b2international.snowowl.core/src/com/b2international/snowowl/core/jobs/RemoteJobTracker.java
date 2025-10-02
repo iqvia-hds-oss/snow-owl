@@ -121,16 +121,25 @@ public final class RemoteJobTracker implements IDisposableService {
 		final String jobId = job.getId();
 		LOG.trace("Scheduled job {}", jobId);
 		
+		// make sure we initialize the job request, otherwise we might miss some important parameters from the parameters object during indexing
+		job.initializeRequest();
+		
 		// try to convert the request to a param object
 		String parameters;
+		String type;
 		try {
-			parameters = mapper.writeValueAsString(job.getParameters(mapper));
+			final Map<String, Object> jobParameters = job.getParameters(mapper);
+			// XXX ideally jobParameters contains a type field derived from the executing request's class name
+			type = (String) jobParameters.get("type");
+			parameters = mapper.writeValueAsString(jobParameters);
 		} catch (Throwable e) {
 			parameters = "";
+			type = "";
 		}
 		put(RemoteJobEntry.builder()
 				.id(jobId)
 				.key(job.getKey())
+				.type(type)
 				.description(job.getDescription())
 				.user(job.getUser())
 				.parameters(parameters)

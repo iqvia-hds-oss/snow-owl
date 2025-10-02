@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,14 +134,14 @@ public abstract class AbstractRestService {
 	/**
 	 * Creates a Location header URI that should be returned from all POST resource create endpoints.
 	 * 
-	 * @param branch
-	 *            - the branch where the resource has been created
+	 * @param path
+	 *            - the path where the resource has been created
 	 * @param resourceId
 	 *            - the identifier of the resource
 	 * @return a URI to be added as Location header value
 	 */
-	protected final URI getResourceLocationURI(String branch, String resourceId) {
-		return createURIBuilder().pathSegment(resourceId).build(branch);
+	protected final URI getResourceLocationURI(String path, String resourceId) {
+		return createURIBuilder().pathSegment(resourceId).build(path);
 	}
 
 	/**

@@ -16,34 +16,76 @@
 package com.b2international.snowowl.core.request.suggest;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.tartarus.snowball.ext.EnglishStemmer;
+
 import com.b2international.commons.collections.Collections3;
+import com.b2international.commons.exceptions.ApiException;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.http.ExtendedLocale;
+import com.b2international.index.compat.TextConstants;
 import com.b2international.snomed.ecl.Ecl;
 import com.b2international.snowowl.core.ResourceTypeConverter;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ResourceURIWithQuery;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.api.SnowowlRuntimeException;
+import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.domain.DelegatingContext;
 import com.b2international.snowowl.core.domain.Description;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.base.Splitter;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.*;
 
 /**
  * @since 8.5
  */
 public final class ConceptSuggestionContext extends DelegatingContext {
 
+	// Split terms at delimiter or whitespace separators
+	private static final Splitter TOKEN_SPLITTER = Splitter.on(TextConstants.WHITESPACE_OR_DELIMITER_MATCHER)
+			.trimResults()
+			.omitEmptyStrings();
+	
 	private final ResourceURIWithQuery from;
 	private final SortedSet<String> likes;
 	private final SortedSet<String> unlikes;
 	private final List<ExtendedLocale> locales;
+	
+	// provides a cache to avoid loading the same content again from the stores and compute the topTokens only once per run for a given config
+	private final LoadingCache<TopTokenConfig, List<String>> topTokenCache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
+		@Override
+		public List<String> load(TopTokenConfig config) throws Exception {
+			
+			// Gather tokens based on the config and the English language characteristics
+			final Multiset<String> tokenOccurrences = HashMultiset.create();
+			final EnglishStemmer stemmer = new EnglishStemmer();
+			
+			// tokens to consider are streamed based on the like parameter configuration
+			streamLikes()
+				.map(term -> term.toLowerCase(Locale.US))
+				.flatMap(lowerCaseTerm -> TOKEN_SPLITTER.splitToList(lowerCaseTerm).stream())
+				.filter(token -> token.length() >= config.minTokenLength) // skip short tokens
+				.filter(token -> !TextConstants.STOP_WORDS_EN.contains(token)) // ignore stopwords from top tokens, so they won't interfere with minShouldMatch
+				.map(token -> config.stemming ? stemToken(stemmer, token) : token)
+				.forEach(tokenOccurrences::add);
+			
+			return Multisets.copyHighestCountFirst(tokenOccurrences)
+				.elementSet()
+				.stream()
+				.limit(config.topTokenCount)
+				.collect(Collectors.toList());
+		}
+	});
 	
 	// dynamically computed exclusion items during like item computation
 	private Multimap<ResourceURI, String> exclusionQueriesPerResourceUri = HashMultimap.create();
@@ -51,7 +93,12 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	public ConceptSuggestionContext(ServiceProvider context, String from, List<String> likes, List<String> unlikes, List<ExtendedLocale> locales) {
 		super(context);
 		this.locales = locales;
-		this.from = resolveUri(context, from);
+		var resolvedUri = resolveUri(context, from);
+		if (resolvedUri == null) {
+			// treat unresolved URIs as CodeSystems for now, it would be better to lookup a resource if present with this ID and throw an error if not
+			resolvedUri = CodeSystem.uriWithQuery(from);
+		}
+		this.from = resolvedUri;
 		this.likes = Collections3.toImmutableSortedSet(likes);
 		this.unlikes = Collections3.toImmutableSortedSet(unlikes);
 	}
@@ -68,20 +115,20 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 		Multimap<ResourceURI, String> unlikeQueriesByResource = HashMultimap.create();
 		
 		unlikes.forEach(unlike -> {
-			try {
-				final ResourceURIWithQuery uri = resolveUri(this, unlike);
-				Collection<String> eclQueries = uri.getQueryValues().get("ecl");
-				if (eclQueries.isEmpty()) {
-					throw new BadRequestException("Selecting an entire Code System as unlike is not supported yet. Specify an ECL query part like this: %s?ecl=<your_query>", uri.getResourceUri().withoutResourceType());
-				} else {
-					eclQueries.forEach(q -> {
-						unlikeQueriesByResource.put(uri.getResourceUri(), q);
-						exclusionQueriesPerResourceUri.put(uri.getResourceUri(), q);
-					});
-				}
-			} catch (Exception e) {
-				// not URI, skip for now
+			final ResourceURIWithQuery uri = resolveUri(this, unlike);
+			if (uri == null) {
+				// not URI, skip
 				// TODO figure out how to represent unlike keywords in a query, ECL NOT {{ term: <x> }} ?
+				return;
+			} 
+			Collection<String> eclQueries = uri.getQueryValues().get("ecl");
+			if (eclQueries.isEmpty()) {
+				throw new BadRequestException("Selecting an entire Code System as unlike is not supported yet. Specify an ECL query part like this: %s?ecl=<your_query>", uri.getResourceUri().withoutResourceType());
+			} else {
+				eclQueries.forEach(q -> {
+					unlikeQueriesByResource.put(uri.getResourceUri(), q);
+					exclusionQueriesPerResourceUri.put(uri.getResourceUri(), q);
+				});
 			}
 		});
 		
@@ -89,37 +136,36 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 		return likes
 			.stream()
 			.flatMap(like -> {
-				try {
-					final ResourceURIWithQuery uri = resolveUri(this, like);
-					// raw URIs are not supported yet, because those can select too many concepts
-					Collection<String> eclQueries = uri.getQueryValues().get("ecl");
-					if (eclQueries.isEmpty()) {
-						throw new BadRequestException("Selecting an entire Code System as like is not supported yet. Specify an ECL query part like this: %s?ecl=<your_query>", uri.getResourceUri().withoutResourceType());
-					}
-					
-					Collection<String> exclusionsForThisLike = unlikeQueriesByResource.get(uri.getResourceUri());
-					String exclusionQuery = exclusionsForThisLike.isEmpty() ? null : Ecl.or(exclusionsForThisLike);
-					
-					// register this like query as global exclusion filter for the final suggestion search
-					eclQueries.forEach(q -> {
-						exclusionQueriesPerResourceUri.put(uri.getResourceUri(), q);
-					});
-					
-					// Get the suggestion base set of concepts in case of URIs with queries
-					return CodeSystemRequests.prepareSearchConcepts()
-							.filterByCodeSystemUri(uri.getResourceUri())
-							.filterByQuery(Ecl.or(eclQueries))
-							.filterByExclusion(exclusionQuery)
-							.setLimit(getPageSize())
-							.setLocales(locales)
-							.stream(this)
-							.flatMap(Concepts::stream)
-							.flatMap(concept -> getAllTerms(concept).stream());
-					
-				} catch (Exception e) {
-					// not URI, use as is
+				final ResourceURIWithQuery uri = resolveUri(this, like);
+				if (uri == null) {
+					// not URI, use as is for lexical matching
 					return List.of(like).stream();
 				}
+				
+				// raw URIs are not supported yet, because those can select too many concepts
+				Collection<String> eclQueries = uri.getQueryValues().get("ecl");
+				if (eclQueries.isEmpty()) {
+					throw new BadRequestException("Selecting an entire Code System as like is not supported yet. Specify an ECL query part like this: %s?ecl=<your_query>", uri.getResourceUri().withoutResourceType());
+				}
+				
+				Collection<String> exclusionsForThisLike = unlikeQueriesByResource.get(uri.getResourceUri());
+				String exclusionQuery = exclusionsForThisLike.isEmpty() ? null : Ecl.or(exclusionsForThisLike);
+				
+				// register this like query as global exclusion filter for the final suggestion search
+				eclQueries.forEach(q -> {
+					exclusionQueriesPerResourceUri.put(uri.getResourceUri(), q);
+				});
+				
+				// Get the suggestion base set of concepts in case of URIs with queries
+				return CodeSystemRequests.prepareSearchConcepts()
+						.filterByCodeSystemUri(uri.getResourceUri())
+						.filterByQuery(Ecl.or(eclQueries))
+						.filterByExclusion(exclusionQuery)
+						.setLimit(getPageSize())
+						.setLocales(locales)
+						.stream(this)
+						.flatMap(Concepts::stream)
+						.flatMap(concept -> getAllTerms(concept).stream());
 			});
 	}
 
@@ -167,15 +213,34 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	
 	private ResourceURIWithQuery resolveUri(ServiceProvider context, String uriToResolve) {
 		// find the appropriate resource for this URI by looking at the plugged in resources types
-		ResourceURIWithQuery uri = null;
 		for (ResourceTypeConverter resourceTypeConverter : context.service(ResourceTypeConverter.Registry.class).getResourceTypeConverters().values()) {
-			if (uriToResolve.startsWith(resourceTypeConverter.getResourceType())) {
-				uri = resourceTypeConverter.resolveToCodeSystemUriWithQuery(context, uriToResolve);
-				break;
+			if (uriToResolve.startsWith(resourceTypeConverter.getResourceType() + Branch.SEPARATOR)) {
+				return resourceTypeConverter.resolveToCodeSystemUriWithQuery(context, uriToResolve);
 			}
 		}
-		// if the URI is still null, treat it as CodeSystem for now
-		return uri == null ? CodeSystem.uriWithQuery(uriToResolve) : uri;
+		
+		// not an URI
+		return null;
 	}
+
+	public List<String> topTokens(int topTokenCount, int minTokenLength, boolean stemming) {
+		try {
+			return topTokenCache.get(new TopTokenConfig(topTokenCount, minTokenLength, stemming));
+		} catch (ExecutionException e) {
+			if (e.getCause() instanceof ApiException) {
+				throw (ApiException) e.getCause();
+			} else {
+				throw new SnowowlRuntimeException("Couldn't compute top tokens based on requested config: ", e);
+			}
+		}
+	}
+	
+	private String stemToken(EnglishStemmer stemmer, String token) {
+		stemmer.setCurrent(token);
+		stemmer.stem();
+		return stemmer.getCurrent();
+	}
+	
+	private record TopTokenConfig(int topTokenCount, int minTokenLength, boolean stemming) {}
 	
 }

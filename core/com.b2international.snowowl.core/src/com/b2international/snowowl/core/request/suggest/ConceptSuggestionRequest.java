@@ -79,11 +79,15 @@ public final class ConceptSuggestionRequest extends SearchResourceRequest<Servic
 	@Override
 	protected Suggestions doExecute(ServiceProvider context) throws IOException {
 		final ConceptSuggester.Registry suggesterRegistry = context.service(ConceptSuggester.Registry.class);
+		
 		// suggester is mandatory, otherwise we can't suggest
 		if (suggester == null) {
 			final Set<String> availableSuggesters = suggesterRegistry.getSuggesterTypes();		
 			throw new BadRequestException("'suggester' is required. Available suggesters are: %s", availableSuggesters);
 		}
+		
+		// create suggester here which might throw an error if the selected suggester is not available
+		ConceptSuggester conceptSuggester = suggesterRegistry.create(this.suggester);
 		
 		// from argument is required to suggests concepts
 		if (!containsKey(OptionKey.FROM)) {
@@ -95,7 +99,7 @@ public final class ConceptSuggestionRequest extends SearchResourceRequest<Servic
 			throw new BadRequestException("At least one like argument is required to generate suggestions.");
 		}
 		
-		return suggesterRegistry.create(this.suggester)
+		return conceptSuggester
 				.suggest(
 					new ConceptSuggestionContext(context, getString(OptionKey.FROM), getList(OptionKey.LIKE, String.class), getList(OptionKey.UNLIKE, String.class), locales()),
 					limit(),

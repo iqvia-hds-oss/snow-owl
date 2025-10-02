@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,15 @@ import java.util.Set;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.index.query.Expression;
-import com.b2international.index.query.Expressions;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
- * @since 8.5
+ * @since 9.8.0
  */
-public final class MatchTermFilter extends TermFilter {
+public final class LexicalSimilarityTermFilter extends TermFilter {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	private final String term;
 	private final Integer minShouldMatch;
 	
@@ -45,7 +44,7 @@ public final class MatchTermFilter extends TermFilter {
 	private final Integer prefixLength;
 	private final Integer maxExpansions;
 	
-	MatchTermFilter(final String term, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
+	LexicalSimilarityTermFilter(final String term, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
 		if (term == null) {
 			throw new BadRequestException("'term' filter parameter was null.");
 		}
@@ -96,11 +95,11 @@ public final class MatchTermFilter extends TermFilter {
 		return getMinShouldMatch() != null;
 	}
 	
-	public MatchTermFilter withIgnoreStopwords() {
+	public LexicalSimilarityTermFilter withIgnoreStopwords() {
 		return new Builder(this).ignoreStopwords(true).build();
 	}
 	
-	public MatchTermFilter withTerm(String newTerm) {
+	public LexicalSimilarityTermFilter withTerm(String newTerm) {
 		return new Builder(this).term(newTerm).build();
 	}
 	
@@ -111,13 +110,36 @@ public final class MatchTermFilter extends TermFilter {
 	
 	@Override
 	public Expression toExpression(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
-		if (getFuzziness() != null) {
-			return Expressions.matchTextAll(fieldAlias(field, textFieldSuffix), getTerm()).withFuzziness(fuzziness, prefixLength, maxExpansions);
-		} else if (isAnyMatch()) {
-			return minShouldMatchTermDisjunctionQuery(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix);
-		} else {
-			return termDisjunctionQuery(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix);
-		}
+		// lexical similarity based on the following queries
+		return dismaxWithScoreCategories(
+			// exact match overrides anything and should be scored the highest
+			TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix),
+
+			// matching based on synonyms and tokenized text, less score than exact but more than the other (??? not sure for fuzziness though)
+			matchTextAll(fieldAlias(field, textFieldSuffix), getTerm())
+				.withIgnoreStopwords(isIgnoreStopwords())
+				.withSynonymsEnabled(isSynonyms()),
+			matchBooleanPrefix(fieldAlias(field, textFieldSuffix), getTerm())
+				.withIgnoreStopwords(isIgnoreStopwords())
+				.withSynonymsEnabled(isSynonyms()),
+
+			// matching based on fuzziness should receive higher scores than leaving out words
+			matchTextAll(fieldAlias(field, textFieldSuffix), getTerm()).withFuzziness(fuzziness, prefixLength, maxExpansions),
+			
+			// leaving out words but still matching some completely should generate a better similarity than prefix only
+			matchTextAny(fieldAlias(field, textFieldSuffix), getTerm(), getMinShouldMatch())
+				.withIgnoreStopwords(isIgnoreStopwords())
+				.withSynonymsEnabled(isSynonyms()),
+
+			// then all prefixes match
+			matchTextAll(fieldAlias(field, prefixFieldSuffix), getTerm())
+				.withIgnoreStopwords(isIgnoreStopwords()),
+				
+			// and last some prefixes match
+			matchTextAny(fieldAlias(field, prefixFieldSuffix), getTerm(), getMinShouldMatch())
+				.withIgnoreStopwords(isIgnoreStopwords())
+				.withSynonymsEnabled(isSynonyms())
+		);
 	}
 	
 	public static final class Builder {
@@ -136,7 +158,7 @@ public final class MatchTermFilter extends TermFilter {
 		Builder() {
 		}
 		
-		Builder(MatchTermFilter from) {
+		Builder(LexicalSimilarityTermFilter from) {
 			this.term = from.getTerm();
 			this.minShouldMatch = from.getMinShouldMatch();
 			this.ignoreStopwords = from.isIgnoreStopwords();
@@ -191,36 +213,10 @@ public final class MatchTermFilter extends TermFilter {
 			return this;
 		}
 		
-		public MatchTermFilter build() {
-			return new MatchTermFilter(term, minShouldMatch, ignoreStopwords, caseSensitive, synonyms, fuzziness, prefixLength, maxExpansions);
+		public LexicalSimilarityTermFilter build() {
+			return new LexicalSimilarityTermFilter(term, minShouldMatch, ignoreStopwords, caseSensitive, synonyms, fuzziness, prefixLength, maxExpansions);
 		}
 
 	}
 	
-	public Expression termDisjunctionQuery(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
-		return dismaxWithScoreCategories(
-			TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix),
-			matchTextAll(fieldAlias(field, textFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
-			matchBooleanPrefix(fieldAlias(field, textFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
-			matchTextAll(fieldAlias(field, prefixFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords())
-		);
-	}
-
-	public Expression minShouldMatchTermDisjunctionQuery(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
-		return dismaxWithScoreCategories(
-			TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix),
-			matchTextAny(fieldAlias(field, textFieldSuffix), getTerm(), getMinShouldMatch())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
-			matchTextAny(fieldAlias(field, prefixFieldSuffix), getTerm(), getMinShouldMatch())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms())
-		);
-	}
-
 }

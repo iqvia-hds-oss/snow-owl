@@ -92,6 +92,11 @@ public abstract class TermFilter implements Serializable {
 	public static WildcardTermFilter.Builder wild() {
 		return new WildcardTermFilter.Builder();
 	}
+	
+	@JsonIgnore
+	public static LexicalSimilarityTermFilter.Builder lexicalSimilarity() {
+		return new LexicalSimilarityTermFilter.Builder();
+	}
 
 	/**
 	 * Get the search term(s) from this term filter. Certain implementations only support a single term to be defined.

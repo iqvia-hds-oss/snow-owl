@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package com.b2international.snowowl.core.context;
 
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.Resource;
@@ -26,16 +24,20 @@ import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.events.DelegatingRequest;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.events.RequestInitializationRequired;
 import com.b2international.snowowl.core.repository.PathTerminologyResourceResolver;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 8.0
  * @param <R>
  */
-public final class TerminologyResourceRequest<R> extends DelegatingRequest<ServiceProvider, TerminologyResourceContext, R> {
+public final class TerminologyResourceRequest<R> extends DelegatingRequest<ServiceProvider, TerminologyResourceContext, R> implements RequestInitializationRequired {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -45,6 +47,7 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 	@JsonProperty
 	private final String resourcePath;
 
+	@JsonProperty
 	private transient ResourceURI resourceUri;
 	private transient TerminologyResource resource;
 	
@@ -52,6 +55,7 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 		super(next);
 		this.toolingId = toolingId;
 		this.resourcePath = resourcePath;
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(resourcePath), "Resource path may not be null or empty");
 		if (resourcePath.startsWith(Branch.MAIN_PATH) && Strings.isNullOrEmpty(toolingId)) {
 			throw new BadRequestException("Reflective access ('repositoryId/path') to terminology resource content is not supported in this API.")
 				.withDeveloperMessage("No toolingId is specified on API level to ensure the correct reflective access to underlying terminology.");
@@ -60,7 +64,7 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 	
 	public ResourceURI getResourceURI(ServiceProvider context) {
 		if (resourceUri == null) {
-			initialize(context);
+			initializeRequestContext(context);
 		}
 		return resourceUri;
 	}
@@ -73,12 +77,13 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 	
 	public TerminologyResource getResource(ServiceProvider context) {
 		if (resource == null) {
-			initialize(context);
+			initializeRequestContext(context);
 		}
 		return resource;
 	}
-
-	private void initialize(ServiceProvider context) {
+	
+	@Override
+	public void initializeRequestContext(ServiceProvider context) {
 		if (resourcePath.startsWith(Branch.MAIN_PATH)) {
 			context.log().warn("Reflective access of terminology resources ('{}/{}') is not the recommended way of accessing resources. Consider using Resource IDs and relative branch path expressions.", toolingId, resourcePath);
 			this.resource = context.service(PathTerminologyResourceResolver.class).resolve(context, toolingId, resourcePath);
@@ -101,6 +106,10 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 
 	public String getResourcePath() {
 		return resourcePath;
+	}
+	
+	public ResourceURI getResourceUri() {
+		return resourceUri;
 	}
 
 }

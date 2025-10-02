@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,14 +70,12 @@ public final class SearchJobRequestBuilder
 		return addOption(OptionKey.STATE, states);
 	}
 	
-	/**
-	 * Filter {@link RemoteJob job entries} by parameter name and values.
-	 * @param parameter
-	 * @param values
-	 * @return
-	 */
-	public SearchJobRequestBuilder filterByParameter(String parameter, Iterable<String> values) {
-		return addOption(parameter, values);
+	public SearchJobRequestBuilder filterByType(String type) {
+		return addOption(OptionKey.TYPE, type);
+	}
+	
+	public SearchJobRequestBuilder filterByTypes(Iterable<String> types) {
+		return addOption(OptionKey.TYPE, types);
 	}
 	
 	public SearchJobRequestBuilder filterByTerm(String filterTerm) {
