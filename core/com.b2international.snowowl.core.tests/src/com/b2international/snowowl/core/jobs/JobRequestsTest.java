@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@ package com.b2international.snowowl.core.jobs;
 
 import static org.junit.Assert.*;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.elasticsearch.core.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +35,7 @@ import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
 import com.b2international.snowowl.core.IDisposableService;
+import com.b2international.snowowl.core.RequestContext;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.IdentityProvider;
@@ -40,6 +45,9 @@ import com.b2international.snowowl.eventbus.EventBusUtil;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.eventbus.events.SystemNotification;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * @since 5.7
@@ -68,12 +76,16 @@ public class JobRequestsTest {
 		index = Indexes.createIndex("jobs", mapper, new Mappings(RemoteJobEntry.class));
 
 		this.tracker = new RemoteJobTracker(index, bus, mapper, DEFAULT_PURGE_THRESHOLD, DEFAULT_STALE_JOB_AGE);
-		this.context = ServiceProvider.EMPTY.inject()
+		
+		var systemContext = ServiceProvider.EMPTY.inject()
+				.bind(MeterRegistry.class, new SimpleMeterRegistry())
 				.bind(ObjectMapper.class, mapper)
 				.bind(RemoteJobTracker.class, tracker)
 				.bind(IdentityProvider.class, IdentityProvider.UNPROTECTED)
 				.bind(User.class, User.SYSTEM)
 				.build();
+		
+		this.context = new RequestContext(systemContext, Map.of());
 		
 		this.bus.registerHandler(SystemNotification.ADDRESS, message -> {
 			try {
@@ -111,12 +123,12 @@ public class JobRequestsTest {
 	public void scheduleAndCancel() throws Exception {
 		CyclicBarrier barrier = new CyclicBarrier(2);
 		final String jobId = schedule("scheduleAndCancel", context -> {
-			// wait 1000 ms, then throw cancelled if monitor is cancelled or return the result, so the main thread have time to actually initiate the cancel request
+			// wait 50ms, then throw cancelled if monitor is cancelled or return the result, so the main thread have time to actually initiate the cancel request
 			final IProgressMonitor monitor = context.service(IProgressMonitor.class);
 			
 			try {
 				Thread.sleep(50);
-				barrier.await();
+				barrier.await(10, TimeUnit.SECONDS);
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
@@ -126,7 +138,7 @@ public class JobRequestsTest {
 			return RESULT;
 		});
 		cancel(jobId);
-		barrier.await();
+		barrier.await(10, TimeUnit.SECONDS);
 		
 		final RemoteJobEntry entry = waitDone(jobId);
 		assertEquals(RemoteJobState.CANCELED, entry.getState());
@@ -149,8 +161,8 @@ public class JobRequestsTest {
 		final String deletedJobId = schedule("scheduleAndDelete", context -> {
 			// wait until barrier is ready (main thread initiated delete request), return the result
 			try {
-				barrier.await();
-			} catch (InterruptedException | BrokenBarrierException e) {
+				barrier.await(10, TimeUnit.SECONDS);
+			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 			return RESULT;
@@ -159,11 +171,7 @@ public class JobRequestsTest {
 		// delete should immediately mark the object deleted, but wait until the job actually completes then delete the entry
 		delete(deletedJobId);
 		
-		try {
-			barrier.await();
-		} catch (InterruptedException | BrokenBarrierException e) {
-			throw new RuntimeException(e);
-		}
+		barrier.await(10, TimeUnit.SECONDS);
 		
 		// regular get must throw NotFoundException
 		try {
