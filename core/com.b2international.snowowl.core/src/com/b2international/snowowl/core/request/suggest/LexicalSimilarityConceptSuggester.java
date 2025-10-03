@@ -25,6 +25,7 @@ import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.request.SearchIndexResourceRequest;
+import com.b2international.snowowl.core.request.search.LexicalSimilarityTermFilter;
 import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -76,7 +77,8 @@ public class LexicalSimilarityConceptSuggester implements ConceptSuggester {
 	@Override
 	public Promise<Suggestions> suggest(ConceptSuggestionContext context, int limit, String display,
 			List<ExtendedLocale> locales) {
-		// gather top tokens from the context
+		// gather both the like texts and separately the top tokens from the context
+		List<String> likes = context.streamLikes().limit(LexicalSimilarityTermFilter.MAX_EXACT_TERMS).toList();
 		List<String> topTokens = context.topTokens(topTokenCount, minTokenLength, stemming);
 		
 		// if there are no tokens to search for then shortcut here
@@ -85,7 +87,7 @@ public class LexicalSimilarityConceptSuggester implements ConceptSuggester {
 		}
 		
 		final TermFilter termFilter = TermFilter.lexicalSimilarity()
-				.term(String.join(" ", topTokens))
+				.terms(likes, String.join(" ", topTokens))
 				.minShouldMatch(Math.min(minOccurenceCount, topTokens.size()))
 				.ignoreStopwords(ignoreStopwords)
 				.fuzziness(fuzzy ? "AUTO" : null)

@@ -96,6 +96,8 @@ public class Es8QueryBuilder {
 			} finally {
 				this.boost = null;
 			}
+		} else if (expression instanceof ConstantScorePredicate) {
+			visit((ConstantScorePredicate) expression);
 		} else if (expression instanceof MatchAll) {
 			deque.push(QueryBuilders.matchAll(m -> m));
 		} else if (expression instanceof MatchNone) {
@@ -191,6 +193,13 @@ public class Es8QueryBuilder {
 				)
 			)
 		);
+	}
+	
+	private void visit(ConstantScorePredicate expression) {
+		final Expression inner = expression.expression();
+		visit(inner);
+		final Query innerQuery = deque.pop();
+		deque.push(QueryBuilders.constantScore(q -> q.filter(innerQuery).boost(expression.score())));
 	}
 	
 	private void visit(BoolExpression bool) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.b2international.index.query;
 
-
 /**
  * @since 4.7
  */
@@ -27,6 +26,34 @@ public interface Expression {
 	
 	default boolean isMatchNone() {
 		return this instanceof MatchNone;
+	}
+
+	/**
+	 * @since 9.8
+	 */
+	default Expression boost(float boost) {
+		return Expressions.boost(this, boost);
+	}
+	
+	/**
+	 * @since 9.8
+	 */
+	default Expression constantScore(float score) {
+		return Expressions.constantScore(this, score);
+	}
+	
+	/**
+	 * @since 9.8
+	 */
+	default Expression saturateScores() {
+		return Expressions.normalizeScores(this, 0);
+	}
+	
+	/**
+	 * @since 9.8
+	 */
+	default Expression saturateScores(float minScore) {
+		return Expressions.normalizeScores(this, minScore);
 	}
 	
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,11 @@ public final class ComponentURI implements Serializable {
 	@JsonIgnore
 	public final boolean isUnspecified() {
 		return TerminologyRegistry.UNSPECIFIED.equals(resourceUri().getResourceId());
+	}
+	
+	@JsonIgnore
+	public final ResourceURIWithQuery asResourceURIWithQuery() {
+		return resourceUri().withQuery("ecl=" + identifier());
 	}
 	
 	public final ComponentIdentifier toComponentIdentifier() {

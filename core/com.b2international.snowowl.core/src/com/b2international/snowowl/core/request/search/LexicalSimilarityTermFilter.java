@@ -15,16 +15,19 @@
  */
 package com.b2international.snowowl.core.request.search;
 
-import static com.b2international.index.query.Expressions.dismaxWithScoreCategories;
-import static com.b2international.index.query.Expressions.matchBooleanPrefix;
+import static com.b2international.index.query.Expressions.dismax;
 import static com.b2international.index.query.Expressions.matchTextAll;
 import static com.b2international.index.query.Expressions.matchTextAny;
 
 import java.util.Set;
+import java.util.SortedSet;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.index.query.Expression;
+import com.b2international.index.query.Expressions;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Sets;
 
 /**
  * @since 9.8.0
@@ -32,8 +35,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public final class LexicalSimilarityTermFilter extends TermFilter {
 
 	private static final long serialVersionUID = 1L;
+	
+	// TODO make configurable?
+	public static final int MAX_EXACT_TERMS = 100;
 
-	private final String term;
+	private final SortedSet<String> exactTerms;
+	private final String minTerm;
 	private final Integer minShouldMatch;
 	
 	private final Boolean ignoreStopwords;
@@ -44,11 +51,18 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 	private final Integer prefixLength;
 	private final Integer maxExpansions;
 	
-	LexicalSimilarityTermFilter(final String term, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
-		if (term == null) {
-			throw new BadRequestException("'term' filter parameter was null.");
+	LexicalSimilarityTermFilter(final SortedSet<String> exactTerms, final String minTerm, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
+		if (exactTerms.isEmpty()) {
+			throw new BadRequestException("At least one exact term must be provided.");
 		}
-		this.term = term.trim();
+		if (exactTerms.size() > MAX_EXACT_TERMS) {
+			throw new BadRequestException("A maximum of %s exact terms can be provided, but %s were given.", MAX_EXACT_TERMS, exactTerms.size());
+		}
+		if (minTerm == null || minTerm.isBlank()) {
+			throw new BadRequestException("minTerm must be provided.");
+		}
+		this.exactTerms = exactTerms;
+		this.minTerm = minTerm;
 		this.minShouldMatch = minShouldMatch;
 		this.ignoreStopwords = ignoreStopwords;
 		this.caseSensitive = caseSensitive;
@@ -57,9 +71,18 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 		this.prefixLength = prefixLength;
 		this.maxExpansions = maxExpansions;
 	}
+
+	public SortedSet<String> getExactTerms() {
+		return exactTerms;
+	}
 	
-	public String getTerm() {
-		return term;
+	public String getMinTerm() {
+		return minTerm;
+	}
+	
+	@Override
+	public Set<String> getTerms() {
+		return Sets.union(exactTerms, Set.of(minTerm));
 	}
 	
 	public Integer getMinShouldMatch() {
@@ -99,52 +122,60 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 		return new Builder(this).ignoreStopwords(true).build();
 	}
 	
-	public LexicalSimilarityTermFilter withTerm(String newTerm) {
-		return new Builder(this).term(newTerm).build();
-	}
-	
-	@Override
-	public Set<String> getTerms() {
-		return Set.of(term);
-	}
-	
 	@Override
 	public Expression toExpression(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
-		// lexical similarity based on the following queries
-		return dismaxWithScoreCategories(
-			// exact match overrides anything and should be scored the highest
-			TermFilter.exact().term(getTerm()).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix),
+		// exact match overrides anything and should be scored the highest
+		// for each received exactTerm, inject an exact match clause in a dismax query
+		var exactMatches = Expressions.bool();
+		exactTerms.forEach(exactTerm -> {
+			exactMatches.should(TermFilter.exact().term(exactTerm).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix));
+		});
+		var exactMatch = exactMatches.build();
 
-			// matching based on synonyms and tokenized text, less score than exact but more than the other (??? not sure for fuzziness though)
-			matchTextAll(fieldAlias(field, textFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
-			matchBooleanPrefix(fieldAlias(field, textFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
+		// matching based on fuzziness should receive a higher scores than matching words in different order or leaving out words
+		var fuzzyExactMatches = Expressions.bool();
+		exactTerms.forEach(exactTerm -> {
+			fuzzyExactMatches.should(matchTextAll(fieldAlias(field, exactFieldSuffix), exactTerm).withFuzziness(fuzziness, prefixLength, maxExpansions));
+		});
+		var fuzzyExactMatch = fuzzyExactMatches.build();
+		
+		// matching based on synonyms and tokenized text where order does not matter anymore
+		var matchAllWithSynonymsIgnoreStopwords = matchTextAll(fieldAlias(field, textFieldSuffix), getMinTerm())
+			.withIgnoreStopwords(isIgnoreStopwords())
+			.withSynonymsEnabled(isSynonyms());
+		
+		// leaving out words but still matching some completely should generate a better similarity than prefix only
+		var matchAnyWithSynonymsIgnoreStopwords = matchTextAny(fieldAlias(field, textFieldSuffix), getMinTerm(), getMinShouldMatch())
+			.withIgnoreStopwords(isIgnoreStopwords())
+			.withSynonymsEnabled(isSynonyms());
+		
+		var allPrefixMatch = matchTextAll(fieldAlias(field, prefixFieldSuffix), getMinTerm());
+		var anyPrefixMatch = matchTextAny(fieldAlias(field, prefixFieldSuffix), getMinTerm(), getMinShouldMatch());
 
-			// matching based on fuzziness should receive higher scores than leaving out words
-			matchTextAll(fieldAlias(field, textFieldSuffix), getTerm()).withFuzziness(fuzziness, prefixLength, maxExpansions),
+		// using dismax to select the best score from a single matching route as should would generate scores from each matching routes
+		return dismax(
+			// as per suggester contract, the highest score is 1.0f, meaning the best possible match, 100%
+			exactMatch.constantScore(1.0f),
+			// almost as good as the exact but a bit fuzzy gets the second best score, 95%
+			fuzzyExactMatch.constantScore(0.95f),
 			
-			// leaving out words but still matching some completely should generate a better similarity than prefix only
-			matchTextAny(fieldAlias(field, textFieldSuffix), getTerm(), getMinShouldMatch())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms()),
-
-			// then all prefixes match
-			matchTextAll(fieldAlias(field, prefixFieldSuffix), getTerm())
-				.withIgnoreStopwords(isIgnoreStopwords()),
-				
-			// and last some prefixes match
-			matchTextAny(fieldAlias(field, prefixFieldSuffix), getTerm(), getMinShouldMatch())
-				.withIgnoreStopwords(isIgnoreStopwords())
-				.withSynonymsEnabled(isSynonyms())
+			// TODO for the next four we should check if we can reuse the computed score from ES somehow in a sensible way
+			
+			// then word order does not matter anymore but we still need to match all words and the input text can use synonyms and we can ignore stopwords, 90%
+			matchAllWithSynonymsIgnoreStopwords.constantScore(0.90f),
+			// then word order does not matter and we can leave out some words from the match, 75%
+			matchAnyWithSynonymsIgnoreStopwords.constantScore(0.75f),
+			// then try to match the input on the prefix indexed fields, scoring 65%
+			allPrefixMatch.constantScore(0.65f),
+			// then again on the prefix indexed fields, but some words can be left out, 50%
+			anyPrefixMatch.constantScore(0.50f)
 		);
 	}
 	
 	public static final class Builder {
 		
-		private String term;
+		private SortedSet<String> exactTerms;
+		private String minTerm;
 		private Integer minShouldMatch;
 		
 		private Boolean ignoreStopwords;
@@ -159,7 +190,8 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 		}
 		
 		Builder(LexicalSimilarityTermFilter from) {
-			this.term = from.getTerm();
+			this.exactTerms = from.getExactTerms();
+			this.minTerm = from.getMinTerm();
 			this.minShouldMatch = from.getMinShouldMatch();
 			this.ignoreStopwords = from.isIgnoreStopwords();
 			this.caseSensitive = from.isCaseSensitive();
@@ -169,8 +201,9 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 			this.maxExpansions = from.getMaxExpansions();
 		}
 		
-		public Builder term(String term) {
-			this.term = term;
+		public Builder terms(Iterable<String> exactTerms, String minTerm) {
+			this.exactTerms = exactTerms == null ? null : ImmutableSortedSet.copyOf(exactTerms);
+			this.minTerm = minTerm;
 			return this;
 		}
 		
@@ -214,7 +247,7 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 		}
 		
 		public LexicalSimilarityTermFilter build() {
-			return new LexicalSimilarityTermFilter(term, minShouldMatch, ignoreStopwords, caseSensitive, synonyms, fuzziness, prefixLength, maxExpansions);
+			return new LexicalSimilarityTermFilter(exactTerms, minTerm, minShouldMatch, ignoreStopwords, caseSensitive, synonyms, fuzziness, prefixLength, maxExpansions);
 		}
 
 	}

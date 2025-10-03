@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,16 @@ public final class ResourceURIWithQuery implements Serializable, Comparable<Reso
 	
 	ResourceURIWithQuery(ResourceURI resourceUri, String query) {
 		this.resourceUri = resourceUri;
-		this.query = query;
-		this.uri = Strings.isNullOrEmpty(query) ? resourceUri.toString() : String.join(QUERY_PART_SEPARATOR, resourceUri.toString(), query);
+		if (Strings.isNullOrEmpty(query)) {
+			this.query = query;
+			this.uri = resourceUri.toString();
+		} else if (query.startsWith(QUERY_PART_SEPARATOR)) {
+			this.query = query.substring(1);
+			this.uri = String.join("", resourceUri.toString(), query);
+		} else {
+			this.query = query;
+			this.uri = String.join(QUERY_PART_SEPARATOR, resourceUri.toString(), query);
+		}
 	}
 	
 	public String getUri() {
