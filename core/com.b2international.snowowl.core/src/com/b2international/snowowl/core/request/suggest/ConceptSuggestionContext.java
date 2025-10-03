@@ -145,7 +145,7 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 				// raw URIs are not supported yet, because those can select too many concepts
 				Collection<String> eclQueries = uri.getQueryValues().get("ecl");
 				if (eclQueries.isEmpty()) {
-					throw new BadRequestException("Selecting an entire Code System as like is not supported yet. Specify an ECL query part like this: %s?ecl=<your_query>", uri.getResourceUri().withoutResourceType());
+					throw new BadRequestException("Selecting an entire Code System as like is not supported yet. Specify an ECL query part like this: %s?ecl=<your_query> instead of supplying '%s'", uri.getResourceUri().withoutResourceType(), uri);
 				}
 				
 				Collection<String> exclusionsForThisLike = unlikeQueriesByResource.get(uri.getResourceUri());
