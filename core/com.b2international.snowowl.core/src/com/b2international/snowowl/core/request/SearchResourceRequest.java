@@ -22,8 +22,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.annotation.OverridingMethodsMustInvokeSuper;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.options.Options;
@@ -38,6 +36,9 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.annotations.VisibleForTesting;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 5.2
@@ -406,7 +407,7 @@ public abstract class SearchResourceRequest<C extends ServiceProvider, B> extend
 		if (specialOptionKey != null && options.containsKey(specialOptionKey)) {
 			// this will throw a CCE if non-String value is encountered in the option key and that is okay
 			String specialOption = extractSpecialOption.apply(options, specialOptionKey);
-			if (specialOption.startsWith(SPECIAL_OPTION_CHARACTER) && specialOption.endsWith(")")) {
+			if (specialOption != null && specialOption.startsWith(SPECIAL_OPTION_CHARACTER) && specialOption.endsWith(")")) {
 				// strip of the leading and trailing characters so we end up with a field(value expression that can be split on the first occurence of
 				// the ( character
 				String fieldAndValueWithParenSeparator = specialOption.substring(1, specialOption.length() - 1);
