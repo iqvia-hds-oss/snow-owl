@@ -35,6 +35,9 @@ import com.google.common.collect.Sets;
 public final class LexicalSimilarityTermFilter extends TermFilter {
 
 	private static final long serialVersionUID = 1L;
+	
+	// TODO make configurable?
+	public static final int MAX_EXACT_TERMS = 100;
 
 	private final SortedSet<String> exactTerms;
 	private final String minTerm;
@@ -51,6 +54,9 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 	LexicalSimilarityTermFilter(final SortedSet<String> exactTerms, final String minTerm, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
 		if (exactTerms.isEmpty()) {
 			throw new BadRequestException("At least one exact term must be provided.");
+		}
+		if (exactTerms.size() > MAX_EXACT_TERMS) {
+			throw new BadRequestException("A maximum of %s exact terms can be provided, but %s were given.", MAX_EXACT_TERMS, exactTerms.size());
 		}
 		if (minTerm == null || minTerm.isBlank()) {
 			throw new BadRequestException("minTerm must be provided.");
