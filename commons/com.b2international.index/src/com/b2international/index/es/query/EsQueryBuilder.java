@@ -124,6 +124,8 @@ public final class EsQueryBuilder {
 			visit((DisMaxPredicate) expression);
 		} else if (expression instanceof BoostPredicate) {
 			visit((BoostPredicate) expression);
+		} else if (expression instanceof ConstantScorePredicate) {
+			visit((ConstantScorePredicate) expression);
 		} else if (expression instanceof ScriptScoreExpression) {
 			visit((ScriptScoreExpression) expression);
 		} else if (expression instanceof DecimalPredicate) {
@@ -158,6 +160,13 @@ public final class EsQueryBuilder {
 		deque.push(QueryBuilders
 				.functionScoreQuery(innerQuery, ScoreFunctionBuilders.scriptFunction(expression.toEsScript(mapping)))
 				.boostMode(CombineFunction.REPLACE));
+	}
+	
+	private void visit(ConstantScorePredicate expression) {
+		final Expression inner = expression.expression();
+		visit(inner);
+		final QueryBuilder innerQuery = deque.pop();
+		deque.push(QueryBuilders.constantScoreQuery(innerQuery).boost(expression.score()));
 	}
 	
 	private void visit(BoolExpression bool) {
