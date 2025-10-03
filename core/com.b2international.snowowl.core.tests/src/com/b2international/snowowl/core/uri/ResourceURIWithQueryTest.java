@@ -66,4 +66,20 @@ public class ResourceURIWithQueryTest {
 		assertThat(uri.getQuery()).isEqualTo("ecl=<12312313|TERM|");
 	}
 	
+	@Test
+	public void withQuery() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURI("codesystems/SNOMEDCT").withQuery("ecl=12123123");
+		assertThat(uri.getResourceUri()).isEqualTo(new ResourceURI("codesystems/SNOMEDCT"));
+		assertThat(uri.getQueryValues().get("ecl")).containsOnly("12123123");
+		assertThat(uri.getQuery()).isEqualTo("ecl=12123123");
+	}
+	
+	@Test
+	public void withQuery_ExistingQuestionMark() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURI("codesystems/SNOMEDCT").withQuery("?ecl=12123123");
+		assertThat(uri.getResourceUri()).isEqualTo(new ResourceURI("codesystems/SNOMEDCT"));
+		assertThat(uri.getQueryValues().get("ecl")).containsOnly("12123123");
+		assertThat(uri.getQuery()).isEqualTo("ecl=12123123");
+	}
+	
 }
