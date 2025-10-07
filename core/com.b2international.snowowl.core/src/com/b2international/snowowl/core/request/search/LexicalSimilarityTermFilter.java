@@ -20,13 +20,13 @@ import static com.b2international.index.query.Expressions.matchTextAll;
 import static com.b2international.index.query.Expressions.matchTextAny;
 
 import java.util.Set;
-import java.util.SortedSet;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 /**
@@ -39,7 +39,7 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 	// TODO make configurable?
 	public static final int MAX_EXACT_TERMS = 100;
 
-	private final SortedSet<String> exactTerms;
+	private final Set<String> exactTerms;
 	private final String minTerm;
 	private final Integer minShouldMatch;
 	
@@ -51,7 +51,7 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 	private final Integer prefixLength;
 	private final Integer maxExpansions;
 	
-	LexicalSimilarityTermFilter(final SortedSet<String> exactTerms, final String minTerm, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
+	LexicalSimilarityTermFilter(final Set<String> exactTerms, final String minTerm, final Integer minShouldMatch, final Boolean ignoreStopwords, final Boolean caseSensitive, final Boolean synonyms, final String fuzziness, final Integer prefixLength, final Integer maxExpansions) {
 		if (exactTerms.isEmpty()) {
 			throw new BadRequestException("At least one exact term must be provided.");
 		}
@@ -72,7 +72,7 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 		this.maxExpansions = maxExpansions;
 	}
 
-	public SortedSet<String> getExactTerms() {
+	public Set<String> getExactTerms() {
 		return exactTerms;
 	}
 	
@@ -126,11 +126,19 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 	public Expression toExpression(String field, String textFieldSuffix, String exactFieldSuffix, String prefixFieldSuffix) {
 		// exact match overrides anything and should be scored the highest
 		// for each received exactTerm, inject an exact match clause in a dismax query
-		var exactMatches = Expressions.bool();
-		exactTerms.forEach(exactTerm -> {
-			exactMatches.should(TermFilter.exact().term(exactTerm).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix));
-		});
-		var exactMatch = exactMatches.build();
+		// the first received exact match is prioritized to be 100% score
+		// while anything else received as exact will be treated as secondary and will receive a score of 99%
+		final Expression exactMatch = TermFilter.exact().term(Iterables.getFirst(exactTerms, null)).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix);
+		final Expression nearExactMatch;
+		if (exactTerms.size() > 1) {
+			var nearExactMatches = Expressions.bool();
+			exactTerms.stream().skip(1).forEach(nearExactTerm -> {
+				nearExactMatches.should(TermFilter.exact().term(nearExactTerm).caseSensitive(isCaseSensitive()).build().toExpression(field, textFieldSuffix, exactFieldSuffix, prefixFieldSuffix));
+			});
+			nearExactMatch = nearExactMatches.build();
+		} else {
+			nearExactMatch = Expressions.matchNone();
+		}
 
 		// matching based on fuzziness should receive a higher scores than matching words in different order or leaving out words
 		var fuzzyExactMatches = Expressions.bool();
@@ -156,7 +164,9 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 		return dismax(
 			// as per suggester contract, the highest score is 1.0f, meaning the best possible match, 100%
 			exactMatch.constantScore(1.0f),
-			// almost as good as the exact but a bit fuzzy gets the second best score, 95%
+			// second best are the near exact matches, they probably match a secondary term in the system
+			nearExactMatch.constantScore(0.99f),
+			// almost as good as any exact but a bit fuzzy gets the third best score, 95%
 			fuzzyExactMatch.constantScore(0.95f),
 			
 			// TODO for the next four we should check if we can reuse the computed score from ES somehow in a sensible way
@@ -174,7 +184,7 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 	
 	public static final class Builder {
 		
-		private SortedSet<String> exactTerms;
+		private Set<String> exactTerms;
 		private String minTerm;
 		private Integer minShouldMatch;
 		
@@ -202,7 +212,7 @@ public final class LexicalSimilarityTermFilter extends TermFilter {
 		}
 		
 		public Builder terms(Iterable<String> exactTerms, String minTerm) {
-			this.exactTerms = exactTerms == null ? null : ImmutableSortedSet.copyOf(exactTerms);
+			this.exactTerms = exactTerms == null ? null : ImmutableSet.copyOf(exactTerms);
 			this.minTerm = minTerm;
 			return this;
 		}

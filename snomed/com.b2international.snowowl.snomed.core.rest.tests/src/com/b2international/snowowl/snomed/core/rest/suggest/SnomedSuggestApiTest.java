@@ -105,7 +105,27 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 			.body("limit", equalTo(1))
 			.body("total", greaterThanOrEqualTo(1))
 			.body("items[0].id", equalTo(BODY_STRUCTURE_ID))
-			.body("items[0].score", equalTo(1.0f)); // as this is an exact match of the body structure concept this should receive 1.0 score
+			.body("items[0].score", equalTo(1.0f)); // as this is an exact match and it is the first term, expect 1.0 score
+	}
+	
+	@Test
+	public void suggestLexical_SecondaryLikeTermsReceiveABitLessScore() {
+		suggest(
+			Json.object(
+				"from", SnomedContentRule.SNOMEDCT.toString(),
+				"like", Json.array("fake term starting with alphabetically later word than body", "body structure"),
+				"suggester", Json.object(
+					"type", "lexical"
+				)
+			)
+		)
+			.statusCode(200)
+			.assertThat()
+			// Use default limit
+			.body("limit", equalTo(1))
+			.body("total", greaterThanOrEqualTo(1))
+			.body("items[0].id", equalTo(BODY_STRUCTURE_ID))
+			.body("items[0].score", equalTo(0.99f)); // as this is an exact match but from a secondary like text, expect 0.99 score
 	}
 	
 	@Test

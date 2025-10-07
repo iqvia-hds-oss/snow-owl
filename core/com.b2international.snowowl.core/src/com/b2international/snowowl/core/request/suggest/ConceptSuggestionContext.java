@@ -57,8 +57,9 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 			.omitEmptyStrings();
 	
 	private final ResourceURIWithQuery from;
-	private final SortedSet<String> likes;
-	private final SortedSet<String> unlikes;
+	// XXX while these are Sets, we keep the original encounter order via Guava's ImmutableSet's copyOf
+	private final Set<String> likes;
+	private final Set<String> unlikes;
 	private final List<ExtendedLocale> locales;
 	
 	// provides a cache to avoid loading the same content again from the stores and compute the topTokens only once per run for a given config
@@ -99,15 +100,15 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 			resolvedUri = CodeSystem.uriWithQuery(from);
 		}
 		this.from = resolvedUri;
-		this.likes = Collections3.toImmutableSortedSet(likes);
-		this.unlikes = Collections3.toImmutableSortedSet(unlikes);
+		this.likes = Collections3.toImmutableSet(likes);
+		this.unlikes = Collections3.toImmutableSet(unlikes);
 	}
 
-	public SortedSet<String> likes() {
+	public Set<String> likes() {
 		return likes;
 	}
 	
-	public SortedSet<String> unlikes() {
+	public Set<String> unlikes() {
 		return unlikes;
 	}
 
@@ -177,8 +178,8 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 		return locales;
 	}
 	
-	private Set<String> getAllTerms(Concept concept) {
-		final Set<String> allTerms = new HashSet<>();
+	private SequencedSet<String> getAllTerms(Concept concept) {
+		final SequencedSet<String> allTerms = new LinkedHashSet<>();
 		
 		// just in case keep adding the selected display term even though the description list of the generic concept should already contain all descriptions, not just alternatives
 		if (concept.getTerm() != null) {
