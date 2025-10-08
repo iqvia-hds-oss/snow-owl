@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,11 @@ public final class ConceptSuggestionRequest extends SearchResourceRequest<Servic
 		 */
 		DISPLAY,
 		
+		/**
+		 * Specifies the minimum confidence score a suggestion to receive in order to be returned
+		 */
+		MIN_CONFIDENCE_SCORE
+		
 	}
 	
 	@JsonProperty
@@ -99,9 +104,15 @@ public final class ConceptSuggestionRequest extends SearchResourceRequest<Servic
 			throw new BadRequestException("At least one like argument is required to generate suggestions.");
 		}
 		
+		var minConfidenceScore = containsKey(OptionKey.MIN_CONFIDENCE_SCORE) ? get(OptionKey.MIN_CONFIDENCE_SCORE, Float.class) : 0.0f;
+		
+		if (minConfidenceScore < 0.0f) {
+			throw new BadRequestException("'minConfidenceScore' must be a positive number when set. Got: %s", minConfidenceScore);
+		}
+		
 		return conceptSuggester
 				.suggest(
-					new ConceptSuggestionContext(context, getString(OptionKey.FROM), getList(OptionKey.LIKE, String.class), getList(OptionKey.UNLIKE, String.class), locales()),
+					new ConceptSuggestionContext(context, getString(OptionKey.FROM), getList(OptionKey.LIKE, String.class), getList(OptionKey.UNLIKE, String.class), minConfidenceScore, locales()),
 					limit(),
 					getString(OptionKey.DISPLAY),
 					locales()

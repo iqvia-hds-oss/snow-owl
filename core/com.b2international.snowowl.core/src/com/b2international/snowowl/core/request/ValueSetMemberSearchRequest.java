@@ -46,6 +46,7 @@ public final class ValueSetMemberSearchRequest extends SearchResourceRequest<Ser
 				.putAll(options())
 				.put(MemberSearchRequestEvaluator.OptionKey.AFTER, searchAfter())
 				.put(MemberSearchRequestEvaluator.OptionKey.LIMIT, limit)
+				.put(MemberSearchRequestEvaluator.OptionKey.MIN_SCORE, minScore())
 				.put(MemberSearchRequestEvaluator.OptionKey.LOCALES, locales())
 				.put(SearchResourceRequest.OptionKey.SORT_BY, sortBy())
 				.build();

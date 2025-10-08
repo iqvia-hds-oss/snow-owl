@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,6 +224,9 @@ public abstract class SearchResourceRequest<C extends ServiceProvider, B> extend
 	@Min(0)
 	private int limit;
 
+	@Min(0)
+	private Float minScore;
+	
 	@NotNull
 	private Options options;
 	
@@ -239,25 +242,13 @@ public abstract class SearchResourceRequest<C extends ServiceProvider, B> extend
 		return null;
 	}
 	
-	void setSearchAfter(String searchAfter) {
-		this.searchAfter = searchAfter;
-	}
-	
-	void setComponentIds(Set<String> componentIds) {
-		this.componentIds = componentIds;
-	}
-
 	@JsonProperty
 	protected final String searchAfter() {
 		return searchAfter;
 	}
 	
-	void setLimit(int limit) {
-		this.limit = limit;
-	}
-	
-	void setOptions(Options options) {
-		this.options = options;
+	void setSearchAfter(String searchAfter) {
+		this.searchAfter = searchAfter;
 	}
 	
 	@JsonProperty
@@ -265,14 +256,35 @@ public abstract class SearchResourceRequest<C extends ServiceProvider, B> extend
 		return limit;
 	}
 	
+	void setLimit(int limit) {
+		this.limit = limit;
+	}
+	
+	@JsonProperty
+	public final Float minScore() {
+		return minScore;
+	}
+	
+	void setMinScore(Float minScore) {
+		this.minScore = minScore;
+	}
+	
 	@JsonProperty
 	protected final Options options() {
 		return options;
 	}
 	
+	void setOptions(Options options) {
+		this.options = options;
+	}
+	
 	@JsonProperty
 	protected final Set<String> componentIds() {
 		return componentIds;
+	}
+	
+	void setComponentIds(Set<String> componentIds) {
+		this.componentIds = componentIds;
 	}
 
 	protected final boolean containsKey(Enum<?> key) {

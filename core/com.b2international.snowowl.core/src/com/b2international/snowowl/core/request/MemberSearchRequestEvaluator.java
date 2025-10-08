@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,11 @@ public interface MemberSearchRequestEvaluator<R> {
 		 * Number of matches to return.
 		 */
 		LIMIT, 
+		
+		/**
+		 * Minimum score to match.
+		 */
+		MIN_SCORE,
 		
 		/**
 		 * Search for mappings with the specified source tooling id.

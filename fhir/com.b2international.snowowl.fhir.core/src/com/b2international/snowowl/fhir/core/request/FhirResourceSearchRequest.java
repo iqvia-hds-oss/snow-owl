@@ -125,6 +125,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				.where(resourcesQuery.build())
 				.searchAfter(searchAfter())
 				.limit(limit())
+				.minScore(minScore())
 				.sortBy(querySortBy(context))
 				.build());
 		

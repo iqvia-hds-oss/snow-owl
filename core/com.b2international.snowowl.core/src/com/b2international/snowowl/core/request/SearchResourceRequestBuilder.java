@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ public abstract class SearchResourceRequestBuilder<B extends SearchResourceReque
 	private Set<String> componentIds;
 	private String searchAfter;
 	private int limit = 50;
+	private Float minScore;
 	private final OptionsBuilder optionsBuilder = OptionsBuilder.newBuilder();
 	
 	protected SearchResourceRequestBuilder() {
@@ -62,6 +63,17 @@ public abstract class SearchResourceRequestBuilder<B extends SearchResourceReque
 	 */
 	public final B setLimit(int limit) {
 		this.limit = limit;
+		return getSelf();
+	}
+	
+	/**
+	 * Sets the minimum score required to include a match in the result set.
+	 * 
+	 * @param minScore
+	 * @return
+	 */
+	public final B setMinScore(Float minScore) {
+		this.minScore = minScore;
 		return getSelf();
 	}
 	
@@ -155,6 +167,7 @@ public abstract class SearchResourceRequestBuilder<B extends SearchResourceReque
 		req.setSearchAfter(searchAfter);
 		req.setLimit(Math.min(limit, MAX_LIMIT));
 		req.setOptions(initOptions(optionsBuilder));
+		req.setMinScore(minScore);
 		return req;
 	}
 	
