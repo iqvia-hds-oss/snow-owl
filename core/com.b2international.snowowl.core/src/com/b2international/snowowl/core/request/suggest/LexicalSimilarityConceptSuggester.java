@@ -113,6 +113,7 @@ public class LexicalSimilarityConceptSuggester implements ConceptSuggester {
 				// configure display, limit and locales
 				.setPreferredDisplay(display)
 				.setLimit(limit)
+				.setMinScore(context.minConfidenceScore())
 				.setLocales(locales)
 				// always order by score
 				.sortBy(SearchIndexResourceRequest.SCORE)

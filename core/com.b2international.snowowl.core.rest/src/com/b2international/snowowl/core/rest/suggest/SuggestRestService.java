@@ -113,6 +113,7 @@ public class SuggestRestService extends AbstractRestService {
 				.setUnlike(params.getUnlike())
 				.setSuggester(params.getSuggester())
 				.setLimit(params.getLimit())
+				.setMinScore(params.getMinConfidenceScore())
 				.setLocales(Strings.isNullOrEmpty(params.getAcceptLanguage()) ? acceptLanguage : params.getAcceptLanguage())
 				.setPreferredDisplay(params.getPreferredDisplay());
 	}

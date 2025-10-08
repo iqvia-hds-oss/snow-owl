@@ -61,7 +61,7 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	private final Set<String> likes;
 	private final Set<String> unlikes;
 	private final List<ExtendedLocale> locales;
-	private final float minConfidenceScore;
+	private final Float minConfidenceScore;
 	
 	// provides a cache to avoid loading the same content again from the stores and compute the topTokens only once per run for a given config
 	private final LoadingCache<TopTokenConfig, List<String>> topTokenCache = CacheBuilder.newBuilder().build(new CacheLoader<>() {
@@ -92,7 +92,7 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 	// dynamically computed exclusion items during like item computation
 	private Multimap<ResourceURI, String> exclusionQueriesPerResourceUri = HashMultimap.create();
 
-	public ConceptSuggestionContext(ServiceProvider context, String from, List<String> likes, List<String> unlikes, final float minConfidenceScore, List<ExtendedLocale> locales) {
+	public ConceptSuggestionContext(ServiceProvider context, String from, List<String> likes, List<String> unlikes, final Float minConfidenceScore, List<ExtendedLocale> locales) {
 		super(context);
 		this.minConfidenceScore = minConfidenceScore;
 		this.locales = locales;
@@ -106,7 +106,7 @@ public final class ConceptSuggestionContext extends DelegatingContext {
 		this.unlikes = Collections3.toImmutableSet(unlikes);
 	}
 	
-	public float minConfidenceScore() {
+	public Float minConfidenceScore() {
 		return minConfidenceScore;
 	}
 
