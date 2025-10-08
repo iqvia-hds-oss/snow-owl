@@ -38,7 +38,7 @@ public class Fixtures {
 
 	@Doc
 	@Script(name=Data.Scripts.FIELD_SCORE, script="return doc.floatField.value")
-	public static class Data {
+	public static class Data implements WithScore {
 		
 		public static class Scripts {
 			public static final String FIELD_SCORE = "fieldScore";
@@ -73,12 +73,14 @@ public class Fixtures {
 		private String unindexedValue;
 		
 		private LongSortedSet longSortedSet;
+		
+		private float score;
 
 		@JsonCreator
 		public Data(@JsonProperty("id") String id) {
 			this.id = id;
 		}
-		
+
 		public String getId() {
 			return id;
 		}
@@ -194,6 +196,16 @@ public class Fixtures {
 		public void setUnindexedValue(String unindexedValue) {
 			this.unindexedValue = unindexedValue;
 		}
+		
+		@Override
+		public float getScore() {
+			return score;
+		}
+		
+		@Override
+		public void setScore(float score) {
+			this.score = score;
+		}
 
 		@Override
 		public boolean equals(Object obj) {
@@ -251,6 +263,7 @@ public class Fixtures {
 					.add("shortField", shortField)
 					.add("shortWrapper", shortWrapper)
 					.add("longSortedSet", longSortedSet)
+					.add("score", score)
 					.toString();
 		}
 		

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,14 @@ public final class Query<T> implements Metrics {
 		AfterWhereBuilder<T> withScores(boolean withScores);
 		
 		/**
+		 * Return only matches having equivalent or higher scores than the specified minScore.
+		 * @param minScore
+		 * @return
+		 * @since 9.8
+		 */
+		AfterWhereBuilder<T> minScore(Float minScore);
+		
+		/**
 		 * Request the underlying service to cache the results of this query when possible. By default queries are not cached.
 		 * 
 		 * @param cached - whether this query needs to be cached or not
@@ -113,6 +121,7 @@ public final class Query<T> implements Metrics {
 	private IndexSelection<T> selection;
 	private Expression where;
 	private SortBy sortBy = SortBy.DEFAULT;
+	private Float minScore;
 	private boolean withScores = false;
 	private List<String> fields;
 	private boolean cached = false;
@@ -139,9 +148,17 @@ public final class Query<T> implements Metrics {
 	public SortBy getSortBy() {
 		return sortBy;
 	}
-
+	
 	void setSortBy(SortBy sortBy) {
 		this.sortBy = sortBy;
+	}
+	
+	public Float getMinScore() {
+		return minScore;
+	}
+	
+	void setMinScore(Float minScore) {
+		this.minScore = minScore;
 	}
 
 	public IndexSelection<T> getSelection() {
@@ -222,6 +239,9 @@ public final class Query<T> implements Metrics {
 		if (cached) {
 			sb.append(" CACHED");
 		}
+		if (minScore != null) {
+			sb.append(" MIN_SCORE(").append(minScore).append(")");
+		}
 		return sb.toString();
 	}
 
@@ -251,6 +271,7 @@ public final class Query<T> implements Metrics {
 			.limit(getLimit())
 			.searchAfter(getSearchAfter())
 			.withScores(isWithScores())
+			.minScore(getMinScore())
 			.cached(isCached());
 	}
 	
@@ -262,6 +283,7 @@ public final class Query<T> implements Metrics {
 				.limit(getLimit())
 				.searchAfter(searchAfter)
 				.withScores(isWithScores())
+				.minScore(getMinScore())
 				.cached(isCached());
 	}
 
@@ -317,5 +339,5 @@ public final class Query<T> implements Metrics {
 	public boolean isMeasured() {
 		return getMetrics() != null;
 	}
-	
+
 }
