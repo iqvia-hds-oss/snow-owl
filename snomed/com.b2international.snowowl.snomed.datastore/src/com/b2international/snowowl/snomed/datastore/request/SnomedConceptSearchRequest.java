@@ -401,6 +401,7 @@ public class SnomedConceptSearchRequest extends SnomedComponentSearchRequest<Sno
 			.setExpand(expand())
 			.setFields(fields())
 			.setLimit(limit())
+			.setMinScore(minScore())
 			.setLocales(locales())
 			.setSearchAfter(searchAfter());
 	}

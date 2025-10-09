@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@ public class SuggestRestParameters {
 	
 	@Parameter(description = "The maximum number of items to return", example = "1", schema = @Schema(defaultValue = "1"))
 	private int limit = 1;
+	
+	@Parameter(description = "The minimum score required to suggest a concept (0.0..1.0 range)", example = "0.80", schema = @Schema(defaultValue = "0.80"))
+	private Float minConfidenceScore;
 
 	@Parameter(description = "The preferred term display in case of SNOMED CT", example = "PT", schema = @Schema(allowableValues = {
 			"FSN", "PT", "ID_ONLY" }, defaultValue = "PT"))
@@ -103,6 +106,14 @@ public class SuggestRestParameters {
 
 	public void setAcceptLanguage(String acceptLanguage) {
 		this.acceptLanguage = acceptLanguage;
+	}
+	
+	public Float getMinConfidenceScore() {
+		return minConfidenceScore;
+	}
+	
+	public void setMinConfidenceScore(Float minConfidenceScore) {
+		this.minConfidenceScore = minConfidenceScore;
 	}
 	
 }

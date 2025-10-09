@@ -46,6 +46,7 @@ public final class SearchRawIndexResourceRequestBuilder<C extends ServiceProvide
 		setLocales(req.locales());
 		setFields(req.fields());
 		sortBy(req.sortBy());
+		setMinScore(req.minScore());
 		return new SearchRawIndexResourceRequest<C, D>(req, select);
 	}
 	

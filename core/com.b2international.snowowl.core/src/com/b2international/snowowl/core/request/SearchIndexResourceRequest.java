@@ -78,6 +78,7 @@ public abstract class SearchIndexResourceRequest<C extends ServiceProvider, B, D
 					.where(where)
 					.searchAfter(searchAfter())
 					.limit(limit())
+					.minScore(minScore())
 					.sortBy(querySortBy(context))
 					.withScores(trackScores())
 					.cached(cacheHits(context))

@@ -174,6 +174,11 @@ public class EsDocumentSearcher implements Searcher {
 			.trackScores(esQueryBuilder.needsScoring())
 			.trackTotalHitsUpTo(Integer.MAX_VALUE);
 		
+		// set min score
+		if (query.getMinScore() != null) {
+			reqSource.minScore(query.getMinScore());
+		}
+		
 		// field selection
 		final boolean fetchSource;
 		if (toRead > 0) {

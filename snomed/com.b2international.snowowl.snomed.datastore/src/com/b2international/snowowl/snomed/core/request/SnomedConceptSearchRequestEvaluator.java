@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 				.setLocales(locales)
 				.setSearchAfter(search.getString(OptionKey.AFTER))
 				.setLimit(search.get(OptionKey.LIMIT, Integer.class))
+				.setMinScore(search.get(OptionKey.MIN_SCORE, Float.class))
 				.setFields(search.getList(OptionKey.FIELDS, String.class))
 				.setExpand(expand)
 				.sortBy(search.containsKey(SearchResourceRequest.OptionKey.SORT_BY) ? search.getList(SearchResourceRequest.OptionKey.SORT_BY, SearchResourceRequest.Sort.class) : null)

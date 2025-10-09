@@ -67,6 +67,7 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 				.put(ConceptSearchRequestEvaluator.OptionKey.ID, componentIds())
 				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, searchAfter())
 				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, limit)
+				.put(ConceptSearchRequestEvaluator.OptionKey.MIN_SCORE, minScore())
 				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, locales())
 				.put(ConceptSearchRequestEvaluator.OptionKey.FIELDS, fields())
 				.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, expand())

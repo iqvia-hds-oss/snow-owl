@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ class DefaultQueryBuilder<T> implements QueryBuilder<T>, AfterWhereBuilder<T> {
 	private Expression where;
 	private SortBy sortBy = SortBy.DEFAULT;
 	private boolean withScores = false;
+	private Float minScore;
 	private boolean cached = false;
 
 	private List<String> fields = Collections.emptyList();
@@ -101,6 +102,12 @@ class DefaultQueryBuilder<T> implements QueryBuilder<T>, AfterWhereBuilder<T> {
 	}
 	
 	@Override
+	public AfterWhereBuilder<T> minScore(Float minScore) {
+		this.minScore = minScore;
+		return this;
+	}
+	
+	@Override
 	public AfterWhereBuilder<T> cached(boolean cached) {
 		this.cached = cached;
 		return this;
@@ -119,6 +126,7 @@ class DefaultQueryBuilder<T> implements QueryBuilder<T>, AfterWhereBuilder<T> {
 		query.setLimit(limit);
 		query.setSortBy(sortBy);
 		query.setWithScores(withScores);
+		query.setMinScore(minScore);
 		query.setFields(fields);
 		query.setCached(cached);
 		return query;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public final class ConceptSuggestionRequest extends SearchResourceRequest<Servic
 		
 		return conceptSuggester
 				.suggest(
-					new ConceptSuggestionContext(context, getString(OptionKey.FROM), getList(OptionKey.LIKE, String.class), getList(OptionKey.UNLIKE, String.class), locales()),
+					new ConceptSuggestionContext(context, getString(OptionKey.FROM), getList(OptionKey.LIKE, String.class), getList(OptionKey.UNLIKE, String.class), minScore(), locales()),
 					limit(),
 					getString(OptionKey.DISPLAY),
 					locales()

@@ -83,6 +83,11 @@ public interface ConceptSearchRequestEvaluator {
 		LIMIT,
 		
 		/**
+		 * Minimum score to match.
+		 */
+		MIN_SCORE,
+		
+		/**
 		 * Specific fields to load when requested content (consumers of the API must be familiar with the underlying schema)
 		 */
 		FIELDS,
