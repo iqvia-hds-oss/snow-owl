@@ -51,6 +51,7 @@ import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.TestMethodNameRule;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
+import com.google.common.collect.Sets;
 
 /**
  * @since 5.9
@@ -101,6 +102,60 @@ public class BranchCompareRequestTest {
 		assertThat(compare.getNewComponents()).containsAll(newIds);
 		assertThat(compare.getChangedComponents()).doesNotContainAnyElementsOf(newIds);
 		assertThat(compare.getDeletedComponents()).isEmpty();
+	}
+	
+	@Test
+	public void compareBranchWithLimit() throws Exception {
+		final Set<ComponentIdentifier> newIds = prepareBranchWithNewChanges(branchPath);
+		
+		final BranchCompareResult compare = RepositoryRequests.branching().prepareCompare()
+			.setBase(Branch.MAIN_PATH)
+			.setCompare(branchPath)
+			.setLimit(1)
+			.setIncludeComponentChanges(true)
+			.build(REPOSITORY_ID)
+			.execute(bus)
+			.getSync();
+		
+		assertThat(compare.getNewComponents())
+			.hasSize(1)
+			.containsAnyElementsOf(newIds);
+		
+		assertThat(compare.getChangedComponents()).isEmpty();
+		assertThat(compare.getDeletedComponents()).isEmpty();
+		
+		assertThat(compare.getTotalNew()).isEqualTo(newIds.size());
+		assertThat(compare.getTotalChanged()).isZero();
+		assertThat(compare.getTotalDeleted()).isZero();
+	}
+	
+	@Test
+	public void compareBranchWithLimitAndType() throws Exception {
+		final Set<ComponentIdentifier> newIds = prepareBranchWithNewChanges(branchPath);
+		final Set<ComponentIdentifier> newDescriptionIds = Sets.filter(newIds, ci -> SnomedDescription.TYPE.equals(ci.getComponentType()));
+		
+		final BranchCompareResult compare = RepositoryRequests.branching().prepareCompare()
+			.setBase(Branch.MAIN_PATH)
+			.setCompare(branchPath)
+			.setLimit(1)
+			.setIncludeComponentChanges(true)
+			.filterByType(SnomedDescription.TYPE)
+			.build(REPOSITORY_ID)
+			.execute(bus)
+			.getSync();
+
+		// These descriptions are registered as changed components for some reason, possibly due to language refset members
+		assertThat(compare.getChangedComponents())
+			.hasSize(1)
+			.containsAnyElementsOf(newDescriptionIds);
+
+		assertThat(compare.getNewComponents()).isEmpty();
+		assertThat(compare.getDeletedComponents()).isEmpty();
+		
+		// Counters however will always show 2 new descriptions regardless of the limit
+		assertThat(compare.getTotalNew()).isEqualTo(newDescriptionIds.size());
+		assertThat(compare.getTotalChanged()).isZero();
+		assertThat(compare.getTotalDeleted()).isZero();
 	}
 
 	@Test
