@@ -16,11 +16,13 @@
 package com.b2international.snowowl.core.request.suggest;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.plugin.Component;
@@ -121,8 +123,13 @@ public class LexicalSimilarityConceptSuggester implements ConceptSuggester {
 				.async(Map.of(User.class, context.service(User.class)))
 				.execute(context.service(IEventBus.class))
 				.then(concepts -> {
-					return new Suggestions(topTokens, concepts.getItems(), concepts.getSearchAfter(), limit, concepts.getTotal());
+					return new Suggestions(topTokens, sortItemsByTermLength(concepts.getItems()), concepts.getSearchAfter(), limit, concepts.getTotal());
 				});
+	}
+
+	// rewrite the returned suggestions by sorting same score categories from shorter preferred terms to longer ones
+	private List<Concept> sortItemsByTermLength(List<Concept> items) {
+		return items.stream().sorted(Comparator.comparing(Concept::getScore).reversed().thenComparing(c -> c.getTerm().length()).thenComparing(Concept::getTerm)).toList();
 	}
 	
 }

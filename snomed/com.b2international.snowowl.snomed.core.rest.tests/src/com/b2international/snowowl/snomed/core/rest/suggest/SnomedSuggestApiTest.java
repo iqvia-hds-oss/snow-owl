@@ -129,6 +129,29 @@ public class SnomedSuggestApiTest extends AbstractSnomedApiTest {
 	}
 	
 	@Test
+	public void suggestLexical_ShorterTermsFirst() throws Exception {
+		suggest(
+			Json.object(
+				"from", SnomedContentRule.SNOMEDCT.toString(),
+				"like", Json.array("Associated etiologic"),
+				"suggester", Json.object(
+					"type", "lexical"
+				),
+				"limit", 10
+			)
+		)
+			.statusCode(200)
+			.assertThat()
+			.body("total", greaterThanOrEqualTo(3))
+			.body("items[0].term", equalTo("Associated etiologic finding"))
+			.body("items[0].score", equalTo(0.90f))
+			.body("items[1].term", equalTo("Associated etiologic chemical"))
+			.body("items[1].score", equalTo(0.90f))
+			.body("items[2].term", equalTo("Associated etiologic deficiency"))
+			.body("items[2].score", equalTo(0.90f));
+	}
+	
+	@Test
 	public void suggestConceptWithoutAlternativeTerms() {
 		String descriptionToDelete = RandomSnomedIdentiferGenerator.generateDescriptionId();
 		String baseConceptId = createConcept(branchPath, Json.object(
