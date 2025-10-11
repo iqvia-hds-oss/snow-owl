@@ -10,7 +10,7 @@
 	<packaging>eclipse-plugin</packaging>
 	
 	<properties>
-		<elasticsearch.version>7.17.28</elasticsearch.version>
+		<elasticsearch.version>9.0.8</elasticsearch.version>
 		<log4j2.version>2.17.1</log4j2.version>
     </properties>
     
