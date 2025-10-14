@@ -31,17 +31,19 @@ public enum Acceptability {
 	/**
 	 * Description is acceptable in language or dialect
 	 */
-	ACCEPTABLE(Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_ACCEPTABLE),
+	ACCEPTABLE(Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_ACCEPTABLE, "Acceptable"),
 
 	/**
 	 * Description is preferred in language or dialect
 	 */
-	PREFERRED(Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_PREFERRED);
+	PREFERRED(Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_PREFERRED, "Preferred");
 
 	private final String conceptId;
+	private final String label;
 
-	private Acceptability(final String conceptId) {
+	private Acceptability(final String conceptId, String label) {
 		this.conceptId = conceptId;
+		this.label = label;
 	}
 
 	/**
@@ -51,6 +53,10 @@ public enum Acceptability {
 	 */
 	public String getConceptId() {
 		return conceptId;
+	}
+	
+	public String getLabel() {
+		return label;
 	}
 
 	/**
