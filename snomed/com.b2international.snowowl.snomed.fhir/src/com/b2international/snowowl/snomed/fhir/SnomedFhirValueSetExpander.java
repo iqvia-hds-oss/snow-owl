@@ -63,7 +63,9 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 			.setLimit(parameters.getCount() == null ? 10 : parameters.getCount().getValue())
 			.setSearchAfter(parameters.getAfter() == null ? null : parameters.getAfter().getValue())
 			// SNOMED only preferred display support (VS should always use FSN)
-			.setPreferredDisplay("FSN") 
+			.setPreferredDisplay("FSN")
+			// Expand descriptions so that type information can be extracted later
+			.setExpand("descriptions(expand(type(expand(pt()))))")
 			.setLocales(FhirRequest.compactLocale(parameters.getDisplayLanguage()))
 			// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
 			.sortBy(!CompareUtils.isEmpty(termFilter) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
