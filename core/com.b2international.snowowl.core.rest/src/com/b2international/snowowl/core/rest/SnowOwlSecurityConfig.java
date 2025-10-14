@@ -25,6 +25,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import org.springframework.security.web.header.writers.XXssProtectionHeaderWriter;
 import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import com.b2international.snowowl.core.rest.util.CORSFilter;
@@ -47,6 +48,7 @@ public class SnowOwlSecurityConfig {
 	@SuppressWarnings({ "lgtm[java/spring-disabled-csrf-protection]" })
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		
 		// configure stateless session policy
 		http.sessionManagement(session -> {
 			session.sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -55,6 +57,16 @@ public class SnowOwlSecurityConfig {
 		// disable CSRF
 		http.csrf(csrf -> {
 			csrf.disable();
+		});
+
+		// configure security headers
+		http.headers(headers -> {
+			headers
+				// XSS Protection (X-XSS-Protection)
+				.xssProtection(xss -> 
+					 xss.headerValue(XXssProtectionHeaderWriter.HeaderValue.ENABLED_MODE_BLOCK)
+				);
+			
 		});
 
 		// handle X-Forwarded headers
@@ -67,7 +79,9 @@ public class SnowOwlSecurityConfig {
 		
 		// authentication is handled internally in AuthorizedRequest
 		http.authorizeHttpRequests((authz) -> authz.requestMatchers("/**").permitAll());
+		
 		return http.build();
+		
 	}
 	
 	@Bean
