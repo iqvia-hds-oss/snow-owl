@@ -103,7 +103,7 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 					// FIXME: "system" may need to be set to the code system's URL we are calling from
 					.setSystem(SNOMED_SYSTEM_URL)
 					.setCode(acceptability.getConceptId())
-					.setDisplay(acceptability.name());
+					.setDisplay(acceptability.getLabel());
 				
 				final Extension useContextExtension = new Extension("http://snomed.info/fhir/StructureDefinition/designation-use-context");
 				

@@ -162,7 +162,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 					// FIXME: "system" may need to be set to the code system's URL we are calling from
 					.setSystem(baseUrl)
 					.setCode(acceptability.getConceptId())
-					.setDisplay(acceptability.name());
+					.setDisplay(acceptability.getLabel());
 				
 				final Extension useContextExtension = new Extension("http://snomed.info/fhir/StructureDefinition/designation-use-context");
 				
