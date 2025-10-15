@@ -24,8 +24,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.test.commons.TestMethodNameRule;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 
@@ -95,9 +95,20 @@ public abstract class FhirRestTest extends FhirTest {
 		
 		assertThat(jsonPath.getString("extension[0].url")).isEqualTo("context");
 		assertThat(jsonPath.getString("extension[0].valueCoding.code")).isEqualTo(refsetId);
+		
 		assertThat(jsonPath.getString("extension[1].url")).isEqualTo("role");
 		assertThat(jsonPath.getString("extension[1].valueCoding.code")).isEqualTo(Concepts.REFSET_DESCRIPTION_ACCEPTABILITY_PREFERRED);
+		assertThat(jsonPath.getString("extension[1].valueCoding.display")).isEqualTo("Preferred");
+		
 		assertThat(jsonPath.getString("extension[2].url")).isEqualTo("type");
 		assertThat(jsonPath.getString("extension[2].valueCoding.code")).isEqualTo(typeId);
+		
+		String display = jsonPath.getString("extension[2].valueCoding.display");
+		
+		if (Concepts.FULLY_SPECIFIED_NAME.equals(typeId)) {
+			assertThat(display).isEqualTo("Fully specified name");
+		} else if (Concepts.SYNONYM.equals(typeId)) {
+			assertThat(display).isEqualTo("Synonym");
+		}
 	}
 }

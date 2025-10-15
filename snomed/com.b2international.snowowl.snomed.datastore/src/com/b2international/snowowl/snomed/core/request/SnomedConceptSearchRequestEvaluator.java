@@ -36,7 +36,6 @@ import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcepts;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
-import com.b2international.snowowl.snomed.core.domain.SnomedDescriptions;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptSearchRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.google.common.base.Strings;
@@ -120,7 +119,7 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 	private Concept toConcept(ResourceURI codeSystem, SnomedConcept snomedConcept, String pt, boolean requestedExpand) {
 		final Concept concept = toConcept(codeSystem, snomedConcept, snomedConcept.getIconId(), pt, snomedConcept.getScore());
 		
-		SortedSet<Description> descriptions = generateGenericDescriptions(snomedConcept.getPreferredDescriptions());
+		SortedSet<Description> descriptions = generateGenericDescriptions(snomedConcept);
 		
 		if (!descriptions.isEmpty()) {
 			concept.setDescriptions(descriptions);
@@ -136,16 +135,20 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 	}
 	
 	/**
-	 * Generates generic {@link Description} objects for each {@link SnomedDescription} in the given {@link SnomedDescriptions}. This method combines
+	 * Generates generic {@link Description} objects from the descriptions of the given {@link SnomedConcept}. 
+	 * The method uses {@link SnomedConcept#getDescriptions() concept descriptions} when available; if that collection is {@code null}, 
+	 * it falls back to {@link SnomedConcept#getPreferredDescriptions() preferred descriptions}. This method combines
 	 * the language code and each language reference set acceptability membership of the {@link SnomedDescription} to generate a generic
 	 * {@link Description} representation. The number of {@link Description}s generated can be higher than the given number of
 	 * {@link SnomedDescription}s.
-	 * 
-	 * @param descriptions
-	 * @return a {@link SortedSet} of {@link Description} objects, never <code>null</code>
+	 *
+	 * @param concept the {@link SnomedConcept} to read descriptions from
+	 * @return a {@code SortedSet<Description>} of {@link Description} objects, never <code>null</code>
 	 */
-	public static SortedSet<Description> generateGenericDescriptions(SnomedDescriptions descriptions) {
-		return descriptions.stream()
+	public static SortedSet<Description> generateGenericDescriptions(SnomedConcept concept) {
+		return Optional.ofNullable(concept.getDescriptions())
+				.orElse(concept.getPreferredDescriptions())
+				.stream()
 				.flatMap(description -> {
 					// FIXME falling back to en when the languageCode is not available on concept descriptions
 					// descriptions expand is needed but only when the requestor truly needs them, but that requires a bit larger set of changes
