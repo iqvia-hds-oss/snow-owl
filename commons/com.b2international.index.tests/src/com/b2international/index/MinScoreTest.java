@@ -49,7 +49,7 @@ public class MinScoreTest extends BaseIndexTest {
 				Expressions.matchTextAll("analyzedField.text", "unspecified").boost(10.0f),
 				Expressions.matchTextAll("analyzedField.text", "cerebrospinal")
 			)
-		).minScore(10.0f).build());
+		).minScore(1.0f).build());
 		assertThat(hits)
 			.extracting(Data::getId)
 			.containsOnly(KEY1);
