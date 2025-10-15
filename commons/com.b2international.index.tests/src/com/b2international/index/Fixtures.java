@@ -27,6 +27,7 @@ import com.b2international.index.mapping.Field;
 import com.b2international.index.mapping.FieldAlias;
 import com.b2international.index.mapping.FieldAlias.FieldAliasType;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.MoreObjects;
@@ -197,11 +198,13 @@ public class Fixtures {
 			this.unindexedValue = unindexedValue;
 		}
 		
+		@JsonIgnore
 		@Override
 		public float getScore() {
 			return score;
 		}
 		
+		@JsonIgnore
 		@Override
 		public void setScore(float score) {
 			this.score = score;
