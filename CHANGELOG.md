@@ -1,6 +1,45 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.8.0
+
+### Core
+- `lexical` concept suggester is now generally available (#1417, #1418)
+  * This suggester uses an improved and accurate keyword matching strategy than the `term` suggester
+  * Ensures that scores are always in the 0..1 range where 1.0 is usually an exact, high confidence match, while values closer to zero are less confident matches
+  * In case matches would receive the same scores the system will sort them by term length, shorter to longer 
+
+- Restore some missing terminology resource upgrade related capabilities from 7.x (#1411)
+  * Introduce `upgradeInfo` expandable property on `upgradeOf` scoped dependencies
+
+- Job Schema Upgrades (#1417)
+  * Add a type property that can be used to filter job types based on the executed request hierarchy
+  * Job async execution context is now behaving the same as sync request execution context 
+
+### SNOMED CT
+- Improved namespace related information management in SNOMED CT CodeSystem resources (#1401)
+  * `namespace` setting is the 7 digit namespace identifier assigned for a SNOMED CT Extension
+  * `namespaceConceptId` are the actual conceptId holding the identifier in its description
+
+### Security
+- Mitigate security vulnerabilities: CVE-2025-41248, CVE-2025-41249, CVE-2025-41242, CVE-2025-58751, CVE-2025-58752, CVE-2025-58754
+
+### Bugs/Improvements
+- [index] support min_score clauses when executing an Elasticsearch query (bc9101f)
+- [core] fixed an issue where invalid authentication token can bypass the authentication verification and can result in a HTTP 500 error later (e61d60a) 
+- [snomed] ensure that module dependency conflicts get auto-resolved during upgrades (#1402)
+- [api] prevent empty dependencies array from materialization when retrieving a resource without selecting the dependencies field (4de14be)
+- [api] resolve some OpenAPI specification consumption issues by improving the generated spec (#1404)
+- [fhir] includeDesignations now properly returns all designations for a concept and also display proper labels for acceptability and type values (#1422)  
+- [build] exclude org.hl7.fhir and subpackages from jacoco code coverage (32589d4)
+
+### Dependencies
+- Bump Jackson to 2.19.2
+- Bump Spring to 6.2.11
+- Bump Spring Security to 6.5.5
+- Bump SpringDoc to 2.8.13
+- Bump Swagger to 2.2.36
+
 ## 9.7.2
 
 ### Bugs/Improvements
