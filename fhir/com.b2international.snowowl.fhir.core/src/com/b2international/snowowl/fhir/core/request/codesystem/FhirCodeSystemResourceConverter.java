@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,16 @@ public interface FhirCodeSystemResourceConverter {
 				.buildAsync()
 				.execute(context)
 				.getTotal();
+	}
+	
+	/**
+	 * Compute and return the ValueSet URL to set that denotes the entire CodeSystem.
+	 * 
+	 * @param codeSystem - to use its configured properties to construct the necessary ValueSet URL
+	 * @since 9.8.0
+	 */
+	default String computeValueSet(CodeSystem codeSystem) {
+		return null;
 	}
 
 	/**

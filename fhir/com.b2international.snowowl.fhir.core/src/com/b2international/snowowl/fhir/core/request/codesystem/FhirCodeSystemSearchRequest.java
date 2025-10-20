@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,5 +118,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		includeIfFieldSelected(R5ObjectFields.CodeSystem.PROPERTY, () -> converter.expandProperties(context, resourceURI, locales()), properties -> {
 			properties.forEach(entry::addProperty);
 		});
+		
+		includeIfFieldSelected(R5ObjectFields.CodeSystem.VALUE_SET, () -> converter.computeValueSet(entry), entry::setValueSet);
 	}
 }

@@ -28,6 +28,7 @@ import com.b2international.commons.json.Json;
 import com.b2international.fhir.FhirCodeSystems;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
+import com.b2international.snowowl.snomed.fhir.SnomedUri;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 
@@ -50,6 +51,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", notNullValue()) // actual number depends on test data, just verify existence
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
 			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()))
+			.body("entry[0].resource.valueSet", equalTo(String.join("?", getTestCodeSystemUrl(), SnomedUri.QueryPart.PREFIX_VS)))
 			.body("entry[0].resource.count", equalTo(1943)); // base RF2 package count
 	}
 	
