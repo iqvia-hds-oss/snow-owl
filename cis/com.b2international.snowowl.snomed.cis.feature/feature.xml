@@ -2,7 +2,7 @@
 <feature
       id="com.b2international.snowowl.snomed.cis.feature"
       label="Snow Owl SNOMED CT CIS Feature"
-      version="9.8.1.qualifier"
+      version="10.0.0.qualifier"
       provider-name="B2i Healthcare">
 
    <description url="http://www.example.com/description">
@@ -18,9 +18,9 @@
    </license>
 
    <requires>
-      <import feature="com.b2international.snowowl.core.feature" version="9.0.1.qualifier"/>
-      <import feature="com.b2international.snowowl.snomed.core.feature" version="9.0.1.qualifier"/>
-      <import feature="com.b2international.snowowl.core.rest.feature" version="9.0.1.qualifier"/>
+      <import feature="com.b2international.snowowl.core.feature" version="10.0.0" match="compatible"/>
+      <import feature="com.b2international.snowowl.snomed.core.feature" version="10.0.0" match="compatible"/>
+      <import feature="com.b2international.snowowl.core.rest.feature" version="10.0.0" match="compatible"/>
    </requires>
 
    <plugin
