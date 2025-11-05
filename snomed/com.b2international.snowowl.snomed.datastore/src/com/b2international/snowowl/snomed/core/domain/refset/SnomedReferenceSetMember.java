@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public final class SnomedReferenceSetMember extends SnomedComponent {
 	private SnomedRefSetType type;
 	private SnomedCoreComponent referencedComponent;
 	private String refsetId;
-	private Map<String, Object> properties = newHashMap();
+	private Map<String, Object> properties;
 	private List<SnomedOWLRelationship> equivalentOWLRelationships;
 	private List<SnomedOWLRelationship> classOWLRelationships;
 	private List<SnomedOWLRelationship> gciOWLRelationships;
@@ -166,9 +166,24 @@ public final class SnomedReferenceSetMember extends SnomedComponent {
 		return properties;
 	}
 	
+	/**
+	 * Helper method to access a property value.
+	 * 
+	 * @param property
+	 * @return the object or <code>null</code> depending on whether this member has the given property or not
+	 * @since 10.0
+	 */
+	@JsonIgnore
+	public <T> T getPropertyValue(String property) {
+		return getProperties() == null ? null : (T) getProperties().get(property);
+	}
+	
 	@JsonAnyGetter
 	private Map<String, Object> getPropertiesJson() {
-		HashMap<String, Object> jsonMap = newHashMap(properties);
+		if (properties == null) {
+			return null;
+		}
+		Map<String, Object> jsonMap = newHashMap(properties);
 		jsonMap.computeIfPresent(SnomedRf2Headers.FIELD_SOURCE_EFFECTIVE_TIME, (k,v) -> EffectiveTimes.format(v, DateFormats.SHORT, ""));
 		jsonMap.computeIfPresent(SnomedRf2Headers.FIELD_TARGET_EFFECTIVE_TIME, (k,v) -> EffectiveTimes.format(v, DateFormats.SHORT, ""));
 		return jsonMap;
@@ -216,6 +231,9 @@ public final class SnomedReferenceSetMember extends SnomedComponent {
 	
 	@JsonAnySetter
 	private void setPropertiesJson(String key, Object value) {
+		if (properties == null) {
+			properties = new HashMap<>(3);
+		}
 		switch (key) {
 			case SnomedRf2Headers.FIELD_SOURCE_EFFECTIVE_TIME: //$FALL-THROUGH$
 			case SnomedRf2Headers.FIELD_TARGET_EFFECTIVE_TIME:
