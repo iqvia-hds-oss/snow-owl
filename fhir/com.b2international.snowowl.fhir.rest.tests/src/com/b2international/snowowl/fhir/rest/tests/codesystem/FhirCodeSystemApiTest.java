@@ -449,6 +449,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
 			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/version/20020131"))
+			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
 			.body("entry[0].resource.version", equalTo("2002-01-31"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"));
 	}
@@ -466,10 +467,12 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
 			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/version/20020131"))
+			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
 			.body("entry[0].resource.version", equalTo("2002-01-31"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"))
 			.body("entry[1].resource.id", equalTo("SNOMEDCT/2020-01-31"))
 			.body("entry[1].resource.url", equalTo(SNOMEDCT_URL + "/version/20200131"))
+			.body("entry[1].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20200131?fhir_vs"))
 			.body("entry[1].resource.version", equalTo("2020-01-31"))
 			.body("entry[1].resource.date", equalTo("2020-01-31T00:00:00Z"));
 	}
