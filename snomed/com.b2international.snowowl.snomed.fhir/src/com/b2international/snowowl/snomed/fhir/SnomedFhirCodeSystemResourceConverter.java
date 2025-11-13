@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,12 @@ import com.google.common.collect.ImmutableList;
  */
 public class SnomedFhirCodeSystemResourceConverter implements FhirCodeSystemResourceConverter {
 
+	@Override
+	public String computeValueSet(CodeSystem codeSystem) {
+		// make sure the ValueSet always points to fhir_vs using the complete URI of the CodeSystem system + version
+		return String.join("?", codeSystem.getUrl(), SnomedUri.QueryPart.PREFIX_VS);
+	}
+	
 	@Override
 	public List<CodeSystem.PropertyComponent> expandProperties(ServiceProvider context, ResourceURI resourceURI, List<ExtendedLocale> locales) {
 		final ImmutableList.Builder<CodeSystem.PropertyComponent> properties = ImmutableList.builder();

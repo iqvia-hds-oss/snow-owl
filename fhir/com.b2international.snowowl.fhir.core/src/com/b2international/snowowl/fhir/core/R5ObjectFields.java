@@ -78,6 +78,7 @@ public final class R5ObjectFields {
 		
 		// XXX do we need caseSensitive???
 		public static final String CONTENT = "content";
+		public static final String VALUE_SET = "valueSet";
 		// TODO valueSet
 		public static final String COUNT = "count";
 		// XXX do we need hierarchyMeaning???
@@ -115,6 +116,8 @@ public final class R5ObjectFields {
 				.addAll(SUMMARY)
 				.add(TEXT)
 				.add(CONCEPT)
+				.add(COPYRIGHT)
+				.add(VALUE_SET)
 				.build();
 		
 	}

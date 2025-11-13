@@ -28,6 +28,7 @@ import com.b2international.commons.json.Json;
 import com.b2international.fhir.FhirCodeSystems;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
+import com.b2international.snowowl.snomed.fhir.SnomedUri;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 
@@ -50,6 +51,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", notNullValue()) // actual number depends on test data, just verify existence
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
 			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()))
+			.body("entry[0].resource.valueSet", equalTo(String.join("?", getTestCodeSystemUrl(), SnomedUri.QueryPart.PREFIX_VS)))
 			.body("entry[0].resource.count", equalTo(1943)); // base RF2 package count
 	}
 	
@@ -447,6 +449,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
 			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/version/20020131"))
+			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
 			.body("entry[0].resource.version", equalTo("2002-01-31"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"));
 	}
@@ -464,10 +467,12 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
 			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/version/20020131"))
+			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
 			.body("entry[0].resource.version", equalTo("2002-01-31"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"))
 			.body("entry[1].resource.id", equalTo("SNOMEDCT/2020-01-31"))
 			.body("entry[1].resource.url", equalTo(SNOMEDCT_URL + "/version/20200131"))
+			.body("entry[1].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20200131?fhir_vs"))
 			.body("entry[1].resource.version", equalTo("2020-01-31"))
 			.body("entry[1].resource.date", equalTo("2020-01-31T00:00:00Z"));
 	}

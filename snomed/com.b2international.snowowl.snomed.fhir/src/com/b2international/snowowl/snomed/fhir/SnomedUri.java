@@ -76,8 +76,8 @@ public class SnomedUri {
 	 */
 	public static class QueryPart {
 		
-		private static final String PREFIX_VS = "fhir_vs";
-		private static final String PREFIX_CM = "fhir_cm";
+		public static final String PREFIX_VS = "fhir_vs";
+		public static final String PREFIX_CM = "fhir_cm";
 		
 		private String queryParameter;
 		private QueryPartDefinition queryPartDefinition = QueryPartDefinition.NONE;
