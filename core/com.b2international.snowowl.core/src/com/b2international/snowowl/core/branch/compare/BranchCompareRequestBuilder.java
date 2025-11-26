@@ -18,6 +18,7 @@ package com.b2international.snowowl.core.branch.compare;
 import java.util.Set;
 
 import com.b2international.commons.collections.Collections3;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.events.BaseRequestBuilder;
 import com.b2international.snowowl.core.events.Request;
@@ -31,6 +32,8 @@ public final class BranchCompareRequestBuilder extends BaseRequestBuilder<Branch
 
 	private String base;
 	private String compare;
+	private ResourceURI from;
+	private ResourceURI to;
 	
 	// options
 	private Set<String> types;
@@ -42,6 +45,16 @@ public final class BranchCompareRequestBuilder extends BaseRequestBuilder<Branch
 	
 	public BranchCompareRequestBuilder setBase(String baseBranch) {
 		this.base = baseBranch;
+		return getSelf();
+	}
+	
+	public BranchCompareRequestBuilder setFrom(ResourceURI from) {
+		this.from = from;
+		return getSelf();
+	}
+	
+	public BranchCompareRequestBuilder setTo(ResourceURI to) {
+		this.to = to;
 		return getSelf();
 	}
 	
@@ -97,6 +110,8 @@ public final class BranchCompareRequestBuilder extends BaseRequestBuilder<Branch
 		final BranchCompareRequest req = new BranchCompareRequest();
 		req.setBaseBranch(base);
 		req.setCompareBranch(compare);
+		req.setFrom(from);
+		req.setTo(to);
 		req.setLimit(limit);
 		req.setIncludeComponentChanges(includeComponentChanges);
 		req.setIncludeDerivedComponentChanges(includeDerivedComponentChanges);

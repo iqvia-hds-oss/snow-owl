@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.b2international.commons.ChangeKind;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.ComponentIdentifier;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.context.TerminologyResourceContentRequestBuilder;
@@ -48,8 +49,8 @@ public final class CompareResultsDsvExporter {
 	
 	private static final int PARTITION_SIZE = 10_000;
 	
-	private final Map<String, String> baseBranches;
-	private final Map<String, String> compareBranches;
+	private final Map<String, ResourceURI> baseBranches;
+	private final Map<String, ResourceURI> compareBranches;
 	private Map<String, CodeSystem> codeSystemsMap;
 	private final Path outputPath;
 	private final Map<String, BranchCompareResult> compareResultsProvider;
@@ -60,8 +61,8 @@ public final class CompareResultsDsvExporter {
 
 	
 	public CompareResultsDsvExporter(
-		Map<String, String> baseBranches,
-		Map<String, String> compareBranch,
+		Map<String, ResourceURI> baseBranches,
+		Map<String, ResourceURI> compareBranch,
 		Map<String, CodeSystem> codeSystemsMap,
 		Path outputPath,
 		Map<String, BranchCompareResult> compareResults,
@@ -118,8 +119,8 @@ public final class CompareResultsDsvExporter {
 	private void exportCodeSystem(final String codeSystem, SequenceWriter writer, IProgressMonitor monitor) {
 		BranchCompareResult compareResults = compareResultsProvider.get(codeSystem);
 		BiFunction<String, Collection<String>, TerminologyResourceContentRequestBuilder<CollectionResource<IComponent>>> fetcherFunction = fetcherProvider.get(codeSystem);
-		String compareBranch = compareBranches.get(codeSystem);
-		String baseBranch = baseBranches.get(codeSystem);
+		ResourceURI compareBranch = compareBranches.get(codeSystem);
+		ResourceURI baseBranch = baseBranches.get(codeSystem);
 		BiFunction<IComponent, IComponent, Collection<CompareData>> getCompareResultsOfComponent = componentCompareResultProviders.get(codeSystem);
 		
 		try {
@@ -162,13 +163,13 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(baseBranch))
+						.build(baseBranch)
 						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
 					
 					componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(compareBranch))
+						.build(compareBranch)
 						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
@@ -199,7 +200,7 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					CollectionResource<IComponent> components = componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(baseBranch))
+						.build(baseBranch)
 						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
 						.getSync();
 					

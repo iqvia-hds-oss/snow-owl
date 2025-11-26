@@ -15,25 +15,26 @@
  */
 package com.b2international.snowowl.core.branch.compare;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.Min;
-
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.index.revision.*;
 import com.b2international.snowowl.core.ComponentIdentifier;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.authorization.AccessControl;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
+import com.b2international.snowowl.core.uri.ResourceURIPathResolver;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+
+import jakarta.validation.constraints.Min;
 
 /**
  * @since 5.9
@@ -45,7 +46,6 @@ final class BranchCompareRequest implements Request<RepositoryContext, BranchCom
 	@JsonProperty
 	private String base;
 	
-	@NotEmpty
 	@JsonProperty
 	private String compare;
 	
@@ -68,6 +68,12 @@ final class BranchCompareRequest implements Request<RepositoryContext, BranchCom
 	@JsonProperty
 	private Set<String> statsFor;
 	
+	@JsonProperty
+	private ResourceURI from; 
+	
+	@JsonProperty
+	private ResourceURI to; 
+	
 	BranchCompareRequest() {
 	}
 	
@@ -77,6 +83,14 @@ final class BranchCompareRequest implements Request<RepositoryContext, BranchCom
 	
 	void setCompareBranch(String compareBranch) {
 		this.compare = compareBranch;
+	}
+	
+	void setFrom(ResourceURI from) {
+		this.from = from;
+	}
+	
+	void setTo(ResourceURI to) {
+		this.to = to;
 	}
 	
 	void setLimit(int limit) {
@@ -105,6 +119,10 @@ final class BranchCompareRequest implements Request<RepositoryContext, BranchCom
 	
 	@Override
 	public BranchCompareResult execute(RepositoryContext context) {
+		ResourceURIPathResolver resolver = context.service(ResourceURIPathResolver.class);
+		if (compare == null) {
+			compare = resolver.resolve(context, List.of(to, from)).getFirst();
+		}
 		final RevisionIndex index = context.service(RevisionIndex.class);
 		final Branch branchToCompare = RepositoryRequests.branching().prepareGet(compare).build().execute(context);
 		final long compareHeadTimestamp = branchToCompare.headTimestamp();
@@ -122,12 +140,18 @@ final class BranchCompareRequest implements Request<RepositoryContext, BranchCom
 		if (base != null) {
 			compareResult = index.compare(base, compare, options);
 			baseBranchPath = base;
+		} else if (from != null) {
+			base = resolver.resolve(context, List.of(from)).getFirst();
+			compareResult = index.compare(base, compare, options);
+			baseBranchPath = base;
 		} else {
 			compareResult = index.compare(compare, options);
 			baseBranchPath = branchToCompare.parentPath();
 		}
 		
 		final BranchCompareResult.Builder result = BranchCompareResult.builder(baseBranchPath, compare, compareHeadTimestamp);
+		result.from(from);
+		result.to(to);
 		
 		Multimap<String, ObjectId> changesByProperty = HashMultimap.create();
 		

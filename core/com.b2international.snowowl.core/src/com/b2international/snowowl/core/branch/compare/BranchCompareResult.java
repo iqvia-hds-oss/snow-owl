@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.b2international.snowowl.core.ComponentIdentifier;
+import com.b2international.snowowl.core.ResourceURI;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
@@ -42,6 +43,8 @@ public final class BranchCompareResult implements Serializable {
 		private final ImmutableSet.Builder<ComponentIdentifier> newComponents = ImmutableSet.builder();
 		private final ImmutableSet.Builder<ComponentIdentifier> changedComponents = ImmutableSet.builder();
 		private final ImmutableSet.Builder<ComponentIdentifier> deletedComponents = ImmutableSet.builder();
+		private ResourceURI from;
+		private ResourceURI to;
 		
 		private List<BranchCompareChangeStatistic> stats;
 		
@@ -74,6 +77,16 @@ public final class BranchCompareResult implements Serializable {
 			return this;
 		}
 		
+		public Builder from(ResourceURI from) {
+			this.from = from;
+			return this;
+		}
+		
+		public Builder to(ResourceURI to) {
+			this.to = to;
+			return this;
+		}
+		
 		public BranchCompareResult build() {
 			return build(Set.of());
 		}
@@ -94,7 +107,9 @@ public final class BranchCompareResult implements Serializable {
 					stats,
 					newComponents.size(),
 					changedComponents.size(),
-					deletedComponents.size());
+					deletedComponents.size(),
+					from,
+					to);
 		}
 
 	}
@@ -111,6 +126,8 @@ public final class BranchCompareResult implements Serializable {
 	private final int totalNew;
 	private final int totalChanged;
 	private final int totalDeleted;
+	private final ResourceURI from;
+	private final ResourceURI to;
 	
 	@JsonCreator
 	private BranchCompareResult(
@@ -123,7 +140,9 @@ public final class BranchCompareResult implements Serializable {
 			@JsonProperty("stats") List<BranchCompareChangeStatistic> stats,
 			@JsonProperty("totalNew") int totalNew, 
 			@JsonProperty("totalChanged") int totalChanged, 
-			@JsonProperty("totalDeleted") int totalDeleted) {
+			@JsonProperty("totalDeleted") int totalDeleted,
+			@JsonProperty("from") ResourceURI from,
+			@JsonProperty("to") ResourceURI to) {
 		this.baseBranch = baseBranch;
 		this.compareBranch = compareBranch;
 		this.compareHeadTimestamp = compareHeadTimestamp;
@@ -134,8 +153,18 @@ public final class BranchCompareResult implements Serializable {
 		this.totalNew = totalNew;
 		this.totalChanged = totalChanged;
 		this.totalDeleted = totalDeleted;
+		this.from = from;
+		this.to =  to;
 	}
 	
+	public ResourceURI getFrom() {
+		return from;
+	}
+
+	public ResourceURI getTo() {
+		return to;
+	}
+
 	public String getBaseBranch() {
 		return baseBranch;
 	}
