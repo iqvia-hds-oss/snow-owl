@@ -21,7 +21,6 @@ import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import com.b2international.commons.collections.Collections3;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.jobs.JobRequests;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
@@ -57,38 +56,45 @@ public class JobRestService extends AbstractRestService {
 	})
 	@GetMapping(produces = { AbstractRestService.JSON_MEDIA_TYPE })
 	public Promise<RemoteJobs> searchJobs(
-			@Parameter(description = "The Job identifier(s) to match")
-			@RequestParam(value = "id", required = false) 
-			final Set<String> ids,
-			
-			@Parameter(description = "The usernames to match")
-			@RequestParam(value = "user", required = false) 
-			final String[] users,
+		@Parameter(description = "The job identifier(s) to match")
+		@RequestParam(value = "id", required = false) 
+		final Set<String> ids,
+		
+		@Parameter(description = "The job key(s) to match")
+		@RequestParam(value = "key", required = false) 
+		final Set<String> keys,
+		
+		@Parameter(description = "The usernames to match")
+		@RequestParam(value = "user", required = false) 
+		final Set<String> users,
 
-			@Parameter(description = "The job state values to match (accepted values: 'scheduled', 'running', 'finished', 'failed', 'cancel_requested', 'canceled')")
-			@RequestParam(value = "state", required = false)
-			final String[] state,
-			
-			@Parameter(description = "The search key to use for retrieving the next page of results")
-			@RequestParam(value="searchAfter", required=false) 
-			final String searchAfter,
-			
-			@Parameter(description = "The maximum number of items to return")
-			@RequestParam(value="limit", defaultValue="50", required=false)   
-			final int limit,
-			
-			@Parameter(description = "Sort keys")
-			@RequestParam(value="sort", required=false)
-			final List<String> sort) {
+		@Parameter(description = "The job state values to match (accepted values: 'scheduled', 'running', 'finished', 'failed', 'cancel_requested', 'canceled')")
+		@RequestParam(value = "state", required = false)
+		final Set<String> states,
+		
+		@Parameter(description = "The search key to use for retrieving the next page of results")
+		@RequestParam(value="searchAfter", required=false) 
+		final String searchAfter,
+		
+		@Parameter(description = "The maximum number of items to return")
+		@RequestParam(value="limit", defaultValue="50", required=false)   
+		final int limit,
+		
+		@Parameter(description = "Sort keys")
+		@RequestParam(value="sort", required=false)
+		final List<String> sort
+	) {
+		
 		return JobRequests.prepareSearch()
-				.filterByIds(ids)
-				.filterByUsers(users == null ? null : Collections3.toImmutableSet(users))
-				.filterByState(state == null ? null : Collections3.toImmutableSet(state))
-				.setSearchAfter(searchAfter)
-				.setLimit(limit)
-				.sortBy(extractSortFields(sort))
-				.buildAsync()
-				.execute(getBus());
+			.filterByIds(ids)
+			.filterByKeys(keys)
+			.filterByUsers(users)
+			.filterByState(states)
+			.setSearchAfter(searchAfter)
+			.setLimit(limit)
+			.sortBy(extractSortFields(sort))
+			.buildAsync()
+			.execute(getBus());
 	}
 	
 	@Operation(
