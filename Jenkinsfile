@@ -42,6 +42,8 @@ try {
 	def revision
 	def branch
 	def mavenPhase = params.skipDeploy ? "verify" : "deploy"
+    def scmVars
+    def pom
 
 	chat.notifyBuild()
 
