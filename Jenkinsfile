@@ -44,9 +44,9 @@ try {
 
 		stage('Checkout repository') {
 
-			scmVars = checkout scm
+			def scmVars = checkout scm
 
-			pom = readMavenPom file: 'pom.xml'
+			def pom = readMavenPom file: 'pom.xml'
 			currentVersion = pom.version
 
 			revision = sh(returnStdout: true, script: "git rev-parse --short HEAD").trim()
