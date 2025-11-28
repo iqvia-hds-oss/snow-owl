@@ -15,14 +15,15 @@
  */
 package com.b2international.snowowl.core.request;
 
-import java.util.Collections;
 import java.util.Set;
 
+import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.options.Options;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.ConceptMapMapping;
 import com.b2international.snowowl.core.domain.ConceptMapMappings;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * @since 7.8
@@ -88,14 +89,28 @@ public interface MemberSearchRequestEvaluator<R> {
 	}
 	
 	/**
-	 * Returns a {@link Set} of ResourceURI instances where the system can evaluate the given search.
+	 * Returns a {@link Set} of ResourceURI instances where the system can evaluate
+	 * the given search. By default in this implementation it uses valid
+	 * {@link ResourceURI} values registered into the {@link OptionKey#URI} key in
+	 * the given search options.
 	 * 
 	 * @param context - the context to use to determine the target resources
-	 * @param search - the search to handle
-	 * @return a {@link Set} of ResourceURI instances where the system can evaluate the given search, never <code>null</code>.
+	 * @param search  - the search to handle
+	 * @return a {@link Set} of ResourceURI instances where the system can evaluate
+	 *         the given search, never <code>null</code>.
 	 */
 	default Set<ResourceURI> evaluateSearchTargetResources(ServiceProvider context, Options search) {
-		return Collections.emptySet();
+		var targetResourceURIs = ImmutableSet.<ResourceURI>builder();
+		if (search.containsKey(OptionKey.URI)) {
+			for (String rawResourceUri : search.getCollection(OptionKey.URI, String.class)) {
+				try {
+					targetResourceURIs.add(new ResourceURI(rawResourceUri));
+				} catch (BadRequestException e) {
+					// ignore malformed URIs as invalid values
+				}
+			}
+		}
+		return targetResourceURIs.build();
 	}
 	
 	/**
