@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.b2international.snowowl.snomed.datastore.request;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,6 +56,9 @@ public final class SnomedValueSetMemberSearchRequestEvaluator implements ValueSe
 			
 			if (!targetResources.isEmpty()) {
 				return targetResources;
+			} else {
+				// if there are URIs to search but none of them looks like an exact reference set ID in the form of a ComponentURI then return zero targets
+				return Collections.emptySet();
 			}
 		}
 		
