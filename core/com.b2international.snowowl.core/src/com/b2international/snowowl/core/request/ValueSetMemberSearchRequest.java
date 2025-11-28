@@ -25,6 +25,7 @@ import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.ValueSetMembers;
+import com.google.common.collect.Iterables;
 
 /**
 * @since 7.7
@@ -65,6 +66,11 @@ public final class ValueSetMemberSearchRequest extends SearchResourceRequest<Ser
 			})
 			.collect(Collectors.toList());
 		
+		// for single ValueSet/CodeSystem searches, sorting, paging works as it should
+		if (evaluatedMembers.size() == 1) {
+			return Iterables.getOnlyElement(evaluatedMembers);
+		}
+		
 		// calculate grand total
 		int total = 0;
 		for (ValueSetMembers evaluatedMember : evaluatedMembers) {
@@ -73,7 +79,7 @@ public final class ValueSetMemberSearchRequest extends SearchResourceRequest<Ser
 		
 		return new ValueSetMembers(
 			evaluatedMembers.stream().flatMap(ValueSetMembers::stream).limit(limit).collect(Collectors.toList()), // TODO add manual sorting here if multiple resources have been fetched 
-			null /* not supported across resources, TODO support it when a single ValueSet is being fetched */, 
+			null /* not supported when fetching across valuesets and/or resources */, 
 			limit, 
 			total
 		);
