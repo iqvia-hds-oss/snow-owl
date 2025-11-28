@@ -17,6 +17,7 @@ package com.b2international.snowowl.core.jobs;
 
 import static org.junit.Assert.*;
 
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CyclicBarrier;
@@ -25,7 +26,6 @@ import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.elasticsearch.core.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
