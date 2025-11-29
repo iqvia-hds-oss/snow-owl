@@ -15,10 +15,13 @@
  */
 package com.b2international.snowowl.core.request;
 
+import java.util.Set;
+
 import com.b2international.commons.options.Options;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.ValueSetMembers;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * @since 7.7
@@ -26,10 +29,16 @@ import com.b2international.snowowl.core.domain.ValueSetMembers;
 public interface ValueSetMemberSearchRequestEvaluator extends MemberSearchRequestEvaluator<ValueSetMembers> {
 
 	/**
-	 * No-op request evaluator that returns zero results
+	 * No-op request evaluator that suggests no resources to check and returns zero members when requested.
+	 * 
 	 * @since 7.7
 	 */
 	ValueSetMemberSearchRequestEvaluator NOOP = new ValueSetMemberSearchRequestEvaluator() {
+		@Override
+		public Set<ResourceURI> evaluateSearchTargetResources(ServiceProvider context, Options search) {
+			return ImmutableSet.of();
+		}
+		
 		@Override
 		public ValueSetMembers evaluate(ResourceURI uri, ServiceProvider context, Options search) {
 			return new ValueSetMembers(search.get(OptionKey.LIMIT, Integer.class), 0);
