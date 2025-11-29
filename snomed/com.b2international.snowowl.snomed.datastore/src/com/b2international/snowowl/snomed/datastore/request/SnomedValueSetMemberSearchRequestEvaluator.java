@@ -15,7 +15,6 @@
  */
 package com.b2international.snowowl.snomed.datastore.request;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +30,7 @@ import com.b2international.snowowl.core.domain.ValueSetMembers;
 import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.request.ValueSetMemberSearchRequestEvaluator;
 import com.b2international.snowowl.core.uri.ComponentURI;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
@@ -53,24 +53,21 @@ public final class SnomedValueSetMemberSearchRequestEvaluator implements ValueSe
 				.map(ComponentURI::of)
 				.map(ComponentURI::resourceUri)
 				.collect(Collectors.toSet());
-			
-			if (!targetResources.isEmpty()) {
-				return targetResources;
-			} else {
-				// if there are URIs to search but none of them looks like an exact reference set ID in the form of a ComponentURI then return zero targets
-				return Collections.emptySet();
-			}
+
+			// If there are no valid ComponentURIs to extract resource URIs from, return empty set
+			return targetResources;
 		}
 		
 		// any SNOMED CT CodeSystem can be target resource, so search all by default
 		return CodeSystemRequests.prepareSearchCodeSystem()
-				.all()
-				.setFields(ResourceDocument.Fields.RESOURCE_TYPE, ResourceDocument.Fields.ID)
-				.buildAsync()
-				.execute(context)
-				.stream()
-				.map(CodeSystem::getResourceURI)
-				.collect(Collectors.toSet());
+			.all()
+			.filterByToolingId(SnomedTerminologyComponentConstants.TOOLING_ID)
+			.setFields(ResourceDocument.Fields.RESOURCE_TYPE, ResourceDocument.Fields.ID)
+			.buildAsync()
+			.execute(context)
+			.stream()
+			.map(CodeSystem::getResourceURI)
+			.collect(Collectors.toSet());
 	}
 	
 	@Override
