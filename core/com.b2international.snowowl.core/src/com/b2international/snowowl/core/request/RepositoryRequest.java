@@ -69,9 +69,11 @@ public final class RepositoryRequest<B> extends DelegatingRequest<ServiceProvide
 		
 		DefaultRepositoryContext repositoryContext = new DefaultRepositoryContext(context, repository.status());
 		
-		// by default add a NullProgressMonitor binding to the context
-		// if the previous context is a delegate context, injecting all services can override this safely 
-		repositoryContext.bind(IProgressMonitor.class, new NullProgressMonitor());
+		// Add NullProgressMonitor as a fallback in case the request is not running in a remote job context
+		if (context.optionalService(IProgressMonitor.class).isEmpty()) {
+			repositoryContext.bind(IProgressMonitor.class, new NullProgressMonitor());
+		}
+		
 		repositoryContext.bindAll(repository);
 		
 		// always "open" an index read context when executing requests inside a repository
