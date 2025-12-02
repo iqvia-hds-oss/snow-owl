@@ -16,6 +16,7 @@
 package com.b2international.index;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.b2international.index.Fixtures.Data;
+import com.b2international.index.Fixtures.ParentData;
 import com.b2international.index.admin.IndexAdmin;
 import com.b2international.index.es.query.EsQueryBuilder;
 import com.b2international.index.mapping.DocumentMapping;
@@ -46,7 +48,7 @@ public class BoolQueryTest extends BaseIndexTest {
 
 	@Override
 	protected Collection<Class<?>> getTypes() {
-		return List.of(Fixtures.Data.class);
+		return List.of(Fixtures.Data.class, Fixtures.ParentData.class);
 	}
 	
 	@Test
@@ -158,6 +160,26 @@ public class BoolQueryTest extends BaseIndexTest {
 		// All three clauses should be preserved as longSortedSet might contain [id1, id2, id4] and thus satisfy all three constraints
 		assertEquals(BoolQueryBuilder.NAME, esQueryBuilder.getName());
 		assertEquals(3, ((BoolQueryBuilder) esQueryBuilder).filter().size());
+	}
+	
+	@Test
+	public void nestedScoringQuery() throws Exception {
+		Expression actual = Expressions.bool()
+			// This clause requires scoring
+			.should(Expressions.nestedMatch("nestedData", Expressions.matchTextAll("nestedData.analyzedField", "multi term query")))
+			// This one does not
+			.should(Expressions.nestedMatch("nestedData", Expressions.exactMatch("nestedData.field2", "field2value")))
+			.build();
+		
+		IndexAdmin indexAdmin = index().admin();
+		DocumentMapping mapping = indexAdmin.getIndexMapping().getMapping(ParentData.class);
+		Map<String, Object> settings = indexAdmin.settings();
+		
+		EsQueryBuilder esQueryBuilder = new EsQueryBuilder(mapping, settings, LOG);
+		esQueryBuilder.build(actual);
+		
+		// We are only interested in the value of the flag, not the actual query
+		assertTrue(esQueryBuilder.needsScoring());
 	}
 
 	private Expression generateDeepBooleanClause(int depth, BiFunction<ExpressionBuilder, Expression, ExpressionBuilder> boolClause) {

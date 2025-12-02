@@ -74,6 +74,10 @@ public final class EsQueryBuilder {
 		return needsScoring;
 	}
 	
+	public void enableScoring() {
+		needsScoring = true;
+	}
+	
 	public QueryBuilder build(Expression expression) {
 		checkNotNull(expression, "expression");
 		visit(expression);
@@ -156,7 +160,7 @@ public final class EsQueryBuilder {
 		visit(inner);
 		final QueryBuilder innerQuery = deque.pop();
 		
-		needsScoring = true;
+		enableScoring();
 		deque.push(QueryBuilders
 				.functionScoreQuery(innerQuery, ScoreFunctionBuilders.scriptFunction(expression.toEsScript(mapping)))
 				.boostMode(CombineFunction.REPLACE));
@@ -180,8 +184,8 @@ public final class EsQueryBuilder {
 			// visit the item and immediately pop the deque item back
 			final EsQueryBuilder innerQueryBuilder = new EsQueryBuilder(mapping, settings, log, path);
 			innerQueryBuilder.visit(must);
-			if (innerQueryBuilder.needsScoring) {
-				needsScoring = innerQueryBuilder.needsScoring;
+			if (innerQueryBuilder.needsScoring()) {
+				enableScoring();
 				query.must(innerQueryBuilder.deque.pop());
 			} else {
 				query.filter(innerQueryBuilder.deque.pop());
@@ -266,9 +270,17 @@ public final class EsQueryBuilder {
 		final DocumentMapping nestedMapping = mapping.getNestedMapping(predicate.getField());
 		final EsQueryBuilder nestedQueryBuilder = new EsQueryBuilder(nestedMapping, settings, log, nestedPath);
 		nestedQueryBuilder.visit(predicate.getExpression());
-		needsScoring = nestedQueryBuilder.needsScoring;
+		
+		final ScoreMode scoreMode;
+		if (nestedQueryBuilder.needsScoring()) {
+			enableScoring();
+			scoreMode = ScoreMode.Max;
+		} else {
+			scoreMode = ScoreMode.None;
+		}
+		
 		final QueryBuilder nestedQuery = nestedQueryBuilder.deque.pop();
-		deque.push(QueryBuilders.nestedQuery(nestedPath, nestedQuery, nestedQueryBuilder.needsScoring ? ScoreMode.Max : ScoreMode.None));
+		deque.push(QueryBuilders.nestedQuery(nestedPath, nestedQuery, scoreMode));
 	}
 
 	private String toFieldPath(Predicate predicate) {
@@ -288,60 +300,70 @@ public final class EsQueryBuilder {
 		final String term = predicate.term();
 		final MatchType type = predicate.type();
 		final int minShouldMatch = predicate.minShouldMatch();
+		final String searchAnalyzer = selectSearchAnalyzer(predicate);
 		
 		QueryBuilder query;
 		
-		String searchAnalyzer = selectSearchAnalyzer(predicate);
 		switch (type) {
-		case BOOLEAN_PREFIX:
-			query = QueryBuilders.matchBoolPrefixQuery(field, term)
-				.analyzer(searchAnalyzer)
-				.operator(Operator.AND);
-			break;
-		case PHRASE:
-			query = QueryBuilders.matchPhraseQuery(field, term)
-						.analyzer(searchAnalyzer);
-			break;
-		case ALL:
-			MatchQueryBuilder all = QueryBuilders.matchQuery(field, term)
-						.analyzer(searchAnalyzer)
-						.operator(Operator.AND);
-			if (!Strings.isNullOrEmpty(predicate.fuzziness())) {
-				all
-					.fuzziness(predicate.fuzziness())
+			case BOOLEAN_PREFIX:
+				query = QueryBuilders.matchBoolPrefixQuery(field, term)
+					.analyzer(searchAnalyzer)
+					.operator(Operator.AND);
+				break;
+				
+			case PHRASE:
+				query = QueryBuilders.matchPhraseQuery(field, term)
+					.analyzer(searchAnalyzer);
+				break;
+				
+			case ALL:
+				MatchQueryBuilder all = QueryBuilders.matchQuery(field, term)
+					.analyzer(searchAnalyzer)
+					.operator(Operator.AND);
+		
+				if (!Strings.isNullOrEmpty(predicate.fuzziness())) {
+					all.fuzziness(predicate.fuzziness())
+						.prefixLength(predicate.prefixLength())
+						.maxExpansions(predicate.maxExpansions());
+				}
+			
+				query = all;
+				break;
+				
+			case ANY:
+				MatchQueryBuilder any = QueryBuilders.matchQuery(field, term)
+					.analyzer(searchAnalyzer)
+					.operator(Operator.OR)
+					.minimumShouldMatch(Integer.toString(minShouldMatch));
+				
+				if (!Strings.isNullOrEmpty(predicate.fuzziness())) {
+					any.fuzziness(predicate.fuzziness())
 					.prefixLength(predicate.prefixLength())
 					.maxExpansions(predicate.maxExpansions());
-			}
-			query = all;
-			break;
-		case ANY:
-			MatchQueryBuilder any = QueryBuilders.matchQuery(field, term)
-						.analyzer(searchAnalyzer)
-						.operator(Operator.OR)
-						.minimumShouldMatch(Integer.toString(minShouldMatch));
-			if (!Strings.isNullOrEmpty(predicate.fuzziness())) {
-				any
-					.fuzziness(predicate.fuzziness())
-					.prefixLength(predicate.prefixLength())
-					.maxExpansions(predicate.maxExpansions());
-			}
-			query = any;
-			break;
-		case PARSED:
-			query = QueryBuilders.queryStringQuery(TextConstants.escape(term))
-						.analyzer(searchAnalyzer)
-						.field(field)
-						.escape(false)
-						.allowLeadingWildcard(true)
-						.defaultOperator(Operator.AND);
-			break;
-		default: throw new UnsupportedOperationException("Unexpected text match type: " + type);
+				}
+				
+				query = any;
+				break;
+				
+			case PARSED:
+				query = QueryBuilders.queryStringQuery(TextConstants.escape(term))
+					.analyzer(searchAnalyzer)
+					.field(field)
+					.escape(false)
+					.allowLeadingWildcard(true)
+					.defaultOperator(Operator.AND);
+				break;
+		
+			default: 
+				throw new UnsupportedOperationException("Unexpected text match type: " + type);
 		}
+		
 		if (query == null) {
 			query = MATCH_NONE;
 		} else {
-			needsScoring = true;
+			enableScoring();
 		}
+		
 		deque.push(query);
 	}
 	
