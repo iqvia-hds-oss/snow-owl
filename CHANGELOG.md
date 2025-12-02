@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 9.8.1
+
+### Bugs/Improvements
+- [index] enforce scoring requirement in Elasticsearch queries; prevent disabling when required (#1424)
+- [core] make terminology resource dependency overrides null safe (#1427)
+- [ci] improve build pipeline stability (#1431)
+- [ci] make build notifications platform independent (4201b41)
+
 ## 9.8.0
 
 ### Core
