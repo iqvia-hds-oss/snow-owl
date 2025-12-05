@@ -226,7 +226,7 @@ public final class Dependency implements Serializable, DependencyEntry {
 	 * @return
 	 */
 	public static List<Dependency> override(List<Dependency> dependencies, List<Dependency> overrides) {
-		if (CompareUtils.isEmpty(overrides)) {
+		if (CompareUtils.isEmpty(dependencies) || CompareUtils.isEmpty(overrides)) {
 			return dependencies;
 		}
 		final List<Dependency> merged = new ArrayList<>(dependencies.size() + overrides.size());
