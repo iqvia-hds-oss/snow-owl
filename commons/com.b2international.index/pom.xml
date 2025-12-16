@@ -69,12 +69,6 @@
             <version>${elasticsearch.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-        	<groupId>org.lz4</groupId>
-        	<artifactId>lz4-java</artifactId>
-        	<version>1.8.0</version>
-        	<scope>provided</scope>
-        </dependency>
     </dependencies>
     
     <build>
@@ -133,7 +127,6 @@
 								lucene-spatial-extras,
 								lucene-spatial3d,
 								lucene-suggest,
-								lz4-java,
 								mapper-extras-client,
 								parent-join-client,
 								percolator-client,
