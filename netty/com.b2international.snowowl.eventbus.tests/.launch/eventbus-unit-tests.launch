@@ -56,6 +56,7 @@
         <setEntry value="io.netty.resolver@default:default"/>
         <setEntry value="io.netty.transport-native-unix-common@default:default"/>
         <setEntry value="io.netty.transport@default:default"/>
+        <setEntry value="lz4-java@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy-agent@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy@default:default"/>
         <setEntry value="org.apache.aries.spifly.dynamic.bundle@2:true"/>
