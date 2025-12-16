@@ -753,6 +753,13 @@
 	  			<version>0.3.2</version>
 	  			<type>jar</type>
 			</dependency>
+			<!-- lz4-java required by Elasticsearch and MapDB -->
+			<dependency>
+			    <groupId>at.yawk.lz4</groupId>
+			    <artifactId>lz4-java</artifactId>
+			    <version>1.10.2</version>
+			    <type>jar</type>
+			</dependency>
 		</dependencies>
 		<repositories>
 			<repository>
