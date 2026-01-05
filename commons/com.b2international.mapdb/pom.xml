@@ -70,7 +70,6 @@
 								eclipse-collections-api,
 								eclipse-collections-forkjoin,
 								elsa,
-								lz4,
 								mapdb
 							</includeArtifactIds>
 							<outputDirectory>${basedir}/lib</outputDirectory>

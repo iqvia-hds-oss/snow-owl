@@ -82,6 +82,7 @@
         <setEntry value="jcl.over.slf4j@2:true"/>
         <setEntry value="jul.to.slf4j@2:true"/>
         <setEntry value="log4j.over.slf4j@2:true"/>
+        <setEntry value="lz4-java@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy-agent@default:default"/>
         <setEntry value="net.bytebuddy.byte-buddy@default:default"/>
         <setEntry value="net.jodah.typetools@default:default"/>
