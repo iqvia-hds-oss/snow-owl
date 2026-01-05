@@ -31,8 +31,8 @@
 	<classpathentry exported="true" kind="lib" path="lib/jopt-simple-5.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/lang-mustache-client-7.17.29.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/lang-painless-7.17.29.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/log4j-api-2.17.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/log4j-core-2.17.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/log4j-api-2.25.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/log4j-core-2.25.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/lucene-analyzers-common-8.11.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/lucene-backward-codecs-8.11.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/lucene-core-8.11.3.jar"/>

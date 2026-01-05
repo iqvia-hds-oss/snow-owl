@@ -11,6 +11,7 @@
 	
 	<properties>
 		<elasticsearch.version>7.17.29</elasticsearch.version>
+		<log4j2.version>2.25.3</log4j2.version>
     </properties>
     
     <!-- NOTE: in case of dependency changes, please update "includeArtifactIds" in maven-dependency-plugin's configuration as well, listing all (exact and transitive) dependency artifacts -->
@@ -67,6 +68,18 @@
             <groupId>org.codelibs.elasticsearch.module</groupId>
             <artifactId>scripting-painless-spi</artifactId>
             <version>${elasticsearch.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j2.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j2.version}</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
