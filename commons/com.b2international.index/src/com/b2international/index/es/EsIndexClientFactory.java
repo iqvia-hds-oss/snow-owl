@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public final class EsIndexClientFactory implements IndexClientFactory {
 
-	private static final Path DEFAULT_PATH = Paths.get("target", "resources", "indexes");
+	public static final Path DEFAULT_PATH = Paths.get("target", "resources", "indexes");
 
 	@Override
 	public IndexClient createClient(String name, ObjectMapper mapper, Mappings mappings, Map<String, Object> settings) {
