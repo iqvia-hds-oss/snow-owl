@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import javax.validation.Validator;
 
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -44,6 +43,7 @@ import com.b2international.commons.test.config.data.ModuleConfig2;
 import com.b2international.commons.test.config.data.NestedConfig;
 import com.b2international.commons.test.config.data.TestConfig;
 import com.b2international.commons.validation.ApiValidation;
+import com.b2international.snowowl.rules.LazyEnvironmentVariables;
 
 /**
  * @since 3.4
@@ -57,7 +57,7 @@ public class ConfigurationFactoryTest {
 	private Validator validator;
 	
 	@Rule
-	public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+	public final LazyEnvironmentVariables environmentVariables = new LazyEnvironmentVariables();
 	
 	@Test
 	public void build_WithoutSource_ShouldReturnADefaultInstance() throws Exception {
