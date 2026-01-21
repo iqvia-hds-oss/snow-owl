@@ -23,6 +23,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -69,7 +70,8 @@ public final class DocumentMapping {
 	private final Map<String, Script> scripts;
 	private final SortedSet<String> trackedRevisionFields;
 	private final String idField;
-
+	private final SortedSet<String> selectableFields;
+	
 	public DocumentMapping(Class<?> type) {
 		this(null, type);
 	}
@@ -163,6 +165,23 @@ public final class DocumentMapping {
 				}
 			});
 		}
+		
+		final ImmutableSortedSet.Builder<String> selectableFields = ImmutableSortedSet.naturalOrder();
+
+		for (Entry<String, Field> field : fieldMap.entrySet()) {
+			final String fieldName = field.getKey();
+			
+			// exclude internal Revision fields
+			if (Revision.class.isAssignableFrom(this.type) 
+					&& Revision.Fields.CREATED.equals(fieldName)
+					&& Revision.Fields.REVISED.equals(fieldName)) {
+				continue;
+			}
+			
+			selectableFields.add(fieldName);
+		}
+		
+		this.selectableFields = selectableFields.build();		
 	}
 
 	private void checkRevisionType() {
@@ -247,6 +266,10 @@ public final class DocumentMapping {
 	
 	public Collection<Field> getFields() {
 		return ImmutableList.copyOf(fieldMap.values());
+	}
+	
+	public Set<String> getSelectableFields() {
+		return selectableFields;
 	}
 	
 	public boolean isText(String field) {
