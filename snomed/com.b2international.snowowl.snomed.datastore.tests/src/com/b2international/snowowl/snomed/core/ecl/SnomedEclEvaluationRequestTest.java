@@ -24,6 +24,7 @@ import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedCon
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument.Expressions.statedAncestors;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument.Expressions.statedParents;
 import static com.b2international.snowowl.test.commons.snomed.DocumentBuilders.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -32,6 +33,7 @@ import static org.junit.Assume.assumeFalse;
 import java.math.BigDecimal;
 import java.util.*;
 
+import org.assertj.core.api.ListAssert;
 import org.eclipse.xtext.parser.IParser;
 import org.eclipse.xtext.serializer.ISerializer;
 import org.eclipse.xtext.validation.IResourceValidator;
@@ -45,12 +47,12 @@ import org.junit.runners.Parameterized.Parameters;
 import com.b2international.collections.PrimitiveCollectionModule;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.index.Index;
-import com.b2international.index.query.Expression;
-import com.b2international.index.query.Expressions;
-import com.b2international.index.query.MatchNone;
+import com.b2international.index.query.*;
 import com.b2international.index.revision.BaseRevisionIndexTest;
+import com.b2international.index.revision.Revision;
 import com.b2international.index.revision.RevisionIndex;
 import com.b2international.index.revision.StagingArea;
+import com.b2international.snomed.ecl.Ecl;
 import com.b2international.snomed.ecl.EclStandaloneSetup;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.domain.BranchContext;
@@ -274,6 +276,70 @@ public class SnomedEclEvaluationRequestTest extends BaseRevisionIndexTest {
 					.build();
 		}
 		assertEquals(expected, actual);
+	}
+
+	@Test
+	public void descendantOrSelfList() throws Exception {
+		final Expression actual = eval(Ecl.or(
+			"<<" + Concepts.ACCEPTABILITY,
+			"<<" + Concepts.FINDING_SITE,
+			"<<" + Concepts.SYNONYM,
+			"<<" + Concepts.DEFINING_RELATIONSHIP
+		));
+		
+		/*
+		 * The output should have:
+		 * 
+		 * 1. ID sets should be consolidated into a single SetPredicate query 
+		 * 2. A single boolean expression with multiple "should" clauses instead of a nested bool-should-bool-should... structure
+		 */
+		if (actual instanceof BoolExpression) {
+			final BoolExpression expected = (BoolExpression) actual;
+			assertEquals(3, expected.shouldClauses().size());
+
+			final ListAssert<Expression> shouldClauses = assertThat(expected.shouldClauses());
+			final ListAssert<Expression> stringPredicates = shouldClauses.filteredOn(e -> e instanceof StringSetPredicate);
+			final ListAssert<Expression> longPredicates = shouldClauses.filteredOn(e -> e instanceof LongSetPredicate);
+			
+			stringPredicates.extracting(e -> ((StringSetPredicate) e).values())
+				.allMatch(values -> values.equals(Set.of(
+					Concepts.ACCEPTABILITY,
+					Concepts.FINDING_SITE,
+					Concepts.SYNONYM,
+					Concepts.DEFINING_RELATIONSHIP
+				)));
+
+			longPredicates.extracting(e -> ((LongSetPredicate) e).values())
+				.allMatch(values -> values.equals(Set.of(
+					Long.parseLong(Concepts.ACCEPTABILITY),
+					Long.parseLong(Concepts.FINDING_SITE),
+					Long.parseLong(Concepts.SYNONYM),
+					Long.parseLong(Concepts.DEFINING_RELATIONSHIP)
+				)));
+
+			stringPredicates.extracting(e -> ((StringSetPredicate) e).getField())
+				.containsExactlyInAnyOrder(Revision.Fields.ID);
+			
+			if (isInferred()) {
+				
+				longPredicates.extracting(e -> ((LongSetPredicate) e).getField())
+					.containsExactlyInAnyOrder(
+						SnomedConceptDocument.Fields.PARENTS,
+						SnomedConceptDocument.Fields.ANCESTORS
+					);
+				
+			} else {
+				
+				longPredicates.extracting(e -> ((LongSetPredicate) e).getField())
+					.containsExactlyInAnyOrder(
+						SnomedConceptDocument.Fields.STATED_PARENTS, 
+						SnomedConceptDocument.Fields.STATED_ANCESTORS
+					);
+			}
+			
+		} else {
+			fail("Expected a BoolExpression but got: " + actual);
+		}
 	}
 	
 	@Test
