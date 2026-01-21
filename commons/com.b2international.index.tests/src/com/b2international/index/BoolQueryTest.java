@@ -69,11 +69,11 @@ public class BoolQueryTest extends BaseIndexTest {
 		String id2 = UUID.randomUUID().toString();
 		String id3 = UUID.randomUUID().toString();
 		Expression actual = Expressions.bool()
-			.should(Expressions.exactMatch("id", id1))
-			.should(Expressions.exactMatch("id", id2))
-			.should(Expressions.exactMatch("id", id3))
+			.should(Expressions.exactMatch("field1", id1))
+			.should(Expressions.exactMatch("field1", id2))
+			.should(Expressions.exactMatch("field1", id3))
 			.build();
-		assertEquals(Expressions.matchAny("id", Set.of(id1, id2, id3)), actual);
+		assertEquals(Expressions.matchAny("field1", Set.of(id1, id2, id3)), actual);
 	}
 	
 	@Test
@@ -83,11 +83,11 @@ public class BoolQueryTest extends BaseIndexTest {
 		String id3 = UUID.randomUUID().toString();
 		String id4 = UUID.randomUUID().toString();
 		Expression actual = Expressions.bool()
-			.should(Expressions.exactMatch("id", id1))
-			.should(Expressions.exactMatch("id", id2))
-			.should(Expressions.matchAny("id", Set.of(id3, id4)))
+			.should(Expressions.exactMatch("field1", id1))
+			.should(Expressions.exactMatch("field1", id2))
+			.should(Expressions.matchAny("field1", Set.of(id3, id4)))
 			.build();
-		assertEquals(Expressions.matchAny("id", Set.of(id1, id2, id3, id4)), actual);
+		assertEquals(Expressions.matchAny("field1", Set.of(id1, id2, id3, id4)), actual);
 	}
 	
 	@Test
@@ -97,9 +97,9 @@ public class BoolQueryTest extends BaseIndexTest {
 		String id3 = UUID.randomUUID().toString();
 		String id4 = UUID.randomUUID().toString();
 		Expression actual = Expressions.bool()
-			.filter(Expressions.exactMatch("id", id1))
-			.filter(Expressions.matchAny("id", Set.of(id1, id2)))
-			.filter(Expressions.matchAny("id", Set.of(id1, id3, id4)))
+			.filter(Expressions.exactMatch("field1", id1))
+			.filter(Expressions.matchAny("field1", Set.of(id1, id2)))
+			.filter(Expressions.matchAny("field1", Set.of(id1, id3, id4)))
 			.build();
 		
 		IndexAdmin indexAdmin = index().admin();
@@ -119,9 +119,9 @@ public class BoolQueryTest extends BaseIndexTest {
 		String id3 = UUID.randomUUID().toString();
 		String id4 = UUID.randomUUID().toString();
 		Expression actual = Expressions.bool()
-			.filter(Expressions.exactMatch("id", id1))
-			.filter(Expressions.matchAny("id", Set.of(id2, id3)))
-			.filter(Expressions.matchAny("id", Set.of(id3, id4)))
+			.filter(Expressions.exactMatch("field1", id1))
+			.filter(Expressions.matchAny("field1", Set.of(id2, id3)))
+			.filter(Expressions.matchAny("field1", Set.of(id3, id4)))
 			.build();
 		
 		IndexAdmin indexAdmin = index().admin();
@@ -185,10 +185,10 @@ public class BoolQueryTest extends BaseIndexTest {
 	private Expression generateDeepBooleanClause(int depth, BiFunction<ExpressionBuilder, Expression, ExpressionBuilder> boolClause) {
 		ExpressionBuilder root = Expressions.bool();
 		ExpressionBuilder current = root;
-		boolClause.apply(current, Expressions.exactMatch("id", UUID.randomUUID().toString()));
+		boolClause.apply(current, Expressions.exactMatch("field1", UUID.randomUUID().toString()));
 		for (int i = 0; i < depth; i++) {
 			ExpressionBuilder nested = Expressions.bool();
-			boolClause.apply(nested, Expressions.exactMatch("id", UUID.randomUUID().toString()));
+			boolClause.apply(nested, Expressions.exactMatch("field1", UUID.randomUUID().toString()));
 			current.should(nested.build());
 			current = nested;
 		}
