@@ -29,6 +29,7 @@ import javax.validation.Validator;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -43,7 +44,6 @@ import com.b2international.commons.test.config.data.ModuleConfig2;
 import com.b2international.commons.test.config.data.NestedConfig;
 import com.b2international.commons.test.config.data.TestConfig;
 import com.b2international.commons.validation.ApiValidation;
-import com.b2international.snowowl.rules.LazyEnvironmentVariables;
 
 /**
  * @since 3.4
@@ -57,7 +57,7 @@ public class ConfigurationFactoryTest {
 	private Validator validator;
 	
 	@Rule
-	public final LazyEnvironmentVariables environmentVariables = new LazyEnvironmentVariables();
+	public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 	
 	@Test
 	public void build_WithoutSource_ShouldReturnADefaultInstance() throws Exception {
