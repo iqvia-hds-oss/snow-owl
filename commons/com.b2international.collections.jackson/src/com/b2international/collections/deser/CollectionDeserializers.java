@@ -122,7 +122,7 @@ class CollectionDeserializers
                     value = jp.getIntValue();
                 } else {
                     if (t != JsonToken.VALUE_NULL) {
-                        throw ctxt.mappingException(_valueClass.getComponentType());
+                    	ctxt.reportWrongTokenException(_valueClass.getComponentType(), JsonToken.VALUE_NUMBER_INT, "Invalid token: expected int or float numbers");
                     }
                     value = 0;
                 }
@@ -155,7 +155,7 @@ class CollectionDeserializers
                     value = jp.getLongValue();
                 } else {
                     if (t != JsonToken.VALUE_NULL) {
-                        throw ctxt.mappingException(_valueClass.getComponentType());
+                    	ctxt.reportWrongTokenException(_valueClass.getComponentType(), JsonToken.VALUE_NUMBER_INT, "Invalid token: expected int or float numbers");
                     }
                     value = 0;
                 }
@@ -188,7 +188,7 @@ class CollectionDeserializers
                     value = jp.getFloatValue();
                 } else {
                     if (t != JsonToken.VALUE_NULL) {
-                        throw ctxt.mappingException(_valueClass.getComponentType());
+                    	ctxt.reportWrongTokenException(_valueClass.getComponentType(), JsonToken.VALUE_NUMBER_INT, "Invalid token: expected int or float numbers");
                     }
                     value = 0;
                 }
