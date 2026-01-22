@@ -54,13 +54,13 @@
 						</goals>
 					</execution>
 					<execution>
-						<id>http-tests</id>
+						<id>docker-tests</id>
 						<phase>integration-test</phase>
 						<goals>
 							<goal>test</goal>
 						</goals>
 						<configuration>
-							<argLine>${testArgLine} -Dso.index.es.useHttp</argLine>
+							<argLine>${testArgLine} -Dso.index.es.useHttp -Dso.index.es.useDocker</argLine>
 						</configuration>
 					</execution>
 				</executions>
