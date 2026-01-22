@@ -92,9 +92,9 @@ public final class IndexResource extends ExternalResource {
 				// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 
 				// remove the entry and replace it with ours
 				container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
-				container.withCopyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(IndexResource.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options");
+				container.copyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(IndexResource.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options");
 				
-				container.withEnv("rest.action.multi.allow_explicit_index", "false");
+				container.addEnv("rest.action.multi.allow_explicit_index", "false");
 				container.start();
 				
 				settings = Maps.newHashMap(this.indexSettings.get());
