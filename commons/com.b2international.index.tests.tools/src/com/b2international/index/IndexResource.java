@@ -90,20 +90,23 @@ public final class IndexResource extends ExternalResource {
 			final Map<String, Object> settings;
 			
 			// fire up an Elasticsearch test container if requested via useDocker system prop
-			String testElasticsearchContainer = System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE);
-			if (testElasticsearchContainer != null) {
-				if (testElasticsearchContainer.isEmpty()) {
-					testElasticsearchContainer = DEFAULT_ES_DOCKER_IMAGE;
+			String testElasticsearchImage = System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE);
+			if (testElasticsearchImage != null) {
+				
+				if (testElasticsearchImage.isEmpty()) {
+					testElasticsearchImage = DEFAULT_ES_DOCKER_IMAGE;
 				}
-				container = new ElasticsearchContainer(testElasticsearchContainer);
+				
+				container = new ElasticsearchContainer(testElasticsearchImage);
 				// XXX elasticsearch-default-memory-vm.options is a classpath resource in the testcontainers:elasticsearch jar since 7.17.4
 				// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 
 				// remove the entry and replace it with ours
 				container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
-				container.copyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(IndexResource.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options");
-				
-				container.addEnv("rest.action.multi.allow_explicit_index", "false");
-				container.start();
+				// configuring the container with additional files and env vars
+				container
+					.withCopyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(IndexResource.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options")
+					.withEnv("rest.action.multi.allow_explicit_index", "false")
+					.start();
 				
 				settings = Maps.newHashMap(this.indexSettings.get());
 				settings.putIfAbsent(IndexClientFactory.CLUSTER_URL, "https://" + container.getHttpHostAddress());
