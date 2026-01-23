@@ -15,9 +15,6 @@
  */
 package com.b2international.snowowl.fhir.core.model.valueset.expansion;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
@@ -25,9 +22,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
-import com.b2international.snowowl.fhir.core.FhirConstants;
-import com.b2international.snowowl.fhir.core.codesystems.OperationOutcomeCode;
-import com.b2international.snowowl.fhir.core.exceptions.FhirException;
+import com.b2international.snowowl.fhir.core.FhirDates;
 import com.b2international.snowowl.fhir.core.model.ValidatingBuilder;
 import com.b2international.snowowl.fhir.core.model.dt.Uri;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -100,12 +95,7 @@ public class Expansion {
 		}
 		
 		public Builder timestamp(String dateString) {
-			DateFormat df = new SimpleDateFormat(FhirConstants.DATE_TIME_FORMAT);
-			try {
-				this.timestamp = df.parse(dateString);
-			} catch (ParseException e) {
-				throw FhirException.createFhirError(dateString + " cannot be parsed, use the format " + FhirConstants.DATE_TIME_FORMAT, OperationOutcomeCode.MSG_PARAM_INVALID);
-			}
+			this.timestamp = FhirDates.parse(dateString);
 			return this;
 		}
 
