@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,16 @@ public final class IndexResource extends ExternalResource {
 	 * Java system property to configure the use of a testcontainer Elasticsearch Docker container and optionally configure the actual image as well. By default it uses the 8.1.3 image.
 	 */
 	public static final String ES_USE_TEST_CONTAINER_VARIABLE = "so.index.es.useDocker";
+
+	/**
+	 * The default Elasticsearch image version to run tests against. 
+	 */
+	public static final String ES_DOCKER_IMAGE_VERSION = "8.19.10";
 	
-	public static final String DEFAULT_ES_DOCKER_IMAGE = "docker.elastic.co/elasticsearch/elasticsearch:8.18.0";
+	/**
+	 * The default Elasticsearch image to use when running tests.
+	 */
+	public static final String DEFAULT_ES_DOCKER_IMAGE = String.format("docker.elastic.co/elasticsearch/elasticsearch:%s", ES_DOCKER_IMAGE_VERSION);
 
 	private static final AtomicBoolean INIT = new AtomicBoolean(false);
 	
