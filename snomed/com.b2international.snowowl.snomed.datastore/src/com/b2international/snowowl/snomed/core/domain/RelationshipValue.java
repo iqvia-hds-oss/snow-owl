@@ -28,6 +28,7 @@ import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Operator;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
 
 /**
  * Represents a "union class" holder for all supported relationship value types.
@@ -108,6 +109,7 @@ public final class RelationshipValue implements Serializable {
 	/**
 	 * @param integerValue
 	 */
+	@JsonCreator(mode = Mode.DISABLED)
 	public RelationshipValue(final Integer integerValue) {
 		this(RelationshipValueType.INTEGER, new BigDecimal(checkNotNull(integerValue, "Value may not be null.")), null);
 	}
@@ -115,6 +117,7 @@ public final class RelationshipValue implements Serializable {
 	/**
 	 * @param decimalValue
 	 */
+	@JsonCreator(mode = Mode.DISABLED)
 	public RelationshipValue(final BigDecimal decimalValue) {
 		this(RelationshipValueType.DECIMAL, checkNotNull(decimalValue, "Value may not be null."), null);
 	}
@@ -122,10 +125,12 @@ public final class RelationshipValue implements Serializable {
 	/**
 	 * @param stringValue
 	 */
+	@JsonCreator(mode = Mode.DISABLED)
 	public RelationshipValue(final String stringValue) {
 		this(RelationshipValueType.STRING, (BigDecimal) null, checkNotNull(stringValue, "Value may not be null."));
 	}
 
+	@JsonCreator(mode = Mode.DISABLED)
 	private RelationshipValue(final RelationshipValueType type, final BigDecimal numericValue, final String stringValue) {
 		switch (type) {
 			case DECIMAL: //$FALL-THROUGH$
@@ -155,7 +160,7 @@ public final class RelationshipValue implements Serializable {
 		this.stringValue = stringValue;
 	}
 	
-	@JsonCreator
+	@JsonCreator(mode = Mode.PROPERTIES)
 	private RelationshipValue(
 		final @JsonProperty("type") RelationshipValueType type, 
 		final @JsonProperty("numericValue") String numericValueAsString, 
