@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedCon
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument.Expressions.statedAncestors;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument.Expressions.statedParents;
 import static com.b2international.snowowl.test.commons.snomed.DocumentBuilders.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -34,6 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.assertj.core.api.ListAssert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,16 +44,16 @@ import org.junit.runners.Parameterized.Parameters;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.TooCostlyException;
-import com.b2international.index.query.Expression;
-import com.b2international.index.query.Expressions;
-import com.b2international.index.query.MatchNone;
+import com.b2international.index.query.*;
 import com.b2international.index.revision.Revision;
 import com.b2international.index.revision.StagingArea;
+import com.b2international.snomed.ecl.Ecl;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.repository.RevisionDocument;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.tree.Trees;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 import com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator;
 
 /**
@@ -262,6 +264,71 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 					.build();
 		}
 		assertEquals(expected, actual);
+	}
+	
+	@Test
+	public void descendantOrSelfList() throws Exception {
+		final Expression actual = eval(Ecl.or(
+			"<<" + Concepts.ACCEPTABILITY,
+			"<<" + Concepts.FINDING_SITE,
+			"<<" + Concepts.SYNONYM,
+			"<<" + Concepts.DEFINING_RELATIONSHIP
+		));
+		
+		/*
+		 * The output should have:
+		 * 
+		 * 1. ID sets should be consolidated into a single SetPredicate query 
+		 * 2. A single boolean expression with multiple "should" clauses instead of a nested bool-should-bool-should... structure
+		 */
+		if (actual instanceof BoolExpression expected) {
+			assertEquals(3, expected.shouldClauses().size());
+
+			final ListAssert<Expression> shouldClauses = assertThat(expected.shouldClauses());
+			final ListAssert<Expression> stringPredicates = shouldClauses.filteredOn(e -> e instanceof StringSetPredicate);
+			final ListAssert<Expression> longPredicates = shouldClauses.filteredOn(e -> e instanceof LongSetPredicate);
+			
+			stringPredicates.map(e -> ((StringSetPredicate) e).values())
+				.allMatch(values -> values.equals(Set.of(
+					Concepts.ACCEPTABILITY,
+					Concepts.FINDING_SITE,
+					Concepts.SYNONYM,
+					Concepts.DEFINING_RELATIONSHIP
+				)));
+
+			longPredicates.map(e -> ((LongSetPredicate) e).values())
+				.allMatch(values -> values.equals(Set.of(
+					Long.parseLong(Concepts.ACCEPTABILITY),
+					Long.parseLong(Concepts.FINDING_SITE),
+					Long.parseLong(Concepts.SYNONYM),
+					Long.parseLong(Concepts.DEFINING_RELATIONSHIP)
+				)));
+
+			stringPredicates.map(e -> ((StringSetPredicate) e).getField())
+				.containsExactlyInAnyOrder(Revision.Fields.ID);
+			
+			if (isInferred()) {
+				
+				longPredicates
+					.map(e -> ((LongSetPredicate) e).getField())
+					.containsExactlyInAnyOrder(
+						SnomedConceptDocument.Fields.PARENTS,
+						SnomedConceptDocument.Fields.ANCESTORS
+					);
+				
+			} else {
+				
+				longPredicates
+					.map(e -> ((LongSetPredicate) e).getField())
+					.containsExactlyInAnyOrder(
+						SnomedConceptDocument.Fields.STATED_PARENTS, 
+						SnomedConceptDocument.Fields.STATED_ANCESTORS
+					);
+			}
+			
+		} else {
+			fail("Expected a BoolExpression but got: " + actual);
+		}
 	}
 	
 	@Test
