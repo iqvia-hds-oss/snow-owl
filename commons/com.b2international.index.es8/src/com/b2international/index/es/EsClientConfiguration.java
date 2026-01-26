@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,19 @@ package com.b2international.index.es;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import java.util.List;
 import java.util.Objects;
 
 import javax.net.ssl.SSLContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 
 /**
  * @since 6.7
  */
 public final class EsClientConfiguration {
 
-	public static final String TCP_SCHEME = "tcp://";
 	public static final String HTTP_SCHEME = "http://";
 	public static final String HTTPS_SCHEME = "https://";
 	
@@ -61,8 +60,8 @@ public final class EsClientConfiguration {
 		this.sslContext = sslContext;
 		this.mapper = mapper;
 		checkArgument(
-			isTcp() || isHttp(), 
-			"Unsupported networking scheme in clusterUrl: %s. Supported schemes are: %s.", clusterUrl, ImmutableList.of(TCP_SCHEME, HTTP_SCHEME, HTTPS_SCHEME)
+			isHttp(), 
+			"Unsupported networking scheme in clusterUrl: %s. Supported schemes are: %s.", clusterUrl, List.of(HTTP_SCHEME, HTTPS_SCHEME)
 		);
 	}
 
@@ -119,10 +118,6 @@ public final class EsClientConfiguration {
 		return clusterUrl.startsWith(HTTP_SCHEME) || clusterUrl.startsWith(HTTPS_SCHEME);
 	}
 	
-	public boolean isTcp() {
-		return clusterUrl.startsWith(TCP_SCHEME);
-	}
-
 	/**
 	 * @return <code>true</code> if both username and password is provided, meaning that the target Elasticsearch cluster is protected by authentication, <code>false</code> if not protected.
 	 */

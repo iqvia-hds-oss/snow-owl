@@ -89,6 +89,11 @@ public interface IndexClientFactory {
 	String CLUSTER_URL = "clusterUrl";
 	
 	/**
+	 * The default Elasticsearch cluster URL. 
+	 */
+	String DEFAULT_CLUSTER_URL = "http://127.0.0.1:9200";
+	
+	/**
 	 * Configuration key to specify the user name for authenticating with the Elasticsearch cluster.
 	 */
 	String CLUSTER_USERNAME = "clusterUsername";
