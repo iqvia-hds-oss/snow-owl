@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -49,7 +50,7 @@ public abstract class BaseRevisionIndexTest {
 	private final Collection<Hooks.Hook> hooks = newArrayListWithCapacity(2);
 	
 	@Rule
-	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version);
+	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonymsFile);
 
 	@After
 	public void after() {
@@ -74,6 +75,15 @@ public abstract class BaseRevisionIndexTest {
 	}
 	
 	protected void configureMapper(ObjectMapper mapper) {
+	}
+	
+	/**
+	 * Subclasses may override this method to provide a synonyms file for the underlying index.
+	 * 
+	 * @return
+	 */
+	protected Path configureSynonymsFile() {
+		return null;
 	}
 	
 	protected Map<String, Object> getIndexSettings() {

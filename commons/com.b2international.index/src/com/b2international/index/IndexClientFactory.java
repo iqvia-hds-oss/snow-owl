@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,6 @@ public interface IndexClientFactory {
 	// Configuration keys
 	//
 	
-	/**
-	 * Configuration key to use when specifying the configuration directory
-	 * where index specific configuration can be found.
-	 */
-	String CONFIG_DIRECTORY = "configDirectory";
-
-	/**
-	 * Configuration key to use when creating file system based index.
-	 */
-	String DATA_DIRECTORY = "dataDirectory";
-
 	/**
 	 * Configuration key to specify the synchronization interval of the underlying transaction log.
 	 */

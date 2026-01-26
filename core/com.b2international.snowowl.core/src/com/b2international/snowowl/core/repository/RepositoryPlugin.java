@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,8 +102,6 @@ public final class RepositoryPlugin extends Plugin {
 		final ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 		indexConfig.configure(builder);
 		
-		builder.put(IndexClientFactory.DATA_DIRECTORY, env.getDataPath().resolve("indexes").toString());
-		builder.put(IndexClientFactory.CONFIG_DIRECTORY, env.getConfigPath().toString());
 		builder.put(IndexClientFactory.INDEX_PREFIX, repositoryConfig.getDeploymentId());
 		
 		return builder.build();
