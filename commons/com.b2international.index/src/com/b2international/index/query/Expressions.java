@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,18 @@ public class Expressions {
 
 	}
 	
+	/**
+	 * @return a new boolean query expression builder
+	 * @deprecated - use {@link Expressions#bool()} instead
+	 */
 	public static ExpressionBuilder builder() {
+		return bool();
+	}
+	
+	/**
+	 * @return a new boolean query expression builder
+	 */
+	public static ExpressionBuilder bool() {
 		return new ExpressionBuilder();
 	}
 	
@@ -246,6 +257,27 @@ public class Expressions {
 	
 	public static Expression scriptQuery(String script, Map<String, Object> params) {
 		return new ScriptQueryExpression(script, params);
+	}
+
+	public static Expression matchAnyObject(String field, Iterable<?> values) {
+		Object firstValue = Iterables.getFirst(values, null);
+		if (firstValue == null) {
+			return matchNone();
+		} else if (firstValue instanceof String) {
+			return matchAny(field, (Iterable<String>) values);
+		} else if (firstValue instanceof Long) {
+			return matchAnyLong(field, (Iterable<Long>) values);
+		} else if (firstValue instanceof BigDecimal) {
+			return matchAnyDecimal(field, (Iterable<BigDecimal>) values);
+		} else if (firstValue instanceof Double) {
+			return matchAnyDouble(field, (Iterable<Double>) values);
+		} else if (firstValue instanceof Enum<?>) {
+			return matchAnyEnum(field, (Iterable<Enum<?>>) values);
+		} else if (firstValue instanceof Integer) {
+			return matchAnyInt(field, (Iterable<Integer>) values);
+		} else {
+			throw new UnsupportedOperationException("Unsupported term expression value type: " + firstValue);
+		}
 	}
 
 }

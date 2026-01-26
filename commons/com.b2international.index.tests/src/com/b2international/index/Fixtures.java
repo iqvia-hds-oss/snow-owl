@@ -22,11 +22,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.b2international.collections.longs.LongSortedSet;
+import com.fasterxml.jackson.annotation.*;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
 
@@ -60,6 +57,8 @@ public class Fixtures {
 		private Integer intWrapper;
 		private short shortField;
 		private Short shortWrapper;
+		
+		private LongSortedSet longSortedSet;
 
 		@JsonProperty
 		public String getAnalyzedField() {
@@ -168,6 +167,14 @@ public class Fixtures {
 		public void setShortWrapper(Short shortWrapper) {
 			this.shortWrapper = shortWrapper;
 		}
+		
+		public LongSortedSet getLongSortedSet() {
+			return longSortedSet;
+		}
+		
+		public void setLongSortedSet(LongSortedSet longSortedSet) {
+			this.longSortedSet = longSortedSet;
+		}
 
 		@Override
 		public boolean equals(Object obj) {
@@ -184,6 +191,7 @@ public class Fixtures {
 					&& Objects.equals(longWrapper, other.longWrapper) 
 					&& Objects.equals(intWrapper, other.intWrapper) 
 					&& Objects.equals(shortWrapper, other.shortWrapper)
+					&& Objects.equals(longSortedSet, other.longSortedSet)
 					&& floatField == other.floatField 
 					&& longField == other.longField
 					&& intField == other.intField 
@@ -192,14 +200,17 @@ public class Fixtures {
 		
 		@Override
 		public int hashCode() {
-			return Objects.hash(analyzedField, 
-					field1, 
-					field2, 
-					bigDecimalField, 
-					floatWrapper, 
-					longWrapper, 
-					intWrapper, 
-					shortWrapper);
+			return Objects.hash(
+				analyzedField, 
+				field1, 
+				field2, 
+				bigDecimalField, 
+				floatWrapper, 
+				longWrapper, 
+				intWrapper, 
+				shortWrapper,
+				longSortedSet
+			);
 		}
 		
 		@Override
@@ -217,6 +228,7 @@ public class Fixtures {
 					.add("longWrapper", longWrapper)
 					.add("shortField", shortField)
 					.add("shortWrapper", shortWrapper)
+					.add("longSortedSet", longSortedSet)
 					.toString();
 		}
 		
