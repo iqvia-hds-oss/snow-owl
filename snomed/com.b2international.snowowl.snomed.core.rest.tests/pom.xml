@@ -55,7 +55,7 @@
 					<includes>
 						<include>**/AllSnomedApiTests.java</include>
 					</includes>
-					<argLine>${testArgLine} -Dso.index.es.useHttp -Dso.index.es.useDocker</argLine>
+					<argLine>${testArgLine} -Dso.index.es.useDocker</argLine>
 				</configuration>
 			</plugin>
 		</plugins>
