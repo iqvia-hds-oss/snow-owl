@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.b2international.index.BulkDelete;
+import com.b2international.index.Hits;
 import com.b2international.index.Index;
 import com.b2international.index.Searcher;
 import com.b2international.index.Writer;
