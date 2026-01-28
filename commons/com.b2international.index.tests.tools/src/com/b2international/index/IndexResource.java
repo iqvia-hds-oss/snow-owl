@@ -119,7 +119,7 @@ public final class IndexResource extends ExternalResource {
 			
 			mapper = new ObjectMapper();
 			mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-			client = Indexes.createIndexClient(UUID.randomUUID().toString(), mapper, new Mappings(), indexSettings.get());
+			client = Indexes.createIndexClient(UUID.randomUUID().toString(), mapper, new Mappings(), settings);
 			index = new DefaultIndex(client);
 			revisionIndex = new DefaultRevisionIndex(index, new TimestampProvider.Default(), mapper);
 		}
