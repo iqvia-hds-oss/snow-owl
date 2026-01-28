@@ -84,7 +84,9 @@ public final class EsHttpClient extends EsClientBase {
 					final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
 					credentialsProvider.setCredentials(AuthScope.ANY, 
 							new UsernamePasswordCredentials(configuration.getUserName(), configuration.getPassword()));
-					return httpClientConfigBuilder.setDefaultCredentialsProvider(credentialsProvider);
+					return httpClientConfigBuilder
+							.setDefaultCredentialsProvider(credentialsProvider)
+							.setSSLContext(configuration.getSslContext());
 				};
 				
 				restClientBuilder.setHttpClientConfigCallback(httpClientConfigCallback);

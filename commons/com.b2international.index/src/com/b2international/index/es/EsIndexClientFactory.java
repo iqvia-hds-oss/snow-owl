@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.b2international.index.es;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+
+import javax.net.ssl.SSLContext;
 
 import org.elasticsearch.node.Node;
 
@@ -52,17 +54,18 @@ public final class EsIndexClientFactory implements IndexClientFactory {
 		final int socketTimeout = socketTimeoutSetting instanceof Integer ? (int) socketTimeoutSetting : Integer.parseInt((String) socketTimeoutSetting);
 		final String username = (String) settings.getOrDefault(CLUSTER_USERNAME, "");
 		final String password = (String) settings.getOrDefault(CLUSTER_PASSWORD, "");
+		final SSLContext sslContext = (SSLContext) settings.getOrDefault(CLUSTER_SSL_CONTEXT, null);
 		
 		final EsClient client;
 		if (settings.containsKey(CLUSTER_URL)) {
 			final String clusterUrl = (String) settings.get(CLUSTER_URL);
-			client = EsClient.create(new EsClientConfiguration(clusterName, clusterUrl, username, password, connectTimeout, socketTimeout));
+			client = EsClient.create(new EsClientConfiguration(clusterName, clusterUrl, username, password, connectTimeout, socketTimeout, sslContext));
 		} else {
 			// Start an embedded ES node only if a cluster URL is not set
 			Node node = EsNode.getInstance(clusterName, configDirectory, dataDirectory, persistent);
 			// check sysprop to force HTTP client when still using embedded mode
 			if (System.getProperty("so.index.es.useHttp") != null) {
-				client = EsClient.create(new EsClientConfiguration(clusterName, "http://127.0.0.1:9200", username, password, connectTimeout, socketTimeout));
+				client = EsClient.create(new EsClientConfiguration(clusterName, "http://127.0.0.1:9200", username, password, connectTimeout, socketTimeout, null));
 			} else {
 				// and use the local NodeClient to communicate via the embedded node
 				client = new EsTcpClient(node.client());
