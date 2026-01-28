@@ -17,9 +17,8 @@ package com.b2international.index.es.query;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.util.Deque;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.search.join.ScoreMode;
@@ -36,9 +35,7 @@ import com.b2international.index.mapping.DocumentMapping;
 import com.b2international.index.query.*;
 import com.b2international.index.query.TextPredicate.MatchType;
 import com.b2international.index.util.DecimalUtils;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Queues;
+import com.google.common.collect.*;
 
 /**
  * @since 4.7
@@ -75,19 +72,15 @@ public final class EsQueryBuilder {
 		return needsScoring;
 	}
 	
+	public void enableScoring() {
+		needsScoring = true;
+	}
+	
 	public QueryBuilder build(Expression expression) {
 		checkNotNull(expression, "expression");
-		// always filter by type
 		visit(expression);
 		if (deque.size() == 1) {
-			QueryBuilder queryBuilder = deque.pop();
-			if (needsScoring) {
-				return queryBuilder;
-			} else {
-				return QueryBuilders.boolQuery()
-					.must(QueryBuilders.matchAllQuery())
-					.filter(queryBuilder);
-			}
+			return deque.pop();
 		} else {
 			throw newIllegalStateException();
 		}
@@ -165,7 +158,7 @@ public final class EsQueryBuilder {
 		visit(inner);
 		final QueryBuilder innerQuery = deque.pop();
 		
-		needsScoring = true;
+		enableScoring();
 		deque.push(QueryBuilders
 				.functionScoreQuery(innerQuery, ScoreFunctionBuilders.scriptFunction(expression.toEsScript(mapping)))
 				.boostMode(CombineFunction.REPLACE));
@@ -173,12 +166,17 @@ public final class EsQueryBuilder {
 	
 	private void visit(BoolExpression bool) {
 		final BoolQueryBuilder query = QueryBuilders.boolQuery();
+
+		// Assumes that BoolExpression clauses are stored in writable array lists
+		reduceTermFilters(bool.mustClauses());
+		reduceTermFilters(bool.filterClauses());
+		
 		for (Expression must : bool.mustClauses()) {
 			// visit the item and immediately pop the deque item back
 			final EsQueryBuilder innerQueryBuilder = new EsQueryBuilder(mapping, settings, log);
 			innerQueryBuilder.visit(must);
-			if (innerQueryBuilder.needsScoring) {
-				needsScoring = innerQueryBuilder.needsScoring;
+			if (innerQueryBuilder.needsScoring()) {
+				enableScoring();
 				query.must(innerQueryBuilder.deque.pop());
 			} else {
 				query.filter(innerQueryBuilder.deque.pop());
@@ -194,7 +192,7 @@ public final class EsQueryBuilder {
 			visit(should);
 			query.should(deque.pop());
 		}
-		
+
 		for (Expression filter : bool.filterClauses()) {
 			visit(filter);
 			query.filter(deque.pop());
@@ -207,14 +205,73 @@ public final class EsQueryBuilder {
 		deque.push(query);
 	}
 	
+	private void reduceTermFilters(List<Expression> clauses) {
+		Multimap<String, Expression> termExpressionsByField = HashMultimap.create();
+		for (Expression expression : List.copyOf(clauses)) {
+			if (shouldMergeSingleArgumentPredicate(expression)) {
+				termExpressionsByField.put(((SingleArgumentPredicate<?>) expression).getField(), expression);
+			} else if (shouldMergeSetPredicate(expression)) {
+				termExpressionsByField.put(((SetPredicate<?>) expression).getField(), expression);
+			}
+		}
+		
+		for (String field : Set.copyOf(termExpressionsByField.keySet())) {
+			Collection<Expression> termExpressions = termExpressionsByField.removeAll(field);
+			if (termExpressions.size() > 1) {
+				SortedSet<Comparable<?>> values = null;
+				for (Expression expression : termExpressions) {
+					if (values != null && values.isEmpty()) {
+						break;
+					}
+					SortedSet<Comparable<?>> expressionValues;
+					if (expression instanceof SingleArgumentPredicate<?>) {
+						expressionValues = ImmutableSortedSet.copyOf(Set.of(((SingleArgumentPredicate<?>) expression).getArgument()));
+					} else if (expression instanceof SetPredicate<?>) {
+						expressionValues = ImmutableSortedSet.copyOf(((SetPredicate<?>) expression).values());
+					} else {
+						throw new IllegalStateException("Invalid clause detected when processing term/terms clauses: " + expression);
+					}
+					values = values == null ? expressionValues : ImmutableSortedSet.copyOf(Sets.intersection(values, expressionValues));
+				}
+				// remove all matching clauses first
+				clauses.removeAll(termExpressions);
+				// add the new merged expression
+				clauses.add(Expressions.matchAnyObject(field, values));
+			}
+		}
+
+	}
+	
+	private boolean shouldMergeSingleArgumentPredicate(Expression expression) {
+		return AbstractExpressionBuilder.shouldMergeSingleArgumentPredicate(expression) && referencesScalarField(expression);
+	}
+	
+	private boolean shouldMergeSetPredicate(Expression expression) {
+		return AbstractExpressionBuilder.shouldMergeSetPredicate(expression) && referencesScalarField(expression);
+	}
+
+	// Predicates should not be eliminated if the field is a collection type
+	private boolean referencesScalarField(Expression expression) {
+		final String fieldName = ((Predicate) expression).getField();
+		return mapping.getSelectableFields().contains(fieldName) && !mapping.isCollection(fieldName);
+	}
+
 	private void visit(NestedPredicate predicate) {
 		final String nestedPath = toFieldPath(predicate);
 		final DocumentMapping nestedMapping = mapping.getNestedMapping(predicate.getField());
 		final EsQueryBuilder nestedQueryBuilder = new EsQueryBuilder(nestedMapping, settings, log, nestedPath);
 		nestedQueryBuilder.visit(predicate.getExpression());
-		needsScoring = nestedQueryBuilder.needsScoring;
+		
+		final ScoreMode scoreMode;
+		if (nestedQueryBuilder.needsScoring()) {
+			enableScoring();
+			scoreMode = ScoreMode.Max;
+		} else {
+			scoreMode = ScoreMode.None;
+		}
+		
 		final QueryBuilder nestedQuery = nestedQueryBuilder.deque.pop();
-		deque.push(QueryBuilders.nestedQuery(nestedPath, nestedQuery, ScoreMode.None));
+		deque.push(QueryBuilders.nestedQuery(nestedPath, nestedQuery, scoreMode));
 	}
 
 	private String toFieldPath(Predicate predicate) {
@@ -234,51 +291,62 @@ public final class EsQueryBuilder {
 		final String term = predicate.term();
 		final MatchType type = predicate.type();
 		final int minShouldMatch = predicate.minShouldMatch();
+
 		QueryBuilder query;
+
 		switch (type) {
-		case BOOLEAN_PREFIX:
-			query = QueryBuilders.matchBoolPrefixQuery(field, term)
-				.analyzer(predicate.analyzer())
-				.operator(Operator.AND);
+			case BOOLEAN_PREFIX:
+				query = QueryBuilders.matchBoolPrefixQuery(field, term)
+					.analyzer(predicate.analyzer())
+					.operator(Operator.AND);
+					break;
+			
+			case PHRASE:
+				query = QueryBuilders.matchPhraseQuery(field, term)
+					.analyzer(predicate.analyzer());
 				break;
-		case PHRASE:
-			query = QueryBuilders.matchPhraseQuery(field, term)
-						.analyzer(predicate.analyzer());
-			break;
-		case ALL:
-			query = QueryBuilders.matchQuery(field, term)
-						.analyzer(predicate.analyzer())
-						.operator(Operator.AND);
-			break;
-		case ANY:
-			query = QueryBuilders.matchQuery(field, term)
-						.analyzer(predicate.analyzer())
-						.operator(Operator.OR)
-						.minimumShouldMatch(Integer.toString(minShouldMatch));
-			break;
-		case FUZZY:
-			query = QueryBuilders.matchQuery(field, term)
-						.analyzer(predicate.analyzer())
-						.fuzziness(Fuzziness.ONE)
-						.prefixLength(1)
-						.operator(Operator.AND)
-						.maxExpansions(10);
-			break;
-		case PARSED:
-			query = QueryBuilders.queryStringQuery(TextConstants.escape(term))
-						.analyzer(predicate.analyzer())
-						.field(field)
-						.escape(false)
-						.allowLeadingWildcard(true)
-						.defaultOperator(Operator.AND);
-			break;
-		default: throw new UnsupportedOperationException("Unexpected text match type: " + type);
+			
+			case ALL:
+				query = QueryBuilders.matchQuery(field, term)
+					.analyzer(predicate.analyzer())
+					.operator(Operator.AND);
+				break;
+			
+			case ANY:
+				query = QueryBuilders.matchQuery(field, term)
+					.analyzer(predicate.analyzer())
+					.operator(Operator.OR)
+					.minimumShouldMatch(Integer.toString(minShouldMatch));
+				break;
+			
+			case FUZZY:
+				query = QueryBuilders.matchQuery(field, term)
+					.analyzer(predicate.analyzer())
+					.fuzziness(Fuzziness.ONE)
+					.prefixLength(1)
+					.operator(Operator.AND)
+					.maxExpansions(10);
+				break;
+			
+			case PARSED:
+				query = QueryBuilders.queryStringQuery(TextConstants.escape(term))
+					.analyzer(predicate.analyzer())
+					.field(field)
+					.escape(false)
+					.allowLeadingWildcard(true)
+					.defaultOperator(Operator.AND);
+				break;
+			
+			default: 
+				throw new UnsupportedOperationException("Unexpected text match type: " + type);
 		}
+		
 		if (query == null) {
 			query = MATCH_NONE;
 		} else {
-			needsScoring = true;
+			enableScoring();
 		}
+		
 		deque.push(query);
 	}
 	
@@ -290,7 +358,7 @@ public final class EsQueryBuilder {
 		deque.push(QueryBuilders.termQuery(toFieldPath(predicate), DecimalUtils.encode(predicate.getArgument())));
 	}
 	
-	private <T> void visit(SetPredicate<T> predicate) {
+	private <T extends Comparable<T>> void visit(SetPredicate<T> predicate) {
 		toTermsQuery(predicate, predicate.values(), null);
 	}
 
@@ -299,14 +367,14 @@ public final class EsQueryBuilder {
 	}
 	
 	// consider max terms count and break into multiple terms queries if number of terms are greater than that value
-	private <T> void toTermsQuery(SetPredicate<T> predicate, final Set<T> terms, final Function<T, ?> valueConverter) {
+	private <T extends Comparable<T>> void toTermsQuery(SetPredicate<T> predicate, final Set<T> terms, final Function<T, ?> valueConverter) {
 		final int maxTermsCount = Integer.parseInt((String) settings.get(IndexClientFactory.MAX_TERMS_COUNT_KEY));
 		if (terms.size() > maxTermsCount) {
 			log.warn("More than currently configured max_terms_count ({}) filter values on field query: {}.{}", maxTermsCount, mapping.typeAsString(), toFieldPath(predicate));
 			final BoolQueryBuilder bool = QueryBuilders.boolQuery().minimumShouldMatch(1);
 			Iterables.partition(terms, maxTermsCount).forEach(partition -> {
 				if (valueConverter != null) {
-					bool.should(QueryBuilders.termsQuery(toFieldPath(predicate), partition.stream().map(valueConverter).collect(Collectors.toSet())));	
+					bool.should(QueryBuilders.termsQuery(toFieldPath(predicate), partition.stream().map(valueConverter).collect(Collectors.toCollection(TreeSet::new))));	
 				} else {
 					bool.should(QueryBuilders.termsQuery(toFieldPath(predicate), partition));
 				}
@@ -315,7 +383,7 @@ public final class EsQueryBuilder {
 		} else {
 			// push the terms query directly
 			if (valueConverter != null) {
-				deque.push(QueryBuilders.termsQuery(toFieldPath(predicate), terms.stream().map(valueConverter).collect(Collectors.toSet())));
+				deque.push(QueryBuilders.termsQuery(toFieldPath(predicate), terms.stream().map(valueConverter).collect(Collectors.toCollection(TreeSet::new))));
 			} else {
 				deque.push(QueryBuilders.termsQuery(toFieldPath(predicate), terms));
 			}
