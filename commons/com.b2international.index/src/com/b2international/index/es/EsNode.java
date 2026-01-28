@@ -66,6 +66,7 @@ public final class EsNode extends Node {
 		if (INSTANCE == null) {
 			synchronized (EsNode.class) {
 				if (INSTANCE == null) {
+					LOG.info("Initializing embedded Elasticsearch node");
 					// XXX: Adjust the thread context classloader while ES is initializing
 					Activator.withTccl(() -> {
 						try {
@@ -92,6 +93,8 @@ public final class EsNode extends Node {
 			return;
 		}
 
+		LOG.info("Stopping embedded Elasticsearch node");
+		
 		// XXX: Adjust the thread context classloader while ES is closing
 		Activator.withTccl(() -> {
 			try {
