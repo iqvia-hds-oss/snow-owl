@@ -62,19 +62,19 @@ public class RegExpQueryTest extends BaseIndexTest {
 	@Test
 	public void whitespaceRegexp() throws Exception {
 		Data crlf = new Data();
-		crlf.setAnalyzedField("Hello\\r\\nRegexp1!");
+		crlf.setAnalyzedField("Hello\r\nRegexp1!");
 		indexDocument(KEY1, crlf);
 		
 		Data cr = new Data();
-		cr.setAnalyzedField("Hello\\rRegexp2!");
+		cr.setAnalyzedField("Hello\rRegexp2!");
 		indexDocument(KEY2, cr);
 		
 		Data lf = new Data();
-		lf.setAnalyzedField("Hello\\nRegexp2!");
+		lf.setAnalyzedField("Hello\nRegexp2!");
 		indexDocument("key3", lf);
 		
 		Data tab = new Data();
-		tab.setAnalyzedField("Hello\\tRegexp2!");
+		tab.setAnalyzedField("Hello\tRegexp2!");
 		indexDocument("key4", tab);
 		
 		Data regular = new Data();
@@ -83,7 +83,7 @@ public class RegExpQueryTest extends BaseIndexTest {
 		
 		final Hits<Data> hits = search(
 			Query.select(Data.class)
-				.where(Expressions.regexp("analyzedField.exact", ".*[\\t\\r\\n]+.*"))
+				.where(Expressions.regexp("analyzedField.exact", ".*[\t\r\n]+.*"))
 				.build()
 		);
 		
