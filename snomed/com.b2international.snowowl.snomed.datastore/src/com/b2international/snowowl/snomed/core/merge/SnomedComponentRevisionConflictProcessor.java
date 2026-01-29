@@ -202,7 +202,7 @@ public final class SnomedComponentRevisionConflictProcessor extends ComponentRev
 						if (conflict instanceof AddedInSourceAndTargetConflict) {
 							// for added vs added conflicts make sure we inject a poison pill to avoid the former revision of the component reappearing in certain index operations
 							// https://snowowl.atlassian.net/browse/SO-6448
-							staging.injectPoisonPillToMergeCommit(objectId, conflict.getContainerId());
+							staging.injectPoisonPillToMergeCommit(conflict.getContainerId(), objectId);
 						}
 						
 						// filter out all conflicts reported around donated content
