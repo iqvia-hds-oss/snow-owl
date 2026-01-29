@@ -102,6 +102,6 @@ public class RemoteLockTargetListener implements IHandler<IMessage>, IDisposable
 
 	@Override
 	public boolean isDisposed() {
-		return active.get();
+		return !active.get();
 	}
 }

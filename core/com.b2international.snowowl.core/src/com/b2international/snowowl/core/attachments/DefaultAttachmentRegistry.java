@@ -334,6 +334,6 @@ public final class DefaultAttachmentRegistry implements InternalAttachmentRegist
 
 	@Override
 	public boolean isDisposed() {
-		return active.get();
+		return !active.get();
 	}
 }
