@@ -15,12 +15,9 @@
  */
 package com.b2international.index;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assume.assumeTrue;
 
-import java.net.URL;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -28,11 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import org.eclipse.core.runtime.FileLocator;
 import org.junit.rules.ExternalResource;
-import org.osgi.framework.FrameworkUtil;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.utility.MountableFile;
 
 import com.b2international.index.mapping.Mappings;
 import com.b2international.index.revision.Commit;
@@ -46,24 +39,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 /**
+ * Boots up an Elasticsearch testcontainer Docker container for integration tests.
+ * The image can overridden with -Dso.index.elasticsearch.image=custom/image:tag value or programmatically via the #set
+ * 
  * @since 7.1
  */
 public final class IndexResource extends ExternalResource {
-
-	/**
-	 * Java system property to configure the use of a testcontainer Elasticsearch Docker container and optionally configure the actual image as well. By default it uses the 8.1.3 image.
-	 */
-	public static final String ES_USE_TEST_CONTAINER_VARIABLE = "so.index.elasticsearch.image";
-
-	/**
-	 * The default Elasticsearch image version to run tests against. 
-	 */
-	public static final String ES_DOCKER_IMAGE_VERSION = "8.19.10";
-	
-	/**
-	 * The default Elasticsearch image to use when running tests.
-	 */
-	public static final String DEFAULT_ES_DOCKER_IMAGE = String.format("docker.elastic.co/elasticsearch/elasticsearch:%s", ES_DOCKER_IMAGE_VERSION);
 
 	private static final AtomicBoolean INIT = new AtomicBoolean(false);
 	
@@ -90,24 +71,11 @@ public final class IndexResource extends ExternalResource {
 	@Override
 	protected void before() throws Throwable {
 		if (INIT.compareAndSet(false, true)) {
-			// boot up an Elasticsearch test container
-			// image can be overridden with -Dso.index.elasticsearch.image=custom/image:tag
-			String testElasticsearchContainer = System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE, DEFAULT_ES_DOCKER_IMAGE);
-			container = new ElasticsearchContainer(testElasticsearchContainer);
-			// XXX elasticsearch-default-memory-vm.options is a classpath resource in the testcontainers:elasticsearch jar since 7.17.4
-			// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 
-			// remove the entry and replace it with ours
-			container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
-			container
-				.withCopyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(IndexResource.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options")
-				.withEnv("rest.action.multi.allow_explicit_index", "false")
-				.start();
+			// boot up a shared global Elasticsearch test container
+			container = new ElasticsearchContainer();
 			
 			final Map<String, Object> settings = Maps.newHashMap(this.indexSettings.get());
-			settings.putIfAbsent(IndexClientFactory.CLUSTER_URL, "https://" + container.getHttpHostAddress());
-			settings.putIfAbsent(IndexClientFactory.CLUSTER_SSL_CONTEXT, container.createSslContextFromCa());
-			settings.putIfAbsent(IndexClientFactory.CLUSTER_USERNAME, "elastic");
-			settings.putIfAbsent(IndexClientFactory.CLUSTER_PASSWORD, ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
+			container.getIndexClientConfiguration().forEach(settings::putIfAbsent);
 			
 			mapper = new ObjectMapper();
 			mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
@@ -120,14 +88,7 @@ public final class IndexResource extends ExternalResource {
 		assumeTrue(supportedVersion.get().equals("*") || index.admin().client().version().startsWith(supportedVersion.get()));
 		
 		if (container != null) {
-			// make sure we update the synonyms.txt inside the test container
-			Path synonymsFile = this.synonymsFile.get();
-			if (synonymsFile == null) {
-				synonymsFile = toAbsolutePathBundleEntry(IndexResource.class, "synonym.txt");
-			}
-			final MountableFile localSynonymFilePath = MountableFile.forHostPath(synonymsFile);
-			final String containerSynonymFilePath = "/usr/share/elasticsearch/config/analysis/synonym.txt";
-			container.copyFileToContainer(localSynonymFilePath, containerSynonymFilePath);
+			container.overrideSynonymFile(this.synonymsFile.get());
 		}
 		
 		// apply mapper changes first
@@ -143,12 +104,6 @@ public final class IndexResource extends ExternalResource {
 		revisionIndex.admin().create();
 	}
 
-	private static Path toAbsolutePathBundleEntry(Class<?> contextClass, String path) throws Exception {
-		var bundle = checkNotNull(FrameworkUtil.getBundle(contextClass), "Bundle not found for %s", contextClass);
-		var fileURL = new URL(FileLocator.toFileURL(bundle.getEntry(path)).toString().replaceAll(" ", "%20"));
-		return Paths.get(fileURL.toURI());
-	}
-	
 	@Override
 	protected void after() {
 		// make sure we clear each index after we've used them
@@ -157,10 +112,6 @@ public final class IndexResource extends ExternalResource {
 				.add(RevisionBranch.class)
 				.add(Commit.class)
 				.build());
-	}
-	
-	public ElasticsearchContainer getContainer() {
-		return container;
 	}
 	
 	public IndexClient getClient() {

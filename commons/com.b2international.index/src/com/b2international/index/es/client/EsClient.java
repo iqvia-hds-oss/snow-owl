@@ -16,6 +16,7 @@
 package com.b2international.index.es.client;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.get.GetRequest;
@@ -32,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.b2international.index.Activator;
+import com.b2international.index.IndexException;
 import com.b2international.index.es.EsClientConfiguration;
 import com.b2international.index.es.client.http.EsHttpClient;
 import com.google.common.cache.CacheBuilder;
@@ -46,6 +48,11 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 public interface EsClient extends AutoCloseable {
 
 	Logger LOG = LoggerFactory.getLogger("elastic-snowowl");
+	
+	/**
+	 * We currently only support Elasticsearch 8.x clusters as 9.x requires moving completely to the new Java client.
+	 */
+	Set<String> SUPPORTED_MAJOR_VERSIONS = Set.of("8.");
 	
 	/**
 	 * Gets the Elasticsearch version from the currently configured host using the Info Endpoint. 
@@ -117,7 +124,23 @@ public interface EsClient extends AutoCloseable {
 					configuration.getConnectTimeout(),
 					configuration.getSocketTimeout());
 		
-			return new EsHttpClient(configuration);
+			EsClient client = new EsHttpClient(configuration);
+			
+			// check version and report if Elasticsearch version is not supported
+			String elasticsearchVersion;
+			try {
+				elasticsearchVersion = client.version();
+			} catch (Exception e) {
+				throw new IndexException("Failed to determine version of underlying Elasticsearch cluster.", e);
+			}
+			
+			if (SUPPORTED_MAJOR_VERSIONS.stream().noneMatch(supportedMajorVersion -> elasticsearchVersion.startsWith(supportedMajorVersion))) {
+				throw new IndexException(String.format(
+						"The connected Elasticsearch cluster is running a non-supported major version, '%s'. The currently supported major versions are: %s.",
+						elasticsearchVersion, SUPPORTED_MAJOR_VERSIONS));
+			}
+			
+			return client;
 		}
 		
 		static void onRemove(final RemovalNotification<EsClientConfiguration, EsClient> notification) {
