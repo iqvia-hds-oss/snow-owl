@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.WithScore;
@@ -37,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * @since 7.1.0
  */
-public class LockIndexTests {
+public class LockIndexTests extends BaseElasticsearchAwareTest {
 
 	private static final String USER = "test@b2ihealthcare.com";
 
@@ -47,7 +48,7 @@ public class LockIndexTests {
 	@Before
 	public void setup() {
 		mapper = JsonSupport.getDefaultObjectMapper();
-		index = Indexes.createIndex("locks", mapper, new Mappings(DatastoreLockIndexEntry.class));
+		index = Indexes.createIndex("locks", mapper, new Mappings(DatastoreLockIndexEntry.class), getIndexClientConfiguration());
 		index.admin().create();
 	}
 

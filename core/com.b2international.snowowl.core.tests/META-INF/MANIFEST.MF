@@ -6,6 +6,7 @@ Bundle-Version: 10.0.0.qualifier
 Bundle-Vendor: B2i Healthcare
 Fragment-Host: com.b2international.snowowl.core;bundle-version="7.5.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-21
-Require-Bundle: org.junit;bundle-version="4.12.0"
+Require-Bundle: org.junit;bundle-version="4.12.0",
+ com.b2international.index.test.tools
 Import-Package: org.assertj.core.api,
  org.assertj.core.api.iterable

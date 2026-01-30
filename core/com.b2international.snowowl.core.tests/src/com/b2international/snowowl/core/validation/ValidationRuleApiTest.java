@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.b2international.commons.exceptions.NotFoundException;
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
@@ -39,14 +40,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * @since 6.0
  */
-public class ValidationRuleApiTest {
+public class ValidationRuleApiTest extends BaseElasticsearchAwareTest {
 
 	private ServiceProvider context;
 
 	@Before
 	public void setup() {
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
-		final Index index = Indexes.createIndex(UUID.randomUUID().toString(), mapper, new Mappings(ValidationRule.class));
+		final Index index = Indexes.createIndex(UUID.randomUUID().toString(), mapper, new Mappings(ValidationRule.class), getIndexClientConfiguration());
 		index.admin().create();
 		final ValidationRepository repository = new ValidationRepository(index);
 		context = ServiceProvider.EMPTY.inject()
