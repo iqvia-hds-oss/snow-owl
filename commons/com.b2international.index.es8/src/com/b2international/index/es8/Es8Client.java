@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import com.b2international.index.es.EsClientConfiguration;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -76,8 +75,7 @@ public class Es8Client implements Closeable {
 		final RestClientBuilder restClientBuilder = RestClient.builder(host)
 			.setRequestConfigCallback(requestConfigCallback);
 		
-		final boolean isProtected = !Strings.isNullOrEmpty(config.getUserName()) && !Strings.isNullOrEmpty(config.getPassword());
-		if (isProtected) {
+		if (config.isProtected()) {
 			
 			final HttpClientConfigCallback httpClientConfigCallback = httpClientConfigBuilder -> {
 				final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
