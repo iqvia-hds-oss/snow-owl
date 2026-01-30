@@ -22,12 +22,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.utility.MountableFile;
 
 import com.google.common.base.Preconditions;
@@ -45,28 +47,34 @@ public final class ElasticsearchContainer {
 	private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchContainer.class);
 	
 	/**
-	 * Java system property to configure the use of a testcontainer Elasticsearch Docker container and optionally configure the actual image as well. By default it uses the {@value #ES_DOCKER_IMAGE_VERSION} version.
+	 * Java system property to configure which Elasticsearch version to use when initializing its docker container. By default it uses the {@value #ES_DOCKER_VERSION} version.
 	 */
-	public static final String ES_USE_TEST_CONTAINER_VARIABLE = "so.index.elasticsearch.image";
+	public static final String ES_DOCKER_VERSION_VARIABLE = "so.index.es.docker.version";
 	
 	/**
 	 * The default Elasticsearch image version to run tests against. 
 	 */
-	public static final String ES_DOCKER_IMAGE_VERSION = "8.19.10";
+	public static final String ES_DOCKER_VERSION = "8.19.10";
 	
-	/**
-	 * The default Elasticsearch image to use when running tests.
-	 */
-	public static final String DEFAULT_ES_DOCKER_IMAGE = String.format("docker.elastic.co/elasticsearch/elasticsearch:%s", ES_DOCKER_IMAGE_VERSION);
+	// override wait strategies for specific Elasticsearch versions as the log output may differ and relying on solely on started message arrival might not be enough
+	private static final Map<Predicate<String>, WaitStrategy> WAIT_STRATEGIES = Map.of(
+		version -> version.startsWith("8."), new LogMessageWaitStrategy().withRegEx(".*(\"message\":\\s?\"Security is enabled[\\s?|\"].*\n$)")
+		// not specifying custom wait strategy for ES 7.x as the default one waits for the started message which is sufficient
+		// version -> version.startsWith("7."), null
+	);
 	
 	private org.testcontainers.elasticsearch.ElasticsearchContainer container;
+
+	private final String elasticsearchDockerImageVersion;
 	
 	public ElasticsearchContainer() throws Exception {
-		this(System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE, DEFAULT_ES_DOCKER_IMAGE));
+		this(System.getProperty(ES_DOCKER_VERSION_VARIABLE, ES_DOCKER_VERSION));
 	}
 	
-	public ElasticsearchContainer(String elasticsearchDockerImage) throws Exception {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(elasticsearchDockerImage), "'elasticsearchDockerImage' may not be null or empty.");
+	public ElasticsearchContainer(String elasticsearchDockerImageVersion) throws Exception {
+		Preconditions.checkArgument(!Strings.isNullOrEmpty(elasticsearchDockerImageVersion), "'elasticsearchDockerImageVersion' may not be null or empty.");
+		this.elasticsearchDockerImageVersion = elasticsearchDockerImageVersion;
+		var elasticsearchDockerImage = String.format("docker.elastic.co/elasticsearch/elasticsearch:%s", elasticsearchDockerImageVersion);
 		this.container = new org.testcontainers.elasticsearch.ElasticsearchContainer(elasticsearchDockerImage);
 		// XXX elasticsearch-default-memory-vm.options is a classpath resource in the testcontainers-elasticsearch jar since 7.17.4
 		// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 
@@ -74,13 +82,18 @@ public final class ElasticsearchContainer {
 		this.container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
 		this.container
 			.withCopyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(ElasticsearchContainer.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options")
-			.withEnv("rest.action.multi.allow_explicit_index", "false")
-			// override the default wait strategy to wait for not just the started message but also for the security module to be initialized
-			// fixes authentication issues when trying to connect to an Elasticsearch cluster that already accepts connections but is not yet ready for authentication
-			.waitingFor(new LogMessageWaitStrategy().withRegEx(".*(\"message\":\\s?\"Security is enabled[\\s?|\"].*\n$)"));
+			.withEnv("rest.action.multi.allow_explicit_index", "false");
+	
+		// override the default wait strategy to wait for not just the started message but also for the security module to be initialized
+		// fixes authentication issues when trying to connect to an Elasticsearch cluster that already accepts connections but is not yet ready for authentication
+		WAIT_STRATEGIES.entrySet().stream()
+			.filter(entry -> entry.getKey().test(this.elasticsearchDockerImageVersion))
+			.findFirst()
+			.map(Map.Entry::getValue)
+			.ifPresent(this.container::setWaitStrategy);
 
+		// all configuration done, start the container
 		start();
-		
 		LOG.info("Started Elasticsearch test container at {}", container.getHttpHostAddress());
 
 		// use the default synonym file at startup to initialize the container with it
@@ -90,12 +103,22 @@ public final class ElasticsearchContainer {
 	public Map<String, Object> getIndexClientConfiguration() {
 		Preconditions.checkState(this.container != null, "Elasticsearch container is already stopped and closed.");
 		Preconditions.checkState(this.container.isRunning(), "Elasticsearch container is not running.");
-		return Map.of(
-			IndexClientFactory.CLUSTER_URL, "https://" + container.getHttpHostAddress(),
-			IndexClientFactory.CLUSTER_USERNAME, "elastic",
-			IndexClientFactory.CLUSTER_PASSWORD, org.testcontainers.elasticsearch.ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD,
-			IndexClientFactory.CLUSTER_SSL_CONTEXT, container.createSslContextFromCa()
-		);
+		
+		if (this.elasticsearchDockerImageVersion.startsWith("7.")) {
+			return Map.of(
+				IndexClientFactory.CLUSTER_URL, "http://" + container.getHttpHostAddress(),
+				IndexClientFactory.CLUSTER_USERNAME, "elastic",
+				IndexClientFactory.CLUSTER_PASSWORD, org.testcontainers.elasticsearch.ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD
+			);
+		} else {
+			return Map.of(
+				IndexClientFactory.CLUSTER_URL, "https://" + container.getHttpHostAddress(),
+				IndexClientFactory.CLUSTER_USERNAME, "elastic",
+				IndexClientFactory.CLUSTER_PASSWORD, org.testcontainers.elasticsearch.ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD,
+				IndexClientFactory.CLUSTER_SSL_CONTEXT, container.createSslContextFromCa()
+			);
+		}
+		
 	}
 
 	public void overrideSynonymFile(Path synonymsFile) throws Exception {
