@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 
 import org.junit.Test;
 
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
@@ -46,7 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * @since 4.0
  */
-public class ReservationImplTest {
+public class ReservationImplTest extends BaseElasticsearchAwareTest {
 
 	@Test
 	public void whenReservingSingleID_ThenItShouldConflictWithThatIDOnly() throws Exception {
@@ -58,7 +59,7 @@ public class ReservationImplTest {
 	
 	@Test
 	public void whenReservingRangeOfIDs_ThenItShouldConflictWithAllIDsInThatRangeIncludingBoundaries() throws Exception {
-		final Index store = Indexes.createIndex(UUID.randomUUID().toString(), new ObjectMapper(), new Mappings(SctId.class));
+		final Index store = Indexes.createIndex(UUID.randomUUID().toString(), new ObjectMapper(), new Mappings(SctId.class), getIndexClientConfiguration());
 		store.admin().create();
 		final ISnomedIdentifierService identifierService = new DefaultSnomedIdentifierService(store, new ItemIdGenerationStrategy() {
 			int counter = 200;

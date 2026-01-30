@@ -49,7 +49,7 @@ public class DefaultSnomedIdentifierServiceTest extends AbstractIdentifierServic
 
 	@Before
 	public void init() {
-		store = Indexes.createIndex(UUID.randomUUID().toString(), new ObjectMapper(), new Mappings(SctId.class));
+		store = Indexes.createIndex(UUID.randomUUID().toString(), new ObjectMapper(), new Mappings(SctId.class), getIndexClientConfiguration());
 		store.admin().create();
 		
 		final ISnomedIdentifierReservationService reservationService = new SnomedIdentifierReservationServiceImpl();

@@ -32,6 +32,7 @@ import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 
 import com.b2international.commons.exceptions.BadRequestException;
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
@@ -55,7 +56,7 @@ import com.google.inject.util.Providers;
 /**
  * @since 4.7
  */
-public class DefaultSnomedIdentifierServiceRegressionTest {
+public class DefaultSnomedIdentifierServiceRegressionTest extends BaseElasticsearchAwareTest {
 
 	@Rule
 	public TestWatcher w = new TestWatcher( ) {
@@ -92,7 +93,7 @@ public class DefaultSnomedIdentifierServiceRegressionTest {
 
 	@Before
 	public void init() {
-		store = Indexes.createIndex(UUID.randomUUID().toString(), new ObjectMapper(), new Mappings(SctId.class));
+		store = Indexes.createIndex(UUID.randomUUID().toString(), new ObjectMapper(), new Mappings(SctId.class), getIndexClientConfiguration());
 		store.admin().create();
 	}
 

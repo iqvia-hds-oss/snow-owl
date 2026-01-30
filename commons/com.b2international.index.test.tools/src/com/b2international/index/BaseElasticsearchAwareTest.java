@@ -33,7 +33,7 @@ public abstract class BaseElasticsearchAwareTest {
 		}
 	}
 
-	public Map<String, Object> getIndexClientConfiguration() {
+	public static Map<String, Object> getIndexClientConfiguration() {
 		return container.getIndexClientConfiguration();
 	}
 	
