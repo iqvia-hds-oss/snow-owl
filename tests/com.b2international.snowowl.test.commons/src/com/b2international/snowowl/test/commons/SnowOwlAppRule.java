@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,19 @@
 package com.b2international.snowowl.test.commons;
 
 import java.nio.file.Path;
+import java.util.Map;
+
+import javax.net.ssl.SSLContext;
 
 import org.junit.rules.ExternalResource;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.utility.MountableFile;
 
 import com.b2international.commons.exceptions.AlreadyExistsException;
 import com.b2international.commons.io.PathUtils;
+import com.b2international.index.ElasticsearchContainer;
 import com.b2international.index.IndexClientFactory;
 import com.b2international.index.IndexResource;
-import com.b2international.index.es.EsIndexClientFactory;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.IndexConfiguration;
@@ -148,31 +149,23 @@ public class SnowOwlAppRule extends ExternalResource {
 			PathUtils.cleanDirectory(resourceDirectory);
 		}
 		
-		// modify the Snow Owl configuration values if useDocker is defined as JVM argument
+		// initialize an Elasticsearch test container
 		String testElasticsearchContainer = System.getProperty(IndexResource.ES_USE_TEST_CONTAINER_VARIABLE);
 		if (testElasticsearchContainer != null) {
-			if (testElasticsearchContainer.isEmpty()) {
-				testElasticsearchContainer = IndexResource.DEFAULT_ES_DOCKER_IMAGE;
-			}
-			// initialize an Elasticsearch test container
-			container = new ElasticsearchContainer(testElasticsearchContainer);
+			container = new ElasticsearchContainer();
 			
-//			final MountableFile localSynonymsFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
-//			final String containerSynonymsFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
-			container
-//				.withCopyFileToContainer(localSynonymsFilePath, containerSynonymsFilePath)
-				.withEnv("rest.action.multi.allow_explicit_index", "false")
-				.start();
-			
+			Map<String, Object> indexClientConfiguration = container.getIndexClientConfiguration();
 			IndexConfiguration index = snowowl.getConfiguration().getModuleConfig(RepositoryConfiguration.class).getIndexConfiguration();
-			index.setClusterUrl("https://" + container.getHttpHostAddress());
-			index.setClusterUsername("elastic");
-			index.setClusterPassword(ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
-			index.setSslContext(container.createSslContextFromCa());
+			index.setClusterUrl((String) indexClientConfiguration.get(IndexClientFactory.CLUSTER_URL));
+			index.setClusterUsername((String) indexClientConfiguration.get(IndexClientFactory.CLUSTER_USERNAME));
+			index.setClusterPassword((String) indexClientConfiguration.get(IndexClientFactory.CLUSTER_PASSWORD));
+			index.setSslContext((SSLContext) indexClientConfiguration.get(IndexClientFactory.CLUSTER_SSL_CONTEXT));
 		}
+		
 		
 		snowowl.bootstrap();
 		snowowl.run();
+
 		// inject the test user to the current identity provider
 		try {
 			((IdentityWriter) ApplicationContext.getInstance().getServiceChecked(IdentityProvider.class)).addUser(RestExtensions.USER, RestExtensions.PASS);
@@ -189,8 +182,7 @@ public class SnowOwlAppRule extends ExternalResource {
 		snowowl = null;
 		
 		if (container != null) {
-			container.stop();
-			container.close();
+			container.destroy();
 			container = null;
 		}
 	}

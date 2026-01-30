@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import static com.google.common.base.Preconditions.checkState;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Set;
 
+import org.eclipse.core.runtime.Platform;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -34,10 +36,12 @@ import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.RemoteInfo;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.osgi.framework.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.b2international.index.Activator;
+import com.b2international.index.IndexException;
 import com.b2international.index.es.EsClientConfiguration;
 import com.b2international.index.es.client.http.EsHttpClient;
 import com.b2international.index.es.client.tcp.EsTcpClient;
@@ -54,6 +58,11 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 public interface EsClient extends AutoCloseable {
 
 	Logger LOG = LoggerFactory.getLogger("elastic-snowowl");
+	
+	/**
+	 * We currently only support Elasticsearch 8.x clusters as 9.x requires moving completely to the new Java client.
+	 */
+	Set<String> SUPPORTED_MAJOR_VERSIONS = Set.of("8.");
 	
 	/**
 	 * Gets the Elasticsearch version from the currently configured host using the Info Endpoint. 
@@ -125,9 +134,10 @@ public interface EsClient extends AutoCloseable {
 					configuration.isProtected() ? " using basic authentication" : "",
 					configuration.getConnectTimeout(),
 					configuration.getSocketTimeout());
-			
+		
+			EsClient client;
 			if (configuration.isHttp()) {
-				return new EsHttpClient(configuration);
+				client = new EsHttpClient(configuration);
 			} else {
 				checkState(configuration.isTcp(), "Only TCP and HTTP clients are supported");
 				checkState(!configuration.isProtected(), "TCP connection scheme does not yet support security configuration. Consider switching to HTTP instead.");
@@ -135,9 +145,25 @@ public interface EsClient extends AutoCloseable {
 				Settings settings = Settings.builder()
 				        .put("cluster.name", configuration.getClusterName())
 				        .build();
-				return new EsTcpClient(new PreBuiltTransportClient(settings)
+				client = new EsTcpClient(new PreBuiltTransportClient(settings)
 						.addTransportAddress(new TransportAddress(new InetSocketAddress(hostAndPort.getHost(), hostAndPort.getPort()))));
 			}
+			
+			// check version and report if Elasticsearch version is not supported
+			String elasticsearchVersion;
+			try {
+				elasticsearchVersion = client.version();
+			} catch (Exception e) {
+				throw new IndexException("Failed to determine version of underlying Elasticsearch cluster.", e);
+			}
+			
+			if (!isDevVersion() && SUPPORTED_MAJOR_VERSIONS.stream().noneMatch(supportedMajorVersion -> elasticsearchVersion.startsWith(supportedMajorVersion))) {
+				throw new IndexException(String.format(
+						"The connected Elasticsearch cluster is running a non-supported major version, '%s'. The currently supported major versions are: %s.",
+						elasticsearchVersion, SUPPORTED_MAJOR_VERSIONS));
+			}
+			
+			return client;
 		}
 		
 		static void onRemove(final RemovalNotification<EsClientConfiguration, EsClient> notification) {
@@ -153,6 +179,11 @@ public interface EsClient extends AutoCloseable {
 			} catch (final Exception e) {
 				LOG.error("Unable to close ES client connected to '{}'", configuration.getClusterUrl(), e);
 			}
+		}
+		
+		static boolean isDevVersion() {
+			final Bundle bundle = Platform.getBundle("com.b2international.index");
+			return bundle != null && "qualifier".equals(bundle.getVersion().getQualifier());
 		}
 		
 	}

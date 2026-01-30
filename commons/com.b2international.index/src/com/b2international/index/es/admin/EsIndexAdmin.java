@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,19 @@ public final class EsIndexAdmin implements IndexAdmin {
 	private static final int DEFAULT_MAX_NUMBER_OF_VERSION_CONFLICT_RETRIES = 5;
 	
 	private final Random random = new Random();
+	
+	// Elasticsearch client API instances
+	/**
+	 * Elasticsearch 7 client running in compability mode against ES 8 cluster
+	 * @deprecated will be replaced with the official Java client in future versions
+	 */
 	private final EsClient client;
+	
+	/**
+	 * Elasticsearch Java client (supporting ES 8 and up to newer when upgraded to newer client versions)
+	 */
+	private Es8Client es8Client;
+	
 	private final ObjectMapper mapper;
 	private final String name;
 	private final Map<String, Object> settings;
@@ -130,9 +142,6 @@ public final class EsIndexAdmin implements IndexAdmin {
 
 	// dynamically changeable index mappings
 	private IndexMapping indexMapping;
-	
-	// optionally available Elasticsearch 8 client API
-	private Es8Client es8Client;
 	
 	private int indent = 0;
 

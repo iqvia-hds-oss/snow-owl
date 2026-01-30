@@ -41,7 +41,7 @@ import com.b2international.index.es.client.IndicesClient;
 
 /**
  * @since 6.11
- * @deprecated
+ * @deprecated - will be removed in 10.0.0, use the HTTP based {@link EsHttpClient} instead
  */
 public final class EsTcpClient extends EsClientBase {
 
