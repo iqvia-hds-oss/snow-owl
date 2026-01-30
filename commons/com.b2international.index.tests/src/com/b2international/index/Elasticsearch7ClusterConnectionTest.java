@@ -19,8 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import com.b2international.index.mapping.Mappings;
@@ -35,25 +34,15 @@ public class Elasticsearch7ClusterConnectionTest {
 
 	private static final String UNSUPPORTED_ELASTIC_VERSION = "7.17.29";
 	
-	private ElasticsearchContainer container;
-
-	@Before
-	public void setup() throws Exception {
-		this.container = new ElasticsearchContainer(UNSUPPORTED_ELASTIC_VERSION);
-	}
-	
-	@After
-	public void teardown() throws Exception {
-		this.container.destroy();
-		this.container = null;
-	}
+	@Rule
+	public ElasticsearchContainerResource elasticsearch = new ElasticsearchContainerResource(UNSUPPORTED_ELASTIC_VERSION);
 	
 	@Test
 	public void connectToES7() throws Exception {
 		var mapper = new ObjectMapper();
 		mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
 		// try to initialize the index client, which should initialize an HTTP connection to retrieve the version info and fail if the cluster is an unsupported version
-		assertThatThrownBy(() -> Indexes.createIndexClient(UUID.randomUUID().toString(), mapper, new Mappings(), container.getIndexClientConfiguration()))
+		assertThatThrownBy(() -> Indexes.createIndexClient(UUID.randomUUID().toString(), mapper, new Mappings(), elasticsearch.getContainer().getIndexClientConfiguration()))
 			.isInstanceOf(IndexException.class)
 			.hasMessageContaining("The connected Elasticsearch cluster is running a non-supported major version, '%s'.", UNSUPPORTED_ELASTIC_VERSION);
 	}
