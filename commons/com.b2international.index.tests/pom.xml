@@ -44,36 +44,6 @@
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-surefire-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>default-test</id>
-						<phase>integration-test</phase>
-						<goals>
-							<goal>test</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>http-tests</id>
-						<phase>integration-test</phase>
-						<goals>
-							<goal>test</goal>
-						</goals>
-						<configuration>
-							<argLine>${testArgLine} -Dso.index.es.useHttp</argLine>
-						</configuration>
-					</execution>
-					<execution>
-						<id>docker-tests</id>
-						<phase>integration-test</phase>
-						<goals>
-							<goal>test</goal>
-						</goals>
-						<configuration>
-							<skip>true</skip>
-							<argLine>${testArgLine} -Dso.index.es.useDocker</argLine>
-						</configuration>
-					</execution>
-				</executions>
 				<configuration>
 					<bundleStartLevel>
 						<bundle>
