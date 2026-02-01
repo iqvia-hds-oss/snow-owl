@@ -15,7 +15,7 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  org.apache.commons.commons-codec;bundle-version="1.16.0"
 Bundle-ClassPath: .,
  lib/elasticsearch-java-8.19.8.jar,
- lib/elasticsearch-rest-client-8.18.0.jar,
+ lib/elasticsearch-rest-client-8.19.0.jar,
  lib/jakarta.json-api-2.0.2.jar,
  lib/opentelemetry-api-1.29.0.jar,
  lib/opentelemetry-context-1.29.0.jar,
