@@ -17,12 +17,15 @@ package com.b2international.index;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.osgi.framework.FrameworkUtil;
@@ -30,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
+import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.MountableFile;
 
 import com.google.common.base.Preconditions;
@@ -62,10 +66,11 @@ public final class ElasticsearchContainer {
 		// not specifying custom wait strategy for ES 7.x as the default one waits for the started message which is sufficient
 		// version -> version.startsWith("7."), null
 	);
-	
-	private org.testcontainers.elasticsearch.ElasticsearchContainer container;
 
 	private final String elasticsearchDockerImageVersion;
+
+	private org.testcontainers.elasticsearch.ElasticsearchContainer container;
+	private Path synonymsFile;
 	
 	public ElasticsearchContainer() throws Exception {
 		this(System.getProperty(ES_DOCKER_VERSION_VARIABLE, ES_DOCKER_VERSION));
@@ -80,6 +85,7 @@ public final class ElasticsearchContainer {
 		// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 
 		// remove the entry and replace it with ours
 		this.container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
+		
 		this.container
 			.withCopyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(ElasticsearchContainer.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options")
 			.withEnv("rest.action.multi.allow_explicit_index", "false");
@@ -97,7 +103,7 @@ public final class ElasticsearchContainer {
 		LOG.info("Started Elasticsearch test container at {}", container.getHttpHostAddress());
 
 		// use the default synonym file at startup to initialize the container with it
-		overrideSynonymFile(null);
+		overrideSearchSynonyms(List.of());
 	}
 	
 	public Map<String, Object> getIndexClientConfiguration() {
@@ -121,14 +127,12 @@ public final class ElasticsearchContainer {
 		
 	}
 
-	public void overrideSynonymFile(Path synonymsFile) throws Exception {
+	public void overrideSearchSynonyms(List<String> synonyms) throws Exception {
+		Preconditions.checkArgument(synonyms != null, "'synonyms' may not be null.");
 		Preconditions.checkState(this.container != null, "Elasticsearch container is already stopped and closed.");
 		Preconditions.checkState(this.container.isRunning(), "Elasticsearch container is not running.");
-		// make sure we update the synonyms.txt inside the test container
-		if (synonymsFile == null || !Files.exists(synonymsFile)) {
-			synonymsFile = toAbsolutePathBundleEntry(ElasticsearchContainer.class, "synonym.txt");
-		}
-		this.container.copyFileToContainer(MountableFile.forHostPath(synonymsFile, 0777), "/usr/share/elasticsearch/config/analysis/synonym.txt");
+		// make sure we transfer the new synonym text content into the synonym.txt file
+		this.container.copyFileToContainer(Transferable.of(synonyms.stream().collect(Collectors.joining("\n"))), "/usr/share/elasticsearch/config/analysis/synonym.txt");
 	}
 	
 	public void start() {
@@ -139,6 +143,12 @@ public final class ElasticsearchContainer {
 	public void stop() {
 		Preconditions.checkState(this.container != null, "Elasticsearch container is already stopped and closed.");
 		this.container.stop();
+		// make sure we delete the temporary synonym file
+		try {
+			Files.deleteIfExists(this.synonymsFile);
+		} catch (IOException e) {
+			LOG.warn("Failed to delete temporary synonym file at {}", this.synonymsFile, e);
+		}
 	}
 
 	public void destroy() {

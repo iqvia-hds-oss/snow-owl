@@ -20,11 +20,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 import org.junit.Rule;
@@ -44,7 +40,7 @@ public abstract class BaseIndexTest {
 	protected static final String KEY2 = "key2";
 
 	@Rule
-	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonymsFile);
+	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonyms);
 
 	/**
 	 * @return the document types used by this test case
@@ -65,12 +61,12 @@ public abstract class BaseIndexTest {
 	}
 	
 	/**
-	 * Subclasses may override this method to provide a synonyms file for the underlying index.
+	 * Subclasses may override this method to provide a List of synonyms (single string values with the format "word,syn") for the underlying index to perform search tests. By defaults returns an empty list which clears out any previous synonym rules.
 	 * 
 	 * @return
 	 */
-	protected Path configureSynonymsFile() {
-		return null;
+	protected List<String> configureSynonyms() {
+		return List.of();
 	}
 	
 	protected Map<String, Object> getIndexSettings() {

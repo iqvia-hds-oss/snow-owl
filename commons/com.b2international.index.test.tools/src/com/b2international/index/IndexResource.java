@@ -17,8 +17,8 @@ package com.b2international.index;
 
 import static org.junit.Assume.assumeTrue;
 
-import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -58,14 +58,14 @@ public final class IndexResource extends ExternalResource {
 	private final Consumer<ObjectMapper> objectMapperConfigurator;
 	private final Supplier<Map<String, Object>> indexSettings;
 	private final Supplier<String> supportedVersion;
-	private final Supplier<Path> synonymsFile;
+	private final Supplier<List<String>> synonymsToUse;
 	
-	private IndexResource(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion, Supplier<Path> synonymsFile) {
+	private IndexResource(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion, Supplier<List<String>> synonymsToUse) {
 		this.types = types;
 		this.objectMapperConfigurator = objectMapperConfigurator;
 		this.indexSettings = indexSettings;
 		this.supportedVersion = supportedVersion;
-		this.synonymsFile = synonymsFile;
+		this.synonymsToUse = synonymsToUse;
 	}
 	
 	@Override
@@ -88,7 +88,7 @@ public final class IndexResource extends ExternalResource {
 		assumeTrue(supportedVersion.get().equals("*") || index.admin().client().version().startsWith(supportedVersion.get()));
 		
 		if (container != null) {
-			container.overrideSynonymFile(this.synonymsFile.get());
+			container.overrideSearchSynonyms(this.synonymsToUse.get());
 		}
 		
 		// apply mapper changes first
@@ -130,8 +130,8 @@ public final class IndexResource extends ExternalResource {
 		return mapper;
 	}
 	
-	public static IndexResource create(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion, Supplier<Path> synonymsFile) {
-		return new IndexResource(types, objectMapperConfigurator, indexSettings, supportedVersion, synonymsFile);
+	public static IndexResource create(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion, Supplier<List<String>> synonymsToUse) {
+		return new IndexResource(types, objectMapperConfigurator, indexSettings, supportedVersion, synonymsToUse);
 	}
 
 }

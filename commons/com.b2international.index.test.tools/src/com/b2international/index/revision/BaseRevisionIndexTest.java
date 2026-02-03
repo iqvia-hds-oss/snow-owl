@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.lang.reflect.Field;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -50,7 +49,7 @@ public abstract class BaseRevisionIndexTest {
 	private final Collection<Hooks.Hook> hooks = newArrayListWithCapacity(2);
 	
 	@Rule
-	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonymsFile);
+	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonyms);
 
 	@After
 	public void after() {
@@ -78,12 +77,12 @@ public abstract class BaseRevisionIndexTest {
 	}
 	
 	/**
-	 * Subclasses may override this method to provide a synonyms file for the underlying index.
+	 * Subclasses may override this method to provide a List of synonyms (single string values with the format "word,syn") for the underlying index to perform search tests. By defaults returns an empty list which clears out any previous synonym rules.
 	 * 
 	 * @return
 	 */
-	protected Path configureSynonymsFile() {
-		return null;
+	protected List<String> configureSynonyms() {
+		return List.of();
 	}
 	
 	protected Map<String, Object> getIndexSettings() {

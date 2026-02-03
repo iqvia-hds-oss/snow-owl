@@ -1,1 +1,0 @@
-# Empty, can be overriden with a dedicated synonyms file via IndexResource or another mechanism.
