@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package com.b2international.snowowl.snomed.core.ecl;
 
 import static com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator.generateDescriptionId;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
+import java.nio.file.Path;
 import java.util.*;
 
 import org.junit.ClassRule;
@@ -47,6 +48,11 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 	public static SynonymsRule synonyms = new SynonymsRule(
 		"history,previous"
 	);
+	
+	@Override
+	protected Path configureSynonymsFile() {
+		return synonyms.getSynonymsFile();
+	}
 	
 	@Test
 	public void concept_activeOnly() throws Exception {

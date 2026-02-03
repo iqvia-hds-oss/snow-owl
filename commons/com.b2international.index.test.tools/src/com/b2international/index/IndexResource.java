@@ -34,8 +34,6 @@ import org.osgi.framework.FrameworkUtil;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.MountableFile;
 
-import com.b2international.index.es.EsIndexClientFactory;
-import com.b2international.index.es.EsNode;
 import com.b2international.index.mapping.Mappings;
 import com.b2international.index.revision.Commit;
 import com.b2international.index.revision.DefaultRevisionIndex;
@@ -79,12 +77,14 @@ public final class IndexResource extends ExternalResource {
 	private final Consumer<ObjectMapper> objectMapperConfigurator;
 	private final Supplier<Map<String, Object>> indexSettings;
 	private final Supplier<String> supportedVersion;
+	private final Supplier<Path> synonymsFile;
 	
-	private IndexResource(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion) {
+	private IndexResource(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion, Supplier<Path> synonymsFile) {
 		this.types = types;
 		this.objectMapperConfigurator = objectMapperConfigurator;
 		this.indexSettings = indexSettings;
 		this.supportedVersion = supportedVersion;
+		this.synonymsFile = synonymsFile;
 	}
 	
 	@Override
@@ -129,8 +129,12 @@ public final class IndexResource extends ExternalResource {
 		
 		if (container != null) {
 			// make sure we update the synonyms.txt inside the test container
-			final MountableFile localSynonymFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
-			final String containerSynonymFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
+			Path synonymsFile = this.synonymsFile.get();
+			if (synonymsFile == null) {
+				synonymsFile = toAbsolutePathBundleEntry(IndexResource.class, "synonym.txt");
+			}
+			final MountableFile localSynonymFilePath = MountableFile.forHostPath(synonymsFile);
+			final String containerSynonymFilePath = "/usr/share/elasticsearch/config/analysis/synonym.txt";
 			container.copyFileToContainer(localSynonymFilePath, containerSynonymFilePath);
 		}
 		
@@ -183,8 +187,8 @@ public final class IndexResource extends ExternalResource {
 		return mapper;
 	}
 	
-	public static IndexResource create(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion) {
-		return new IndexResource(types, objectMapperConfigurator, indexSettings, supportedVersion);
+	public static IndexResource create(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings, Supplier<String> supportedVersion, Supplier<Path> synonymsFile) {
+		return new IndexResource(types, objectMapperConfigurator, indexSettings, supportedVersion, synonymsFile);
 	}
 
 }

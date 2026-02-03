@@ -28,7 +28,6 @@ import com.b2international.commons.io.PathUtils;
 import com.b2international.index.IndexClientFactory;
 import com.b2international.index.IndexResource;
 import com.b2international.index.es.EsIndexClientFactory;
-import com.b2international.index.es.EsNode;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.IndexConfiguration;
@@ -157,11 +156,13 @@ public class SnowOwlAppRule extends ExternalResource {
 			}
 			// initialize an Elasticsearch test container
 			container = new ElasticsearchContainer(testElasticsearchContainer);
-			container.withEnv("rest.action.multi.allow_explicit_index", "false");
-			final MountableFile localSynonymsFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
-			final String containerSynonymsFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
-			container.withCopyFileToContainer(localSynonymsFilePath, containerSynonymsFilePath);
-			container.start();
+			
+//			final MountableFile localSynonymsFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
+//			final String containerSynonymsFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
+			container
+//				.withCopyFileToContainer(localSynonymsFilePath, containerSynonymsFilePath)
+				.withEnv("rest.action.multi.allow_explicit_index", "false")
+				.start();
 			
 			IndexConfiguration index = snowowl.getConfiguration().getModuleConfig(RepositoryConfiguration.class).getIndexConfiguration();
 			index.setClusterUrl("https://" + container.getHttpHostAddress());

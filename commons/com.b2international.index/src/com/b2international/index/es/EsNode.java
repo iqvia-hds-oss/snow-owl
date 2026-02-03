@@ -48,6 +48,7 @@ import dev.failsafe.RetryPolicy;
 
 /**
  * @since 5.10
+ * @deprecated - will be removed in 10.0.0 along with the embedded Elasticsearch support
  */
 public final class EsNode extends Node {
 
