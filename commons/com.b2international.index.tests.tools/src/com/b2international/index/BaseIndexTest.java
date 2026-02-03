@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.Rule;
 
@@ -42,16 +44,33 @@ public abstract class BaseIndexTest {
 	protected static final String KEY2 = "key2";
 
 	@Rule
-	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings);
+	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonymsFile);
 
 	/**
 	 * @return the document types used by this test case
 	 */
 	protected abstract Collection<Class<?>> getTypes();
 
+	/**
+	 * Subclasses may override this method to return an Elasticsearch major that they support. By default it returns `*`, which represents all versions are supported and tests should run on all versions.
+	 * 
+	 * @return
+	 */
+	protected String version() {
+		return "*";
+	}
 	
 	protected void configureMapper(ObjectMapper mapper) {
 		
+	}
+	
+	/**
+	 * Subclasses may override this method to provide a synonyms file for the underlying index.
+	 * 
+	 * @return
+	 */
+	protected Path configureSynonymsFile() {
+		return null;
 	}
 	
 	protected Map<String, Object> getIndexSettings() {

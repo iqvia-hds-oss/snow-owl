@@ -27,7 +27,6 @@ import com.b2international.commons.exceptions.AlreadyExistsException;
 import com.b2international.index.IndexClientFactory;
 import com.b2international.index.IndexResource;
 import com.b2international.index.es.EsIndexClientFactory;
-import com.b2international.index.es.EsNode;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.IndexConfiguration;
@@ -163,10 +162,10 @@ public class SnowOwlAppRule extends ExternalResource {
 			container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
 			
 			// configuring the container with additional files and env vars
-			final MountableFile localSynonymsFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
-			final String containerSynonymsFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
+//			final MountableFile localSynonymsFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
+//			final String containerSynonymsFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
 			container
-				.withCopyFileToContainer(localSynonymsFilePath, containerSynonymsFilePath)
+//				.withCopyFileToContainer(localSynonymsFilePath, containerSynonymsFilePath)
 				.withEnv("rest.action.multi.allow_explicit_index", "false")
 				.start();
 			

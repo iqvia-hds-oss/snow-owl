@@ -17,10 +17,12 @@ package com.b2international.index;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import com.b2international.index.query.Expressions;
@@ -33,6 +35,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class AnalyzerTest extends BaseIndexTest {
 
+	@ClassRule
+	public static SynonymsRule synonyms = new SynonymsRule(
+		"stone,calculus",
+		"bbq,barbecue"
+	);
+	
+	@Override
+	protected Path configureSynonymsFile() {
+		return synonyms.getSynonymsFile();
+	}
+	
 	@Doc
 	private static final class DataWithTokenizedText {
 		
