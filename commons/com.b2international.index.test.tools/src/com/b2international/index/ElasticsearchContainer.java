@@ -128,7 +128,7 @@ public final class ElasticsearchContainer {
 		if (synonymsFile == null || !Files.exists(synonymsFile)) {
 			synonymsFile = toAbsolutePathBundleEntry(ElasticsearchContainer.class, "synonym.txt");
 		}
-		this.container.copyFileToContainer(MountableFile.forHostPath(synonymsFile), "/usr/share/elasticsearch/config/analysis/synonym.txt");
+		this.container.copyFileToContainer(MountableFile.forHostPath(synonymsFile, 0777), "/usr/share/elasticsearch/config/analysis/synonym.txt");
 	}
 	
 	public void start() {
