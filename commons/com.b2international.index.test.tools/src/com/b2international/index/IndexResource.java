@@ -32,8 +32,8 @@ import com.b2international.index.revision.Commit;
 import com.b2international.index.revision.DefaultRevisionIndex;
 import com.b2international.index.revision.RevisionBranch;
 import com.b2international.index.revision.TimestampProvider;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
@@ -78,12 +78,8 @@ public final class IndexResource extends ExternalResource {
 		if (INIT.compareAndSet(false, true)) {
 			final Map<String, Object> settings;
 			// fire up an Elasticsearch test container if requested via useDocker system prop
-			String testElasticsearchContainer = System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE);
-			if (testElasticsearchContainer != null) {
-				if (testElasticsearchContainer.isEmpty()) {
-					testElasticsearchContainer = ElasticsearchContainer.DEFAULT_ES_DOCKER_IMAGE;
-				}
-				container = new ElasticsearchContainer(testElasticsearchContainer);
+			if (System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE) != null) {
+				container = new ElasticsearchContainer();
 				
 				settings = Maps.newHashMap(this.indexSettings.get());
 				container.getIndexClientConfiguration().forEach(settings::putIfAbsent);
