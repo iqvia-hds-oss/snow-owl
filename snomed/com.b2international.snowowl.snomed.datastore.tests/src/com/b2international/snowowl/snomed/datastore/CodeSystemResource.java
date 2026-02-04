@@ -21,6 +21,7 @@ import java.util.Map;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
+import com.b2international.snowowl.core.TerminologyResource.CommonSettings;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -45,19 +46,30 @@ public class CodeSystemResource {
 			"languageTag", US_LOCALE.getLanguageTag(), 
 			"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_US))
 		);
+		
 		languageMap.add(Map.of(
 			"languageTag", GB_LOCALE.getLanguageTag(), 
 			"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
 		);
+		
 		languageMap.add(Map.of(
 			"languageTag", SG_LOCALE.getLanguageTag(), 
 			"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_SG))
 		);
 
+		final List<String> locales = Lists.newArrayList();
+		
+		locales.add(SG_LOCALE.toString());
+		locales.add(GB_LOCALE.toString());
+		locales.add(US_LOCALE.toString());
+		
 		final CodeSystem cs = new CodeSystem();
 		cs.setBranchPath(Branch.MAIN_PATH);
 		cs.setId(SnomedContentRule.SNOMEDCT_ID);
-		cs.setSettings(Map.of(Settings.LANGUAGES, languageMap));
+		cs.setSettings(Map.of(
+			Settings.LANGUAGES, languageMap,
+			CommonSettings.LOCALES, locales
+		));
 
 		context
 			.with(TerminologyResource.class, cs)
