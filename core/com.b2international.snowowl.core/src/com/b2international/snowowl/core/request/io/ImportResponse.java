@@ -95,6 +95,10 @@ public final class ImportResponse implements Serializable {
 	public static ImportResponse error(String error) {
 		return new ImportResponse(error, Set.of(), List.of(), 0);
 	}
+	
+	public static ImportResponse success() {
+		return new ImportResponse(null, null, null, 0);
+	}
 
 	public static ImportResponse success(Set<ComponentURI> visitedComponents) {
 		return success(visitedComponents, List.of());
@@ -114,7 +118,7 @@ public final class ImportResponse implements Serializable {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(defects, error, visitedComponents);
+		return Objects.hash(defects, error, visitedComponents, changeCount);
 	}
 
 	@Override
