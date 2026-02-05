@@ -181,11 +181,11 @@ public interface EsClient extends AutoCloseable {
 			}
 		}
 		
-		static boolean isDevVersion() {
-			final Bundle bundle = Platform.getBundle("com.b2international.index");
-			return bundle != null && "qualifier".equals(bundle.getVersion().getQualifier());
-		}
-		
+	}
+	
+	static boolean isDevVersion() {
+		final Bundle bundle = Platform.getBundle("com.b2international.index");
+		return bundle != null && "qualifier".equals(bundle.getVersion().getQualifier());
 	}
 
 }
