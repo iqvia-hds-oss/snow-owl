@@ -17,6 +17,7 @@ package com.b2international.index;
 
 import static org.junit.Assume.assumeTrue;
 
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,8 @@ import java.util.function.Supplier;
 
 import org.junit.rules.ExternalResource;
 
+import com.b2international.index.es.EsIndexClientFactory;
+import com.b2international.index.es.EsNode;
 import com.b2international.index.mapping.Mappings;
 import com.b2international.index.revision.Commit;
 import com.b2international.index.revision.DefaultRevisionIndex;
@@ -78,12 +81,8 @@ public final class IndexResource extends ExternalResource {
 		if (INIT.compareAndSet(false, true)) {
 			final Map<String, Object> settings;
 			// fire up an Elasticsearch test container if requested via useDocker system prop
-			String testElasticsearchContainer = System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE);
-			if (testElasticsearchContainer != null) {
-				if (testElasticsearchContainer.isEmpty()) {
-					testElasticsearchContainer = ElasticsearchContainer.ES_DOCKER_VERSION;
-				}
-				container = new ElasticsearchContainer(testElasticsearchContainer);
+			if (System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE) != null) {
+				container = new ElasticsearchContainer();
 				
 				settings = Maps.newHashMap(this.indexSettings.get());
 				container.getIndexClientConfiguration().forEach(settings::putIfAbsent);
@@ -103,6 +102,9 @@ public final class IndexResource extends ExternalResource {
 		
 		if (container != null) {
 			container.overrideSearchSynonyms(this.synonymsToUse.get());
+		} else {
+			// in case of running in embedded mode, override synonyms file at the default location with the provided list of synonym rules
+			Files.write(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE), this.synonymsToUse.get());
 		}
 		
 		// apply mapper changes first
