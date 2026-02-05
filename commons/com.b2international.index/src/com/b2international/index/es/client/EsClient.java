@@ -45,6 +45,7 @@ import com.b2international.index.IndexException;
 import com.b2international.index.es.EsClientConfiguration;
 import com.b2international.index.es.client.http.EsHttpClient;
 import com.b2international.index.es.client.tcp.EsTcpClient;
+import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -183,9 +184,12 @@ public interface EsClient extends AutoCloseable {
 		
 	}
 	
+	/**
+	 * @return <code>true</code> if the current bundle version's qualifier is not empty, <code>false</code> otherwise.
+	 */
 	static boolean isDevVersion() {
 		final Bundle bundle = Platform.getBundle("com.b2international.index");
-		return bundle != null && "qualifier".equals(bundle.getVersion().getQualifier());
+		return bundle != null && !Strings.isNullOrEmpty(bundle.getVersion().getQualifier());
 	}
 
 }
