@@ -8,12 +8,16 @@
     </encoder>
   </appender>
 
-  <root level="info">
-    <appender-ref ref="STDOUT"/>
-  </root>
+  <!-- Disable all loggers -->
+  <root level="OFF"/>
 
-  <logger name="org.testcontainers" level="INFO"/>
-  <logger name="com.github.dockerjava" level="INFO"/>
-  <logger name="com.github.dockerjava.zerodep.shaded.org.apache.hc.client5.http.wire" level="OFF"/>
+  <!-- Except these specifically that we would like to see when running the tests in a CI job -->
+  <!-- additivity=false ensures that the logger lives on its own and can be configured independently from the root logger -->
+  <logger name="org.testcontainers" level="INFO" additivity="false">
+  	<appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="com.github.dockerjava" level="INFO" additivity="false">
+  	<appender-ref ref="STDOUT"/>
+  </logger>
   
 </configuration>
