@@ -97,7 +97,7 @@ public final class ImportResponse implements Serializable {
 	}
 	
 	public static ImportResponse success() {
-		return new ImportResponse(null, null, null, 0);
+		return new ImportResponse(null, Set.of(), List.of(), 0);
 	}
 
 	public static ImportResponse success(Set<ComponentURI> visitedComponents) {
