@@ -152,7 +152,7 @@ public class SnowOwlAppRule extends ExternalResource {
 		if (testElasticsearchContainer != null) {
 			
 			if (testElasticsearchContainer.isEmpty()) {
-				testElasticsearchContainer = ElasticsearchContainer.ES_DOCKER_IMAGE_VERSION;
+				testElasticsearchContainer = ElasticsearchContainer.ES_DOCKER_VERSION;
 			}
 			// initialize an Elasticsearch test container
 			container = new ElasticsearchContainer(testElasticsearchContainer);
