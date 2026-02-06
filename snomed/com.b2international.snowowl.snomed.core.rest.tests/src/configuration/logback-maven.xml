@@ -1,3 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- only one line, disables logback ! -->
-<configuration />
+<configuration>
+  
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <!-- Disable all loggers -->
+  <root level="OFF"/>
+
+  <!-- Except these specifically that we would like to see when running the tests in a CI job -->
+  <!-- additivity=false ensures that the logger lives on its own and can be configured independently from the root logger -->
+  <logger name="org.testcontainers" level="INFO" additivity="false">
+  	<appender-ref ref="STDOUT"/>
+  </logger>
+  <logger name="com.github.dockerjava" level="INFO" additivity="false">
+  	<appender-ref ref="STDOUT"/>
+  </logger>
+  
+</configuration>
