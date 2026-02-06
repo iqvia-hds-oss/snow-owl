@@ -68,6 +68,9 @@ public final class IndexResource extends ExternalResource {
 	
 	private static final AtomicBoolean INIT = new AtomicBoolean(false);
 	
+	private static final String DEFAULT_DOCKER_NETWORK = "bridge";
+	private static final int DEFAULT_ES_HTTP_PORT = 9200;
+	
 	private static ObjectMapper mapper;
 	private static Index index;
 	private static IndexClient client;
@@ -109,10 +112,10 @@ public final class IndexResource extends ExternalResource {
 					.start();
 				
 				settings = Maps.newHashMap(this.indexSettings.get());
-				settings.putIfAbsent(IndexClientFactory.CLUSTER_URL, "https://" + container.getHttpHostAddress());
 				settings.putIfAbsent(IndexClientFactory.CLUSTER_SSL_CONTEXT, container.createSslContextFromCa());
 				settings.putIfAbsent(IndexClientFactory.CLUSTER_USERNAME, "elastic");
 				settings.putIfAbsent(IndexClientFactory.CLUSTER_PASSWORD, ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
+				settings.putIfAbsent(IndexClientFactory.CLUSTER_URL, getClusterUrl(container));
 			} else {
 				settings = this.indexSettings.get();
 			}
@@ -178,6 +181,58 @@ public final class IndexResource extends ExternalResource {
 	
 	public static IndexResource create(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings) {
 		return new IndexResource(types, objectMapperConfigurator, indexSettings);
+	}
+	
+	public static String getClusterUrl(ElasticsearchContainer esContainer) {
+		
+		String protocol = esContainer.caCertAsBytes().isPresent() ? "https://" : "http://";
+    	
+		//
+		// org.testcontainers.elasticsearch.ElasticsearchContainer.getHttpHostAddress() is not reliable in certain cases,
+		// so we need additional steps to get the actual HTTP host address. The getHttpHostAddress() method returns the following:
+		// 		getHost() + ":" + getMappedPort(ELASTICSEARCH_DEFAULT_PORT)
+		//
+		// org.testcontainers.containers.ContainerState.getHost() returns the following:
+		// 		DockerClientFactory.instance().dockerHostIpAddress()
+		// 
+		// Depending on the runtime environment the IP address of the docker host could be different.
+		// See a related thread here: https://github.com/testcontainers/testcontainers-java/issues/452
+		//
+		
+		// Simple setup, OS + docker -> testcontainers running "one level above" the host. E.g. a dev-env
+    	if (esContainer.getHost().contains("localhost")) {
+    		
+    		return protocol + esContainer.getHttpHostAddress() /* already includes the random mapped port created by testcontainers */; 
+    	
+    	// Complex setup, OS + docker + docker -> testcontainers running "two or more level above" the host. E.g. a CI/CD env
+    	} else if (esContainer.getContainerInfo().getNetworkSettings().getNetworks().containsKey(DEFAULT_DOCKER_NETWORK)) {
+    		
+    		// The build agent and the Elasticsearch container must be on the same docker network (bridge is the default).
+    		// We need the internal IP address of Elasticsearch within the 'bridge' docker network and the default ES HTTP port.
+    		//
+			//    	  Docker default bridge network
+			//            (gateway: 172.17.0.1)
+			//                       |
+			//       ---------------------------------
+			//       |                               |
+			//  +---------------+         +-----------------------------+
+			//  | build-agent   |         | testcontainers-elasticsearch|
+			//  | 172.17.0.2    | ----->  | 172.17.0.3                  |
+			//  |               | HTTP(S) |                             |
+			//  +---------------+  :9200  +-----------------------------+
+    		//
+    			
+			return String.format("%s%s:%d",
+				protocol,
+				// use the IP address of Elasticsearch from within the bridge network
+				esContainer.getContainerInfo().getNetworkSettings().getNetworks().get(DEFAULT_DOCKER_NETWORK).getIpAddress(),
+				DEFAULT_ES_HTTP_PORT
+			);
+			
+    	}
+    	
+		throw new IllegalStateException("Unable to determine the correct HTTP address for Elasticsearch container. Container's getHttpHostAddress() returned: " + esContainer.getHttpHostAddress());
+		
 	}
 
 }

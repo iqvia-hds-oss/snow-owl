@@ -150,6 +150,7 @@ public class SnowOwlAppRule extends ExternalResource {
 		// modify the Snow Owl configuration values if useDocker is defined as JVM argument
 		String testElasticsearchContainer = System.getProperty(IndexResource.ES_USE_TEST_CONTAINER_VARIABLE);
 		if (testElasticsearchContainer != null) {
+			
 			if (testElasticsearchContainer.isEmpty()) {
 				testElasticsearchContainer = IndexResource.DEFAULT_ES_DOCKER_IMAGE;
 			}
@@ -171,10 +172,11 @@ public class SnowOwlAppRule extends ExternalResource {
 			
 			// override already parsed index configuration in memory
 			IndexConfiguration index = snowowl.getConfiguration().getModuleConfig(RepositoryConfiguration.class).getIndexConfiguration();
-			index.setClusterUrl("https://" + container.getHttpHostAddress());
+			index.setSslContext(container.createSslContextFromCa());
 			index.setClusterUsername("elastic");
 			index.setClusterPassword(ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
-			index.setSslContext(container.createSslContextFromCa());
+			index.setClusterUrl(IndexResource.getClusterUrl(container));
+			
 		}
 		
 		snowowl.bootstrap();

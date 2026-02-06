@@ -17,6 +17,7 @@ Bundle-ClassPath: .,
  lib/contiperf-2.3.2.jar,
  lib/system-rules-1.19.0.jar
 Export-Package: com.github.dockerjava.api.command,
+ com.github.dockerjava.api.model,
  org.databene.contiperf,
  org.databene.contiperf.clock,
  org.databene.contiperf.junit,
