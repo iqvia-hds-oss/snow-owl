@@ -83,4 +83,5 @@ public final class ImportJob implements Serializable {
 		}
 		return new ImportJob(job.getId(), job.getState(), error, response);
 	}
+	
 }

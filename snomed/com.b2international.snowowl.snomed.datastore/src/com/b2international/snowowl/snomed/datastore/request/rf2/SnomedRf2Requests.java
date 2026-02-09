@@ -15,16 +15,10 @@
  */
 package com.b2international.snowowl.snomed.datastore.request.rf2;
 
-import com.b2international.snowowl.core.ResourceURI;
-import com.b2international.snowowl.core.jobs.RemoteJobEntry;
-
 /**
  * @since 5.7
  */
 public final class SnomedRf2Requests {
-
-	public static final String SNOMED_IMPORT_PREFIX = "import-"; 
-	
 	public SnomedRf2ExportRequestBuilder prepareExport() {
 		return new SnomedRf2ExportRequestBuilder();
 	}
@@ -32,17 +26,4 @@ public final class SnomedRf2Requests {
 	public SnomedRf2ImportRequestBuilder prepareImport() {
 		return new SnomedRf2ImportRequestBuilder();
 	}
-
-	public static String importJobKey(ResourceURI resourceUri) {
-		return SNOMED_IMPORT_PREFIX.concat(resourceUri.toString());
-	}
-	
-	public static String importJobKey(String resourceUri) {
-		return SNOMED_IMPORT_PREFIX.concat(resourceUri);
-	}
-	
-	public static boolean isSnomedImportJob(RemoteJobEntry job) {
-		return job != null && job.getKey().startsWith(SNOMED_IMPORT_PREFIX);
-	}
-	
 }

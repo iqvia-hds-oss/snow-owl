@@ -30,13 +30,13 @@ import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.jobs.JobRequests;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
+import com.b2international.snowowl.core.request.io.ImportRequests;
 import com.b2international.snowowl.core.request.io.ImportResponse;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
-import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2Requests;
 import com.b2international.snowowl.test.commons.Resources;
 import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.SnomedContentRule;
@@ -67,7 +67,7 @@ public class SnomedRf2NextReleaseImportTest extends AbstractSnomedApiTest {
 			.setCreateVersions(true)
 			.setImportUntil(importUntil)
 			.build(SnomedContentRule.SNOMEDCT)
-			.runAsJobWithRestart(SnomedRf2Requests.importJobKey(SnomedContentRule.SNOMEDCT), String.format("Import %s release", importFile))
+			.runAsJobWithRestart(ImportRequests.importJobKey(SnomedContentRule.SNOMEDCT), String.format("Import %s release", importFile))
 			.execute(Services.bus())
 			.getSync(1, TimeUnit.MINUTES);
 		RemoteJobEntry job = JobRequests.waitForJob(Services.bus(), jobId, 2000 /* 2 seconds */);

@@ -30,12 +30,12 @@ import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.jobs.JobRequests;
+import com.b2international.snowowl.core.request.io.ImportRequests;
 import com.b2international.snowowl.core.rest.AbstractRestService;
 import com.b2international.snowowl.core.rest.SnomedApiConfig;
 import com.b2international.snowowl.core.rest.io.ImportJob;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
-import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2Requests;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -102,8 +102,6 @@ public class SnomedRf2ImportRestService extends AbstractRestService {
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) throws IOException {
 		
-		final String importJobId = SnomedRf2Requests.importJobKey(path);
-		
 		final UUID rf2ArchiveId = UUID.randomUUID();
 		attachments.upload(rf2ArchiveId, file.getInputStream());
 
@@ -118,7 +116,7 @@ public class SnomedRf2ImportRestService extends AbstractRestService {
 			.setBatchSize(batchSize)
 			.setAuthor(author)
 			.build(path)
-			.runAsJobWithRestart(importJobId, String.format("Importing SNOMED CT RF2 file '%s'", file.getOriginalFilename()))
+			.runAsJobWithRestart(ImportRequests.importJobKey(path), String.format("Importing SNOMED CT RF2 file '%s'", file.getOriginalFilename()))
 			.execute(getBus())
 			.getSync(1, TimeUnit.MINUTES);
 		
