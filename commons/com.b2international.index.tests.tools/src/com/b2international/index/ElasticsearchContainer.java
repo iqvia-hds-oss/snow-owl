@@ -224,7 +224,7 @@ public final class ElasticsearchContainer {
 			//  +---------------+  :9200  +-----------------------------+
     		//
     			
-			return String.format("%s%s:%d",
+			return String.format("%s%s:%s",
 				protocol,
 				// use the IP address of Elasticsearch from within the bridge network
 				container.getContainerInfo().getNetworkSettings().getNetworks().get(DEFAULT_DOCKER_NETWORK_NAME).getIpAddress(),
