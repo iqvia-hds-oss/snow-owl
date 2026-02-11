@@ -42,15 +42,20 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 /**
- * Boots up an Elasticsearch testcontainer Docker container for integration tests.
- * The image can overridden with -Dso.index.elasticsearch.image=custom/image:tag value or programmatically via the #set
+ * Configures an index to be used for a set of tests. By default it uses the
+ * embedded Elasticsearch instance, but it can be configured to connect to a
+ * testcontainer managed containerized Elasticsearch cluster as well. To do that
+ * configure the -Dso.index.es.useDocker sysprop, then optionally configure the
+ * ES version to use via -Dso.index.es.docker.version=8.19.10 sysprop. If the
+ * latter is not specified the hardcoded last tried version will be used, which
+ * is {@value ElasticsearchContainer#ES_DOCKER_VERSION}.
  * 
  * @since 7.1
  */
 public final class IndexResource extends ExternalResource {
 
 	/**
-	 * Java system property to configure the use of a testcontainer Elasticsearch Docker container and optionally configure the actual image as well. By default it uses the 8.1.3 image.
+	 * Java system property to configure the use of a testcontainer Elasticsearch Docker container.
 	 */
 	public static final String ES_USE_TEST_CONTAINER_VARIABLE = "so.index.es.useDocker";
 
