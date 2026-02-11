@@ -30,13 +30,13 @@ import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.jobs.JobRequests;
+import com.b2international.snowowl.core.request.io.ImportRequests;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.snomed.cis.domain.SctId;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.core.rest.io.SnomedImportApiTest;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
-import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2Requests;
 import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.rest.BranchBase;
 
@@ -75,7 +75,7 @@ public class SnomedRF2ImportIDManagementTest extends AbstractSnomedApiTest {
 	@Test
 	public void test01PublishReleasedIdOnImport() throws Exception {
 		final String branch = branchPath.getPath();
-		final String importJobId = SnomedRf2Requests.importJobKey(branch);
+		final String importJobId = ImportRequests.importJobKey(branch);
 		final String archiveName = "SnomedCT_Release_INT_20210502_concept_w_eff_time.zip";
 		final Path path = PlatformUtil.toAbsolutePath(SnomedImportApiTest.class, archiveName);
 		Attachment attachment = Attachment.upload(Services.context(), path);
@@ -105,7 +105,7 @@ public class SnomedRF2ImportIDManagementTest extends AbstractSnomedApiTest {
 	@Test
 	public void test02RegisterNewIdOnImport() throws Exception {
 		final String branch = branchPath.getPath();
-		final String importJobId = SnomedRf2Requests.importJobKey(branch);
+		final String importJobId = ImportRequests.importJobKey(branch);
 		final String archiveName = "SnomedCT_Release_INT_20150131_new_concept.zip";
 		final Path path = PlatformUtil.toAbsolutePath(SnomedImportApiTest.class, archiveName);
 		Attachment attachment = Attachment.upload(Services.context(), path);
@@ -131,7 +131,7 @@ public class SnomedRF2ImportIDManagementTest extends AbstractSnomedApiTest {
 		
 		assertEquals("Assigned", sctId.getStatus());
 		
-		final String importJobId2 = SnomedRf2Requests.importJobKey(branch);
+		final String importJobId2 = ImportRequests.importJobKey(branch);
 		final String archiveName2 = "SnomedCT_Release_INT_20150131_release_unpublished_concept.zip";
 		final Path path2 = PlatformUtil.toAbsolutePath(SnomedImportApiTest.class, archiveName2);
 		Attachment attachment2 = Attachment.upload(Services.context(), path2);		

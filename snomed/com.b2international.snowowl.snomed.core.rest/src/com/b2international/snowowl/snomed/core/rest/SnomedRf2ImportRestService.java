@@ -26,22 +26,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.b2international.commons.exceptions.ApiError;
-import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.jobs.JobRequests;
-import com.b2international.snowowl.core.jobs.RemoteJobEntry;
-import com.b2international.snowowl.core.jobs.RemoteJobState;
-import com.b2international.snowowl.core.request.io.ImportResponse;
+import com.b2international.snowowl.core.request.io.ImportRequests;
 import com.b2international.snowowl.core.rest.AbstractRestService;
 import com.b2international.snowowl.core.rest.SnomedApiConfig;
+import com.b2international.snowowl.core.rest.io.ImportJob;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
-import com.b2international.snowowl.snomed.core.rest.domain.SnomedRf2ImportConfiguration;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
-import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2Requests;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -108,8 +102,6 @@ public class SnomedRf2ImportRestService extends AbstractRestService {
 			@RequestHeader(value = X_AUTHOR, required = false)
 			final String author) throws IOException {
 		
-		final String importJobId = SnomedRf2Requests.importJobKey(path);
-		
 		final UUID rf2ArchiveId = UUID.randomUUID();
 		attachments.upload(rf2ArchiveId, file.getInputStream());
 
@@ -124,7 +116,7 @@ public class SnomedRf2ImportRestService extends AbstractRestService {
 			.setBatchSize(batchSize)
 			.setAuthor(author)
 			.build(path)
-			.runAsJobWithRestart(importJobId, String.format("Importing SNOMED CT RF2 file '%s'", file.getOriginalFilename()))
+			.runAsJobWithRestart(ImportRequests.importJobKey(path), String.format("Importing SNOMED CT RF2 file '%s'", file.getOriginalFilename()))
 			.execute(getBus())
 			.getSync(1, TimeUnit.MINUTES);
 		
@@ -140,7 +132,7 @@ public class SnomedRf2ImportRestService extends AbstractRestService {
 		@ApiResponse(responseCode = "404", description = "Not found"),
 	})
 	@GetMapping(value = "/{id}", produces = { AbstractRestService.JSON_MEDIA_TYPE })
-	public Promise<SnomedRf2ImportConfiguration> getImport(
+	public Promise<ImportJob> getImport(
 			@Parameter(description = "The resource path", required = true)
 			@PathVariable(name = "path")
 			final String path,
@@ -151,7 +143,7 @@ public class SnomedRf2ImportRestService extends AbstractRestService {
 		return JobRequests.prepareGet(id)
 				.buildAsync()
 				.execute(getBus())
-				.then(this::toRf2ImportConfiguration);
+				.then(ImportJob::fromRemoteJobEntry);
 	}
 	
 	@Operation(
@@ -176,17 +168,4 @@ public class SnomedRf2ImportRestService extends AbstractRestService {
 				.buildAsync()
 				.execute(getBus());
 	}
-	
-	private SnomedRf2ImportConfiguration toRf2ImportConfiguration(RemoteJobEntry job) {
-		ApiError error = null;
-		ImportResponse response = null;
-		ObjectMapper mapper = ApplicationContext.getServiceForClass(ObjectMapper.class);
-		if (RemoteJobState.FAILED == job.getState()) {
-			error = job.getResultAs(mapper, ApiError.class);
-		} else if (job.isSuccessful()) {
-			response = job.getResultAs(mapper, ImportResponse.class);
-		}
-		return new SnomedRf2ImportConfiguration(job.getId(), job.getState(), error, response);
-	}
-	
 }

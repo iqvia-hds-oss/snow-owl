@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.b2international.snowowl.snomed.datastore.request.rf2;
+package com.b2international.snowowl.core.request.io;
+
+import com.b2international.snowowl.core.ResourceURI;
 
 /**
- * @since 5.7
+ * @since 10.0
  */
-public final class SnomedRf2Requests {
-	public SnomedRf2ExportRequestBuilder prepareExport() {
-		return new SnomedRf2ExportRequestBuilder();
+public class ImportRequests {
+	public static final String IMPORT_PREFIX = "import-"; 
+	
+	public static String importJobKey(ResourceURI resourceUri) {
+		return importJobKey(resourceUri.toString());
 	}
 	
-	public SnomedRf2ImportRequestBuilder prepareImport() {
-		return new SnomedRf2ImportRequestBuilder();
+	public static String importJobKey(String path) {
+		return IMPORT_PREFIX.concat(path);
 	}
 }

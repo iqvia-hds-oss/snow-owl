@@ -39,6 +39,7 @@ import com.b2international.snowowl.core.jobs.JobRequests;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
+import com.b2international.snowowl.core.request.io.ImportRequests;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.VersionDocument;
@@ -48,7 +49,6 @@ import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConst
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
-import com.b2international.snowowl.snomed.datastore.request.rf2.SnomedRf2Requests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 import com.google.common.collect.Lists;
 
@@ -113,7 +113,7 @@ public class SnomedContentRule extends ExternalResource {
 			.setCreateVersions(createVersions)
 			.setImportUntil(importUntil)
 			.build(codeSystemId)
-			.runAsJobWithRestart(SnomedRf2Requests.importJobKey(codeSystemId), "Importing RF2 content into " + codeSystemId)
+			.runAsJobWithRestart(ImportRequests.importJobKey(codeSystemId), "Importing RF2 content into " + codeSystemId)
 			.execute(Services.bus())
 			.getSync(1, TimeUnit.MINUTES);
 		RemoteJobEntry job = JobRequests.waitForJob(Services.bus(), jobId, 2000 /* 2 seconds */);
