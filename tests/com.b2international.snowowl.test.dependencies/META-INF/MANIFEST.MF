@@ -18,6 +18,7 @@ Bundle-ClassPath: .,
  lib/testcontainers-elasticsearch-2.0.3.jar
 Export-Package: com.b2international.snowowl.rules,
  com.github.dockerjava.api.command,
+ com.github.dockerjava.api.model,
  org.databene.contiperf,
  org.databene.contiperf.clock,
  org.databene.contiperf.junit,
