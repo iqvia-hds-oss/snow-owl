@@ -17,9 +17,7 @@ package com.b2international.index;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -70,7 +68,6 @@ public final class ElasticsearchContainer {
 	private final String elasticsearchDockerImageVersion;
 
 	private org.testcontainers.elasticsearch.ElasticsearchContainer container;
-	private Path synonymsFile;
 	
 	public ElasticsearchContainer() throws Exception {
 		this(System.getProperty(ES_DOCKER_VERSION_VARIABLE, ES_DOCKER_VERSION));
@@ -143,12 +140,6 @@ public final class ElasticsearchContainer {
 	public void stop() {
 		Preconditions.checkState(this.container != null, "Elasticsearch container is already stopped and closed.");
 		this.container.stop();
-		// make sure we delete the temporary synonym file
-		try {
-			Files.deleteIfExists(this.synonymsFile);
-		} catch (IOException e) {
-			LOG.warn("Failed to delete temporary synonym file at {}", this.synonymsFile, e);
-		}
 	}
 
 	public void destroy() {
