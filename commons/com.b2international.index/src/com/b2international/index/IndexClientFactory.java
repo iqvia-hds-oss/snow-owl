@@ -17,6 +17,8 @@ package com.b2international.index;
 
 import java.util.Map;
 
+import javax.net.ssl.SSLContext;
+
 import com.b2international.index.mapping.Mappings;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -78,9 +80,14 @@ public interface IndexClientFactory {
 	String CLUSTER_URL = "clusterUrl";
 	
 	/**
-	 * Configuration key to specify the cluster {@link SSLContext} instance to use secure connections when communicating with external Elasticsearch instances.
+	 * The default Elasticsearch HTTP port to connect to. Value is {@value #DEFAULT_ES_HTTP_PORT}.
 	 */
-	String CLUSTER_SSL_CONTEXT = "clusterSslContext";
+	String DEFAULT_ES_HTTP_PORT = "9200";
+	
+	/**
+	 * The default Elasticsearch cluster URL. Value is {@value #DEFAULT_CLUSTER_URL}.
+	 */
+	String DEFAULT_CLUSTER_URL = "http://127.0.0.1:" + DEFAULT_ES_HTTP_PORT;
 	
 	/**
 	 * Configuration key to specify the user name for authenticating with the Elasticsearch cluster.
@@ -91,6 +98,11 @@ public interface IndexClientFactory {
 	 * Configuration key to specify the password for authenticating with the Elasticsearch cluster.
 	 */
 	String CLUSTER_PASSWORD = "clusterPassword";
+	
+	/**
+	 * Configuration key to specify the cluster {@link SSLContext} instance to use secure connections when communicating with external Elasticsearch instances.
+	 */
+	String CLUSTER_SSL_CONTEXT = "clusterSslContext";
 	
 	/**
 	 * Configuration key to specify the string each index name should be prefixed with (used in multi-tenant deployments). 
