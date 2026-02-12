@@ -107,6 +107,10 @@ public abstract class BaseRevisionIndexTest {
 		return ((DefaultRevisionBranching) branching()).currentTime();
 	}
 
+	protected final Map<String, Object> getIndexClientConfiguration() {
+		return index.getIndexClientConfiguration();
+	}
+	
 	protected final RevisionIndex index() {
 		return index.getRevisionIndex();
 	}

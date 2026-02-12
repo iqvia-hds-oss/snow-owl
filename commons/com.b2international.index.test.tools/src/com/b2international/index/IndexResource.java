@@ -53,7 +53,9 @@ public final class IndexResource extends ExternalResource {
 	private static Index index;
 	private static IndexClient client;
 	private static DefaultRevisionIndex revisionIndex;
-	private static ElasticsearchContainer container;
+	
+	// TODO merge with BaseElasticsearchAwareTest
+	static ElasticsearchContainer container;
 
 	private final Collection<Class<?>> types;
 	private final Consumer<ObjectMapper> objectMapperConfigurator;
@@ -76,7 +78,7 @@ public final class IndexResource extends ExternalResource {
 			container = new ElasticsearchContainer();
 			
 			final Map<String, Object> settings = Maps.newHashMap(this.indexSettings.get());
-			container.getIndexClientConfiguration().forEach(settings::putIfAbsent);
+			getIndexClientConfiguration().forEach(settings::putIfAbsent);
 			
 			mapper = new ObjectMapper();
 			mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
@@ -103,6 +105,10 @@ public final class IndexResource extends ExternalResource {
 		
 		// then make sure we have all indexes ready for tests
 		revisionIndex.admin().create();
+	}
+
+	public Map<String, Object> getIndexClientConfiguration() {
+		return container == null ? Map.of() : container.getIndexClientConfiguration();
 	}
 
 	@Override
