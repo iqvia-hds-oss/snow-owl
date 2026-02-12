@@ -39,8 +39,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 
 /**
- * Boots up an Elasticsearch testcontainer Docker container for integration tests.
- * The image can overridden with -Dso.index.elasticsearch.image=custom/image:tag value or programmatically via the #set
+ * Configures an index to be used for a set of tests. By default it boots up a testcontainer managed containerized Elasticsearch cluster. The cluster
+ * version can be configured via -Dso.index.es.docker.version=8.19.10 sysprop. If the latter is not specified the hardcoded last tried version will be
+ * used, which is {@value ElasticsearchContainer#ES_DOCKER_VERSION}.
  * 
  * @since 7.1
  */
