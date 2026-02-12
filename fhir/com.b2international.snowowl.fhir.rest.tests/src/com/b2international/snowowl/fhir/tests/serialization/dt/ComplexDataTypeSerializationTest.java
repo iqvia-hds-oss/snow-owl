@@ -19,8 +19,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -28,7 +26,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.b2international.snowowl.fhir.core.FhirConstants;
+import com.b2international.snowowl.fhir.core.FhirDates;
 import com.b2international.snowowl.fhir.core.codesystems.IdentifierUse;
 import com.b2international.snowowl.fhir.core.codesystems.IssueSeverity;
 import com.b2international.snowowl.fhir.core.codesystems.IssueType;
@@ -40,7 +38,20 @@ import com.b2international.snowowl.fhir.core.model.Extension;
 import com.b2international.snowowl.fhir.core.model.IntegerExtension;
 import com.b2international.snowowl.fhir.core.model.Issue;
 import com.b2international.snowowl.fhir.core.model.Issue.Builder;
-import com.b2international.snowowl.fhir.core.model.dt.*;
+import com.b2international.snowowl.fhir.core.model.dt.Code;
+import com.b2international.snowowl.fhir.core.model.dt.CodeableConcept;
+import com.b2international.snowowl.fhir.core.model.dt.Coding;
+import com.b2international.snowowl.fhir.core.model.dt.ContactPoint;
+import com.b2international.snowowl.fhir.core.model.dt.Identifier;
+import com.b2international.snowowl.fhir.core.model.dt.Instant;
+import com.b2international.snowowl.fhir.core.model.dt.Narrative;
+import com.b2international.snowowl.fhir.core.model.dt.Period;
+import com.b2international.snowowl.fhir.core.model.dt.Quantity;
+import com.b2international.snowowl.fhir.core.model.dt.Range;
+import com.b2international.snowowl.fhir.core.model.dt.Reference;
+import com.b2international.snowowl.fhir.core.model.dt.Signature;
+import com.b2international.snowowl.fhir.core.model.dt.SimpleQuantity;
+import com.b2international.snowowl.fhir.core.model.dt.Uri;
 import com.b2international.snowowl.fhir.tests.FhirExceptionIssueMatcher;
 import com.b2international.snowowl.fhir.tests.FhirTest;
 import com.google.common.primitives.Bytes;
@@ -199,16 +210,15 @@ public class ComplexDataTypeSerializationTest extends FhirTest {
 	@Test
 	public void periodTest() throws Exception {
 		
-		DateFormat df = new SimpleDateFormat(FhirConstants.DATE_TIME_FORMAT);
-		Date startDate = df.parse(TEST_DATE_STRING);
+		Date startDate = FhirDates.parse(TEST_DATE_STRING);
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(startDate);
 		cal.add(Calendar.DAY_OF_MONTH, 1);
 		
 		Period period = new Period(startDate, cal.getTime());
 		
-		String expected = "{\"start\":\"2018-03-23T07:49:40.000+0000\"," + 
-				"\"end\":\"2018-03-24T07:49:40.000+0000\"}";
+		String expected = "{\"start\":\"2018-03-23T07:49:40.000+00:00\"," + 
+				"\"end\":\"2018-03-24T07:49:40.000+00:00\"}";
 		
 		Assert.assertEquals(expected, objectMapper.writeValueAsString(period));
 	}
@@ -305,8 +315,7 @@ public class ComplexDataTypeSerializationTest extends FhirTest {
 	@Test
 	public void identifierTest() throws Exception {
 		
-		DateFormat df = new SimpleDateFormat(FhirConstants.DATE_TIME_FORMAT);
-		Date startDate = df.parse(TEST_DATE_STRING);
+		Date startDate = FhirDates.parse(TEST_DATE_STRING);
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(startDate);
 		cal.add(Calendar.DAY_OF_MONTH, 1);
@@ -347,8 +356,8 @@ public class ComplexDataTypeSerializationTest extends FhirTest {
 		assertThat(jsonPath.getString("type.coding[0].code"), equalTo("codingCode"));
 		assertThat(jsonPath.getString("type.coding[0].display"), equalTo("codingDisplay"));
 
-		assertThat(jsonPath.getString("period.start"), equalTo("2018-03-23T07:49:40.000+0000"));
-		assertThat(jsonPath.getString("period.end"), equalTo("2018-03-24T07:49:40.000+0000"));
+		assertThat(jsonPath.getString("period.start"), equalTo("2018-03-23T07:49:40.000+00:00"));
+		assertThat(jsonPath.getString("period.end"), equalTo("2018-03-24T07:49:40.000+00:00"));
 		assertThat(jsonPath.getString("assigner.reference"), equalTo("reference url"));
 		assertThat(jsonPath.getString("assigner.display"), equalTo("displayString"));
 		assertThat(jsonPath.getString("assigner.identifier.system"), equalTo("system"));
@@ -357,8 +366,7 @@ public class ComplexDataTypeSerializationTest extends FhirTest {
 	@Test
 	public void signatureUriTest() throws Exception {
 		
-		DateFormat df = new SimpleDateFormat(FhirConstants.DATE_TIME_FORMAT);
-		Date date = df.parse(TEST_DATE_STRING);
+		Date date = FhirDates.parse(TEST_DATE_STRING);
 		Instant instant = Instant.builder().instant(date).build();
 		
 		Signature signature = Signature.builder()
@@ -391,8 +399,7 @@ public class ComplexDataTypeSerializationTest extends FhirTest {
 	@Test
 	public void signatureReferenceTest() throws Exception {
 		
-		DateFormat df = new SimpleDateFormat(FhirConstants.DATE_TIME_FORMAT);
-		Date date = df.parse(TEST_DATE_STRING);
+		Date date = FhirDates.parse(TEST_DATE_STRING);
 		Instant instant = Instant.builder().instant(date).build();
 		
 		Signature signature = Signature.builder()
@@ -424,8 +431,7 @@ public class ComplexDataTypeSerializationTest extends FhirTest {
 		exception.expectMessage("1 validation error");
 		exception.expect(FhirExceptionIssueMatcher.issue(expectedIssue));
 		
-		DateFormat df = new SimpleDateFormat(FhirConstants.DATE_TIME_FORMAT);
-		Date date = df.parse(TEST_DATE_STRING);
+		Date date = FhirDates.parse(TEST_DATE_STRING);
 		Instant instant = Instant.builder().instant(date).build();
 		
 		Signature.builder()

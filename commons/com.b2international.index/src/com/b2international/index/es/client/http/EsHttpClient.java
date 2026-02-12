@@ -42,6 +42,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestClientBuilder.RequestConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.RestHighLevelClientBuilder;
 import org.elasticsearch.client.RestHighLevelClientExt;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -83,14 +84,19 @@ public final class EsHttpClient extends EsClientBase {
 					final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
 					credentialsProvider.setCredentials(AuthScope.ANY, 
 							new UsernamePasswordCredentials(configuration.getUserName(), configuration.getPassword()));
-					return httpClientConfigBuilder.setDefaultCredentialsProvider(credentialsProvider);
+					return httpClientConfigBuilder
+							.setDefaultCredentialsProvider(credentialsProvider)
+							.setSSLContext(configuration.getSslContext());
 				};
 				
 				restClientBuilder.setHttpClientConfigCallback(httpClientConfigCallback);
 				
 			}
 			
-			return new RestHighLevelClient(restClientBuilder);
+			return new RestHighLevelClientBuilder(restClientBuilder.build())
+					// enable API compatibility mode to run Snow Owl against Elasticsearch 8 clusters
+					.setApiCompatibilityMode(true)
+					.build();
 		});
 		
 		this.clientExt = new RestHighLevelClientExt(client);

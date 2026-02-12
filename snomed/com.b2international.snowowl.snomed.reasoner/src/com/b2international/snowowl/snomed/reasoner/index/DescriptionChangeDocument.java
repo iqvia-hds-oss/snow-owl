@@ -19,6 +19,7 @@ import static com.b2international.index.query.Expressions.exactMatch;
 import static com.b2international.index.query.Expressions.matchAny;
 
 import com.b2international.index.Doc;
+import com.b2international.index.mapping.AutoGenerateID;
 import com.b2international.index.query.Expression;
 import com.b2international.snowowl.snomed.reasoner.domain.ChangeNature;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,6 +35,7 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
  * @since 6.14
  */
 @Doc(type="descriptionchange")
+@AutoGenerateID
 @JsonDeserialize(builder=DescriptionChangeDocument.Builder.class)
 public final class DescriptionChangeDocument {
 

@@ -38,9 +38,10 @@ public @interface Doc {
 	 * @return
 	 */
 	boolean index() default true;
-	
+
 	/**
-	 * @return an array of field names that should be used for computing the revision hash, if empty no hash will be computed and the component will not have property level change history
+	 * @return an array of field names that should be used for computing the revision hash, if empty no hash will be computed and the component will
+	 *         not have property level change history
 	 */
 	String[] revisionHash() default {};
 

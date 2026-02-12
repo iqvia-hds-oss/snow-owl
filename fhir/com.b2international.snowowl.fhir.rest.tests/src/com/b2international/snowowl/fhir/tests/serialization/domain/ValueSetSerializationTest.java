@@ -21,12 +21,11 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.junit.Test;
 
-import com.b2international.snowowl.fhir.core.FhirConstants;
+import com.b2international.snowowl.fhir.core.FhirDates;
 import com.b2international.snowowl.fhir.core.codesystems.PublicationStatus;
 import com.b2international.snowowl.fhir.core.model.ContactDetail;
 import com.b2international.snowowl.fhir.core.model.Designation;
@@ -91,7 +90,7 @@ public class ValueSetSerializationTest extends FhirTest {
 	@Test
 	public void dateTimeParameterTest() throws Exception {
 		
-		Date date = new SimpleDateFormat(FhirConstants.DATE_TIME_FORMAT).parse(TEST_DATE_STRING);
+		Date date = FhirDates.parse(TEST_DATE_STRING);
 		
 		DateTimeParameter parameter = DateTimeParameter.builder()
 			.name("paramName")

@@ -15,13 +15,16 @@
  */
 package com.b2international.snowowl.core.config;
 
+import javax.net.ssl.SSLContext;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
 import com.b2international.index.IndexClientFactory;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap.Builder;
 
 /**
@@ -71,6 +74,9 @@ public class IndexConfiguration {
 	@Min(5_000)
 	@Max(IndexClientFactory.DEFAULT_COMMIT_WATERMARK_HIGH_VALUE)
 	private int commitWatermarkHigh = IndexClientFactory.DEFAULT_COMMIT_WATERMARK_HIGH_VALUE;
+	
+	@JsonIgnore
+	private SSLContext sslContext;
 	
 	@JsonProperty
 	public String getCommitInterval() {
@@ -219,6 +225,20 @@ public class IndexConfiguration {
 	public void setCommitWatermarkLow(int commitWatermarkLow) {
 		this.commitWatermarkLow = commitWatermarkLow;
 	}
+	
+	@VisibleForTesting
+	public SSLContext getSslContext() {
+		return sslContext;
+	}
+	
+	/**
+	 * Not configurable via snowowl.yml directly, visible only to connect test cases to a test docker container of Elasticsearch via SSL
+	 * @param sslContext
+	 */
+	@VisibleForTesting
+	public void setSslContext(SSLContext sslContext) {
+		this.sslContext = sslContext;
+	}
 
 	public void configure(Builder<String, Object> settings) {
 		if (getClusterHealthTimeout() <= getSocketTimeout()) {
@@ -236,6 +256,9 @@ public class IndexConfiguration {
 			}
 			if (getClusterPassword() != null) {
 				settings.put(IndexClientFactory.CLUSTER_PASSWORD, getClusterPassword());
+			}
+			if (getSslContext() != null) {
+				settings.put(IndexClientFactory.CLUSTER_SSL_CONTEXT, getSslContext());
 			}
 		}
 		

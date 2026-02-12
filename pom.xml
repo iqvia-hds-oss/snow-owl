@@ -14,8 +14,8 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<!-- Maven Dependency Versions -->
-		<jackson.version>2.10.5</jackson.version>
-		<jackson.databind.version>2.10.5.1</jackson.databind.version>
+		<jackson.version>2.18.5</jackson.version>
+		<jackson.databind.version>2.18.5</jackson.databind.version>
 		<netty.version>4.1.59.Final</netty.version>
 		<slf4j.version>1.7.32</slf4j.version>
 		<logback.version>1.2.10</logback.version>
@@ -37,6 +37,8 @@
 		<javax.activation.version>1.2.0</javax.activation.version>
 		<snomed.owl.toolkit.version>3.0.106</snomed.owl.toolkit.version>
 		<failsafe.version>2.3.1</failsafe.version>
+		<commons.io.version>2.18.0</commons.io.version>
+		<commons.compress.version>1.26.0</commons.compress.version>
 		<osgi.versionRange>[3.16.0,3.17.0]</osgi.versionRange>
 		
 		<!-- Build tool/compiler versions -->
@@ -214,7 +216,7 @@
 		<dependency>
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
-			<version>1.26</version>
+			<version>2.3</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -643,6 +645,20 @@
 			<groupId>net.jodah</groupId>
 			<artifactId>failsafe</artifactId>
 			<version>${failsafe.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- Commons Compress required by test.dependencies -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+			<version>${commons.compress.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- Commons Compress required by fhir-core and other ext plugins -->
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons.io.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

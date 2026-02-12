@@ -78,6 +78,11 @@ public interface IndexClientFactory {
 	String CLUSTER_URL = "clusterUrl";
 	
 	/**
+	 * Configuration key to specify the cluster {@link SSLContext} instance to use secure connections when communicating with external Elasticsearch instances.
+	 */
+	String CLUSTER_SSL_CONTEXT = "clusterSslContext";
+	
+	/**
 	 * Configuration key to specify the user name for authenticating with the Elasticsearch cluster.
 	 */
 	String CLUSTER_USERNAME = "clusterUsername";

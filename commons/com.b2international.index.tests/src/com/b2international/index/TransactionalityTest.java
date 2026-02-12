@@ -37,9 +37,9 @@ public class TransactionalityTest extends BaseIndexTest {
 	
 	@Test
 	public void uncommittedTransactionShouldNotChangeTheIndex() throws Exception {
-		final Data data = new Data();
+		final Data data = new Data(KEY1);
 		index().write(index -> {
-			index.put(KEY1, data);
+			index.put(data);
 			return null;
 		});
 		// after the failed transaction data should not be in the index
@@ -48,22 +48,23 @@ public class TransactionalityTest extends BaseIndexTest {
 	
 	@Test
 	public void tx1CommitShouldNotCommitTx2Changes() throws Exception {
-		final Data data = new Data();
+		final Data data1 = new Data(KEY1);
+		final Data data2 = new Data(KEY2);
 		Writer tx1 = client().writer(); 
 		Writer tx2 = client().writer();
-		tx1.put(KEY1, data);
-		tx2.put(KEY2, data);
+		tx1.put(data1);
+		tx2.put(data2);
 		tx1.commit();
 		
 		// at this point tx2 content should not be visible
 		Searcher searcher = client().searcher();
-		assertEquals(data, searcher.get(Data.class, KEY1));
+		assertEquals(data1, searcher.get(Data.class, KEY1));
 		assertNull(searcher.get(Data.class, KEY2));
 		
 		tx2.commit();
 		
-		assertEquals(data, searcher.get(Data.class, KEY1));
-		assertEquals(data, searcher.get(Data.class, KEY2));
+		assertEquals(data1, searcher.get(Data.class, KEY1));
+		assertEquals(data2, searcher.get(Data.class, KEY2));
 	}
 	
 }

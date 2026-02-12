@@ -216,7 +216,7 @@ public class ReviewManagerImpl implements ReviewManager {
 			for (final Review affectedReview : affectedReviews) {
 				Review newReview = updateStatus(affectedReview, ReviewStatus.STALE);
 				if (newReview != null) {
-					index.put(newReview.id(), newReview);
+					index.put(newReview);
 				}
 			}
 			index.commit();
@@ -273,7 +273,7 @@ public class ReviewManagerImpl implements ReviewManager {
 
 	private void putReview(final Review newReview) {
 		store.get().write(index -> {
-			index.put(newReview.id(), newReview);
+			index.put(newReview);
 			index.commit();
 			return null;
 		});
@@ -324,7 +324,7 @@ public class ReviewManagerImpl implements ReviewManager {
 		try {
 			getReview(id);
 			store.get().write(index -> {
-				index.put(id, convertedChanges);
+				index.put(convertedChanges);
 				index.commit();
 				return null;
 			});

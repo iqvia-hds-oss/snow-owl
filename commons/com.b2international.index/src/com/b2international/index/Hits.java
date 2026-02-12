@@ -51,6 +51,10 @@ public final class Hits<T> implements Iterable<T> {
 		return hits.stream();
 	}
 	
+	public T first() {
+		return stream().findFirst().orElse(null);
+	}
+	
 	public boolean isEmpty() {
 		return hits.isEmpty();
 	}
@@ -89,4 +93,5 @@ public final class Hits<T> implements Iterable<T> {
 	public static <T> Hits<T> empty(int limit) {
 		return new Hits<>(Collections.<T>emptyList(), null, null, limit, 0);
 	}
+
 }

@@ -30,6 +30,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.elasticsearch.common.UUIDs;
+
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.Pair;
 import com.b2international.index.BulkUpdate;
@@ -393,7 +395,7 @@ public final class StagingArea {
 			StagedObject value = entry.getValue();
 			if (value.isAdded() && value.isCommit()) {
 				Object document = value.getObject();
-				writer.put(key.id(), document);
+				writer.put(document);
 				if (document instanceof Revision) {
 					Revision rev = (Revision) document;
 					newComponentsByContainer.put(checkNotNull(rev.getContainerId(), "Missing containerId for revision: %s", rev), rev.getObjectId());
@@ -421,7 +423,7 @@ public final class StagingArea {
 						revisionsToReviseOnMergeSource.put(rev.getClass(), rev.getId());
 					}
 					
-					writer.put(key.id(), rev);
+					writer.put(rev);
 
 					if (!revisionDiff.hasChanges()) {
 						return;
@@ -440,7 +442,7 @@ public final class StagingArea {
 					}
 					
 				} else {
-					writer.put(key.id(), object);
+					writer.put(object);
 					changedComponentsByContainer.put(ObjectId.rootOf(DocumentMapping.getType(object.getClass())), key);
 				}
 			}
@@ -539,7 +541,7 @@ public final class StagingArea {
 		
 		// generate a commit entry that marks the end of the commit and contains all changes in a details property
 		Commit commitDoc = commit
-				.id(UUID.randomUUID().toString())
+				.id(UUIDs.randomBase64UUID())
 				.groupId(commitGroupId)
 				.author(author)
 				.branch(branchPath)
@@ -549,7 +551,7 @@ public final class StagingArea {
 				.mergeSource(!CompareUtils.isEmpty(mergeSources) ? mergeSources.last() : null)
 				.squashMerge(!CompareUtils.isEmpty(mergeSources) ? squashMerge : null)
 				.build();
-		writer.put(commitDoc.getId(), commitDoc);
+		writer.put(commitDoc);
 		
 		// update branch document(s)
 		ImmutableMap.Builder<String, Object> toBranchUpdateParams = ImmutableMap.builder();

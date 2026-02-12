@@ -19,11 +19,19 @@ import java.io.File;
 import java.nio.file.Path;
 
 import org.junit.rules.ExternalResource;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.utility.MountableFile;
 
 import com.b2international.commons.FileUtils;
 import com.b2international.commons.exceptions.AlreadyExistsException;
+import com.b2international.index.IndexClientFactory;
+import com.b2international.index.IndexResource;
+import com.b2international.index.es.EsIndexClientFactory;
+import com.b2international.index.es.EsNode;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.SnowOwl;
+import com.b2international.snowowl.core.config.IndexConfiguration;
+import com.b2international.snowowl.core.config.RepositoryConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.identity.IdentityProvider;
 import com.b2international.snowowl.core.identity.IdentityWriter;
@@ -69,6 +77,7 @@ public class SnowOwlAppRule extends ExternalResource {
 	private boolean clearResources = true;
 	private Plugin[] plugins;
 	private SnowOwl snowowl;
+	private ElasticsearchContainer container;
 
 	private SnowOwlAppRule() {
 //		String requestLoggerLevelProperty = System.getProperty("request.logger.level");
@@ -137,6 +146,39 @@ public class SnowOwlAppRule extends ExternalResource {
 			final File resourceDirectory = snowowl.getEnviroment().getDataPath().toFile();
 			FileUtils.cleanDirectory(resourceDirectory);
 		}
+		
+		// modify the Snow Owl configuration values if useDocker is defined as JVM argument
+		String testElasticsearchContainer = System.getProperty(IndexResource.ES_USE_TEST_CONTAINER_VARIABLE);
+		if (testElasticsearchContainer != null) {
+			
+			if (testElasticsearchContainer.isEmpty()) {
+				testElasticsearchContainer = IndexResource.DEFAULT_ES_DOCKER_IMAGE;
+			}
+			// initialize an Elasticsearch test container
+			container = new ElasticsearchContainer(testElasticsearchContainer);
+			
+			// XXX elasticsearch-default-memory-vm.options is a classpath resource in the testcontainers:elasticsearch jar since 7.17.4
+			// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 
+			// remove the entry and replace it with ours
+			container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
+			
+			// configuring the container with additional files and env vars
+			final MountableFile localSynonymsFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
+			final String containerSynonymsFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
+			container
+				.withCopyFileToContainer(localSynonymsFilePath, containerSynonymsFilePath)
+				.withEnv("rest.action.multi.allow_explicit_index", "false")
+				.start();
+			
+			// override already parsed index configuration in memory
+			IndexConfiguration index = snowowl.getConfiguration().getModuleConfig(RepositoryConfiguration.class).getIndexConfiguration();
+			index.setSslContext(container.createSslContextFromCa());
+			index.setClusterUsername("elastic");
+			index.setClusterPassword(ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
+			index.setClusterUrl(IndexResource.getClusterUrl(container));
+			
+		}
+		
 		snowowl.bootstrap();
 		snowowl.run();
 		// inject the test user to the current identity provider
@@ -151,6 +193,13 @@ public class SnowOwlAppRule extends ExternalResource {
 	protected void after() {
 		super.after();
 		snowowl.shutdown();
+		snowowl = null;
+		
+		if (container != null) {
+			container.stop();
+			container.close();
+			container = null;
+		}
 	}
 
 	/**

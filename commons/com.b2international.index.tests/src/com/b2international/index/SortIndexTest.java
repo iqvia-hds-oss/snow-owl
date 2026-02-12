@@ -16,18 +16,11 @@
 package com.b2international.index;
 
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.collect.Sets.newTreeSet;
 import static org.junit.Assert.assertArrayEquals;
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.PrimitiveIterator;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.junit.Test;
@@ -38,11 +31,7 @@ import com.b2international.index.query.Query;
 import com.b2international.index.query.SortBy;
 import com.b2international.index.query.SortBy.Order;
 import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 
 /**
  * @since 5.4
@@ -53,13 +42,13 @@ public class SortIndexTest extends BaseIndexTest {
 
 	@Override
 	protected Collection<Class<?>> getTypes() {
-		return ImmutableList.<Class<?>>of(Data.class);
+		return List.<Class<?>>of(Data.class);
 	}
 
 	@Test
 	public void sortStringField() throws Exception {
 		final TreeSet<String> orderedItems = newTreeSet();
-		final Map<String, Data> documents = newHashMap(); 
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 
 		for (int i = 0; i < NUM_DOCS; i++) {
 			String item = null;
@@ -68,9 +57,9 @@ public class SortIndexTest extends BaseIndexTest {
 			}
 			orderedItems.add(item);
 			
-			final Data data = new Data();
-			data.setField1(item); 
-			documents.put(Integer.toString(i), data);
+			final Data data = new Data(Integer.toString(i));
+			data.setField1(item);
+			documents.add(data);
 		}
 
 		indexDocuments(documents);
@@ -95,7 +84,7 @@ public class SortIndexTest extends BaseIndexTest {
 	@Test
 	public void sortAnalyzedField() throws Exception {
 		final TreeSet<String> orderedItems = newTreeSet();
-		final Map<String, Data> documents = newHashMap(); 
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 
 		for (int i = 0; i < NUM_DOCS; i++) {
 			String item = null;
@@ -104,9 +93,9 @@ public class SortIndexTest extends BaseIndexTest {
 			}
 			orderedItems.add(item);
 			
-			final Data data = new Data();
+			final Data data = new Data(Integer.toString(i));
 			data.setAnalyzedField(item);
-			documents.put(Integer.toString(i), data);
+			documents.add(data);
 		}
 		
 		indexDocuments(documents);
@@ -132,7 +121,7 @@ public class SortIndexTest extends BaseIndexTest {
 	public void sortBigDecimalField() throws Exception {
 		final PrimitiveIterator.OfDouble doubleIterator = new Random().doubles().iterator();
 		final TreeSet<BigDecimal> orderedItems = newTreeSet();
-		final Map<String, Data> documents = newHashMap();
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 
 		for (int i = 0; i < NUM_DOCS; i++) {
 			BigDecimal item = null;
@@ -141,9 +130,9 @@ public class SortIndexTest extends BaseIndexTest {
 			}
 			orderedItems.add(item);
 			
-			final Data data = new Data();
-			data.setBigDecimalField(item); 
-			documents.put(Integer.toString(i), data);
+			final Data data = new Data(Integer.toString(i));
+			data.setBigDecimalField(item);
+			documents.add(data);
 		}
 		
 		indexDocuments(documents);
@@ -169,7 +158,7 @@ public class SortIndexTest extends BaseIndexTest {
 	public void sortFloatField() throws Exception {
 		final PrimitiveIterator.OfDouble doubleIterator = new Random().doubles().iterator();
 		final TreeSet<Float> orderedItems = newTreeSet();
-		final Map<String, Data> documents = newHashMap();
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 
 		for (int i = 0; i < NUM_DOCS; i++) {
 			float item = 0.0f;
@@ -178,9 +167,9 @@ public class SortIndexTest extends BaseIndexTest {
 			}
 			orderedItems.add(item);
 			
-			final Data data = new Data();
-			data.setFloatField(item); 
-			documents.put(Integer.toString(i), data);
+			final Data data = new Data(Integer.toString(i));
+			data.setFloatField(item);
+			documents.add(data);
 		}
 		
 		indexDocuments(documents);
@@ -206,7 +195,7 @@ public class SortIndexTest extends BaseIndexTest {
 	public void sortLongField() throws Exception {
 		final PrimitiveIterator.OfLong longIterator = new Random().longs().iterator();
 		final TreeSet<Long> orderedItems = newTreeSet(); 
-		final Map<String, Data> documents = newHashMap();
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 		
 		for (int i = 0; i < NUM_DOCS; i++) {
 			long item = 0L;
@@ -215,9 +204,9 @@ public class SortIndexTest extends BaseIndexTest {
 			}
 			orderedItems.add(item);
 			
-			final Data data = new Data();
-			data.setLongField(item); 
-			documents.put(Integer.toString(i), data);
+			final Data data = new Data(Integer.toString(i));
+			data.setLongField(item);
+			documents.add(data);
 		}
 		
 		indexDocuments(documents);
@@ -243,7 +232,7 @@ public class SortIndexTest extends BaseIndexTest {
 	public void sortIntField() throws Exception {
 		final PrimitiveIterator.OfInt intIterator = new Random().ints().iterator();
 		final TreeSet<Integer> orderedItems = newTreeSet(); 
-		final Map<String, Data> documents = newHashMap();
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 		
 		for (int i = 0; i < NUM_DOCS; i++) {
 			int item = 0;
@@ -252,9 +241,9 @@ public class SortIndexTest extends BaseIndexTest {
 			}
 			orderedItems.add(item);
 			
-			final Data data = new Data();
-			data.setIntField(item); 
-			documents.put(Integer.toString(i), data);
+			final Data data = new Data(Integer.toString(i));
+			data.setIntField(item);
+			documents.add(data);
 		}
 
 		indexDocuments(documents);
@@ -280,7 +269,7 @@ public class SortIndexTest extends BaseIndexTest {
 	public void sortShortField() throws Exception {
 		final PrimitiveIterator.OfInt intIterator = new Random().ints().iterator();
 		final TreeSet<Short> orderedItems = newTreeSet(); 
-		final Map<String, Data> documents = newHashMap();
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 		
 		for (short i = 0; i < NUM_DOCS; i++) {
 			short item = 0;
@@ -289,9 +278,9 @@ public class SortIndexTest extends BaseIndexTest {
 			}
 			orderedItems.add(item);
 			
-			final Data data = new Data();
-			data.setShortField(item); 
-			documents.put(Integer.toString(i), data);
+			final Data data = new Data(Integer.toString(i));
+			data.setShortField(item);
+			documents.add(data);
 		}
 		
 		indexDocuments(documents);
@@ -315,20 +304,15 @@ public class SortIndexTest extends BaseIndexTest {
 
 	@Test
 	public void sortScore() throws Exception {
-		final List<String> orderedItems = newArrayList(); 
-		final Map<String, Data> documents = newHashMap();
+		final List<String> orderedKeys = newArrayList(); 
+		final List<Data> documents = new ArrayList<>(NUM_DOCS);
 		
 		for (int i = 0; i < NUM_DOCS; i++) {
-			String item = null;
-			while (item == null || orderedItems.contains(item)) {
-				item = RandomStringUtils.randomAlphabetic(10);
-			}
-			orderedItems.add(item);
-			
-			final Data data = new Data();
-			data.setField1(item); 
+			String key = Integer.toString(NUM_DOCS - i);
+			orderedKeys.add(key);
+			final Data data = new Data(key);
 			data.setFloatField(NUM_DOCS - i);
-			documents.put(Integer.toString(i), data);
+			documents.add(data);
 		}
 		
 		indexDocuments(documents);
@@ -339,7 +323,7 @@ public class SortIndexTest extends BaseIndexTest {
 				.sortBy(SortBy.SCORE)
 				.build();
 		
-		checkDocumentOrder(descendingQuery, data -> data.getField1(), ImmutableSet.copyOf(orderedItems), String.class);
+		checkDocumentOrder(descendingQuery, data -> data.getId(), Sets.newLinkedHashSet(orderedKeys), String.class);
 		
 		final Query<Data> ascendingQuery = Query.select(Data.class)
 				.where(Expressions.scriptScore(Expressions.matchAll(), Data.Scripts.FIELD_SCORE))
@@ -347,7 +331,7 @@ public class SortIndexTest extends BaseIndexTest {
 				.sortBy(SortBy.field(SortBy.FIELD_SCORE, Order.ASC))
 				.build();
 		
-		checkDocumentOrder(ascendingQuery, data -> data.getField1(), ImmutableSet.copyOf(Lists.reverse(orderedItems)), String.class);
+		checkDocumentOrder(ascendingQuery, data -> data.getId(), Sets.newLinkedHashSet(Lists.reverse(orderedKeys)), String.class);
 	}
 
 	private <T> void checkDocumentOrder(Query<Data> query, Function<? super Data, T> hitFunction, Set<T> keySet, Class<T> clazz) {

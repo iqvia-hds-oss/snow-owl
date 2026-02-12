@@ -24,9 +24,17 @@ import java.util.Date;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.b2international.snowowl.core.date.Dates;
-import com.b2international.snowowl.fhir.core.FhirConstants;
-import com.b2international.snowowl.fhir.core.codesystems.*;
+import com.b2international.snowowl.fhir.core.FhirDates;
+import com.b2international.snowowl.fhir.core.codesystems.CodeSystemContentMode;
+import com.b2international.snowowl.fhir.core.codesystems.CodeSystemHierarchyMeaning;
+import com.b2international.snowowl.fhir.core.codesystems.CommonConceptProperties;
+import com.b2international.snowowl.fhir.core.codesystems.FilterOperator;
+import com.b2international.snowowl.fhir.core.codesystems.IdentifierUse;
+import com.b2international.snowowl.fhir.core.codesystems.IssueSeverity;
+import com.b2international.snowowl.fhir.core.codesystems.IssueType;
+import com.b2international.snowowl.fhir.core.codesystems.NarrativeStatus;
+import com.b2international.snowowl.fhir.core.codesystems.OperationOutcomeCode;
+import com.b2international.snowowl.fhir.core.codesystems.PublicationStatus;
 import com.b2international.snowowl.fhir.core.exceptions.ValidationException;
 import com.b2international.snowowl.fhir.core.model.Designation;
 import com.b2international.snowowl.fhir.core.model.Issue;
@@ -121,14 +129,14 @@ public class CodeSystemSerializationTest extends FhirTest {
 	@Test
 	public void returnedDateTimeConceptPropertyTest() throws Exception {
 		
-		Date date = Dates.parse("2018-03-23T08:49:40.000+0100", FhirConstants.DATE_TIME_FORMAT);
+		Date date = FhirDates.parse("2018-03-23T08:49:40+01:00");
 		
 		DateTimeConceptProperty conceptProperty = DateTimeConceptProperty.builder()
 			.code("childConcept")
 			.value(date)
 			.build();
 		
-		String expected = "{\"code\":\"childConcept\",\"valueDateTime\":\"2018-03-23T07:49:40.000+0000\"}";
+		String expected = "{\"code\":\"childConcept\",\"valueDateTime\":\"2018-03-23T07:49:40.000+00:00\"}";
 		Assert.assertEquals(expected, objectMapper.writeValueAsString(conceptProperty));
 	}
 	

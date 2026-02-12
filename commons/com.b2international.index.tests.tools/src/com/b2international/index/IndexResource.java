@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,11 @@
  */
 package com.b2international.index;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -22,8 +27,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.junit.rules.ExternalResource;
+import org.osgi.framework.FrameworkUtil;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.utility.MountableFile;
 
+import com.b2international.index.es.EsIndexClientFactory;
+import com.b2international.index.es.EsNode;
 import com.b2international.index.mapping.Mappings;
 import com.b2international.index.revision.Commit;
 import com.b2international.index.revision.DefaultRevisionIndex;
@@ -33,18 +44,38 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 
 /**
  * @since 7.1
  */
 public final class IndexResource extends ExternalResource {
 
+	/**
+	 * Java system property to configure the use of a testcontainer Elasticsearch Docker container and optionally configure the actual image as well. By default it uses {@value IndexResource#DEFAULT_ES_DOCKER_IMAGE_VERSION}
+	 */
+	public static final String ES_USE_TEST_CONTAINER_VARIABLE = "so.index.es.useDocker";
+	
+	/**
+	 * The default Elasticsearch image version to run tests against.
+	 */
+	public static final String DEFAULT_ES_DOCKER_IMAGE_VERSION = "8.19.10";
+	
+	/**
+	 * Default Elasticsearch container to use when running against a test container Elasticsearch instance.
+	 */
+	public static final String DEFAULT_ES_DOCKER_IMAGE = String.format("docker.elastic.co/elasticsearch/elasticsearch:%s", DEFAULT_ES_DOCKER_IMAGE_VERSION);
+	
 	private static final AtomicBoolean INIT = new AtomicBoolean(false);
+	
+	private static final String DEFAULT_DOCKER_NETWORK = "bridge";
+	private static final int DEFAULT_ES_HTTP_PORT = 9200;
 	
 	private static ObjectMapper mapper;
 	private static Index index;
 	private static IndexClient client;
 	private static DefaultRevisionIndex revisionIndex;
+	private static ElasticsearchContainer container;
 
 	private final Collection<Class<?>> types;
 	private final Consumer<ObjectMapper> objectMapperConfigurator;
@@ -59,11 +90,48 @@ public final class IndexResource extends ExternalResource {
 	@Override
 	protected void before() throws Throwable {
 		if (INIT.compareAndSet(false, true)) {
+			final Map<String, Object> settings;
+			
+			// fire up an Elasticsearch test container if requested via useDocker system prop
+			String testElasticsearchImage = System.getProperty(ES_USE_TEST_CONTAINER_VARIABLE);
+			if (testElasticsearchImage != null) {
+				
+				if (testElasticsearchImage.isEmpty()) {
+					testElasticsearchImage = DEFAULT_ES_DOCKER_IMAGE;
+				}
+				
+				container = new ElasticsearchContainer(testElasticsearchImage);
+				// XXX elasticsearch-default-memory-vm.options is a classpath resource in the testcontainers:elasticsearch jar since 7.17.4
+				// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 
+				// remove the entry and replace it with ours
+				container.getCopyToFileContainerPathMap().keySet().removeIf(file -> file.getFilesystemPath().startsWith("bundleresource://") && file.getFilesystemPath().contains("elasticsearch-default-memory-vm.options"));
+				// configuring the container with additional files and env vars
+				container
+					.withCopyFileToContainer(MountableFile.forHostPath(toAbsolutePathBundleEntry(IndexResource.class, "elasticsearch-default-memory-vm.options")), "/usr/share/elasticsearch/config/jvm.options.d/elasticsearch-default-memory-vm.options")
+					.withEnv("rest.action.multi.allow_explicit_index", "false")
+					.start();
+				
+				settings = Maps.newHashMap(this.indexSettings.get());
+				settings.putIfAbsent(IndexClientFactory.CLUSTER_SSL_CONTEXT, container.createSslContextFromCa());
+				settings.putIfAbsent(IndexClientFactory.CLUSTER_USERNAME, "elastic");
+				settings.putIfAbsent(IndexClientFactory.CLUSTER_PASSWORD, ElasticsearchContainer.ELASTICSEARCH_DEFAULT_PASSWORD);
+				settings.putIfAbsent(IndexClientFactory.CLUSTER_URL, getClusterUrl(container));
+			} else {
+				settings = this.indexSettings.get();
+			}
+			
 			mapper = new ObjectMapper();
 			mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-			client = Indexes.createIndexClient(UUID.randomUUID().toString(), mapper, new Mappings(), indexSettings.get());
+			client = Indexes.createIndexClient(UUID.randomUUID().toString(), mapper, new Mappings(), settings);
 			index = new DefaultIndex(client);
 			revisionIndex = new DefaultRevisionIndex(index, new TimestampProvider.Default(), mapper);
+		}
+		
+		if (container != null) {
+			// make sure we update the synonyms.txt inside the test container
+			final MountableFile localSynonymFilePath = MountableFile.forHostPath(EsIndexClientFactory.DEFAULT_PATH.resolve(IndexClientFactory.DEFAULT_CLUSTER_NAME).resolve(EsNode.CONFIG_DIR).resolve(EsNode.SYNONYMS_FILE));
+			final String containerSynonymFilePath = "/usr/share/elasticsearch/config/" + EsNode.SYNONYMS_FILE;
+			container.copyFileToContainer(localSynonymFilePath, containerSynonymFilePath);
 		}
 		
 		// apply mapper changes first
@@ -77,6 +145,12 @@ public final class IndexResource extends ExternalResource {
 		
 		// then make sure we have all indexes ready for tests
 		revisionIndex.admin().create();
+	}
+	
+	private static Path toAbsolutePathBundleEntry(Class<?> contextClass, String path) throws Exception {
+		var bundle = checkNotNull(FrameworkUtil.getBundle(contextClass), "Bundle not found for %s", contextClass);
+		var fileURL = new URL(FileLocator.toFileURL(bundle.getEntry(path)).toString().replaceAll(" ", "%20"));
+		return Paths.get(fileURL.toURI());
 	}
 	
 	@Override
@@ -107,6 +181,58 @@ public final class IndexResource extends ExternalResource {
 	
 	public static IndexResource create(Collection<Class<?>> types, Consumer<ObjectMapper> objectMapperConfigurator, Supplier<Map<String, Object>> indexSettings) {
 		return new IndexResource(types, objectMapperConfigurator, indexSettings);
+	}
+	
+	public static String getClusterUrl(ElasticsearchContainer esContainer) {
+		
+		String protocol = esContainer.caCertAsBytes().isPresent() ? "https://" : "http://";
+    	
+		//
+		// org.testcontainers.elasticsearch.ElasticsearchContainer.getHttpHostAddress() is not reliable in certain cases,
+		// so we need additional steps to get the actual HTTP host address. The getHttpHostAddress() method returns the following:
+		// 		getHost() + ":" + getMappedPort(ELASTICSEARCH_DEFAULT_PORT)
+		//
+		// org.testcontainers.containers.ContainerState.getHost() returns the following:
+		// 		DockerClientFactory.instance().dockerHostIpAddress()
+		// 
+		// Depending on the runtime environment the IP address of the docker host could be different.
+		// See a related thread here: https://github.com/testcontainers/testcontainers-java/issues/452
+		//
+		
+		// Simple setup, OS + docker -> testcontainers running "one level above" the host. E.g. a dev-env
+    	if (esContainer.getHost().contains("localhost")) {
+    		
+    		return protocol + esContainer.getHttpHostAddress() /* already includes the random mapped port created by testcontainers */; 
+    	
+    	// Complex setup, OS + docker + docker -> testcontainers running "two or more level above" the host. E.g. a CI/CD env
+    	} else if (esContainer.getContainerInfo().getNetworkSettings().getNetworks().containsKey(DEFAULT_DOCKER_NETWORK)) {
+    		
+    		// The build agent and the Elasticsearch container must be on the same docker network (bridge is the default).
+    		// We need the internal IP address of Elasticsearch within the 'bridge' docker network and the default ES HTTP port.
+    		//
+			//    	  Docker default bridge network
+			//            (gateway: 172.17.0.1)
+			//                       |
+			//       ---------------------------------
+			//       |                               |
+			//  +---------------+         +-----------------------------+
+			//  | build-agent   |         | testcontainers-elasticsearch|
+			//  | 172.17.0.2    | ----->  | 172.17.0.3                  |
+			//  |               | HTTP(S) |                             |
+			//  +---------------+  :9200  +-----------------------------+
+    		//
+    			
+			return String.format("%s%s:%d",
+				protocol,
+				// use the IP address of Elasticsearch from within the bridge network
+				esContainer.getContainerInfo().getNetworkSettings().getNetworks().get(DEFAULT_DOCKER_NETWORK).getIpAddress(),
+				DEFAULT_ES_HTTP_PORT
+			);
+			
+    	}
+    	
+		throw new IllegalStateException("Unable to determine the correct HTTP address for Elasticsearch container. Container's getHttpHostAddress() returned: " + esContainer.getHttpHostAddress());
+		
 	}
 
 }

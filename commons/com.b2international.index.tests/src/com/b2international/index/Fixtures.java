@@ -39,6 +39,9 @@ public class Fixtures {
 		public static class Scripts {
 			public static final String FIELD_SCORE = "fieldScore";
 		}
+		
+		@ID
+		private String id;
 
 		@Text(analyzer=Analyzers.CASE_SENSITIVE)
 		@Keyword(alias="exact")
@@ -60,7 +63,15 @@ public class Fixtures {
 		
 		private LongSortedSet longSortedSet;
 
-		@JsonProperty
+		@JsonCreator
+		public Data(@JsonProperty("id") String id) {
+			this.id = id;
+		}
+		
+		public String getId() {
+			return id;
+		}
+		
 		public String getAnalyzedField() {
 			return analyzedField;
 		}
@@ -69,7 +80,6 @@ public class Fixtures {
 			this.analyzedField = analyzedField;
 		}
 
-		@JsonProperty
 		public String getField1() {
 			return field1;
 		}
@@ -78,7 +88,6 @@ public class Fixtures {
 			this.field1 = field1;
 		}
 
-		@JsonProperty
 		public String getField2() {
 			return field2;
 		}
@@ -87,7 +96,6 @@ public class Fixtures {
 			this.field2 = field2;
 		}
 
-		@JsonProperty
 		public BigDecimal getBigDecimalField() {
 			return bigDecimalField;
 		}
@@ -96,7 +104,6 @@ public class Fixtures {
 			this.bigDecimalField = bigDecimalField;
 		}
 
-		@JsonProperty
 		public float getFloatField() {
 			return floatField;
 		}
@@ -105,7 +112,6 @@ public class Fixtures {
 			this.floatField = floatField;
 		}
 
-		@JsonProperty
 		public Float getFloatWrapper() {
 			return floatWrapper;
 		}
@@ -114,7 +120,6 @@ public class Fixtures {
 			this.floatWrapper = floatWrapper;
 		}
 
-		@JsonProperty
 		public long getLongField() {
 			return longField;
 		}
@@ -123,7 +128,6 @@ public class Fixtures {
 			this.longField = longField;
 		}
 
-		@JsonProperty
 		public Long getLongWrapper() {
 			return longWrapper;
 		}
@@ -132,7 +136,6 @@ public class Fixtures {
 			this.longWrapper = longWrapper;
 		}
 
-		@JsonProperty
 		public int getIntField() {
 			return intField;
 		}
@@ -141,7 +144,6 @@ public class Fixtures {
 			this.intField = intField;
 		}
 
-		@JsonProperty
 		public Integer getIntWrapper() {
 			return intWrapper;
 		}
@@ -150,7 +152,6 @@ public class Fixtures {
 			this.intWrapper = intWrapper;
 		}
 
-		@JsonProperty
 		public short getShortField() {
 			return shortField;
 		}
@@ -159,7 +160,6 @@ public class Fixtures {
 			this.shortField = shortField;
 		}
 
-		@JsonProperty
 		public Short getShortWrapper() {
 			return shortWrapper;
 		}
@@ -183,6 +183,7 @@ public class Fixtures {
 			if (getClass() != obj.getClass()) return false;
 			Data other = (Data) obj;
 			return true
+					&& Objects.equals(id, other.id) 
 					&& Objects.equals(analyzedField, other.analyzedField) 
 					&& Objects.equals(field1, other.field1) 
 					&& Objects.equals(field2, other.field2) 
@@ -201,6 +202,7 @@ public class Fixtures {
 		@Override
 		public int hashCode() {
 			return Objects.hash(
+				id,
 				analyzedField, 
 				field1, 
 				field2, 
@@ -216,6 +218,7 @@ public class Fixtures {
 		@Override
 		public String toString() {
 			return MoreObjects.toStringHelper(getClass())
+					.add("id", id)
 					.add("analyzedField", analyzedField)
 					.add("bigDecimalField", bigDecimalField)
 					.add("field1", field1)
@@ -265,13 +268,29 @@ public class Fixtures {
 	@Doc
 	public static class ParentData {
 		
+		@ID
+		private final String id;
+		
 		private final String field1;
 		private final NestedData nestedData;
 		
 		@JsonCreator
-		public ParentData(@JsonProperty("field1") String field1, @JsonProperty("nestedData") NestedData nestedData) {
+		public ParentData(@JsonProperty("id") String id, @JsonProperty("field1") String field1, @JsonProperty("nestedData") NestedData nestedData) {
+			this.id = id;
 			this.field1 = field1;
 			this.nestedData = nestedData;
+		}
+		
+		public String getField1() {
+			return field1;
+		}
+		
+		public String getId() {
+			return id;
+		}
+		
+		public NestedData getNestedData() {
+			return nestedData;
 		}
 		
 		@Override
@@ -280,12 +299,14 @@ public class Fixtures {
 			if (obj == null) return false;
 			if (getClass() != obj.getClass()) return false;
 			ParentData other = (ParentData) obj;
-			return Objects.equals(field1, other.field1) && Objects.equals(nestedData, other.nestedData);
+			return Objects.equals(id, other.id) 
+					&& Objects.equals(field1, other.field1) 
+					&& Objects.equals(nestedData, other.nestedData);
 		}
 		
 		@Override
 		public int hashCode() {
-			return Objects.hash(field1, nestedData);
+			return Objects.hash(id, field1, nestedData);
 		}
 		
 	}
@@ -293,11 +314,14 @@ public class Fixtures {
 	@Doc
 	public static class MultipleNestedData {
 		
+		@ID
+		String id;
 		String field1 = "field1";
 		Collection<NestedData> nestedDatas = newHashSet();
 		
 		@JsonCreator
-		public MultipleNestedData(@JsonProperty("nestedDatas") Collection<NestedData> nestedDatas) {
+		public MultipleNestedData(@JsonProperty("id") String id, @JsonProperty("nestedDatas") Collection<NestedData> nestedDatas) {
+			this.id = id;
 			this.nestedDatas.addAll(nestedDatas);
 		}
 		
@@ -346,10 +370,13 @@ public class Fixtures {
 	@Doc
 	public static class DeepData {
 		
+		@ID
+		final String id;
 		final ParentData parentData;
 		
 		@JsonCreator
-		public DeepData(@JsonProperty("parentData") ParentData parentData) {
+		public DeepData(@JsonProperty("id") String id, @JsonProperty("parentData") ParentData parentData) {
+			this.id = id;
 			this.parentData = parentData;
 		}
 		
@@ -359,12 +386,12 @@ public class Fixtures {
 			if (obj == null) return false;
 			if (getClass() != obj.getClass()) return false;
 			DeepData other = (DeepData) obj;
-			return Objects.equals(parentData, other.parentData);
+			return Objects.equals(id, other.id) && Objects.equals(parentData, other.parentData);
 		}
 		
 		@Override
 		public int hashCode() {
-			return Objects.hash(parentData);
+			return Objects.hash(id, parentData);
 		}
 		
 	}
@@ -372,16 +399,25 @@ public class Fixtures {
 	@Doc
 	public static class DataWithMap {
 		
+		@ID
+		private final String id;
+		
 		@JsonIgnore
 		Map<String, Object> properties;
 
+		/*JSON deserialization*/
 		@JsonCreator
-		DataWithMap() {
-			/*JSON deserialization*/
+		DataWithMap(@JsonProperty("id") String id) {
+			this.id = id;
 		}
 		
-		public DataWithMap(Map<String, Object> properties) {
+		public DataWithMap(String id, Map<String, Object> properties) {
+			this.id = id;
 			this.properties = properties;
+		}
+		
+		public String getId() {
+			return id;
 		}
 		
 		@JsonAnyGetter
@@ -403,12 +439,12 @@ public class Fixtures {
 			if (obj == null) return false;
 			if (getClass() != obj.getClass()) return false;
 			DataWithMap other = (DataWithMap) obj;
-			return Objects.equals(properties, other.properties);
+			return Objects.equals(id, other.id) && Objects.equals(properties, other.properties);
 		}
 		
 		@Override
 		public int hashCode() {
-			return Objects.hash(properties);
+			return Objects.hash(id, properties);
 		}
 		
 	}

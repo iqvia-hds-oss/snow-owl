@@ -18,10 +18,7 @@ package com.b2international.snowowl.fhir.core.model.valueset;
 import java.util.Collection;
 import java.util.Date;
 
-import com.b2international.snowowl.core.api.SnowowlRuntimeException;
-import com.b2international.snowowl.core.date.Dates;
-import com.b2international.snowowl.fhir.core.FhirConstants;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.FhirDates;
 import com.b2international.snowowl.fhir.core.model.ValidatingBuilder;
 import com.b2international.snowowl.fhir.core.model.dt.Code;
 import com.b2international.snowowl.fhir.core.model.dt.Uri;
@@ -298,11 +295,7 @@ public class ExpandValueSetRequest {
 		}
 		
 		public Builder date(String date) {
-			try {
-				this.date = Dates.parse(date, FhirConstants.DATE_TIME_FORMAT);
-			} catch (SnowowlRuntimeException e) {
-				throw new BadRequestException("Incorrect date format '%s'.", date);
-			}
+			this.date = FhirDates.parse(date);
 			return this;
 		}
 		

@@ -18,6 +18,7 @@ package com.b2international.snowowl.core.branch.review;
 import java.util.Set;
 
 import com.b2international.index.Doc;
+import com.b2international.index.ID;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -27,7 +28,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Doc(type="conceptchanges")
 public final class ConceptChanges {
 
+	@ID
 	private final String id;
+	
 	private final Set<String> newConcepts;
 	private final Set<String> changedConcepts;
 	private final Set<String> deletedConcepts;

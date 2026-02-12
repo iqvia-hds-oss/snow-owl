@@ -54,7 +54,6 @@
 								icu4j,
 								log4j,
 								guava,
-								commons-io,
 								commons-logging,
 								commons-codec
 							</excludeArtifactIds>
