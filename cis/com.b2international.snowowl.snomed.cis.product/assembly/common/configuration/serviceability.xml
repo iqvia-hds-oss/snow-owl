@@ -210,6 +210,9 @@
 		</encoder>
 	</appender>
 
+	<!-- Suppresses deprecation warnings thrown by the Elasticsearch REST client -->
+	<logger level="ERROR" additivity="false" name="org.elasticsearch.client.RestClient" />
+
 	<root level="INFO">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="STDOUT_USER_ACTIVITY" />
