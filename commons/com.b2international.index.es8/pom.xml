@@ -11,14 +11,20 @@
 	</parent>
 	
 	<properties>
-		<elasticsearch8.version>8.18.0</elasticsearch8.version>
+		<elasticsearch.java.client.version>8.19.8</elasticsearch.java.client.version>
 	</properties>
 	
 	<dependencies>
 		<dependency>
       		<groupId>co.elastic.clients</groupId>
       		<artifactId>elasticsearch-java</artifactId>
-      		<version>${elasticsearch8.version}</version>
+      		<version>${elasticsearch.java.client.version}</version>
+      		<scope>provided</scope>
+    	</dependency>
+    	<dependency>
+      		<groupId>org.elasticsearch.client</groupId>
+      		<artifactId>elasticsearch-rest-client</artifactId>
+      		<version>${elasticsearch.java.client.version}</version>
       		<scope>provided</scope>
     	</dependency>
 		<dependency>

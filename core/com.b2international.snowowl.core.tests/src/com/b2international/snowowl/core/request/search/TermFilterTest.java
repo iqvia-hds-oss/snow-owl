@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * @since 9.7.2
  */
-public class TermFilterTest {
+public class TermFilterTest extends BaseElasticsearchAwareTest {
 
 	@Doc(type = "data")
 	public static class Data {
@@ -98,7 +98,7 @@ public class TermFilterTest {
 	@Before
 	public void setup() {
 		mapper = JsonSupport.getDefaultObjectMapper();
-		index = Indexes.createIndex("data", mapper, new Mappings(Data.class));
+		index = Indexes.createIndex("data", mapper, new Mappings(Data.class), getIndexClientConfiguration());
 		index.admin().create();
 	}
 

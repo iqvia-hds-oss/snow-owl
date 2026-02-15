@@ -133,6 +133,7 @@ public final class EsHttpClient extends EsClientBase {
 	
 	@Override
 	public String version() throws IOException {
+		checkAvailable();
 		return client.info(EXTENDED_DEFAULT).getVersion().getNumber();
 	}
 	

@@ -25,7 +25,6 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.wiring.BundleWiring;
 
-import com.b2international.index.es.EsNode;
 import com.b2international.index.es.client.EsClient;
 import com.google.common.base.Throwables;
 
@@ -67,7 +66,6 @@ public class Activator implements BundleActivator {
 
 	public void stop(BundleContext context) throws Exception {
 		EsClient.closeAll();
-		EsNode.stop();
 		withTccl(() -> LogManager.shutdown());
 		bundleClassLoader = null;
 	}

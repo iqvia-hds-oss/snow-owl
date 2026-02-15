@@ -15,10 +15,8 @@
  */
 package com.b2international.index.es.client;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import java.io.IOException;
-import java.net.InetSocketAddress;
+import java.util.Set;
 
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.get.GetRequest;
@@ -27,25 +25,21 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.RemoteInfo;
 import org.elasticsearch.script.Script;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.b2international.index.Activator;
+import com.b2international.index.IndexException;
 import com.b2international.index.es.EsClientConfiguration;
 import com.b2international.index.es.client.http.EsHttpClient;
-import com.b2international.index.es.client.tcp.EsTcpClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalNotification;
-import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 /**
@@ -54,6 +48,11 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 public interface EsClient extends AutoCloseable {
 
 	Logger LOG = LoggerFactory.getLogger("elastic-snowowl");
+	
+	/**
+	 * We currently only support Elasticsearch 8.x clusters as 9.x requires moving completely to the new Java client.
+	 */
+	Set<String> SUPPORTED_MAJOR_VERSIONS = Set.of("8.");
 	
 	/**
 	 * Gets the Elasticsearch version from the currently configured host using the Info Endpoint. 
@@ -118,26 +117,30 @@ public interface EsClient extends AutoCloseable {
 			CLIENTS_BY_HOST.cleanUp();
 		}
 		
-		@SuppressWarnings("resource")
 		static EsClient onAdd(final EsClientConfiguration configuration) {
 			LOG.info("Connecting to Elasticsearch cluster with ES7 client at '{}'{}, connect timeout: {} ms, socket timeout: {} ms.", 
 					configuration.getClusterUrl(),
 					configuration.isProtected() ? " using basic authentication" : "",
 					configuration.getConnectTimeout(),
 					configuration.getSocketTimeout());
+		
+			EsClient client = new EsHttpClient(configuration);
 			
-			if (configuration.isHttp()) {
-				return new EsHttpClient(configuration);
-			} else {
-				checkState(configuration.isTcp(), "Only TCP and HTTP clients are supported");
-				checkState(!configuration.isProtected(), "TCP connection scheme does not yet support security configuration. Consider switching to HTTP instead.");
-				HostAndPort hostAndPort = HostAndPort.fromString(configuration.getClusterUrl().replaceAll(EsClientConfiguration.TCP_SCHEME, ""));
-				Settings settings = Settings.builder()
-				        .put("cluster.name", configuration.getClusterName())
-				        .build();
-				return new EsTcpClient(new PreBuiltTransportClient(settings)
-						.addTransportAddress(new TransportAddress(new InetSocketAddress(hostAndPort.getHost(), hostAndPort.getPort()))));
+			// check version and report if Elasticsearch version is not supported
+			String elasticsearchVersion;
+			try {
+				elasticsearchVersion = client.version();
+			} catch (Exception e) {
+				throw new IndexException("Failed to determine version of underlying Elasticsearch cluster.", e);
 			}
+			
+			if (SUPPORTED_MAJOR_VERSIONS.stream().noneMatch(supportedMajorVersion -> elasticsearchVersion.startsWith(supportedMajorVersion))) {
+				throw new IndexException(String.format(
+						"The connected Elasticsearch cluster is running a non-supported major version, '%s'. The currently supported major versions are: %s.",
+						elasticsearchVersion, SUPPORTED_MAJOR_VERSIONS));
+			}
+			
+			return client;
 		}
 		
 		static void onRemove(final RemovalNotification<EsClientConfiguration, EsClient> notification) {

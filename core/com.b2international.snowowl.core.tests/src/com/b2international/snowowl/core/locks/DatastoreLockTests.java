@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.b2international.commons.exceptions.LockedException;
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
@@ -36,7 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * @since 7.1.0
  */
-public class DatastoreLockTests {
+public class DatastoreLockTests extends BaseElasticsearchAwareTest {
 
 	private static final String USER1 = "user1@b2ihealthcare.com";
 	private static final String USER2 = "user2@b2ihealthcare.com";
@@ -68,7 +69,7 @@ public class DatastoreLockTests {
 	@Before
 	public void setup() {
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
-		final Index index = Indexes.createIndex("locks", mapper, new Mappings(DatastoreLockIndexEntry.class));
+		final Index index = Indexes.createIndex("locks", mapper, new Mappings(DatastoreLockIndexEntry.class), getIndexClientConfiguration());
 		
 		manager = new DefaultOperationLockManager(index);
 		manager.addLockTargetListener(new Slf4jOperationLockTargetListener());

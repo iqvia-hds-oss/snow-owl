@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,6 @@ public interface IndexClientFactory {
 	// Configuration keys
 	//
 	
-	/**
-	 * Configuration key to use when specifying the configuration directory
-	 * where index specific configuration can be found.
-	 */
-	String CONFIG_DIRECTORY = "configDirectory";
-
-	/**
-	 * Configuration key to use when creating file system based index.
-	 */
-	String DATA_DIRECTORY = "dataDirectory";
-
 	/**
 	 * Configuration key to specify the synchronization interval of the underlying transaction log.
 	 */
@@ -87,6 +76,16 @@ public interface IndexClientFactory {
 	 * Configuration key to specify the URL of the Elasticsearch cluster to connect to.
 	 */
 	String CLUSTER_URL = "clusterUrl";
+	
+	/**
+	 * The default Elasticsearch HTTP port to connect to. Value is {@value #DEFAULT_ES_HTTP_PORT}.
+	 */
+	String DEFAULT_ES_HTTP_PORT = "9200";
+	
+	/**
+	 * The default Elasticsearch cluster URL. Value is {@value #DEFAULT_CLUSTER_URL}.
+	 */
+	String DEFAULT_CLUSTER_URL = "http://127.0.0.1:" + DEFAULT_ES_HTTP_PORT;
 	
 	/**
 	 * Configuration key to specify the user name for authenticating with the Elasticsearch cluster.

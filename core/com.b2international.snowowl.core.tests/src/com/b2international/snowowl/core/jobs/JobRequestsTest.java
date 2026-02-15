@@ -31,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.b2international.commons.exceptions.NotFoundException;
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
@@ -52,7 +53,7 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 /**
  * @since 5.7
  */
-public class JobRequestsTest {
+public class JobRequestsTest extends BaseElasticsearchAwareTest {
 
 	private static final int DEFAULT_STALE_JOB_AGE = 200;
 	private static final int DEFAULT_PURGE_THRESHOLD = 2;
@@ -73,7 +74,7 @@ public class JobRequestsTest {
 		this.mapper = JsonSupport.getDefaultObjectMapper();
 		this.bus = EventBusUtil.getBus();
 		
-		index = Indexes.createIndex("jobs", mapper, new Mappings(RemoteJobEntry.class));
+		index = Indexes.createIndex("jobs", mapper, new Mappings(RemoteJobEntry.class), getIndexClientConfiguration());
 
 		this.tracker = new RemoteJobTracker(index, bus, mapper, DEFAULT_PURGE_THRESHOLD, DEFAULT_STALE_JOB_AGE);
 		

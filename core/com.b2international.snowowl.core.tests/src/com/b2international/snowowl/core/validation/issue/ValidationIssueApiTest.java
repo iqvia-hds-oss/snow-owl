@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.b2international.commons.CompareUtils;
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
@@ -51,14 +52,14 @@ import com.google.common.collect.ImmutableMap;
 /**
  * @since 6.4
  */
-public class ValidationIssueApiTest {
+public class ValidationIssueApiTest extends BaseElasticsearchAwareTest {
 
 	private ServiceProvider context;
 	
 	@Before
 	public void setup() {
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
-		final Index index = Indexes.createIndex(UUID.randomUUID().toString(), mapper, new Mappings(ValidationIssue.class, ValidationRule.class));
+		final Index index = Indexes.createIndex(UUID.randomUUID().toString(), mapper, new Mappings(ValidationIssue.class, ValidationRule.class), getIndexClientConfiguration());
 		index.admin().create();
 		final ValidationRepository repository = new ValidationRepository(index);
 		final ClassPathScanner scanner = new ClassPathScanner("com.b2international");

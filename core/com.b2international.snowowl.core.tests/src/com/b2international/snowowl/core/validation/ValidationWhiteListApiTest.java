@@ -26,6 +26,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
@@ -44,7 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * @since 6.1
  */
-public class ValidationWhiteListApiTest {
+public class ValidationWhiteListApiTest extends BaseElasticsearchAwareTest {
 
 	private static final ComponentIdentifier COMPONENT_ID = ComponentIdentifier.of("concept", "123");
 	
@@ -53,7 +54,7 @@ public class ValidationWhiteListApiTest {
 	@Before
 	public void setup() {
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
-		final Index index = Indexes.createIndex(UUID.randomUUID().toString(), mapper, new Mappings(ValidationWhiteList.class, ValidationIssue.class));
+		final Index index = Indexes.createIndex(UUID.randomUUID().toString(), mapper, new Mappings(ValidationWhiteList.class, ValidationIssue.class), getIndexClientConfiguration());
 		index.admin().create();
 		final ValidationRepository repository = new ValidationRepository(index);
 		context = ServiceProvider.EMPTY.inject()

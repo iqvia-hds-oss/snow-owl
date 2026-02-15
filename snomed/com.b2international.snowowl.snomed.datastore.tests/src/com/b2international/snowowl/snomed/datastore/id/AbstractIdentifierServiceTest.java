@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
+import com.b2international.index.BaseElasticsearchAwareTest;
 import com.b2international.snowowl.core.terminology.ComponentCategory;
 import com.b2international.snowowl.snomed.cis.ISnomedIdentifierService;
 import com.b2international.snowowl.snomed.cis.domain.IdentifierStatus;
@@ -33,7 +34,7 @@ import com.google.common.collect.Sets;
 /**
  * @since 4.5
  */
-public abstract class AbstractIdentifierServiceTest {
+public abstract class AbstractIdentifierServiceTest extends BaseElasticsearchAwareTest {
 
 	protected static final String B2I_NAMESPACE = SnomedConstants.B2I_NAMESPACE;
 
