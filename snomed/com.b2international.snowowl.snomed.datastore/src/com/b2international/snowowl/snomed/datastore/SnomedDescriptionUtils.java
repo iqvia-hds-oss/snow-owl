@@ -20,11 +20,14 @@ import static com.google.common.collect.Maps.newHashMap;
 
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.ExplicitFirstOrdering;
 import com.b2international.commons.exceptions.BadRequestException;
+import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.domain.BranchContext;
@@ -33,6 +36,7 @@ import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.datastore.config.SnomedLanguageConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.*;
 
 /**
@@ -116,7 +120,39 @@ public final class SnomedDescriptionUtils {
 	 * @return the converted language reference set identifiers or an empty {@link List}, never <code>null</code>
 	 */
 	public static List<String> getLanguageRefSetIds(final BranchContext context, final List<ExtendedLocale> locales) {
-		return getLanguageRefSetIds(getLanguageMapping(context), locales);
+		if (CompareUtils.isEmpty(locales)) {
+			return Collections.emptyList();
+		}
+
+		/*
+		 * Rewrite appearances of "*" to all locales available from the terminology
+		 * resource, avoiding duplicate entries. The first mention of a locale is
+		 * retained in the final list so the order of preference is preserved.
+		 */
+		final Supplier<List<ExtendedLocale>> resourceLocales = Suppliers.memoize(() -> getResourceLocales(context));
+		final List<ExtendedLocale> wildcardExpandedLocales = locales.stream().flatMap(locale -> {
+			if (AcceptLanguageHeader.WILDCARD.equals(locale.getLanguage())) {
+				return resourceLocales.get().stream();
+			} else {
+				return Stream.of(locale);
+			}
+		})
+		.distinct()
+		.collect(Collectors.toList());
+		
+		return getLanguageRefSetIds(getLanguageMapping(context), wildcardExpandedLocales);
+	}
+
+	private static List<ExtendedLocale> getResourceLocales(final BranchContext context) {
+		final TerminologyResource resource = context.service(TerminologyResource.class);
+		final List<String> locales = resource.getLocales();
+		if (locales == null) {
+			return List.of();
+		}
+		
+		return locales.stream()
+			.map(locale -> ExtendedLocale.valueOf(locale))
+			.collect(Collectors.toList());
 	}
 
 	public static List<String> getLanguageRefSetIds(final ListMultimap<String, String> languageMap, final List<ExtendedLocale> locales) {
@@ -128,13 +164,7 @@ public final class SnomedDescriptionUtils {
 		final List<ExtendedLocale> unconvertableLocales = new ArrayList<ExtendedLocale>();
 
 		for (final ExtendedLocale extendedLocale : locales) {
-			Collection<String> mappedRefSetIds;
-
-			if (!extendedLocale.getLanguageRefSetId().isEmpty()) {
-				mappedRefSetIds = Collections.singleton(extendedLocale.getLanguageRefSetId());
-			} else {
-				mappedRefSetIds = languageMap.get(extendedLocale.getLanguageTag());
-			}
+			Collection<String> mappedRefSetIds = mapToLanguageRefSetIds(languageMap, extendedLocale);
 
 			if (mappedRefSetIds.isEmpty()) {
 				unconvertableLocales.add(extendedLocale);
@@ -152,6 +182,15 @@ public final class SnomedDescriptionUtils {
 		}
 
 		return languageRefSetIds;
+	}
+
+	private static Collection<String> mapToLanguageRefSetIds(final ListMultimap<String, String> languageMap, final ExtendedLocale extendedLocale) {
+
+		if (!extendedLocale.getLanguageRefSetId().isEmpty()) {
+			return Collections.singleton(extendedLocale.getLanguageRefSetId());
+		} else {
+			return languageMap.get(extendedLocale.getLanguageTag());
+		}
 	}
 	
 	/**
