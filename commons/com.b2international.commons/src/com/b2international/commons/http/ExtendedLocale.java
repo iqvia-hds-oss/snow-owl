@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,20 @@ public final class ExtendedLocale implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
-	private static final Pattern EXTENDED_LOCALE_PATTERN = Pattern.compile("([a-zA-Z]{2})(-([a-zA-Z]{2}))?(-x-([1-9][0-9]{5,17}))?");
+	private static final Pattern EXTENDED_LOCALE_PATTERN = Pattern.compile(""
+		+ "(?<language>\\*|[a-zA-Z]{2})" 
+		+ "(-(?<country>[a-zA-Z]{2}))?"
+		+ "(-x-(?<languageRefSetId>[1-9][0-9]{5,17}))?");
 
 	@JsonCreator
 	public static ExtendedLocale valueOf(String input) {
 		final Matcher matcher = EXTENDED_LOCALE_PATTERN.matcher(input);
 		if (matcher.matches()) {
-			return new ExtendedLocale(matcher.group(1), matcher.group(3), matcher.group(5));
+			return new ExtendedLocale(
+				matcher.group("language"), 
+				matcher.group("country"), 
+				matcher.group("languageRefSetId")
+			);
 		} else {
 			throw new IllegalArgumentException(String.format("Accept-Language header value '%s' is not supported.", input));
 		}
