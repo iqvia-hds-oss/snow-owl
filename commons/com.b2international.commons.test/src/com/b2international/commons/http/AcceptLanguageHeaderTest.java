@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2023-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,16 @@ import org.junit.Test;
 public class AcceptLanguageHeaderTest {
 
 	@Test(expected = IllegalArgumentException.class)
-	public void unsupportedMixedHeaderValue() throws Exception {
-		AcceptLanguageHeader.parseHeader("de,*");
+	public void unsupportedValue() throws Exception {
+		AcceptLanguageHeader.parseHeader("zul");
+	}
+	
+	@Test
+	public void wildcardWithNonWildcard() throws Exception {
+		List<ExtendedLocale> locales = AcceptLanguageHeader.parseHeader("en,de,*");
+		assertThat(locales)
+			.extracting(ExtendedLocale::getLanguageTag)
+			.containsExactly("en", "de", "*");
 	}
 	
 	@Test
