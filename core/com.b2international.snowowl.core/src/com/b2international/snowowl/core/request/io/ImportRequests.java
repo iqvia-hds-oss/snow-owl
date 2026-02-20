@@ -18,7 +18,7 @@ package com.b2international.snowowl.core.request.io;
 import com.b2international.snowowl.core.ResourceURI;
 
 /**
- * @since 10.0
+ * @since 10.0.0.rc1
  */
 public class ImportRequests {
 	public static final String IMPORT_PREFIX = "import-"; 

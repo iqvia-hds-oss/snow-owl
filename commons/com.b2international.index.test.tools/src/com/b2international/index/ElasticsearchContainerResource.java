@@ -23,7 +23,7 @@ import com.google.common.base.Strings;
  * Simple JUnit rule that starts/stops an Elasticsearch container for the duration of a single test.
  * Good for tests that require a specific version of Elasticsearch to be booted up.
  * 
- * @since 10.0
+ * @since 10.0.0.rc1
  */
 public final class ElasticsearchContainerResource extends ExternalResource {
 

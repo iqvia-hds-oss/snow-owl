@@ -18,7 +18,7 @@ package com.b2international.index;
 import java.util.Map;
 
 /**
- * @since 10.0
+ * @since 10.0.0.rc1
  */
 public abstract class BaseElasticsearchAwareTest {
 

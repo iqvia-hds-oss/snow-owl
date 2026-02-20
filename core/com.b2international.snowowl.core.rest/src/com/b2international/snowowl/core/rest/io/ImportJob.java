@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * @since 10.0
+ * @since 10.0.0.rc1
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public final class ImportJob implements Serializable {

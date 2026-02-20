@@ -46,7 +46,7 @@ import com.google.common.collect.ImmutableMap;
  * memoize it in a ClassRule or singleton rule in order to use the same instance unless you need a specific Elasticsearch version and separate
  * container for a given test.
  * 
- * @since 10.0
+ * @since 10.0.0.rc1
  */
 public final class ElasticsearchContainer {
 

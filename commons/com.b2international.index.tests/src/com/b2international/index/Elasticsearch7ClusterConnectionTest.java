@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * @since 10.0
+ * @since 10.0.0.rc1
  */
 public class Elasticsearch7ClusterConnectionTest {
 
