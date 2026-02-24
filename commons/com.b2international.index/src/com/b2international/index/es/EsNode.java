@@ -23,6 +23,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.elasticsearch.analysis.common.CommonAnalysisPlugin;
 import org.elasticsearch.client.Client;
@@ -41,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.b2international.index.Activator;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
 import net.jodah.failsafe.Failsafe;
@@ -212,6 +214,13 @@ public final class EsNode extends Node {
 					.getPendingTasks()
 					.size();
 		});
+	}
+
+	@VisibleForTesting
+	public static void overrideSearchSynonyms(List<String> synonyms) throws IOException {
+		if (INSTANCE != null) {
+			Files.write(INSTANCE.getEnvironment().configFile().resolve(SYNONYMS_FILE), synonyms);
+		}
 	}
 	
 }
