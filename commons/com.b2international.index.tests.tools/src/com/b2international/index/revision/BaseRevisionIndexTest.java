@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,13 +41,15 @@ public abstract class BaseRevisionIndexTest {
 	protected static final String MAIN = RevisionBranch.MAIN_PATH;
 	protected static final String STORAGE_KEY1 = "1";
 	protected static final String STORAGE_KEY2 = "2";
+	protected static final String STORAGE_KEY3 = "3";
+	protected static final String STORAGE_KEY4 = "4";
 	
 	private AtomicLong storageKeys = new AtomicLong(3);
 	
 	private final Collection<Hooks.Hook> hooks = newArrayListWithCapacity(2);
 	
 	@Rule
-	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings);
+	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonyms);
 
 	@After
 	public void after() {
@@ -62,7 +64,25 @@ public abstract class BaseRevisionIndexTest {
 		return Collections.emptySet();
 	}
 	
+	/**
+	 * Subclasses may override this method to return an Elasticsearch major that they support. By default it returns `*`, which represents all versions are supported and tests should run on all versions.
+	 * 
+	 * @return
+	 */
+	protected String version() {
+		return "*";
+	}
+	
 	protected void configureMapper(ObjectMapper mapper) {
+	}
+	
+	/**
+	 * Subclasses may override this method to provide a List of synonyms (single string values with the format "word,syn") for the underlying index to perform search tests. By defaults returns an empty list which clears out any previous synonym rules.
+	 * 
+	 * @return
+	 */
+	protected List<String> configureSynonyms() {
+		return List.of();
 	}
 	
 	protected Map<String, Object> getIndexSettings() {
@@ -128,8 +148,8 @@ public abstract class BaseRevisionIndexTest {
 		return index().read(branch, index -> index.get(type, key));
 	}
 	
-	protected final void indexRevision(final String branchPath, final Revision... revisions) {
-		commit(branchPath, Arrays.asList(revisions));
+	protected final Commit indexRevision(final String branchPath, final Revision... revisions) {
+		return commit(branchPath, Arrays.asList(revisions));
 	}
 	
 	protected final <T extends Revision> Commit indexChange(final String branchPath, final T oldRevision, final T newRevision) {

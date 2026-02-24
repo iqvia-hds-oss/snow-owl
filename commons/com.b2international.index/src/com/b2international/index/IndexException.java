@@ -20,6 +20,10 @@ package com.b2international.index;
  */
 public class IndexException extends RuntimeException {
 
+	public IndexException(String message) {
+		super(message);
+	}
+	
 	public IndexException(String message, Throwable t) {
 		super(message, t);
 	}

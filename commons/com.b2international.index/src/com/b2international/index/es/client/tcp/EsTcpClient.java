@@ -46,7 +46,7 @@ import com.b2international.index.es.client.IndicesClient;
 
 /**
  * @since 6.11
- * @deprecated
+ * @deprecated - will be removed in 10.0.0, use the HTTP based {@link EsHttpClient} instead
  */
 public final class EsTcpClient extends EsClientBase {
 
@@ -59,6 +59,13 @@ public final class EsTcpClient extends EsClientBase {
 		this.client = client;
 		this.indicesClient = new IndicesTcpClient(client.admin().indices());
 		this.clusterClient = new ClusterTcpClient(client.admin().cluster());
+	}
+	
+	@Override
+	public String version() throws IOException {
+		// fake version to mimic 7.x behavior, TCP support has been removed in 8.x of ES, no need to ask the connected ES what version it has
+		// replace this with actual logic if we need an actual 7.x ES version for anything
+		return "7.x";
 	}
 	
 	@Override
