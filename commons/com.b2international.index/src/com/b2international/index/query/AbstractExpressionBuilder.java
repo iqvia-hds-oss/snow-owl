@@ -170,11 +170,13 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 	}
 	
 	public static boolean shouldMergeSingleArgumentPredicate(Expression expression) {
-		return expression instanceof SingleArgumentPredicate<?> && !(expression instanceof RegexpPredicate);
+		return expression instanceof SingleArgumentPredicate<?> 
+			&& !(expression instanceof RegexpPredicate)
+			&& !(expression instanceof PrefixPredicate);
 	}
 
 	public static boolean shouldMergeSetPredicate(Expression expression) {
-		return expression instanceof SetPredicate<?> && !(expression instanceof PrefixPredicate);
+		return expression instanceof SetPredicate<?>;
 	}
 	
 }

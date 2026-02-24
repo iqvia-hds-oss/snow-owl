@@ -77,7 +77,20 @@ public final class StagingArea {
 	private boolean squashMerge;
 	private SetMultimap<Class<?>, String> revisionsToReviseOnMergeSource;
 	private SetMultimap<Class<?>, String> externalRevisionsToReviseOnMergeSource;
-	private SetMultimap<ObjectId, ObjectId> resolvedAddedInSourceAndTargetComponentsToIgnore;
+	
+	/*
+	 * XXX: Components that require a commit detail entry in a merge commit document
+	 * to indicate that the scenario was resolved by marking one side of the
+	 * contribution as deleted ("added vs. added" cases) or by writing a revision
+	 * reflecting changes coming from both sides ("changed vs. changed" cases).
+	 * 
+	 * Note that these objects were not in conflict! "Added vs. added" scenarios may
+	 * arise from component donation while changes that modify different properties,
+	 * or the same set of properties to the same values in parallel are also allowed.
+	 */
+	private SetMultimap<ObjectId, ObjectId> deletedComponentsInMerge;
+	private SetMultimap<ObjectId, ObjectId> changedComponentsInMerge;
+	
 	private Object context;
 
 	StagingArea(DefaultRevisionIndex index, String branchPath, ObjectMapper mapper) {
@@ -416,11 +429,14 @@ public final class StagingArea {
 			if (value.isChanged() && value.isCommit()) {
 				Object object = value.getObject();
 				if (object instanceof Revision) {
-					RevisionDiff revisionDiff = value.getDiff();
+					final RevisionDiff revisionDiff = value.getDiff();
 					final Revision rev = revisionDiff.newRevision;
+					final ObjectId containerId = checkNotNull(rev.getContainerId(), "Missing containerId for revision: %s", rev);
+					final ObjectId objectId = rev.getObjectId();
 
 					if (isMerge()) {
 						revisionsToReviseOnMergeSource.put(rev.getClass(), rev.getId());
+						injectChangedEntryToMergeCommit(containerId, objectId);
 					}
 					
 					writer.put(rev);
@@ -428,10 +444,8 @@ public final class StagingArea {
 					if (!revisionDiff.hasChanges()) {
 						return;
 					}
-
+					
 					// register component as changed in commit doc
-					ObjectId containerId = checkNotNull(rev.getContainerId(), "Missing containerId for revision: %s", rev);
-					ObjectId objectId = rev.getObjectId();
 					changedComponentsByContainer.put(containerId, objectId);
 					
 					if (revisionDiff.diff() != null) {
@@ -455,11 +469,14 @@ public final class StagingArea {
 			}
 		}
 		
-		// register detail changes only if this is a regular commit, or is it a squash merge commit 
-		final List<CommitDetail> details;
+		final List<CommitDetail> details = Lists.newArrayList();
 		
 		if (!isMerge() || squashMerge) {
-			details = Lists.newArrayList();
+			
+			/*
+			 * This is a regular commit or a squash merge operation, both of which require full commit detail expansion.
+			 */
+			
 			// collect property changes
 			revisionsByChange.asMap().forEach((change, objects) -> {
 				ListMultimap<String, String> objectIdsByType = ArrayListMultimap.create();
@@ -484,6 +501,15 @@ public final class StagingArea {
 					throw new UnsupportedOperationException("Unknown change: " + change);
 				}
 			});
+
+			/*
+			 * For squash merges also make a note of objects where a revision was written
+			 * but did not result in a property-level change. We will need proof of these in
+			 * future merge operations.
+			 */
+			if (squashMerge) {
+				changedComponentsByContainer.putAll(changedComponentsInMerge);
+			}
 			
 			groupDetailsByContainer(newComponentsByContainer, changedComponentsByContainer, removedComponentsByContainer, details::add);
 			
@@ -515,13 +541,17 @@ public final class StagingArea {
 					}
 				}
 			});
-		} else if (isMerge() && !resolvedAddedInSourceAndTargetComponentsToIgnore.isEmpty()) {
-			// in case of non-squash merge commit make sure every resolved added vs added conflict gets a removed entry in the merge commit detail list so that components cannot reappear as added when comparing
-			// https://snowowl.atlassian.net/browse/SO-6448
-			details = new ArrayList<>(resolvedAddedInSourceAndTargetComponentsToIgnore.keySet().size());
-			groupDetailsByContainer(null, null, resolvedAddedInSourceAndTargetComponentsToIgnore, details::add);
+		
 		} else {
-			details = Collections.emptyList();
+			
+			/*
+			 * This is a non-squash merge commit which should only include details to avoid
+			 * ending up with multiple revisions for a single identifier later on.
+			 * 
+			 * - https://snowowl.atlassian.net/browse/SO-6448 
+			 * - https://snowowl.atlassian.net/browse/SO-6533
+			 */
+			groupDetailsByContainer(null, changedComponentsInMerge, deletedComponentsInMerge, details::add);
 		}
 		
 		// free up memory before committing 
@@ -686,7 +716,8 @@ public final class StagingArea {
 		stagedObjects = newHashMap();
 		revisionsToReviseOnMergeSource = HashMultimap.create();
 		externalRevisionsToReviseOnMergeSource = HashMultimap.create();
-		resolvedAddedInSourceAndTargetComponentsToIgnore = HashMultimap.create();
+		deletedComponentsInMerge = HashMultimap.create();
+		changedComponentsInMerge = HashMultimap.create();
 	}
 
 	/**
@@ -836,15 +867,32 @@ public final class StagingArea {
 	}
 
 	/**
-	 * Makes the specified object's history on the merge source unavailable in certain operations. A poison pill (removal entry) will be placed in the underlying merge commit to avoid reappearance of change entries in revision compare for example. 
+	 * Makes the specified object's history on the merge source unavailable in
+	 * certain operations. A poison pill (removal entry) will be placed in the
+	 * underlying merge commit to avoid reappearance of change entries in revision
+	 * compare for example.
 	 * 
-	 * @param componentId - the object to ignore 
 	 * @param containerId - the object's container component id which is needed to group the removal entries properly and save space
+	 * @param componentId - the object to ignore
 	 */
-	public void injectPoisonPillToMergeCommit(ObjectId componentId, ObjectId containerId) {
+	public void injectPoisonPillToMergeCommit(ObjectId containerId, ObjectId componentId) {
 		checkNotNull(containerId, "containerId may not be null");
 		checkNotNull(componentId, "componentId may not be null");
-		resolvedAddedInSourceAndTargetComponentsToIgnore.put(containerId, componentId);
+		deletedComponentsInMerge.put(containerId, componentId);
+	}
+	
+	/**
+	 * Places a detail object in a merge commit to indicate that a combined
+	 * representation was written of the component with the merge commit as its
+	 * "created" timestamp.
+	 * 
+	 * @param containerId - the object's container component id which is needed to group the removal entries properly and save space
+	 * @param componentId - the object to ignore
+	 */
+	public void injectChangedEntryToMergeCommit(ObjectId containerId, ObjectId componentId) {
+		checkNotNull(containerId, "containerId may not be null");
+		checkNotNull(componentId, "componentId may not be null");
+		changedComponentsInMerge.put(containerId, componentId);
 	}
 	
 	/**
@@ -989,7 +1037,7 @@ public final class StagingArea {
 						conflicts.add(conflict);
 					} else {
 						// make sure we inject a poison pill (removal entry) to the merge commit so when processed in compare it won't be visible
-						injectPoisonPillToMergeCommit(componentKey, addedOnSourceObject.getContainerId());
+						injectPoisonPillToMergeCommit(addedOnSourceObject.getContainerId(), componentKey);
 						
 						// ensure we revise the one coming from source (or target?)
 						revisionsToReviseOnMergeSource.put(type, revisionId);
