@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,14 @@
 package com.b2international.snowowl.snomed.core.ecl;
 
 import static com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator.generateDescriptionId;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.util.*;
 
-import org.junit.ClassRule;
 import org.junit.Test;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.SyntaxException;
-import com.b2international.index.SynonymsRule;
 import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.snowowl.core.date.DateFormats;
@@ -43,10 +41,10 @@ import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemb
  */
 public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclEvaluationRequestTest {
 
-	@ClassRule
-	public static SynonymsRule synonyms = new SynonymsRule(
-		"history,previous"
-	);
+	@Override
+	protected List<String> configureSynonyms() {
+		return List.of("history,previous");
+	}
 	
 	@Test
 	public void concept_activeOnly() throws Exception {

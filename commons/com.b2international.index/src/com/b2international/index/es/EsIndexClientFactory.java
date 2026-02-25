@@ -26,6 +26,7 @@ import org.elasticsearch.node.Node;
 
 import com.b2international.index.IndexClient;
 import com.b2international.index.IndexClientFactory;
+import com.b2international.index.IndexException;
 import com.b2international.index.admin.IndexAdmin;
 import com.b2international.index.es.admin.EsIndexAdmin;
 import com.b2international.index.es.client.EsClient;
@@ -65,6 +66,10 @@ public final class EsIndexClientFactory implements IndexClientFactory {
 			final String clusterUrl = (String) settings.get(CLUSTER_URL);
 			client = EsClient.create(new EsClientConfiguration(clusterName, clusterUrl, username, password, connectTimeout, socketTimeout, sslContext, mapper));
 		} else {
+			if (!EsClient.isDevVersion()) {
+				throw new IndexException("clusterUrl is not set, and embedded Elasticsearch is only supported for development versions of Elasticsearch. Set the 'clusterUrl' setting to connect to an external Elasticsearch cluster.");
+			}
+			
 			// Start an embedded ES node only if a cluster URL is not set
 			Node node = EsNode.getInstance(clusterName, configDirectory, dataDirectory, persistent);
 			// check sysprop to force HTTP client when still using embedded mode

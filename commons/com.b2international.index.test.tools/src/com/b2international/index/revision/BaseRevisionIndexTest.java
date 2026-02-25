@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public abstract class BaseRevisionIndexTest {
 	private final Collection<Hooks.Hook> hooks = newArrayListWithCapacity(2);
 	
 	@Rule
-	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version);
+	public final IndexResource index = IndexResource.create(getTypes(), this::configureMapper, this::getIndexSettings, this::version, this::configureSynonyms);
 
 	@After
 	public void after() {
@@ -74,6 +74,15 @@ public abstract class BaseRevisionIndexTest {
 	}
 	
 	protected void configureMapper(ObjectMapper mapper) {
+	}
+	
+	/**
+	 * Subclasses may override this method to provide a List of synonyms (single string values with the format "word,syn") for the underlying index to perform search tests. By defaults returns an empty list which clears out any previous synonym rules.
+	 * 
+	 * @return
+	 */
+	protected List<String> configureSynonyms() {
+		return List.of();
 	}
 	
 	protected Map<String, Object> getIndexSettings() {
