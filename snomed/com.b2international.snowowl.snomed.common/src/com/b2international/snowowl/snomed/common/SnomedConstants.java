@@ -235,6 +235,10 @@ public abstract class SnomedConstants {
 		public static final String MOVED_ELSEWHERE = "900000000000487009";
 		public static final String INAPPROPRIATE = "900000000000494007";
 		public static final String PENDING_MOVE = "900000000000492006";
+		
+		/**
+		 * @deprecated - no longer in use after 2026 January SNOMED International Edition release, kept here only for historical reasons, and if any logic requires the exclusion of this concept for any reason
+		 */
 		public static final String CONCEPT_NON_CURRENT = "900000000000495008";
 		public static final String NONCONFORMANCE_TO_EDITORIAL_POLICY = "723277005";
 		public static final String NOT_SEMANTICALLY_EQUIVALENT = "723278000";
