@@ -16,7 +16,7 @@ import com.google.common.collect.Sets
 
 def Set<ComponentIdentifier> issues = []
 def RevisionSearcher searcher = ctx.service(RevisionSearcher.class)
-def activeDescriptionIndicatorIds = [Concepts.PENDING_MOVE, Concepts.LIMITED, Concepts.CONCEPT_NON_CURRENT]
+def activeDescriptionIndicatorIds = [Concepts.PENDING_MOVE, Concepts.LIMITED]
 
 if (params.isUnpublishedOnly) {
 	

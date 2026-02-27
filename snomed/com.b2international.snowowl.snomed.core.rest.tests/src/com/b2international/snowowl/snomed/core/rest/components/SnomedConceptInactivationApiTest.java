@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
-import com.google.common.collect.Maps;
 
 /**
  * @since 7.7
@@ -61,7 +60,8 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 			.body("statedParentIds", equalTo(List.of(IComponent.ROOT_ID)))
 			.body("statedAncestorIds", equalTo(List.of()))
 			.body("descriptions.items.active", everyItem(equalTo(true)))
-			.body("descriptions.items.inactivationProperties.inactivationIndicator.id", everyItem(equalTo(Concepts.CONCEPT_NON_CURRENT)));
+			// as of 2026 Jan, CNC indicators should not be generated anymore, so expecting this path to be a null value in all cases
+			.body("descriptions.items.inactivationProperties.inactivationIndicator.id", nullValue());
 	}
 	
 	@Test
@@ -308,35 +308,35 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 			.body("inactivationProperties.associationTargets", equalTo(List.of()));
 	}
 	
-	@Test
-	public void reactivateConceptShouldRemoveConceptNonCurrentIndicatorsFromDescriptions() throws Exception {
-		final String inactiveConceptId = createNewConcept(branchPath, createConceptRequestBody(ROOT_CONCEPT, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.UK_PREFERRED_MAP, false)
-				.with("commitComment", "Created inactive concept"));
-		
-		// create non-current indicators for the pre-inactivated concept's descriptions 
-		getConcept(inactiveConceptId, "descriptions()").getDescriptions().forEach(description -> {
-			Map<?, ?> requestBody = createRefSetMemberRequestBody(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR, description.getId())
-					.with(SnomedRf2Headers.FIELD_VALUE_ID, Concepts.CONCEPT_NON_CURRENT)
-					.with("commitComment", "Created new indicator member for description: " + description.getId());
-
-			createComponent(branchPath, SnomedComponentType.MEMBER, requestBody).statusCode(201);
-		});
-		
-		reactivateConcept(branchPath, inactiveConceptId);
-		
-		assertGetConcept(inactiveConceptId, "inactivationProperties(),descriptions(expand(inactivationProperties()))")
-			.statusCode(200)
-			.body("active", equalTo(true))
-			.body("parentIds", equalTo(List.of(IComponent.ROOT_ID)))
-			.body("statedParentIds", equalTo(List.of(Concepts.ROOT_CONCEPT)))
-			.body("ancestorIds", equalTo(List.of()))
-			.body("statedAncestorIds", equalTo(List.of(IComponent.ROOT_ID)))
-			.body("inactivationProperties.inactivationIndicator", nullValue())
-			.body("inactivationProperties.associationTargets", equalTo(List.of()))
-			.body("descriptions.items.active", everyItem(equalTo(true)))
-			.body("descriptions.items.inactivationProperties.inactivationIndicator[0].id", nullValue())
-			.body("descriptions.items.inactivationProperties.inactivationIndicator[1].id", nullValue());
-	}
+//	@Test
+//	public void reactivateConceptShouldRemoveConceptNonCurrentIndicatorsFromDescriptions() throws Exception {
+//		final String inactiveConceptId = createNewConcept(branchPath, createConceptRequestBody(ROOT_CONCEPT, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.UK_PREFERRED_MAP, false)
+//				.with("commitComment", "Created inactive concept"));
+//		
+//		// create non-current indicators for the pre-inactivated concept's descriptions
+//		getConcept(inactiveConceptId, "descriptions()").getDescriptions().forEach(description -> {
+//			Map<?, ?> requestBody = createRefSetMemberRequestBody(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR, description.getId())
+//					.with(SnomedRf2Headers.FIELD_VALUE_ID, Concepts.CONCEPT_NON_CURRENT)
+//					.with("commitComment", "Created new indicator member for description: " + description.getId());
+//
+//			createComponent(branchPath, SnomedComponentType.MEMBER, requestBody).statusCode(201);
+//		});
+//		
+//		reactivateConcept(branchPath, inactiveConceptId);
+//		
+//		assertGetConcept(inactiveConceptId, "inactivationProperties(),descriptions(expand(inactivationProperties()))")
+//			.statusCode(200)
+//			.body("active", equalTo(true))
+//			.body("parentIds", equalTo(List.of(IComponent.ROOT_ID)))
+//			.body("statedParentIds", equalTo(List.of(Concepts.ROOT_CONCEPT)))
+//			.body("ancestorIds", equalTo(List.of()))
+//			.body("statedAncestorIds", equalTo(List.of(IComponent.ROOT_ID)))
+//			.body("inactivationProperties.inactivationIndicator", nullValue())
+//			.body("inactivationProperties.associationTargets", equalTo(List.of()))
+//			.body("descriptions.items.active", everyItem(equalTo(true)))
+//			.body("descriptions.items.inactivationProperties.inactivationIndicator[0].id", nullValue())
+//			.body("descriptions.items.inactivationProperties.inactivationIndicator[1].id", nullValue());
+//	}
 	
 	@Test
 	public void inactivateConceptDefinitionStatusRemainsPrimitive() {
