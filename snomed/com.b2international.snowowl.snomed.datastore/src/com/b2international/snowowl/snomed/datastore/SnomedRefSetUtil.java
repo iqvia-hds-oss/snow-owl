@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import com.google.common.collect.*;
 public abstract class SnomedRefSetUtil {
 
 	public static final Set<String> ATTRIBUTE_VALUES_FOR_ACTIVE_CONCEPTS = ImmutableSet.of(Concepts.PENDING_MOVE);
-	public static final Set<String> ATTRIBUTE_VALUES_FOR_ACTIVE_DESCRIPTIONS = ImmutableSet.of(Concepts.CONCEPT_NON_CURRENT, Concepts.PENDING_MOVE);
+	public static final Set<String> ATTRIBUTE_VALUES_FOR_ACTIVE_DESCRIPTIONS = ImmutableSet.of(Concepts.PENDING_MOVE);
 	
 	private static BiMap<DataType, String> DATATYPE_TO_REFSET_MAP;
 	

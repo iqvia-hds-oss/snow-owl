@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.b2international.snowowl.snomed.core.rest.components;
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.updateComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewConcept;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -44,7 +45,7 @@ import com.google.common.collect.Iterables;
 public class SnomedComponentInactivationApiTest extends AbstractSnomedApiTest {
 
 	@Test
-	public void reuseConceptAndDescriptionInactivationIndicators() throws Exception {
+	public void reuseConceptInactivationIndicators() throws Exception {
 		// create a concept
 		String conceptId = createNewConcept(branchPath);
 		SnomedConcept concept = getConcept(conceptId, "descriptions()");
@@ -108,17 +109,13 @@ public class SnomedComponentInactivationApiTest extends AbstractSnomedApiTest {
 		assertEquals(null, afterInactivationConceptInactivationIndicatorMember.getEffectiveTime());
 		assertEquals(false, afterInactivationConceptInactivationIndicatorMember.isReleased());
 		assertEquals(Concepts.DUPLICATE, afterInactivationConceptInactivationIndicatorMember.getProperties().get(SnomedRf2Headers.FIELD_VALUE_ID));
+
+		// assert that as of 2026 Jan, CNC indicators are not generated/reactivated/managed
+		assertNull(fsnInactivationIndicatorMember);
+		assertNull(afterInactivationFsnInactivationIndicatorMember);
 		
-		assertEquals(fsnInactivationIndicatorMember.getId(), afterInactivationFsnInactivationIndicatorMember.getId());
-		assertEquals(null, afterInactivationFsnInactivationIndicatorMember.getEffectiveTime());
-		assertEquals(false, afterInactivationFsnInactivationIndicatorMember.isReleased());
-		assertEquals(Concepts.CONCEPT_NON_CURRENT, afterInactivationFsnInactivationIndicatorMember.getProperties().get(SnomedRf2Headers.FIELD_VALUE_ID));
-		
-		assertEquals(ptInactivationIndicatorMember.getId(), afterInactivationPtInactivationIndicatorMember.getId());
-		assertEquals(null, afterInactivationPtInactivationIndicatorMember.getEffectiveTime());
-		assertEquals(false, afterInactivationPtInactivationIndicatorMember.isReleased());
-		assertEquals(Concepts.CONCEPT_NON_CURRENT, afterInactivationPtInactivationIndicatorMember.getProperties().get(SnomedRf2Headers.FIELD_VALUE_ID));
-		
+		assertNull(ptInactivationIndicatorMember);
+		assertNull(afterInactivationPtInactivationIndicatorMember);
 	}
 
 	private SnomedReferenceSetMember getIndicatorMember(SnomedCoreComponent component, String inactivationIndicatorRefSetId) {
