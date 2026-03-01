@@ -18,7 +18,6 @@ package com.b2international.snowowl.snomed.core.rest.components;
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.updateComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewConcept;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import java.util.List;
@@ -111,11 +110,16 @@ public class SnomedComponentInactivationApiTest extends AbstractSnomedApiTest {
 		assertEquals(Concepts.DUPLICATE, afterInactivationConceptInactivationIndicatorMember.getProperties().get(SnomedRf2Headers.FIELD_VALUE_ID));
 
 		// assert that as of 2026 Jan, CNC indicators are not generated/reactivated/managed
-		assertNull(fsnInactivationIndicatorMember);
-		assertNull(afterInactivationFsnInactivationIndicatorMember);
-		
-		assertNull(ptInactivationIndicatorMember);
-		assertNull(afterInactivationPtInactivationIndicatorMember);
+		// meaning that original inactivation indicators saved for each component will be kept as is when the concept gets inactivated
+		assertEquals(fsnInactivationIndicatorMember.getId(), afterInactivationFsnInactivationIndicatorMember.getId());
+		assertEquals(null, afterInactivationFsnInactivationIndicatorMember.getEffectiveTime());
+		assertEquals(false, afterInactivationFsnInactivationIndicatorMember.isReleased());
+		assertEquals(Concepts.PENDING_MOVE, afterInactivationFsnInactivationIndicatorMember.getProperties().get(SnomedRf2Headers.FIELD_VALUE_ID));
+				
+		assertEquals(ptInactivationIndicatorMember.getId(), afterInactivationPtInactivationIndicatorMember.getId());
+		assertEquals(null, afterInactivationPtInactivationIndicatorMember.getEffectiveTime());
+		assertEquals(false, afterInactivationPtInactivationIndicatorMember.isReleased());
+		assertEquals(Concepts.PENDING_MOVE, afterInactivationPtInactivationIndicatorMember.getProperties().get(SnomedRf2Headers.FIELD_VALUE_ID));
 	}
 
 	private SnomedReferenceSetMember getIndicatorMember(SnomedCoreComponent component, String inactivationIndicatorRefSetId) {

@@ -62,7 +62,7 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 			.body("statedAncestorIds", equalTo(List.of()))
 			.body("descriptions.items.active", everyItem(equalTo(true)))
 			// as of 2026 Jan, CNC indicators should not be generated anymore, so expecting this path to be a null value in all cases
-			.body("descriptions.items.inactivationProperties.inactivationIndicator.id", nullValue());
+			.body("descriptions.items.inactivationProperties.inactivationIndicator.id", equalTo(List.of()));
 	}
 	
 	@Test
