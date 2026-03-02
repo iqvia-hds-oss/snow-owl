@@ -10,28 +10,43 @@ import com.b2international.index.query.Expressions.ExpressionBuilder
 import com.b2international.index.revision.RevisionSearcher
 import com.b2international.snowowl.core.ComponentIdentifier
 import com.b2international.snowowl.core.date.EffectiveTimes
+import com.b2international.snowowl.core.domain.BranchContext
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept
+import com.b2international.snowowl.snomed.core.domain.SnomedConcepts
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests
 import com.google.common.collect.Lists
 
 //Synonyms should not duplicate other synonyms, regardless of case
 
+BranchContext ctx = ctx
 RevisionSearcher searcher = ctx.service(RevisionSearcher.class)
 
 List<ComponentIdentifier> issues = Lists.newArrayList()
 
 Set<String> extensionModules = SnomedRequests.prepareSearchConcept()
 	.filterByEcl(params.modules)
-	.all()
-	.build()
-	.execute(ctx)
-	.collect({ SnomedConcept c -> c.getId() })
+	.setFields(SnomedConceptDocument.Fields.ID)
+	.setLimit(10_000)
+	.stream(ctx)
+	.flatMap({ SnomedConcepts c -> c.stream() })
+	.map({ SnomedConcept c -> c.getId() })
+	.toSet()
 
+Set<String> inactiveConceptIds = SnomedRequests.prepareSearchConcept()
+	.filterByActive(false)
+	.setFields(SnomedConceptDocument.Fields.ID)
+	.setLimit(10_000)
+	.stream(ctx)
+	.flatMap({ SnomedConcepts c -> c.stream() })
+	.map({ SnomedConcept c -> c.getId() })
+	.toSet()
+	
 Set<String> synonymAndSubtypesIds = SnomedRequests.prepareGetSynonyms()
 	.build()
 	.execute(ctx)
@@ -51,16 +66,18 @@ def pendingMoveDescriptions = SnomedRequests.prepareSearchMember()
 	.execute(ctx)
 	.collect({SnomedReferenceSetMember member -> member.getReferencedComponent().getId()})
 	
-ExpressionBuilder filterExpressionBuilder = Expressions.builder()
+ExpressionBuilder filterExpressionBuilder = Expressions.bool()
 		.filter(SnomedDescriptionIndexEntry.Expressions.active())
 		.filter(SnomedDescriptionIndexEntry.Expressions.types(synonymAndSubtypesIds))
-		.should(SnomedDescriptionIndexEntry.Expressions.ids(pendingMoveDescriptions)) // either pending move or no description inactivity indicator
-		.should(Expressions.builder()
-			.mustNot(SnomedDescriptionIndexEntry.Expressions.activeMemberOf(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
+		// allow pending move indicators in any cases, regardless of whether the concept is active or not
+		.should(SnomedDescriptionIndexEntry.Expressions.ids(pendingMoveDescriptions))
+		// disallow any other description to be reported from inactive concepts
+		.should(Expressions.bool()
+			.mustNot(SnomedDescriptionIndexEntry.Expressions.concepts(inactiveConceptIds))
 			.build())
 		
-Aggregation<String[]> activeDescriptionsByOriginalTerm = searcher.aggregate(
-		AggregationBuilder.bucket("rule532b", String[].class, SnomedDescriptionIndexEntry.class)
+Aggregation<String[]> activeDescriptionsByExactTerm = searcher.aggregate(
+		AggregationBuilder.bucket("rule532b_" + ctx.path(), String[].class, SnomedDescriptionIndexEntry.class)
 		.query(filterExpressionBuilder.build())
 		.onFieldValue(SnomedDescriptionIndexEntry.Fields.TERM_EXACT)
 		.fields(SnomedDescriptionIndexEntry.Fields.ID,
@@ -68,7 +85,7 @@ Aggregation<String[]> activeDescriptionsByOriginalTerm = searcher.aggregate(
 				SnomedDescriptionIndexEntry.Fields.MODULE_ID)
 		.minBucketSize(2))
 		
-activeDescriptionsByOriginalTerm.getBuckets()
+activeDescriptionsByExactTerm.getBuckets()
 		.values()
 		.each({ bucket ->
 			def shouldReport = bucket.any({ hit ->
