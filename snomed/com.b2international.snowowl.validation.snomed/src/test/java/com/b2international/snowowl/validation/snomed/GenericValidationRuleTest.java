@@ -706,34 +706,27 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 	}
 	
 	@Test
-	public void rule532a_pharmacy_1() throws Exception {
+	public void rule532a() throws Exception {
 		rule532("532a", Concepts.FULLY_SPECIFIED_NAME, Concepts.MODULE_B2I_EXTENSION);
 	}
 
 	@Test
-	public void rule532a_pharmacy_2() throws Exception {
-		rule532("532a", Concepts.FULLY_SPECIFIED_NAME, Concepts.MODULE_B2I_EXTENSION);
-	}
-	
-	@Test
-	public void rule532b_pharmacy_1() throws Exception {
+	public void rule532b() throws Exception {
 		rule532("532b", Concepts.SYNONYM, Concepts.MODULE_B2I_EXTENSION);
 	}
 
-	@Test
-	public void rule532b_pharmacy_2() throws Exception {
-		rule532("532b", Concepts.SYNONYM, Concepts.MODULE_B2I_EXTENSION);
-	}
-	
 	private void rule532(String ruleId, String descriptionType, String moduleId) throws Exception {
 		indexRule(ruleId);
 		
+		SnomedConceptDocument activeConcept = concept(generateConceptId()).build();
+		SnomedConceptDocument inactiveConcept = concept(generateConceptId()).active(false).build();
+		
 		SnomedDescriptionIndexEntry validDescription = description(generateDescriptionId(), descriptionType, "Not duplicate term")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription1 = description(generateDescriptionId(), descriptionType, "Duplicate description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
@@ -743,42 +736,51 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription2 = description(generateDescriptionId(), descriptionType, "duplicate description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidIntDescription1 = description(generateDescriptionId(), descriptionType, "Duplicate description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidIntDescription2 = description(generateDescriptionId(), descriptionType, "Duplicate of International description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidIntDescription3 = description(generateDescriptionId(), descriptionType, "Duplicate of International description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription3 = description(generateDescriptionId(), descriptionType, "This is fine")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription4 = description(generateDescriptionId(), descriptionType, "this is fine")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
-		SnomedDescriptionIndexEntry shouldNotCauseIssueDescription3 = description(generateDescriptionId(), descriptionType, "duplicate description")
+		SnomedDescriptionIndexEntry invalidDescriptionOnActiveConceptWithActiveInactivityIndicator = description(generateDescriptionId(), descriptionType, "duplicate description")
 				.activeMemberOf(List.of(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
+				.build();
+		
+		SnomedDescriptionIndexEntry duplicateDescriptionButOnInactiveConceptWithAnInactiveIndicatorMember = description(generateDescriptionId(), descriptionType, "duplicate description")
+				// simulating an indicator that is inactive in the inactivity refset (possibly a CNC indicator in many cases)
+				.memberOf(List.of(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
+				// in this case the concept itself is inactive therefore the term should not be considered
+				.conceptId(inactiveConcept.getId())
 				.build();
 		
 		index()
 			.prepareCommit(MAIN)
+			.stageNew(activeConcept)
+			.stageNew(inactiveConcept)
 			.stageNew(validDescription)
 			.stageNew(invalidDescription1)
 			.stageNew(inactivationIndicator1)
@@ -788,7 +790,8 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			.stageNew(invalidIntDescription3)
 			.stageNew(invalidDescription3)
 			.stageNew(invalidDescription4)
-			.stageNew(shouldNotCauseIssueDescription3)
+			.stageNew(invalidDescriptionOnActiveConceptWithActiveInactivityIndicator)
+			.stageNew(duplicateDescriptionButOnInactiveConceptWithAnInactiveIndicatorMember)
 			.commit(currentTime(), UUID.randomUUID().toString(), "Indexing data for rule 532 test");
 		
 		ValidationIssues issues = validate(ruleId);
@@ -798,7 +801,8 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			ComponentIdentifier.of(SnomedDescription.TYPE, invalidIntDescription1.getId()),
 			ComponentIdentifier.of(SnomedDescription.TYPE, invalidDescription2.getId()),
 			ComponentIdentifier.of(SnomedDescription.TYPE, invalidDescription3.getId()),
-			ComponentIdentifier.of(SnomedDescription.TYPE, invalidDescription4.getId())
+			ComponentIdentifier.of(SnomedDescription.TYPE, invalidDescription4.getId()),
+			ComponentIdentifier.of(SnomedDescription.TYPE, invalidDescriptionOnActiveConceptWithActiveInactivityIndicator.getId())
 		);
 	}
 	
