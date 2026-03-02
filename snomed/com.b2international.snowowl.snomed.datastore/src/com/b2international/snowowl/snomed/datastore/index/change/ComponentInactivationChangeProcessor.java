@@ -39,7 +39,6 @@ import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.datastore.index.entry.*;
 import com.b2international.snowowl.snomed.datastore.request.ModuleRequest.ModuleIdProvider;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
 /**
@@ -182,10 +181,76 @@ final class ComponentInactivationChangeProcessor extends ChangeSetProcessorBase 
 	}
 
 	private void processReactivations(StagingArea staging, RevisionSearcher searcher, Set<String> reactivatedConceptIds, Set<String> reactivatedComponentIds) throws IOException {
-		// active descriptions, with active membership in the indicator refset with a CNC indicator value on reactivated concepts
-		// XXX as of 2026 Jan, CNC indicators are no longer maintained and they should remain inactive in all cases (or non-existent if they got removed)
-		
-		// NOTE: if new reactivation logic needs to be added
+		ServiceProvider context = (ServiceProvider) staging.getContext();
+		ModuleIdProvider moduleIdProvider = context.service(ModuleIdProvider.class);
+
+		try {
+			Query.select(String.class)
+				.from(SnomedDescriptionIndexEntry.class)
+				.fields(SnomedDescriptionIndexEntry.Fields.ID)
+				// active descriptions, with active membership in the indicator refset on reactivated concepts
+				.where(Expressions.bool()
+					.filter(SnomedDescriptionIndexEntry.Expressions.active())
+					.filter(SnomedDescriptionIndexEntry.Expressions.concepts(reactivatedConceptIds))
+					.filter(SnomedDescriptionIndexEntry.Expressions.activeMemberOf(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
+					.build())
+				.limit(context.getPageSize())
+				.build()
+				.stream(searcher)
+				.forEachOrdered(hits -> {
+					try {
+						reactivateDescriptions(staging, searcher, moduleIdProvider, hits);
+					} catch (IOException e) {
+						throw new UndeclaredThrowableException(e);
+					}
+				});
+		} catch (UndeclaredThrowableException ute) {
+			// Unwrap and throw checked exception from lambda above
+			throw (IOException) ute.getCause();
+		}
 	}
+	
+	private void reactivateDescriptions(
+			final StagingArea staging, 
+			final RevisionSearcher searcher, 
+			final ModuleIdProvider moduleIdProvider,
+			final Hits<String> hits) throws IOException {
+			
+			final Set<String> descriptionIds = Set.copyOf(hits.getHits());
+			
+			final Set<String> stagedDescriptionIndicators = staging.getChangedObjects(SnomedRefSetMemberIndexEntry.class)
+				.filter(member -> Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR.equals(member.getRefsetId()))
+				.filter(member -> descriptionIds.contains(member.getReferencedComponentId()))
+				.map(SnomedRefSetMemberIndexEntry::getId)
+				.collect(Collectors.toSet());
+			
+			// XXX although as of 2026 Jan, CNC indicators got deprecated and inactivated in the SI release, this does not mean that the platform will not handle them during concept reactivations as it did before
+			// to ensure smooth transition and handling of these indicators this logic must be kept enabled, while the system won't generate new CNC indicators, it will automatically get rid of them when needed, if for any reason the indicator would be there
+			// NOTE: this does not mean that the system will immediately remove indicators when it sees them, this only happens during concept reactivation
+			
+			// search for all active indicator refset members with concept non-current
+			Hits<SnomedRefSetMemberIndexEntry> members = searcher.search(Query.select(SnomedRefSetMemberIndexEntry.class)
+				.where(Expressions.bool()
+					.mustNot(SnomedRefSetMemberIndexEntry.Expressions.ids(stagedDescriptionIndicators))
+					.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
+					.filter(SnomedRefSetMemberIndexEntry.Expressions.refsetId(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
+					.filter(SnomedRefSetMemberIndexEntry.Expressions.valueIds(Set.of(Concepts.CONCEPT_NON_CURRENT)))
+					.filter(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(descriptionIds))
+					.build())
+				.limit(Integer.MAX_VALUE) // we limit the number of possible members with the above query, even with duplicates we should not get more than 20k
+				.build());
+			
+			for (SnomedRefSetMemberIndexEntry indicatorMember : members) {
+				// check if this member is present in the transaction, if yes, do not auto-update/delete it
+				if (indicatorMember.isReleased() != null && indicatorMember.isReleased()) {
+					stageChange(indicatorMember, SnomedRefSetMemberIndexEntry.builder(indicatorMember).active(false)
+						.effectiveTime(EffectiveTimes.UNSET_EFFECTIVE_TIME)
+						.moduleId(moduleIdProvider.apply(indicatorMember))
+						.build());
+				} else {
+					stageRemove(indicatorMember);
+				}
+			}
+		}
 
 }
