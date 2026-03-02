@@ -308,35 +308,35 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 			.body("inactivationProperties.associationTargets", equalTo(List.of()));
 	}
 	
-//	@Test
-//	public void reactivateConceptShouldRemoveConceptNonCurrentIndicatorsFromDescriptions() throws Exception {
-//		final String inactiveConceptId = createNewConcept(branchPath, createConceptRequestBody(ROOT_CONCEPT, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.UK_PREFERRED_MAP, false)
-//				.with("commitComment", "Created inactive concept"));
-//		
-//		// create non-current indicators for the pre-inactivated concept's descriptions
-//		getConcept(inactiveConceptId, "descriptions()").getDescriptions().forEach(description -> {
-//			Map<?, ?> requestBody = createRefSetMemberRequestBody(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR, description.getId())
-//					.with(SnomedRf2Headers.FIELD_VALUE_ID, Concepts.CONCEPT_NON_CURRENT)
-//					.with("commitComment", "Created new indicator member for description: " + description.getId());
-//
-//			createComponent(branchPath, SnomedComponentType.MEMBER, requestBody).statusCode(201);
-//		});
-//		
-//		reactivateConcept(branchPath, inactiveConceptId);
-//		
-//		assertGetConcept(inactiveConceptId, "inactivationProperties(),descriptions(expand(inactivationProperties()))")
-//			.statusCode(200)
-//			.body("active", equalTo(true))
-//			.body("parentIds", equalTo(List.of(IComponent.ROOT_ID)))
-//			.body("statedParentIds", equalTo(List.of(Concepts.ROOT_CONCEPT)))
-//			.body("ancestorIds", equalTo(List.of()))
-//			.body("statedAncestorIds", equalTo(List.of(IComponent.ROOT_ID)))
-//			.body("inactivationProperties.inactivationIndicator", nullValue())
-//			.body("inactivationProperties.associationTargets", equalTo(List.of()))
-//			.body("descriptions.items.active", everyItem(equalTo(true)))
-//			.body("descriptions.items.inactivationProperties.inactivationIndicator[0].id", nullValue())
-//			.body("descriptions.items.inactivationProperties.inactivationIndicator[1].id", nullValue());
-//	}
+	@Test
+	public void reactivateConceptShouldRemoveConceptNonCurrentIndicatorsFromDescriptions() throws Exception {
+		final String inactiveConceptId = createNewConcept(branchPath, createConceptRequestBody(ROOT_CONCEPT, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.UK_PREFERRED_MAP, false)
+				.with("commitComment", "Created inactive concept"));
+		
+		// create non-current indicators for the pre-inactivated concept's descriptions
+		getConcept(inactiveConceptId, "descriptions()").getDescriptions().forEach(description -> {
+			Map<?, ?> requestBody = createRefSetMemberRequestBody(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR, description.getId())
+					.with(SnomedRf2Headers.FIELD_VALUE_ID, Concepts.CONCEPT_NON_CURRENT)
+					.with("commitComment", "Created new indicator member for description: " + description.getId());
+
+			createComponent(branchPath, SnomedComponentType.MEMBER, requestBody).statusCode(201);
+		});
+		
+		reactivateConcept(branchPath, inactiveConceptId);
+		
+		assertGetConcept(inactiveConceptId, "inactivationProperties(),descriptions(expand(inactivationProperties()))")
+			.statusCode(200)
+			.body("active", equalTo(true))
+			.body("parentIds", equalTo(List.of(IComponent.ROOT_ID)))
+			.body("statedParentIds", equalTo(List.of(Concepts.ROOT_CONCEPT)))
+			.body("ancestorIds", equalTo(List.of()))
+			.body("statedAncestorIds", equalTo(List.of(IComponent.ROOT_ID)))
+			.body("inactivationProperties.inactivationIndicator", nullValue())
+			.body("inactivationProperties.associationTargets", equalTo(List.of()))
+			.body("descriptions.items.active", everyItem(equalTo(true)))
+			.body("descriptions.items.inactivationProperties.inactivationIndicator[0].id", nullValue())
+			.body("descriptions.items.inactivationProperties.inactivationIndicator[1].id", nullValue());
+	}
 	
 	@Test
 	public void inactivateConceptDefinitionStatusRemainsPrimitive() {
