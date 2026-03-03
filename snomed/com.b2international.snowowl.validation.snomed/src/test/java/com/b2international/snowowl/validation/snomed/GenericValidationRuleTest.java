@@ -1172,38 +1172,49 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		final String ruleId = "671";
 		indexRule(ruleId);
 		
+		// prepare the first concept
 		String conceptId1 = generateConceptId();
 		SnomedDescriptionIndexEntry fsn1 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 1 (tag)")
 				.conceptId(conceptId1)
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
 				.build();
+		// no need to generate an indicator here, active FSN without any indicator should be ALLOWED by the rule 
 		
 		SnomedDescriptionIndexEntry pt1 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 1")
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
 				.conceptId(conceptId1)
 				.build();
+		// mark this active PT with a active concept non-current indicator which should be ALLOWED by the rule
+		SnomedRefSetMemberIndexEntry validCNCForPt1 = member(pt1.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
 		
 		SnomedDescriptionIndexEntry pt2 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 2")
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
 				.conceptId(conceptId1)
 				.build();
-		
-		SnomedRefSetMemberIndexEntry ptMember1 = member(pt1.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
-		SnomedRefSetMemberIndexEntry ptMember2 = member(pt2.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.ERRONEOUS).build();
-		
-		SnomedConceptDocument conceptWithActiveDescription = concept(conceptId1)
+		// mark this active PT with an active erroneous indicator which should NOT be allowed by the rule
+		SnomedRefSetMemberIndexEntry invalidErroneousForPt2 = member(pt2.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.ERRONEOUS).build();
+
+		// register the concept as inactive along with the three active descriptions
+		// simulates normal inactivation plus manual editing scenario resulting in a mixed disallowed state
+		SnomedConceptDocument inactiveConceptWithActiveDescriptions = concept(conceptId1)
 				.preferredDescriptions(List.of(
-						new SnomedDescriptionFragment(fsn1.getId(), fsn1.getTypeId(), fsn1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
-						new SnomedDescriptionFragment(pt1.getId(), pt1.getTypeId(), pt1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
-						new SnomedDescriptionFragment(pt2.getId(), pt2.getTypeId(), pt2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
-						))
+					new SnomedDescriptionFragment(fsn1.getId(), fsn1.getTypeId(), fsn1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
+					new SnomedDescriptionFragment(pt1.getId(), pt1.getTypeId(), pt1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
+					new SnomedDescriptionFragment(pt2.getId(), pt2.getTypeId(), pt2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
+				))
 				.active(false)
 				.build();
 		
+		// prepare the second concept
 		String conceptId2 = generateConceptId();
 		SnomedDescriptionIndexEntry fsn2 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 2 (tag)")
 				.conceptId(conceptId2)
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.build();
+		// generate an inactive CNC indicator to test that it is not reported by the rule at all
+		SnomedRefSetMemberIndexEntry validCNCForFsn2 = member(fsn2.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR)
+				.active(false)
+				.valueId(Concepts.CONCEPT_NON_CURRENT)
 				.build();
 		
 		SnomedDescriptionIndexEntry pt3 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 3")
@@ -1211,25 +1222,51 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.active(false)
 				.conceptId(conceptId2)
 				.build();
+		// mark this inactive PT with a concept non-current indicator which should NOT be allowed by the rule as the description is inactive
+		SnomedRefSetMemberIndexEntry invalidCNCOnPt3 = member(pt3.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
+		SnomedDescriptionIndexEntry pt4 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 4")
+				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.active(false)
+				.conceptId(conceptId1)
+				.build();
+		// mark this active PT with an active erroneous indicator which should NOT be allowed by the rule
+		SnomedRefSetMemberIndexEntry validErroneousForPt4 = member(pt4.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.ERRONEOUS).build();
 		
-		
-		SnomedRefSetMemberIndexEntry ptMember3 = member(pt3.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
-		
+		// register the concept as inactive along with the two active/inactive descriptions
+		// simulates concept inactivation along with an incorrect description inactivation
 		SnomedConceptDocument conceptWithInactiveDescription = concept(conceptId2)
 				.preferredDescriptions(List.of(
-						new SnomedDescriptionFragment(fsn2.getId(), fsn2.getTypeId(), fsn2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
-						new SnomedDescriptionFragment(pt3.getId(), pt3.getTypeId(), pt3.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
-						))
+					new SnomedDescriptionFragment(fsn2.getId(), fsn2.getTypeId(), fsn2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
+					new SnomedDescriptionFragment(pt3.getId(), pt3.getTypeId(), pt3.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
+				))
 				.active(false)
 				.build();
 		
-		indexRevision(MAIN, conceptWithActiveDescription, fsn1, pt1, ptMember1, conceptWithInactiveDescription, fsn2, pt2, pt3, ptMember2, ptMember3);
+		indexRevision(MAIN,
+			// index active concept state
+			inactiveConceptWithActiveDescriptions, 
+			fsn1, 
+			pt1, 
+			validCNCForPt1, 
+			pt2, 
+			invalidErroneousForPt2, 
+			
+			// index inactive concept state
+			conceptWithInactiveDescription, 
+			fsn2,
+			validCNCForFsn2,
+			pt3,
+			invalidCNCOnPt3,
+			pt4,
+			validErroneousForPt4
+		);
 		
 		final ValidationIssues issues = validate(ruleId);
 		
 		assertAffectedComponents(issues, 
-				ComponentIdentifier.of(SnomedDescription.TYPE, pt2.getId()),
-				ComponentIdentifier.of(SnomedDescription.TYPE, pt3.getId()));
+			ComponentIdentifier.of(SnomedDescription.TYPE, pt2.getId()),
+			ComponentIdentifier.of(SnomedDescription.TYPE, pt3.getId())
+		);
 	}
 	
 	@Test
