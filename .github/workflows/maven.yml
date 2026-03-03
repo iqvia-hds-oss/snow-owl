@@ -19,6 +19,12 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      pull-requests: read
+      checks: write # Required for CodeQL analysis
+      actions: read
+
     steps:
     - uses: actions/checkout@v4.2.2
     - name: Set up JDK 21
@@ -40,10 +46,6 @@ jobs:
         key: ${{ runner.os }}-npm-${{ hashFiles('core/com.b2international.snowowl.core.rest/snow-owl-api-docs/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-npm-:
-    - name: Setup Maven settings.xml
-      uses: whelk-io/maven-settings-xml-action@v22
-      with:
-        servers: '[{ "id": "b2i-releases", "username": "${env.NEXUS_DEPLOYMENT_USER}", "password": "${env.NEXUS_DEPLOYMENT_PASS}" }, { "id": "b2i-snapshots", "username": "${env.NEXUS_DEPLOYMENT_USER}", "password": "${env.NEXUS_DEPLOYMENT_PASS}" }, { "id": "nexus_deployment", "username": "${env.NEXUS_DEPLOYMENT_USER}", "password": "${env.NEXUS_DEPLOYMENT_PASS}" }]'
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4
@@ -58,9 +60,6 @@ jobs:
     # Run the build
     - name: Build with Maven
       run: ./mvnw -ntp clean verify
-      env: 
-        NEXUS_DEPLOYMENT_USER: ${{ secrets.NEXUS_DEPLOYMENT_USER }}
-        NEXUS_DEPLOYMENT_PASS: ${{ secrets.NEXUS_DEPLOYMENT_PASS }}
     # Upload Code Coverage
     - name: Upload Codecov
       uses: codecov/codecov-action@v5.3.1
