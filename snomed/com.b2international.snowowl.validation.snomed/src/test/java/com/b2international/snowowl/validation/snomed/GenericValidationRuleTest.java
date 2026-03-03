@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import static com.b2international.snowowl.test.commons.snomed.RandomSnomedIdenti
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -50,9 +51,12 @@ import com.b2international.snowowl.snomed.datastore.index.constraint.ConcreteDom
 import com.b2international.snowowl.snomed.datastore.index.constraint.HierarchyDefinitionFragment;
 import com.b2international.snowowl.snomed.datastore.index.constraint.RelationshipPredicateFragment;
 import com.b2international.snowowl.snomed.datastore.index.constraint.SnomedConstraintDocument;
-import com.b2international.snowowl.snomed.datastore.index.entry.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionFragment;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedOWLRelationshipDocument;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry;
 
 /**
  * @since 6.4
@@ -136,7 +140,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		ValidationIssues issues = validate(ruleId);
 		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet()))
 			.contains(ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, activeConceptWithoutInferredParent.getId()))
-			.doesNotContainAnyElementsOf(ImmutableList.of(ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, activeConceptWithInferredParent.getId()),
+			.doesNotContainAnyElementsOf(List.of(ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, activeConceptWithInferredParent.getId()),
 					ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, inactiveConceptWithoutInferredParent.getId())));
 	}
 	
@@ -160,7 +164,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		ValidationIssues issues = validate(ruleId);
 		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet()))
 			.contains(ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, activeConceptWithoutStatedParent.getId()))
-			.doesNotContainAnyElementsOf(ImmutableList.of(ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, activeConceptWithStatedParent.getId()),
+			.doesNotContainAnyElementsOf(List.of(ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, activeConceptWithStatedParent.getId()),
 					ComponentIdentifier.of(SnomedTerminologyComponentConstants.CONCEPT_NUMBER, inactiveConceptWithoutStatedParent.getId())));
 	}
 	
@@ -223,7 +227,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		
 		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet()))
 			.contains(ComponentIdentifier.of(RELATIONSHIP_NUMBER, nonDefiningRelationshipInGroup0.getId()))
-			.doesNotContainAnyElementsOf(ImmutableList.of(ComponentIdentifier.of(RELATIONSHIP_NUMBER, definingRelationshipInGroup0.getId()),
+			.doesNotContainAnyElementsOf(List.of(ComponentIdentifier.of(RELATIONSHIP_NUMBER, definingRelationshipInGroup0.getId()),
 				ComponentIdentifier.of(RELATIONSHIP_NUMBER, relationshipInGroup2.getId())));		
 	}
 	
@@ -379,7 +383,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		SnomedRelationshipIndexEntry relationshipOnValidConcept = relationship(validConcept1.getId(), Concepts.IS_A, invalidConcept.getId()).build();
 		
 		SnomedRefSetMemberIndexEntry owlAxiomMemberOnValidConcpet = member(validConcept2.getId(), Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.IS_A, validConcept1.getId(), 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.IS_A, validConcept1.getId(), 0)))
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
@@ -389,7 +393,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		
 		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet()))
 			.contains(ComponentIdentifier.of(CONCEPT_NUMBER, invalidConcept.getId()))
-			.doesNotContainAnyElementsOf(ImmutableList.of(ComponentIdentifier.of(CONCEPT_NUMBER, validConcept1.getId()),
+			.doesNotContainAnyElementsOf(List.of(ComponentIdentifier.of(CONCEPT_NUMBER, validConcept1.getId()),
 					ComponentIdentifier.of(CONCEPT_NUMBER, validConcept2.getId())));
 	}
 	
@@ -466,7 +470,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		
 		SnomedRefSetMemberIndexEntry owlAxiomMember1 = member(validConcept.getId(), Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.IS_A, Concepts.PHYSICAL_OBJECT, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.IS_A, Concepts.PHYSICAL_OBJECT, 0)))
 				.build();
 		
 		SnomedConceptDocument concept = concept(generateConceptId())
@@ -474,13 +478,13 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		
 		SnomedRefSetMemberIndexEntry owlAxiomMember2 = member(concept.getId(), Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.SYNONYM, Concepts.PHYSICAL_OBJECT, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.SYNONYM, Concepts.PHYSICAL_OBJECT, 0)))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry owlAxiomMemberWithoutClassAxioms = member(concept.getId(), Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList())
-				.gciAxiomRelationships(Lists.newArrayList())
+				.classAxiomRelationships(List.of())
+				.gciAxiomRelationships(List.of())
 				.build();
 
 		indexRevision(MAIN, relationship1, relationship2, validConcept, concept, owlAxiomMember1, owlAxiomMember2, owlAxiomMemberWithoutClassAxioms);	
@@ -507,12 +511,12 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 
 		SnomedConceptDocument badConcept = concept(generateConceptId())
 				.active(false)
-				.activeMemberOf(ImmutableList.of(r1.getId()))
+				.activeMemberOf(List.of(r1.getId()))
 				.build();
 
 		SnomedConceptDocument goodConcept = concept(generateConceptId())
 				.active(true)
-				.activeMemberOf(ImmutableList.of(r1.getId()))
+				.activeMemberOf(List.of(r1.getId()))
 				.build();
 		
 		indexRevision(MAIN, r1, badConcept, goodConcept);
@@ -536,12 +540,12 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 
 		SnomedDescriptionIndexEntry badDesc = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "I've been bad, i deserve this")
 				.active(false)
-				.activeMemberOf(ImmutableList.of(r1.getId()))
+				.activeMemberOf(List.of(r1.getId()))
 				.build();
 
 		SnomedDescriptionIndexEntry goodDesc = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "I've been good, i deserve this")
 				.active(true)
-				.activeMemberOf(ImmutableList.of(r1.getId()))
+				.activeMemberOf(List.of(r1.getId()))
 				.build();
 		
 		indexRevision(MAIN, r1, badDesc, goodDesc);
@@ -707,34 +711,27 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 	}
 	
 	@Test
-	public void rule532a_pharmacy_1() throws Exception {
+	public void rule532a() throws Exception {
 		rule532("532a", Concepts.FULLY_SPECIFIED_NAME, Concepts.MODULE_B2I_EXTENSION);
 	}
 
 	@Test
-	public void rule532a_pharmacy_2() throws Exception {
-		rule532("532a", Concepts.FULLY_SPECIFIED_NAME, Concepts.MODULE_B2I_EXTENSION);
-	}
-	
-	@Test
-	public void rule532b_pharmacy_1() throws Exception {
+	public void rule532b() throws Exception {
 		rule532("532b", Concepts.SYNONYM, Concepts.MODULE_B2I_EXTENSION);
 	}
 
-	@Test
-	public void rule532b_pharmacy_2() throws Exception {
-		rule532("532b", Concepts.SYNONYM, Concepts.MODULE_B2I_EXTENSION);
-	}
-	
 	private void rule532(String ruleId, String descriptionType, String moduleId) throws Exception {
 		indexRule(ruleId);
 		
+		SnomedConceptDocument activeConcept = concept(generateConceptId()).build();
+		SnomedConceptDocument inactiveConcept = concept(generateConceptId()).active(false).build();
+		
 		SnomedDescriptionIndexEntry validDescription = description(generateDescriptionId(), descriptionType, "Not duplicate term")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription1 = description(generateDescriptionId(), descriptionType, "Duplicate description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
@@ -744,42 +741,51 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription2 = description(generateDescriptionId(), descriptionType, "duplicate description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidIntDescription1 = description(generateDescriptionId(), descriptionType, "Duplicate description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidIntDescription2 = description(generateDescriptionId(), descriptionType, "Duplicate of International description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidIntDescription3 = description(generateDescriptionId(), descriptionType, "Duplicate of International description")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription3 = description(generateDescriptionId(), descriptionType, "This is fine")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
 		SnomedDescriptionIndexEntry invalidDescription4 = description(generateDescriptionId(), descriptionType, "this is fine")
-				.conceptId(generateConceptId())
+				.conceptId(activeConcept.getId())
 				.moduleId(moduleId)
 				.build();
 		
-		SnomedDescriptionIndexEntry shouldNotCauseIssueDescription3 = description(generateDescriptionId(), descriptionType, "duplicate description")
-				.activeMemberOf(ImmutableList.of(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
-				.conceptId(generateConceptId())
+		SnomedDescriptionIndexEntry invalidDescriptionOnActiveConceptWithActiveInactivityIndicator = description(generateDescriptionId(), descriptionType, "duplicate description")
+				.activeMemberOf(List.of(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
+				.conceptId(activeConcept.getId())
+				.build();
+		
+		SnomedDescriptionIndexEntry duplicateDescriptionButOnInactiveConceptWithAnInactiveIndicatorMember = description(generateDescriptionId(), descriptionType, "duplicate description")
+				// simulating an indicator that is inactive in the inactivity refset (possibly a CNC indicator in many cases)
+				.memberOf(List.of(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
+				// in this case the concept itself is inactive therefore the term should not be considered
+				.conceptId(inactiveConcept.getId())
 				.build();
 		
 		index()
 			.prepareCommit(MAIN)
+			.stageNew(activeConcept)
+			.stageNew(inactiveConcept)
 			.stageNew(validDescription)
 			.stageNew(invalidDescription1)
 			.stageNew(inactivationIndicator1)
@@ -789,7 +795,8 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			.stageNew(invalidIntDescription3)
 			.stageNew(invalidDescription3)
 			.stageNew(invalidDescription4)
-			.stageNew(shouldNotCauseIssueDescription3)
+			.stageNew(invalidDescriptionOnActiveConceptWithActiveInactivityIndicator)
+			.stageNew(duplicateDescriptionButOnInactiveConceptWithAnInactiveIndicatorMember)
 			.commit(currentTime(), UUID.randomUUID().toString(), "Indexing data for rule 532 test");
 		
 		ValidationIssues issues = validate(ruleId);
@@ -799,7 +806,8 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, invalidIntDescription1.getId()),
 			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, invalidDescription2.getId()),
 			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, invalidDescription3.getId()),
-			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, invalidDescription4.getId())
+			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, invalidDescription4.getId()),
+			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, invalidDescriptionOnActiveConceptWithActiveInactivityIndicator.getId())
 		);
 	}
 	
@@ -937,7 +945,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.build();
 		SnomedRefSetMemberIndexEntry fsn2Member = createLanguageRefsetMember(fsn2);
 		SnomedConceptDocument c1 = concept(concept1Id)
-				.preferredDescriptions(ImmutableList.of(
+				.preferredDescriptions(List.of(
 						new SnomedDescriptionFragment(fsn1.getId(), fsn1.getTypeId(), fsn1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
 						new SnomedDescriptionFragment(fsn2.getId(), fsn2.getTypeId(), fsn2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)))
 				.build();
@@ -956,7 +964,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		SnomedRefSetMemberIndexEntry pt2Member = createLanguageRefsetMember(pt2);
 		SnomedConceptDocument c2 = concept(concept2Id)
 				.preferredDescriptions(
-						ImmutableList.of(
+						List.of(
 								new SnomedDescriptionFragment(pt1.getId(), pt1.getTypeId(), pt1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
 								new SnomedDescriptionFragment(pt2.getId(), pt2.getTypeId(), pt2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)))
 				.build();
@@ -974,7 +982,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.build();
 		SnomedRefSetMemberIndexEntry pt3Member = createLanguageRefsetMember(pt3);
 		SnomedConceptDocument c3 = concept(concept3Id)
-				.preferredDescriptions(ImmutableList.of(
+				.preferredDescriptions(List.of(
 						new SnomedDescriptionFragment(fsn3.getId(), fsn3.getTypeId(), fsn3.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
 						new SnomedDescriptionFragment(pt3.getId(), pt3.getTypeId(), pt3.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
 						))
@@ -1053,26 +1061,26 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		SnomedConceptDocument activeDestinationConcept = concept(generateConceptId()).active(true).build();
 
 		SnomedRefSetMemberIndexEntry invalidSourceAxiomMember = member(inactiveSourceConcept.getId(), Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.IS_A, activeDestinationConcept.getId(), 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.IS_A, activeDestinationConcept.getId(), 0)))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry validSourceAxiomMember = member(activeSourceConcept.getId(), Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.IS_A, activeDestinationConcept.getId(), 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.IS_A, activeDestinationConcept.getId(), 0)))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry invalidDestinationAxiomMember = member(activeSourceConcept.getId(), Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.IS_A, inactiveDestinationConcept.getId(), 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.IS_A, inactiveDestinationConcept.getId(), 0)))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry invalidDestinationGciAxiomMember = member(activeSourceConcept.getId(), Concepts.REFSET_OWL_AXIOM)
-				.gciAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(activeTypeConcept.getId(), inactiveDestinationConcept.getId(), 0)))
+				.gciAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(activeTypeConcept.getId(), inactiveDestinationConcept.getId(), 0)))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry invalidTypeAxiomMember = member(activeSourceConcept.getId(), Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(inactiveTypeConcept.getId(), activeDestinationConcept.getId(), 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(inactiveTypeConcept.getId(), activeDestinationConcept.getId(), 0)))
 				.build();
 		SnomedRefSetMemberIndexEntry validGciAxiomMember = member(activeSourceConcept.getId(), Concepts.REFSET_OWL_AXIOM)
-				.gciAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(activeTypeConcept.getId(), activeDestinationConcept.getId(), 0)))
+				.gciAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(activeTypeConcept.getId(), activeDestinationConcept.getId(), 0)))
 				.build();
 
 		indexRevision(MAIN, 
@@ -1158,38 +1166,49 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		final String ruleId = "671";
 		indexRule(ruleId);
 		
+		// prepare the first concept
 		String conceptId1 = generateConceptId();
 		SnomedDescriptionIndexEntry fsn1 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 1 (tag)")
 				.conceptId(conceptId1)
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
 				.build();
+		// no need to generate an indicator here, active FSN without any indicator should be ALLOWED by the rule 
 		
 		SnomedDescriptionIndexEntry pt1 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 1")
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
 				.conceptId(conceptId1)
 				.build();
+		// mark this active PT with a active concept non-current indicator which should be ALLOWED by the rule
+		SnomedRefSetMemberIndexEntry validCNCForPt1 = member(pt1.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
 		
 		SnomedDescriptionIndexEntry pt2 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 2")
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
 				.conceptId(conceptId1)
 				.build();
-		
-		SnomedRefSetMemberIndexEntry ptMember1 = member(pt1.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
-		SnomedRefSetMemberIndexEntry ptMember2 = member(pt2.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.ERRONEOUS).build();
-		
-		SnomedConceptDocument conceptWithActiveDescription = concept(conceptId1)
-				.preferredDescriptions(ImmutableList.of(
-						new SnomedDescriptionFragment(fsn1.getId(), fsn1.getTypeId(), fsn1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
-						new SnomedDescriptionFragment(pt1.getId(), pt1.getTypeId(), pt1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
-						new SnomedDescriptionFragment(pt2.getId(), pt2.getTypeId(), pt2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
-						))
+		// mark this active PT with an active erroneous indicator which should NOT be allowed by the rule
+		SnomedRefSetMemberIndexEntry invalidErroneousForPt2 = member(pt2.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.ERRONEOUS).build();
+
+		// register the concept as inactive along with the three active descriptions
+		// simulates normal inactivation plus manual editing scenario resulting in a mixed disallowed state
+		SnomedConceptDocument inactiveConceptWithActiveDescriptions = concept(conceptId1)
+				.preferredDescriptions(List.of(
+					new SnomedDescriptionFragment(fsn1.getId(), fsn1.getTypeId(), fsn1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
+					new SnomedDescriptionFragment(pt1.getId(), pt1.getTypeId(), pt1.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
+					new SnomedDescriptionFragment(pt2.getId(), pt2.getTypeId(), pt2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
+				))
 				.active(false)
 				.build();
 		
+		// prepare the second concept
 		String conceptId2 = generateConceptId();
 		SnomedDescriptionIndexEntry fsn2 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 2 (tag)")
 				.conceptId(conceptId2)
 				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.build();
+		// generate an inactive CNC indicator to test that it is not reported by the rule at all
+		SnomedRefSetMemberIndexEntry validCNCForFsn2 = member(fsn2.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR)
+				.active(false)
+				.valueId(Concepts.CONCEPT_NON_CURRENT)
 				.build();
 		
 		SnomedDescriptionIndexEntry pt3 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 3")
@@ -1197,25 +1216,51 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.active(false)
 				.conceptId(conceptId2)
 				.build();
+		// mark this inactive PT with a concept non-current indicator which should NOT be allowed by the rule as the description is inactive
+		SnomedRefSetMemberIndexEntry invalidCNCOnPt3 = member(pt3.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
+		SnomedDescriptionIndexEntry pt4 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 4")
+				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.active(false)
+				.conceptId(conceptId1)
+				.build();
+		// mark this active PT with an active erroneous indicator which should NOT be allowed by the rule
+		SnomedRefSetMemberIndexEntry validErroneousForPt4 = member(pt4.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.ERRONEOUS).build();
 		
-		
-		SnomedRefSetMemberIndexEntry ptMember3 = member(pt3.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
-		
+		// register the concept as inactive along with the two active/inactive descriptions
+		// simulates concept inactivation along with an incorrect description inactivation
 		SnomedConceptDocument conceptWithInactiveDescription = concept(conceptId2)
-				.preferredDescriptions(ImmutableList.of(
-						new SnomedDescriptionFragment(fsn2.getId(), fsn2.getTypeId(), fsn2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
-						new SnomedDescriptionFragment(pt3.getId(), pt3.getTypeId(), pt3.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
-						))
+				.preferredDescriptions(List.of(
+					new SnomedDescriptionFragment(fsn2.getId(), fsn2.getTypeId(), fsn2.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES),
+					new SnomedDescriptionFragment(pt3.getId(), pt3.getTypeId(), pt3.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_ES)
+				))
 				.active(false)
 				.build();
 		
-		indexRevision(MAIN, conceptWithActiveDescription, fsn1, pt1, ptMember1, conceptWithInactiveDescription, fsn2, pt2, pt3, ptMember2, ptMember3);
+		indexRevision(MAIN,
+			// index active concept state
+			inactiveConceptWithActiveDescriptions, 
+			fsn1, 
+			pt1, 
+			validCNCForPt1, 
+			pt2, 
+			invalidErroneousForPt2, 
+			
+			// index inactive concept state
+			conceptWithInactiveDescription, 
+			fsn2,
+			validCNCForFsn2,
+			pt3,
+			invalidCNCOnPt3,
+			pt4,
+			validErroneousForPt4
+		);
 		
 		final ValidationIssues issues = validate(ruleId);
 		
 		assertAffectedComponents(issues, 
-				ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, pt2.getId()),
-				ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, pt3.getId()));
+			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, pt2.getId()),
+			ComponentIdentifier.of(SnomedTerminologyComponentConstants.DESCRIPTION_NUMBER, pt3.getId())
+		);
 	}
 	
 	@Test
@@ -1240,31 +1285,31 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.group(2).build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember1 = member(Concepts.CONCEPT_MODEL_ATTRIBUTE, Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE))
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember2 = member(Concepts.CONCEPT_MODEL_ATTRIBUTE, Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT))
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember3 = member(Concepts.ROOT_CONCEPT, Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE))
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember4 =  member(Concepts.CONCEPT_MODEL_ATTRIBUTE, Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
 				.owlExpression(String.format("TransitiveObjectProperty(:%s)", Concepts.CONCEPT_MODEL_ATTRIBUTE))
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember5 = member(Concepts.ROOT_CONCEPT, Concepts.REFSET_OWL_AXIOM)
-				.gciAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.gciAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE))
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
 				.build();
@@ -1325,31 +1370,31 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		// OWL axioms
 		SnomedRefSetMemberIndexEntry axiomMember1 = member(Concepts.CONCEPT_MODEL_ATTRIBUTE, Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.CONCEPT_MODEL_ATTRIBUTE))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember2 = member(Concepts.TEXT_DEFINITION, Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember3 = member(Concepts.ROOT_CONCEPT, Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember4 = member(Concepts.ROOT_CONCEPT, Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.classAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.PHYSICAL_OBJECT, Concepts.CONCEPT_MODEL_ATTRIBUTE, 0)))
 				.owlExpression(String.format("ReflexiveObjectProperty(:%s)", Concepts.ROOT_CONCEPT))
 				.build();
 		
 		SnomedRefSetMemberIndexEntry axiomMember5 = member(Concepts.PHYSICAL_OBJECT, Concepts.REFSET_OWL_AXIOM)
 				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.gciAxiomRelationships(Lists.newArrayList(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT, 0)))
+				.gciAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT, 0)))
 				.owlExpression(String.format("ObjectSomeValuesFrom(:%s :%s)", Concepts.FINDING_SITE, Concepts.PHYSICAL_OBJECT))
 				.build();
 		

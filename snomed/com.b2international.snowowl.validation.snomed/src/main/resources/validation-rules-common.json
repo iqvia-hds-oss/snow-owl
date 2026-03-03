@@ -281,7 +281,7 @@
   {
   	"id": "671",
     "toolingId": "com.b2international.snowowl.terminology.snomed",
-    "messageTemplate": "All active descriptions, and only active descriptions, of inactive concepts should have a single Concept non-current or Pending Move inactivation indicator.",
+    "messageTemplate": "Only active descriptions of inactive concepts can have the following inactivity indicators: Pending move, Limited, or Concept non-current.",
     "severity": "WARNING",
     "checkType": "FAST",
     "type": "script-groovy",

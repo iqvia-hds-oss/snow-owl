@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,8 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 			.body("statedParentIds", equalTo(List.of(IComponent.ROOT_ID)))
 			.body("statedAncestorIds", equalTo(List.of()))
 			.body("descriptions.items.active", everyItem(equalTo(true)))
-			.body("descriptions.items.inactivationProperties.inactivationIndicator.id", everyItem(equalTo(Concepts.CONCEPT_NON_CURRENT)));
+			// as of 2026 Jan, CNC indicators should not be generated anymore, so expecting this path to be a null value in all cases
+			.body("descriptions.items.inactivationProperties.inactivationIndicator.id", equalTo(List.of()));
 	}
 	
 	@Test
@@ -308,12 +309,16 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 			.body("inactivationProperties.associationTargets", equalTo(List.of()));
 	}
 	
+	/**
+	 * Keeping this test case here, even if SI inactivated all CNC indicators in the INT Edition as of 2026 Jan
+	 * The indicator itself can still be used and if added for any reason it should be removed upon reactivation
+	 */
 	@Test
 	public void reactivateConceptShouldRemoveConceptNonCurrentIndicatorsFromDescriptions() throws Exception {
 		final String inactiveConceptId = createNewConcept(branchPath, createConceptRequestBody(ROOT_CONCEPT, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.UK_PREFERRED_MAP, false)
 				.with("commitComment", "Created inactive concept"));
 		
-		// create non-current indicators for the pre-inactivated concept's descriptions 
+		// create non-current indicators for the pre-inactivated concept's descriptions
 		getConcept(inactiveConceptId, "descriptions()").getDescriptions().forEach(description -> {
 			Map<?, ?> requestBody = createRefSetMemberRequestBody(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR, description.getId())
 					.with(SnomedRf2Headers.FIELD_VALUE_ID, Concepts.CONCEPT_NON_CURRENT)
