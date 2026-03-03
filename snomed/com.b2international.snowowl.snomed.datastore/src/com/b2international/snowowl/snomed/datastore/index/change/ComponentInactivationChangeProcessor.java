@@ -231,6 +231,7 @@ final class ComponentInactivationChangeProcessor extends ChangeSetProcessorBase 
 			// search for all active indicator refset members with concept non-current
 			Hits<SnomedRefSetMemberIndexEntry> members = searcher.search(Query.select(SnomedRefSetMemberIndexEntry.class)
 				.where(Expressions.bool()
+					// exclude already modified/updated indicators
 					.mustNot(SnomedRefSetMemberIndexEntry.Expressions.ids(stagedDescriptionIndicators))
 					.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
 					.filter(SnomedRefSetMemberIndexEntry.Expressions.refsetId(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
@@ -241,12 +242,12 @@ final class ComponentInactivationChangeProcessor extends ChangeSetProcessorBase 
 				.build());
 			
 			for (SnomedRefSetMemberIndexEntry indicatorMember : members) {
-				// check if this member is present in the transaction, if yes, do not auto-update/delete it
 				if (indicatorMember.isReleased() != null && indicatorMember.isReleased()) {
-					stageChange(indicatorMember, SnomedRefSetMemberIndexEntry.builder(indicatorMember).active(false)
-						.effectiveTime(EffectiveTimes.UNSET_EFFECTIVE_TIME)
-						.moduleId(moduleIdProvider.apply(indicatorMember))
-						.build());
+					stageChange(indicatorMember, SnomedRefSetMemberIndexEntry.builder(indicatorMember)
+							.active(false)
+							.effectiveTime(EffectiveTimes.UNSET_EFFECTIVE_TIME)
+							.moduleId(moduleIdProvider.apply(indicatorMember))
+							.build());
 				} else {
 					stageRemove(indicatorMember);
 				}
