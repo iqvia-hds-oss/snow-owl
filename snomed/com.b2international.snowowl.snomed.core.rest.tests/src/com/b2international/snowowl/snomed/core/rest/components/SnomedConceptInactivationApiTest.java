@@ -308,6 +308,10 @@ public class SnomedConceptInactivationApiTest extends AbstractSnomedApiTest {
 			.body("inactivationProperties.associationTargets", equalTo(List.of()));
 	}
 	
+	/**
+	 * Keeping this test case here, even if SI inactivated all CNC indicators in the INT Edition as of 2026 Jan
+	 * The indicator itself can still be used and if added for any reason it should be removed upon reactivation
+	 */
 	@Test
 	public void reactivateConceptShouldRemoveConceptNonCurrentIndicatorsFromDescriptions() throws Exception {
 		final String inactiveConceptId = createNewConcept(branchPath, createConceptRequestBody(ROOT_CONCEPT, Concepts.MODULE_SCT_CORE, SnomedApiTestConstants.UK_PREFERRED_MAP, false)
