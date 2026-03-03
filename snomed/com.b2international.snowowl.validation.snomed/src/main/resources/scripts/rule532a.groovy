@@ -45,8 +45,6 @@ Set<String> inactiveConceptIds = SnomedRequests.prepareSearchConcept()
 	.map({ SnomedConcept c -> c.getId() })
 	.toSet()
 	
-println inactiveConceptIds
-	
 def pendingMoveDescriptions = SnomedRequests.prepareSearchMember()
 	.filterByRefSet(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR)
 	.filterByProps(OptionsBuilder.newBuilder()
