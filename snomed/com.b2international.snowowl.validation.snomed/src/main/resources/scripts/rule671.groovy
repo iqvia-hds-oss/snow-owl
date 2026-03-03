@@ -16,7 +16,13 @@ import com.google.common.collect.Sets
 
 def Set<ComponentIdentifier> issues = []
 def RevisionSearcher searcher = ctx.service(RevisionSearcher.class)
+// XXX keeping the CNC indicator here for customers who still rely on it (SI inactivated all indicators in the 2026 Jan release but kept the functionality available for extension maintainers) 
 def activeDescriptionIndicatorIds = [Concepts.PENDING_MOVE, Concepts.LIMITED, Concepts.CONCEPT_NON_CURRENT]
+
+// the main scope of the rule is inactive concepts, anything that is on active concepts could be ignored, BUT
+// in the unpublished case we will report all issues so that users can be notified when they made a mistake during authoring
+// in the published case we will follow what the rule says and report incorrect patterns on inactive concepts only to reduce the scope and increase performance
+// running the entire rule on all descriptions require a lot of computation and it is very likely that it will report issues that customers don't care much about
 
 if (params.isUnpublishedOnly) {
 	
@@ -77,10 +83,10 @@ if (params.isUnpublishedOnly) {
 } else {
 	// report descriptions with incorrect unpublished or published inactivation indicator members
 	def checkDescriptions = { boolean active , List<String> inactiveConceptIds ->
-		final List<String> descriptionIds = []
-		
+
+		// depending on the incoming active parameter, we will collect all inactive or active descriptions from inactive concepts
+		final List<String> activeOrInactiveDescriptionIdsInScope = []
 		//	println "Searching ${active ? 'active' : 'inactive'} descriptions on inactive concepts..."
-			
 		searcher.stream(Query.select(String.class)
 				.from(SnomedDescriptionIndexEntry.class)
 				.fields(SnomedDescriptionIndexEntry.Fields.ID)
@@ -93,20 +99,15 @@ if (params.isUnpublishedOnly) {
 				.limit(100_000)
 				.build())
 				.forEachOrdered({Hits<String> hits ->
-					descriptionIds.addAll(hits.getHits())
+					activeOrInactiveDescriptionIdsInScope.addAll(hits.getHits())
 				})
-					
 		//	println "Found ${descriptionIds.size()} ${active ? 'active' : 'inactive'} descriptions on inactive concepts..."
 		
 		ExpressionBuilder memberQuery = Expressions.bool()
 				.filter(SnomedRefSetMemberIndexEntry.Expressions.active())
 				.filter(SnomedRefSetMemberIndexEntry.Expressions.refsetId(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR))
-				.filter(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(descriptionIds))
+				.filter(SnomedRefSetMemberIndexEntry.Expressions.referencedComponentIds(activeOrInactiveDescriptionIdsInScope))
 				
-		if (params.isUnpublishedOnly) {
-			memberQuery.filter(SnomedRefSetMemberIndexEntry.Expressions.effectiveTime(EffectiveTimes.UNSET_EFFECTIVE_TIME))
-		}
-	
 		if (active) {
 			memberQuery
 					.mustNot(SnomedRefSetMemberIndexEntry.Expressions.valueIds(activeDescriptionIndicatorIds))
@@ -134,7 +135,7 @@ if (params.isUnpublishedOnly) {
 	
 	ExpressionBuilder filterInactiveConceptsExpressionBuilder = Expressions.bool()
 			.filter(SnomedConceptDocument.Expressions.inactive())
-	
+
 	List<String> inactiveConceptIds = []
 	
 	//println "Loading inactive concepts"
@@ -148,7 +149,7 @@ if (params.isUnpublishedOnly) {
 				inactiveConceptIds.addAll(hits.getHits())
 			})
 	//println "Loaded ${inactiveConceptIds.size()} inactive concepts"
-			
+	
 	checkDescriptions(true, inactiveConceptIds)
 	checkDescriptions(false, inactiveConceptIds)
 }
