@@ -44,6 +44,7 @@ import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
+import com.google.common.collect.Maps;
 
 /**
  * @since 7.7

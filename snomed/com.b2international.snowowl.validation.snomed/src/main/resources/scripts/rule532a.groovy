@@ -1,5 +1,7 @@
 package scripts
 
+import java.util.stream.Collectors
+
 import com.b2international.commons.options.Options
 import com.b2international.index.aggregations.Aggregation
 import com.b2international.index.aggregations.AggregationBuilder
@@ -34,7 +36,7 @@ Set<String> extensionModules = SnomedRequests.prepareSearchConcept()
 	.stream(ctx)
 	.flatMap({ SnomedConcepts c -> c.stream() })
 	.map({ SnomedConcept c -> c.getId() })
-	.toSet()
+	.collect(Collectors.toSet())
 	
 Set<String> inactiveConceptIds = SnomedRequests.prepareSearchConcept()
 	.filterByActive(false)
@@ -43,7 +45,7 @@ Set<String> inactiveConceptIds = SnomedRequests.prepareSearchConcept()
 	.stream(ctx)
 	.flatMap({ SnomedConcepts c -> c.stream() })
 	.map({ SnomedConcept c -> c.getId() })
-	.toSet()
+	.collect(Collectors.toSet())
 	
 def pendingMoveDescriptions = SnomedRequests.prepareSearchMember()
 	.filterByRefSet(Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR)
