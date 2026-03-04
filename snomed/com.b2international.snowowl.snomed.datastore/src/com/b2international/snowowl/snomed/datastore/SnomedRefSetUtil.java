@@ -40,9 +40,6 @@ import com.google.common.collect.*;
  * Utility class collecting commons operations related to SNOMED CT reference sets. 
  */
 public abstract class SnomedRefSetUtil {
-
-	public static final Set<String> ATTRIBUTE_VALUES_FOR_ACTIVE_CONCEPTS = ImmutableSet.of(Concepts.PENDING_MOVE);
-	public static final Set<String> ATTRIBUTE_VALUES_FOR_ACTIVE_DESCRIPTIONS = ImmutableSet.of(Concepts.PENDING_MOVE);
 	
 	private static BiMap<DataType, String> DATATYPE_TO_REFSET_MAP;
 	
