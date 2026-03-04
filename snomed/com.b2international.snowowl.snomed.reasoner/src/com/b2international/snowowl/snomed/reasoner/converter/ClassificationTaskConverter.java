@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.snomed.reasoner.converter;
 
+import static com.b2international.snowowl.snomed.reasoner.index.ConcreteDomainChangeDocument.Fields.REFERENCED_COMPONENT_ID;
+import static com.b2international.snowowl.snomed.reasoner.index.RelationshipChangeDocument.Fields.SOURCE_ID;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,8 +32,6 @@ import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.request.BaseResourceConverter;
 import com.b2international.snowowl.snomed.reasoner.domain.*;
 import com.b2international.snowowl.snomed.reasoner.index.ClassificationTaskDocument;
-import com.b2international.snowowl.snomed.reasoner.index.ConcreteDomainChangeDocument;
-import com.b2international.snowowl.snomed.reasoner.index.RelationshipChangeDocument;
 import com.b2international.snowowl.snomed.reasoner.request.ClassificationRequests;
 import com.b2international.snowowl.snomed.reasoner.request.ConcreteDomainChangeSearchRequestBuilder;
 import com.b2international.snowowl.snomed.reasoner.request.EquivalentConceptSetSearchRequestBuilder;
@@ -147,15 +148,15 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 			final RelationshipChangeSearchRequestBuilder builder = ClassificationRequests.prepareSearchRelationshipChange()
 					.filterByClassificationId(classificationTask.getId());
 	
-			if (expandOptions.containsKey("sourceId")) {
-				builder.filterBySourceId(expandOptions.getCollection("sourceId", String.class));
+			if (expandOptions.containsKey(SOURCE_ID)) {
+				builder.filterBySourceId(expandOptions.getCollection(SOURCE_ID, String.class));
 			}
 			
 			final RelationshipChanges relationshipChanges = builder
 					.setExpand(expandOptions.get("expand", Options.class))
 					.setLimit(getLimit(expandOptions))
 					.setLocales(locales())
-					.sortBy(RelationshipChangeDocument.Fields.SOURCE_ID)
+					.sortBy(SOURCE_ID)
 					.build()
 					.execute(context());
 			classificationTask.setRelationshipChanges(relationshipChanges);
@@ -173,9 +174,13 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 			final ConcreteDomainChangeSearchRequestBuilder builder = ClassificationRequests.prepareSearchConcreteDomainChange()
 					.filterByClassificationId(classificationTask.getId())
 					.setExpand(expandOptions.get("expand", Options.class))
-					.sortBy(ConcreteDomainChangeDocument.Fields.REFERENCED_COMPONENT_ID)
+					.sortBy(REFERENCED_COMPONENT_ID)
 					.setLocales(locales())
 					.setLimit(getLimit(expandOptions));
+			
+			if (expandOptions.containsKey(REFERENCED_COMPONENT_ID)) {
+				builder.filterByReferencedComponentId(expandOptions.get(REFERENCED_COMPONENT_ID, String.class));
+			}
 
 			final ConcreteDomainChanges concreteDomainChanges = builder.build().execute(context());
 			classificationTask.setConcreteDomainChanges(concreteDomainChanges);
