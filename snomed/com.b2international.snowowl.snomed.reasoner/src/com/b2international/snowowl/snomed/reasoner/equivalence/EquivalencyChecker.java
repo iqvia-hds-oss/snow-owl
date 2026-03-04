@@ -26,7 +26,6 @@ import com.b2international.snowowl.snomed.reasoner.classification.ClassifyOperat
 import com.b2international.snowowl.snomed.reasoner.domain.ClassificationStatus;
 import com.b2international.snowowl.snomed.reasoner.domain.ClassificationTask;
 import com.b2international.snowowl.snomed.reasoner.domain.EquivalentConceptSet;
-import com.b2international.snowowl.snomed.reasoner.domain.EquivalentConceptSets;
 import com.b2international.snowowl.snomed.reasoner.exceptions.ReasonerApiException;
 import com.b2international.snowowl.snomed.reasoner.request.ClassificationRequests;
 
@@ -59,7 +58,6 @@ public final class EquivalencyChecker extends ClassifyOperation<LongKeyLongMap> 
 		final LongKeyLongMap equivalentConceptMap = PrimitiveMaps.newLongKeyLongOpenHashMap();
 
 		final ClassificationTask classificationTask = ClassificationRequests.prepareGetClassification(classificationId)
-				.setExpand("equivalentConceptSets()")
 				.build(repositoryId)
 				.execute(getEventBus())
 				.getSync();
@@ -71,13 +69,19 @@ public final class EquivalencyChecker extends ClassifyOperation<LongKeyLongMap> 
 		if (!classificationTask.getEquivalentConceptsFound()) {
 			return equivalentConceptMap;
 		}
+		
+		final List<EquivalentConceptSet> equivalentConceptSets = ClassificationRequests.prepareSearchEquivalentConceptSet()
+				.filterByClassificationId(classificationTask.getId())
+				.setLimit(10_000)
+				.streamAsync(getEventBus(), b -> b.build(repositoryId))
+				.flatMap(conceptSets -> conceptSets.stream())
+				.collect(Collectors.toList());
 
-		final EquivalentConceptSets equivalentConceptSets = classificationTask.getEquivalentConceptSets();
 		registerEquivalentConcepts(equivalentConceptSets, conceptIdsToCheck, equivalentConceptMap);
 		return equivalentConceptMap;
 	}
 
-	private void registerEquivalentConcepts(final EquivalentConceptSets equivalentConceptSets, 
+	private void registerEquivalentConcepts(final List<EquivalentConceptSet> equivalentConceptSets, 
 			final Set<String> conceptIdsToCheck,
 			final LongKeyLongMap equivalentConceptMap) {
 
