@@ -74,7 +74,7 @@ public final class EquivalencyChecker extends ClassifyOperation<LongKeyLongMap> 
 		final List<EquivalentConceptSet> equivalentConceptSets = ClassificationRequests.prepareSearchEquivalentConceptSet()
 				.filterByClassificationId(classificationTask.getId())
 				.setLimit(10_000)
-				.streamAsync(getEventBus(), b -> b.build(classificationId))
+				.streamAsync(getEventBus(), b -> b.build(repositoryId))
 				.flatMap(conceptSets -> conceptSets.stream())
 				.collect(Collectors.toList());
 
