@@ -126,14 +126,8 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 			final EquivalentConceptSetSearchRequestBuilder builder = ClassificationRequests.prepareSearchEquivalentConceptSet()
 					.filterByClassificationId(classificationTask.getId())
 					.setExpand(expandOptions.get("expand", Options.class))
-					.setLocales(locales());
-			
-			if (expandOptions.containsKey("limit") && results.size() == 1) {
-				builder.setLimit(getLimit(expandOptions));
-			} else {
-				builder.all();
-			}
-			
+					.setLocales(locales())
+					.setLimit(getLimit(expandOptions));			
 			final EquivalentConceptSets equivalentConceptSets = builder.build().execute(context());
 			classificationTask.setEquivalentConceptSets(equivalentConceptSets);
 		}
@@ -154,14 +148,9 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 				builder.filterBySourceId(expandOptions.getCollection("sourceId", String.class));
 			}
 			
-			if (expandOptions.containsKey("limit")) {
-				builder.setLimit(getLimit(expandOptions));
-			} else {
-				builder.all();
-			}
-	
 			final RelationshipChanges relationshipChanges = builder
 					.setExpand(expandOptions.get("expand", Options.class))
+					.setLimit(getLimit(expandOptions))
 					.setLocales(locales())
 					.sortBy(RelationshipChangeDocument.Fields.SOURCE_ID)
 					.build()
@@ -182,13 +171,8 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 					.filterByClassificationId(classificationTask.getId())
 					.setExpand(expandOptions.get("expand", Options.class))
 					.sortBy(ConcreteDomainChangeDocument.Fields.REFERENCED_COMPONENT_ID)
-					.setLocales(locales());
-			
-			if (expandOptions.containsKey("limit")) {
-				builder.setLimit(getLimit(expandOptions));
-			} else {
-				builder.all();
-			}
+					.setLocales(locales())
+					.setLimit(getLimit(expandOptions));
 
 			final ConcreteDomainChanges concreteDomainChanges = builder.build().execute(context());
 			classificationTask.setConcreteDomainChanges(concreteDomainChanges);
