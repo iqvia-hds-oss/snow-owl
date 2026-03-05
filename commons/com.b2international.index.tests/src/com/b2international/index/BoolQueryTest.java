@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2026 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.index.query.Query;
 
 /**
- * @since 8.1
+ * @since 7.29.0
  */
 public class BoolQueryTest extends BaseIndexTest {
 

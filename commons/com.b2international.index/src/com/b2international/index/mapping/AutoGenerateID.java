@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 /**
  * Supporting annotation to give a Doc annotated class auto-generated IDs and let Elasticsearch manage the uniqueness of the documents.
  * 
- * @since 8.0
+ * @since 7.29.0
  */
 @Retention(RUNTIME)
 @Target(TYPE)
