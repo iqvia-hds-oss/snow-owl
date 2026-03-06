@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,8 +73,8 @@ public final class EquivalencyChecker extends ClassifyOperation<LongKeyLongMap> 
 		
 		final List<EquivalentConceptSet> equivalentConceptSets = ClassificationRequests.prepareSearchEquivalentConceptSet()
 				.filterByClassificationId(classificationTask.getId())
-				.setLimit(10_000)
-				.streamAsync(getEventBus(), b -> b.build(repositoryId))
+				.setLimit(context.getPageSize())
+				.stream(context, b -> b.build(SnomedTerminologyComponentConstants.TOOLING_ID))
 				.flatMap(conceptSets -> conceptSets.stream())
 				.collect(Collectors.toList());
 
