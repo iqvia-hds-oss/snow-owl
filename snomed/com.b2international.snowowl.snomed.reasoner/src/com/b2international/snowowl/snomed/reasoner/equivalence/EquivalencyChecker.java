@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.b2international.snowowl.snomed.reasoner.classification.ClassifyOperat
 import com.b2international.snowowl.snomed.reasoner.domain.ClassificationStatus;
 import com.b2international.snowowl.snomed.reasoner.domain.ClassificationTask;
 import com.b2international.snowowl.snomed.reasoner.domain.EquivalentConceptSet;
-import com.b2international.snowowl.snomed.reasoner.domain.EquivalentConceptSets;
 import com.b2international.snowowl.snomed.reasoner.exceptions.ReasonerApiException;
 import com.b2international.snowowl.snomed.reasoner.request.ClassificationRequests;
 
@@ -61,7 +60,6 @@ public final class EquivalencyChecker extends ClassifyOperation<LongKeyLongMap> 
 		final LongKeyLongMap equivalentConceptMap = PrimitiveMaps.newLongKeyLongOpenHashMap();
 
 		final ClassificationTask classificationTask = ClassificationRequests.prepareGetClassification(classificationId)
-				.setExpand("equivalentConceptSets()")
 				.build(SnomedTerminologyComponentConstants.TOOLING_ID)
 				.get(context);
 
@@ -72,13 +70,19 @@ public final class EquivalencyChecker extends ClassifyOperation<LongKeyLongMap> 
 		if (!classificationTask.getEquivalentConceptsFound()) {
 			return equivalentConceptMap;
 		}
+		
+		final List<EquivalentConceptSet> equivalentConceptSets = ClassificationRequests.prepareSearchEquivalentConceptSet()
+				.filterByClassificationId(classificationTask.getId())
+				.setLimit(context.getPageSize())
+				.stream(context, b -> b.build(SnomedTerminologyComponentConstants.TOOLING_ID))
+				.flatMap(conceptSets -> conceptSets.stream())
+				.collect(Collectors.toList());
 
-		final EquivalentConceptSets equivalentConceptSets = classificationTask.getEquivalentConceptSets();
 		registerEquivalentConcepts(equivalentConceptSets, conceptIdsToCheck, equivalentConceptMap);
 		return equivalentConceptMap;
 	}
 
-	private void registerEquivalentConcepts(final EquivalentConceptSets equivalentConceptSets, 
+	private void registerEquivalentConcepts(final List<EquivalentConceptSet> equivalentConceptSets, 
 			final Set<String> conceptIdsToCheck,
 			final LongKeyLongMap equivalentConceptMap) {
 

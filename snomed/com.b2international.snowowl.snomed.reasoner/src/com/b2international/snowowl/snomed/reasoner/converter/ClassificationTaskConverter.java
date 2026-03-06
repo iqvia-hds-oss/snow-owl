@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.snomed.reasoner.converter;
 
+import static com.b2international.snowowl.snomed.reasoner.index.ConcreteDomainChangeDocument.Fields.REFERENCED_COMPONENT_ID;
+import static com.b2international.snowowl.snomed.reasoner.index.RelationshipChangeDocument.Fields.SOURCE_ID;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,20 +30,13 @@ import com.b2international.snowowl.core.branch.Branches;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.request.BaseResourceConverter;
-import com.b2international.snowowl.snomed.reasoner.domain.ClassificationStatus;
-import com.b2international.snowowl.snomed.reasoner.domain.ClassificationTask;
-import com.b2international.snowowl.snomed.reasoner.domain.ClassificationTasks;
-import com.b2international.snowowl.snomed.reasoner.domain.ConcreteDomainChange;
-import com.b2international.snowowl.snomed.reasoner.domain.ConcreteDomainChanges;
-import com.b2international.snowowl.snomed.reasoner.domain.EquivalentConceptSet;
-import com.b2international.snowowl.snomed.reasoner.domain.EquivalentConceptSets;
-import com.b2international.snowowl.snomed.reasoner.domain.RelationshipChange;
-import com.b2international.snowowl.snomed.reasoner.domain.RelationshipChanges;
+import com.b2international.snowowl.snomed.reasoner.domain.*;
 import com.b2international.snowowl.snomed.reasoner.index.ClassificationTaskDocument;
 import com.b2international.snowowl.snomed.reasoner.request.ClassificationRequests;
+import com.b2international.snowowl.snomed.reasoner.request.ConcreteDomainChangeSearchRequestBuilder;
+import com.b2international.snowowl.snomed.reasoner.request.EquivalentConceptSetSearchRequestBuilder;
 import com.b2international.snowowl.snomed.reasoner.request.RelationshipChangeSearchRequestBuilder;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 
@@ -130,21 +126,14 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 		}
 
 		final Options expandOptions = expand().get(ClassificationTask.Expand.EQUIVALENT_CONCEPT_SETS, Options.class);
-		final EquivalentConceptSets equivalentConceptSets = ClassificationRequests.prepareSearchEquivalentConceptSet()
-				.filterByClassificationId(classificationTaskIds)
-				.all()
-				.setExpand(expandOptions.get("expand", Options.class))
-				.setLocales(locales())
-				.build()
-				.execute(context());
-
-		final ListMultimap<String, EquivalentConceptSet> setsByTaskId = Multimaps.index(
-				equivalentConceptSets, 
-				EquivalentConceptSet::getClassificationId);
-
 		for (final ClassificationTask classificationTask : results) {
-			final List<EquivalentConceptSet> taskSets = setsByTaskId.get(classificationTask.getId());
-			classificationTask.setEquivalentConceptSets(new EquivalentConceptSets(taskSets, null, taskSets.size(), taskSets.size()));
+			final EquivalentConceptSetSearchRequestBuilder builder = ClassificationRequests.prepareSearchEquivalentConceptSet()
+					.filterByClassificationId(classificationTask.getId())
+					.setExpand(expandOptions.get("expand", Options.class))
+					.setLocales(locales())
+					.setLimit(getLimit(expandOptions));			
+			final EquivalentConceptSets equivalentConceptSets = builder.build().execute(context());
+			classificationTask.setEquivalentConceptSets(equivalentConceptSets);
 		}
 	}
 
@@ -155,27 +144,22 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 
 		final Options expandOptions = expand().get(ClassificationTask.Expand.RELATIONSHIP_CHANGES, Options.class);
 		
-		final RelationshipChangeSearchRequestBuilder builder = ClassificationRequests.prepareSearchRelationshipChange()
-				.all()
-				.filterByClassificationId(classificationTaskIds);
-
-		if (expandOptions.containsKey("sourceId")) {
-			builder.filterBySourceId(expandOptions.getCollection("sourceId", String.class));
-		}
-		
-		final RelationshipChanges relationshipChanges = builder
-				.setExpand(expandOptions.get("expand", Options.class))
-				.setLocales(locales())
-				.build()
-				.execute(context());
-
-		final ListMultimap<String, RelationshipChange> relationshipChangesByTaskId = Multimaps.index(
-				relationshipChanges, 
-				RelationshipChange::getClassificationId);
-
 		for (final ClassificationTask classificationTask : results) {
-			final List<RelationshipChange> taskChanges = relationshipChangesByTaskId.get(classificationTask.getId());
-			classificationTask.setRelationshipChanges(new RelationshipChanges(taskChanges, null, taskChanges.size(), taskChanges.size()));
+			final RelationshipChangeSearchRequestBuilder builder = ClassificationRequests.prepareSearchRelationshipChange()
+					.filterByClassificationId(classificationTask.getId());
+	
+			if (expandOptions.containsKey(SOURCE_ID)) {
+				builder.filterBySourceId(expandOptions.getCollection(SOURCE_ID, String.class));
+			}
+			
+			final RelationshipChanges relationshipChanges = builder
+					.setExpand(expandOptions.get("expand", Options.class))
+					.setLimit(getLimit(expandOptions))
+					.setLocales(locales())
+					.sortBy(SOURCE_ID)
+					.build()
+					.execute(context());
+			classificationTask.setRelationshipChanges(relationshipChanges);
 		}
 	}
 
@@ -185,21 +169,21 @@ public final class ClassificationTaskConverter extends BaseResourceConverter<Cla
 		}
 
 		final Options expandOptions = expand().get(ClassificationTask.Expand.CONCRETE_DOMAIN_CHANGES, Options.class);
-		final ConcreteDomainChanges concreteDomainChanges = ClassificationRequests.prepareSearchConcreteDomainChange()
-				.filterByClassificationId(classificationTaskIds)
-				.all()
-				.setExpand(expandOptions.get("expand", Options.class))
-				.setLocales(locales())
-				.build()
-				.execute(context());
-
-		final ListMultimap<String, ConcreteDomainChange> concreteDomainChangesByTaskId = Multimaps.index(
-				concreteDomainChanges, 
-				ConcreteDomainChange::getClassificationId);
-
+		
 		for (final ClassificationTask classificationTask : results) {
-			final List<ConcreteDomainChange> taskChanges = concreteDomainChangesByTaskId.get(classificationTask.getId());
-			classificationTask.setConcreteDomainChanges(new ConcreteDomainChanges(taskChanges, null, taskChanges.size(), taskChanges.size()));
+			final ConcreteDomainChangeSearchRequestBuilder builder = ClassificationRequests.prepareSearchConcreteDomainChange()
+					.filterByClassificationId(classificationTask.getId())
+					.setExpand(expandOptions.get("expand", Options.class))
+					.sortBy(REFERENCED_COMPONENT_ID)
+					.setLocales(locales())
+					.setLimit(getLimit(expandOptions));
+			
+			if (expandOptions.containsKey(REFERENCED_COMPONENT_ID)) {
+				builder.filterByReferencedComponentId(expandOptions.get(REFERENCED_COMPONENT_ID, String.class));
+			}
+
+			final ConcreteDomainChanges concreteDomainChanges = builder.build().execute(context());
+			classificationTask.setConcreteDomainChanges(concreteDomainChanges);
 		}
 	}
 }
