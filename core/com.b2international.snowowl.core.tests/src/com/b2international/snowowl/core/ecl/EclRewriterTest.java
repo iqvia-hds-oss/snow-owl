@@ -459,6 +459,13 @@ public class EclRewriterTest {
 				"^ " + ROOT_CONCEPT + " {{ M referencedComponentId = " + SUBSTANCE + " }}"
 			},
 
+			// "!=" operator must _not_ be rewritten to "= (* MINUS value)" in this case, but the concept term should still be removed
+			new Object[] {
+				"caseMemberFieldFilter_noNeRewrite",
+				"^ " + ROOT_CONCEPT + " {{ M referencedComponentId != " + SUBSTANCE + " |Substance| }}",
+				"^ " + ROOT_CONCEPT + " {{ M referencedComponentId != " + SUBSTANCE + " }}"
+			},
+			
 			new Object[] {
 				"caseFilterConstraint_conceptDomain",
 				"* {{ C definitionStatusId = " + DEFINED + " |Fully defined| }}",

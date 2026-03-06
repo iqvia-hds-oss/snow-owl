@@ -457,8 +457,22 @@ public class EclRewriter extends EclSwitch<EObject> {
 	
 	@Override
 	public EObject caseMemberFieldFilter(MemberFieldFilter object) {
-		object.setComparison(rewrite(object.getComparison()));
+		object.setComparison(rewriteMemberFieldComparison(object.getComparison()));
 		return object;
+	}
+
+	private Comparison rewriteMemberFieldComparison(Comparison comparison) {
+		/*
+		 * XXX: For AttributeComparisons the "!=" operator should _not_ be rewritten to
+		 * "= (* MINUS ...)" in this context, so we will not be calling "rewrite" on the
+		 * entire instance. This would in turn lead to caseAttributeComparison() getting called.
+		 */
+		if (comparison instanceof AttributeComparison ac) {
+			ac.setValue(rewrite(ac.getValue()));
+			return ac;
+		} else {
+			return rewrite(comparison);
+		}
 	}
 
 	@Override
