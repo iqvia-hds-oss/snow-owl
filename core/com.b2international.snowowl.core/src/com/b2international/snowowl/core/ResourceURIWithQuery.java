@@ -25,6 +25,7 @@ import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.branch.Branch;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -37,8 +38,8 @@ public final class ResourceURIWithQuery implements Serializable, Comparable<Reso
 	private static final long serialVersionUID = 1L;
 
 	public static final String QUERY_PART_SEPARATOR = "?";
-	private static final String QUERY_KEY_SEPARATOR = "&";
-	private static final String QUERY_KEY_VALUE_SEPARATOR = "=";
+	private static final char QUERY_KEY_SEPARATOR = '&';
+	private static final char QUERY_KEY_VALUE_SEPARATOR = '=';
 	
 	private final String uri;
 	private final ResourceURI resourceUri;
@@ -102,21 +103,57 @@ public final class ResourceURIWithQuery implements Serializable, Comparable<Reso
 	
 	public Multimap<String, String> getQueryValues() {
 		if (queryValues == null) {
-			queryValues = HashMultimap.create();
+			queryValues = parseQueryValues(query);
+		}
+		return queryValues;
+	}
+	
+	private static Multimap<String, String> parseQueryValues(final String query) {
+		final Multimap<String, String> result = HashMultimap.create();
+		
+		if (Strings.isNullOrEmpty(query)) {
+			return result;
+		}
+		
+		int pos = 0;
+		while (pos < query.length()) {
+
+			// Find the next '=' that separates key and value
+			final int valueSepIdx = query.indexOf(QUERY_KEY_VALUE_SEPARATOR, pos);
+			if (valueSepIdx == -1) {
+				throw new BadRequestException("Query string '%s' is missing '%c' after key '%s'.", query, QUERY_KEY_VALUE_SEPARATOR, query.substring(pos));
+			}
 			
-			if (!Strings.isNullOrEmpty(query)) {
-				for (String keyValueRaw : query.split(QUERY_KEY_SEPARATOR)) {
-					if (!Strings.isNullOrEmpty(keyValueRaw)) {
-						String[] keyValue = keyValueRaw.split(QUERY_KEY_VALUE_SEPARATOR);
-						if (keyValue.length == 2) {
-							queryValues.put(keyValue[0], keyValue[1]);
-						}
-					}
-				}				
+			final String key = query.substring(pos, valueSepIdx);
+			if (key.isEmpty()) {
+				throw new BadRequestException("Query string '%s' has an empty parameter key at position %d.", query, pos);
+			}
+			
+			if (key.startsWith(String.valueOf(QUERY_KEY_SEPARATOR))) {
+				throw new BadRequestException("Query string '%s' has an empty parameter key at position %d.", query, pos);
+			}
+			
+			if (CharMatcher.whitespace().matchesAnyOf(key)) {
+				throw new BadRequestException("Query string '%s' has a parameter key with whitespace, starting at position %d.", query, pos);
+			}
+			
+			// Find the next '&' that ends the value, '=' is intentionally allowed here
+			final int keySepIdx = query.indexOf(QUERY_KEY_SEPARATOR, valueSepIdx + 1);
+			if (keySepIdx == -1) {
+				// The value for the current key runs to end of string
+				result.put(key, query.substring(valueSepIdx + 1));
+				break;
+			} else {
+				// The value for the current key runs until the next '&' we just found
+				result.put(key, query.substring(valueSepIdx + 1, keySepIdx));
+				pos = keySepIdx + 1;
+				if (pos == query.length()) {
+					throw new BadRequestException("Query string '%s' has a trailing '%c' at position %d.", query, QUERY_KEY_SEPARATOR, keySepIdx);
+				}
 			}
 		}
 		
-		return queryValues;
+		return result;
 	}
 	
 	@Override

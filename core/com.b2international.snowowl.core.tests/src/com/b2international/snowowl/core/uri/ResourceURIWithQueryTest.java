@@ -81,5 +81,98 @@ public class ResourceURIWithQueryTest {
 		assertThat(uri.getQueryValues().get("ecl")).containsOnly("12123123");
 		assertThat(uri.getQuery()).isEqualTo("ecl=12123123");
 	}
+
+	@Test
+	public void queryValues_zeroParam() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT");
+		assertThat(uri.getQueryValues().isEmpty()).isTrue();
+	}
+
+	@Test
+	public void queryValues_singleParam() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?key=value");
+		assertThat(uri.getQueryValues().get("key")).containsOnly("value");
+	}
+
+	@Test
+	public void queryValues_multipleParams() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?key1=value1&key2=value2");
+		assertThat(uri.getQueryValues().get("key1")).containsOnly("value1");
+		assertThat(uri.getQueryValues().get("key2")).containsOnly("value2");
+	}
+
+	@Test
+	public void queryValues_repeatingParams() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?key=value1&key=value2");
+		assertThat(uri.getQueryValues().get("key")).containsOnly("value1", "value2");
+	}
+
+	@Test
+	public void queryValues_equalsInsideValue() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?key=a=b=c");
+		assertThat(uri.getQueryValues().get("key")).containsOnly("a=b=c");
+	}
+
+	@Test
+	public void queryValues_equalsInsideFirstValue() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?key=a=b&other=value");
+		assertThat(uri.getQueryValues().get("key")).containsOnly("a=b");
+		assertThat(uri.getQueryValues().get("other")).containsOnly("value");
+	}
+
+	@Test
+	public void queryValues_equalsInsideSecondValue() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?a=1&b=x=y");
+		assertThat(uri.getQueryValues().get("a")).containsOnly("1");
+		assertThat(uri.getQueryValues().get("b")).containsOnly("x=y");
+	}
+
+	@Test
+	public void queryValues_emptyValue() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?key=");
+		assertThat(uri.getQueryValues().get("key")).containsOnly("");
+	}
+
+	@Test
+	public void queryValues_emptyValueNotLastParam() throws Exception {
+		ResourceURIWithQuery uri = new ResourceURIWithQuery("codesystems/SNOMEDCT?key=&other=value");
+		assertThat(uri.getQueryValues().get("key")).containsOnly("");
+		assertThat(uri.getQueryValues().get("other")).containsOnly("value");
+	}
+
+	@Test(expected = BadRequestException.class)
+	public void queryValues_emptyKey() throws Exception {
+		new ResourceURIWithQuery("codesystems/SNOMEDCT?=value").getQueryValues();
+	}
+
+	@Test(expected = BadRequestException.class)
+	public void queryValues_missingValue() throws Exception {
+		new ResourceURIWithQuery("codesystems/SNOMEDCT?keyonly").getQueryValues();
+	}
+
+	@Test(expected = BadRequestException.class)
+	public void queryValues_missingValueSecondParam() throws Exception {
+		new ResourceURIWithQuery("codesystems/SNOMEDCT?key=value&keyonly").getQueryValues();
+	}
+
+	@Test(expected = BadRequestException.class)
+	public void queryValues_missingKey() throws Exception {
+		new ResourceURIWithQuery("codesystems/SNOMEDCT?key=value&&other=value2").getQueryValues();
+	}
+
+	@Test(expected = BadRequestException.class)
+	public void queryValues_missingKeySecondParam() throws Exception {
+		new ResourceURIWithQuery("codesystems/SNOMEDCT?key=value&=other").getQueryValues();
+	}
+
+	@Test(expected = BadRequestException.class)
+	public void queryValues_missingKeyLastParam() throws Exception {
+		new ResourceURIWithQuery("codesystems/SNOMEDCT?key=value&").getQueryValues();
+	}
 	
+	@Test(expected = BadRequestException.class)
+	public void queryValues_spaceInKey() throws Exception {
+		new ResourceURIWithQuery("codesystems/SNOMEDCT?key=value& blank=value2&other=value3").getQueryValues();
+	}
+
 }
