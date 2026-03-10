@@ -16,7 +16,8 @@
 		<!-- Dependency versions for Tycho's target platform filter -->
 		<elk.version>0.4.3</elk.version>
 		<guava.versionRange>[33.4.0,34.0.0)</guava.versionRange>
-		<jackson.version>2.19.2</jackson.version>
+		<jackson.annotations.version>2.21</jackson.annotations.version>
+		<jackson.version>2.21.1</jackson.version>
 		<logback.versionRange>[1.5.16,1.6.0)</logback.versionRange>
 		<osgi.versionRange>[3.23.0,3.24.0)</osgi.versionRange>
 		<slf4j.version>2.0.16</slf4j.version>
@@ -148,7 +149,7 @@
 							<type>p2-installable-unit</type>
 							<id>com.fasterxml.jackson.core.jackson-annotations</id>
 							<restrictTo>
-								<version>${jackson.version}</version>
+								<version>${jackson.annotations.version}</version>
 							</restrictTo>
 						</filter>
 						<filter>
