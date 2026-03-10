@@ -8,7 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-21
 Import-Package: com.b2international.index.compat,
  jakarta.validation;version="3.0.2",
  jakarta.validation.constraints;version="3.0.2",
- org.apache.commons.io.input;version="[2.18.0,2.19.0)",
+ org.apache.commons.io.input;version="[2.21.0,2.22.0)",
  org.slf4j;version="2.0.0"
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: .,
