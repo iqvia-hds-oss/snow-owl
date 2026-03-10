@@ -89,7 +89,7 @@
         <setEntry value="io.swagger.core.v3.swagger-annotations.jakarta@default:default"/>
         <setEntry value="io.swagger.core.v3.swagger-models.jakarta@default:default"/>
         <setEntry value="it.unimi.dsi.fastutil@default:default"/>
-        <setEntry value="jakarta.activation-api*2.1.3@default:default"/>
+        <setEntry value="jakarta.activation-api@default:default"/>
         <setEntry value="jakarta.annotation-api@default:default"/>
         <setEntry value="jakarta.el-api@default:default"/>
         <setEntry value="jakarta.enterprise.cdi-api@default:default"/>
