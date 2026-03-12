@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,20 @@ import com.b2international.index.migrate.SchemaRevision;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Doc {
 
+	/**
+	 * Defines the available refresh policies for documents annotated with {@link Doc}.
+	 * The available policies are:
+	 * <ul>
+	 *  <li>{@link #STANDARD}: the document will be refreshed along with all other documents marked with {@link #STANDARD} and before any document marked with {@link #DEFERRED}.
+	 *  <li>{@link #DEFERRED}: the document will be refreshed deferred compared to the documents marked with {@link #STANDARD} along with all other {@link #DEFERRED} docs.
+	 * </ul>
+	 * 
+	 * @since 10.0
+	 */
+	enum RefreshPolicy {
+		STANDARD, DEFERRED
+	}
+	
 	String type() default "";
 
 	boolean nested() default true;
@@ -56,5 +70,11 @@ public @interface Doc {
 	 * @return an array of schema revisions assigned to this document type or an empty array if no revisions have been registered yet.
 	 */
 	SchemaRevision[] revisions() default {};
+	
+	/**
+	 * Configurable refresh policy for documents. See {@link RefreshPolicy} for available options.
+	 * @return
+	 */
+	RefreshPolicy refreshPolicy() default RefreshPolicy.STANDARD;
 	
 }

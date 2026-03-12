@@ -51,7 +51,9 @@ import com.google.common.primitives.Longs;
 			description = "add nameAliases / pathAliases",
 			strategy = DocumentMappingMigrationStrategy.NO_REINDEX
 		)
-	}
+	},
+	// ensure that branch documents refreshed after everything else in the commit process
+	refreshPolicy = Doc.RefreshPolicy.DEFERRED
 )
 @JsonDeserialize(builder=RevisionBranch.Builder.class)
 @Script(name=RevisionBranch.Scripts.COMMIT, script=""
