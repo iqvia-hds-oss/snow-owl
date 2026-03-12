@@ -24,6 +24,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.bulk.*;
@@ -261,8 +262,13 @@ public class EsDocumentWriter implements Writer {
 			}
 		}
 
-		// refresh the indexes after successfuly commit
-		admin.refresh(mappingsToRefresh, indexMapping);
+		// refresh the non-critical indexes first and wait for their refresh
+		var defaultRefreshPolicyDocs = mappingsToRefresh.stream().filter(d -> Doc.RefreshPolicy.STANDARD == d.getRefreshPolicy()).collect(Collectors.toSet());
+		admin.refresh(defaultRefreshPolicyDocs, indexMapping);
+		
+		// then refresh the critical indexes typically a branch document for example that describes critical query related information about the previously refreshed documents
+		var lastRefreshPolicyDocs = mappingsToRefresh.stream().filter(d -> Doc.RefreshPolicy.DEFERRED == d.getRefreshPolicy()).collect(Collectors.toSet());
+		admin.refresh(lastRefreshPolicyDocs, indexMapping);
 		
 		// if there were failures, fail the process here, as we are unable to rollback at any point due to append-only nature, the client has to mitigate the error either by restoring a backup or
 		if (!bulkIndexFailures.isEmpty()) {

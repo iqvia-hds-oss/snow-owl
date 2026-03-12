@@ -628,6 +628,8 @@ public final class StagingArea {
 			toBranchUpdateParams.put("headTimestamp", timestamp); 
 		}
 		
+		// XXX this is not actually performed last during commit but first applied to the index, but since the refresh ensures that it will be visible only at the end this is okay
+		// see RevisionBranch type's Doc annotation's refreshPolicy for more details
 		writer.bulkUpdate(
 			new BulkUpdate<>(
 				RevisionBranch.class, 
