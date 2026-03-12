@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.b2international.snowowl.snomed.datastore.config;
 
+import java.io.Serializable;
 import java.util.List;
 
 import com.b2international.commons.collections.Collections3;
@@ -24,8 +25,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @since 7.1
  */
-public class SnomedLanguageConfig {
+public final class SnomedLanguageConfig implements Serializable {
 
+	private static final long serialVersionUID = 1L;
 	private String languageTag;
 	private List<String> languageRefSetIds;
 	
