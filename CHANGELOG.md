@@ -1,6 +1,68 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 10.0.0
+
+### Breaking changes
+
+#### Concept Maps
+
+The internal Concept Map domain representation in the paid version of Snow Owl has been rewritten to be more aligned with the official FHIR R5 specification. 
+Additionally the system has been improved to allow more precise map target definitions, noMap representations and workflow related information to be stored in the mappings.
+
+#### Dropped support for Elasticsearch 7
+
+Elasticsearch 7 reached EOL earlier this year and Snow Owl 10 is no longer able to connect to clusters running that version. Migrate your cluster to Elasticsearch 8 using one of the official ES guides and reconnect to them using the new Snow Owl version. 
+Please note that Elasticsearch 9 is not supported yet, that support will arrive in a feature version on the 10.x dev stream. See PR #1446 for more details.
+
+### Core
+- Job API improvements
+  * Support filtering based on the job `key` field (8ae90e8)
+
+- Import API consolidation (#1449 and also paid version changes to ICD-10, LOINC and Local Codes)
+  * For various healthcare standards their specified import API now follows the async semantics of the SNOMED CT RF2 Import API making it easier to implement scripts/clients against them in a generic way.
+
+### SNOMED CT
+- Support `*` wildcard Accept-Language header values that resolve to any available description in case the preceeding accept values did not match anything (#1448)
+  * Example use case: `hu,*` where * will match any other description if a concept does not a PT in Hungarian
+  * This allows user interfaces and clients to display a concept term in all scenarios and not the identifier of the concept even if that term is from a different language 
+- Remove generation of Concept non-current (CNC) indicators when inactivating SNOMED CT Concepts in authoring scenarios (#1458)
+  * Also remove the use of CNC indicators in any validation rule or business logic and replace it with checking the status of the corresponding concept
+  * Handling of CNC indicators during concept reactivation has been kept to ensure that they become inactive in all use cases 
+
+### Concept Map
+- New, dynamic Excel/CSV Import API (paid tier)
+  * Supports any format through column mapping from CSV like file
+- New, CSV Export API (paid tier)
+  * Exports all critical mapping information into a delimiter separate text file
+
+### Security
+- Mitigate security vulnerabilities CVE-2025-66566, CVE-2025-68161, CVE-2025-12183, CVE-2025-15284, CVE-2025-62522, CVE-2025-64718, CVE-2025-13465, CVE-2026-2391, CVE-2026-25639, CVE-2026-26996, GHSA-xxh7-fcf3-rj7f, GHSA-72hv-8253-57qq (#1436, #1440, #1441, 9d60bf0, #1470)
+
+### Bugs/Improvements
+- [index] resolve potential document revision duplication issue appearing after upgrading a codesystem to a newer dependency in certain special cases (#1450)
+- [index] fixed an issue where scoring in nested queries did not propagate properly to the overall document score, resulting in zero or incorrect scores (#1434)
+- [index] support refresh policy to be defined on a document level allowing the index refresh of certain documents to be deferred (#1471)
+- [core] ensure that single value set members can be paged through the generic member search API when requested (a690ab4)
+- [core] make query based resource URIs more resilient to special characters that appear often in expressions (#1469)
+- [snomed] allow a smaller set of classification results to be retrieved from the API (#1467)  
+- [fhir] automatically generate CodeSystem.valueSet field URL value for SNOMED CT CodeSystems that can be implicitly resolved in an $expand operation (#1425)
+- [build] restrict GitHub token access to read-only to disallow malicious PRs stealing key credentials or information (#1461) 
+
+### Dependencies
+- Replace embedded lz4-java with at.yawk.lz4:lz4-java:1.10.2
+- Bump Jetty to 12.0.32
+- Bump Jackson libraries to 2.21.1
+- Bump ASM to 9.9.0
+
+## 9.8.1
+
+### Bugs/Improvements
+- [index] enforce scoring requirement in Elasticsearch queries; prevent disabling when required (#1424)
+- [core] make terminology resource dependency overrides null safe (#1427)
+- [ci] improve build pipeline stability (#1431)
+- [ci] make build notifications platform independent (4201b41)
+
 ## 9.8.0
 
 ### Core
