@@ -15,11 +15,11 @@
  */
 package com.b2international.snowowl.core.identity.jwks;
 
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.snowowl.core.identity.IdentityProviderConfig;
 import com.b2international.snowowl.core.identity.JWTConfiguration;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 8.8.0
@@ -36,7 +36,7 @@ public class JwksIdentityProviderConfig implements IdentityProviderConfig {
 	@NotEmpty
 	private String jwksUrl;
 	
-	private String emailClaimProperty = "sub";
+	private String userIdClaimProperty = "sub";
 	private String permissionsClaimProperty = "permissions";
 	
 	public String getIssuer() {
@@ -55,8 +55,8 @@ public class JwksIdentityProviderConfig implements IdentityProviderConfig {
 		return permissionsClaimProperty;
 	}
 	
-	public String getEmailClaimProperty() {
-		return emailClaimProperty;
+	public String getUserIdClaimProperty() {
+		return userIdClaimProperty;
 	}
 	
 	public void setIssuer(String issuer) {
@@ -75,15 +75,21 @@ public class JwksIdentityProviderConfig implements IdentityProviderConfig {
 		this.permissionsClaimProperty = permissionsClaimProperty;
 	}
 	
+	public void setUserIdClaimProperty(String userIdClaimProperty) {
+		this.userIdClaimProperty = userIdClaimProperty;
+	}
+
+	// Setter retained for backwards compatibility
+	@Deprecated
 	public void setEmailClaimProperty(String emailClaimProperty) {
-		this.emailClaimProperty = emailClaimProperty;
+		this.userIdClaimProperty = emailClaimProperty;
 	}
 
 	public JWTConfiguration toJWTConfiguration() {
 		final JWTConfiguration jwtConfiguration = new JWTConfiguration();
 		jwtConfiguration.setJws(jws);
 		jwtConfiguration.setIssuer(issuer);
-		jwtConfiguration.setEmailClaimProperty(emailClaimProperty);
+		jwtConfiguration.setUserIdClaimProperty(userIdClaimProperty);
 		jwtConfiguration.setPermissionsClaimProperty(permissionsClaimProperty);
 		return jwtConfiguration;
 	}

@@ -39,26 +39,37 @@ final class DefaultJWTGenerator implements JWTGenerator {
 
 	private final Algorithm algorithm;
 	private final String issuer;
-	private final String emailClaimProperty;
+	private final String userIdClaimProperty;
 	private final String permissionsClaimProperty;
 	private final InstantSource instantSource;
 
-	public DefaultJWTGenerator(final Algorithm algorithm, final String issuer, final String emailClaimProperty, final String permissionsClaimProperty, InstantSource instantSource) {
+	public DefaultJWTGenerator(
+		final Algorithm algorithm, 
+		final String issuer, 
+		final String userIdClaimProperty, 
+		final String permissionsClaimProperty, 
+		final InstantSource instantSource
+	) {
 		this.algorithm = checkNotNull(algorithm);
 		this.issuer = issuer;
-		this.emailClaimProperty = emailClaimProperty;
+		this.userIdClaimProperty = userIdClaimProperty;
 		this.permissionsClaimProperty = permissionsClaimProperty;
 		this.instantSource = checkNotNull(instantSource);
 	}
 	
 	@Override
-	public String generate(String email, Map<String, Object> claims, String expiration) {
+	public String generate(String userId, Map<String, Object> claims, String expiration) {
 		
+		/*
+		 * XXX: If userIdClaimProperty is different from "sub", we add it as a separate
+		 * claim; otherwise we will do a bit of extra work but no duplicate claims will
+		 * end up in the token.
+		 */
 		Builder builder = JWT.create()
-				.withIssuer(issuer)
-				.withSubject(email)
-				.withIssuedAt(new Date())
-				.withClaim(emailClaimProperty, email);
+			.withIssuer(issuer)
+			.withSubject(userId)
+			.withIssuedAt(new Date())
+			.withClaim(userIdClaimProperty, userId);
 		
 		if (!Strings.isNullOrEmpty(expiration)) {
 			try {

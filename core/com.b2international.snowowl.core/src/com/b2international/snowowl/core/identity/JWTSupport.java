@@ -23,7 +23,10 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.time.InstantSource;
-import java.util.*;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -131,7 +134,7 @@ public class JWTSupport implements JWTGenerator {
 			generator = JWT_GENERATOR_DISABLED;
 			verifier = createJWTVerifier(algorithm, config);
 		} else {
-			generator = new DefaultJWTGenerator(algorithm, config.getIssuer(), config.getEmailClaimProperty(), config.getPermissionsClaimProperty(), instantSource);
+			generator = new DefaultJWTGenerator(algorithm, config.getIssuer(), config.getUserIdClaimProperty(), config.getPermissionsClaimProperty(), instantSource);
 			verifier = createJWTVerifier(algorithm, config);
 		}
 	}
@@ -257,37 +260,47 @@ public class JWTSupport implements JWTGenerator {
 	/**
 	 * Converts the given JWT access token to a {@link User} representation using the configured email and permission claims.
 	 * 
-	 * @param jwt
-	 *            - the JWT to convert to a {@link User} object
-	 * @return
-	 * @throws BadRequestException
-	 *             - if either the configured email or permissions property is missing from the given JWT
+	 * @param jwt - the JWT to convert to a {@link User} object
+	 * @return the converted {@link User} instance with user ID and permissions extracted from the input
+	 * @throws BadRequestException - if either the configured email or permissions property is missing from the given JWT
 	 */
 	public static User toUser(DecodedJWT jwt, JWTConfiguration config) {
-		final String userId;
+		final String userIdProperty = config.getUserIdClaimProperty();
+		final String permissionsProperty = config.getPermissionsClaimProperty();
+		
+		final String userId = getUserId(jwt, userIdProperty);
+		final List<String> permissions = getPermissions(jwt, permissionsProperty);
+		final List<Permission> permissionObjects = permissions.stream()
+			.map(Permission::valueOf)
+			.collect(Collectors.toList());
 
-		// XXX emailClaimProperty should be renamed to userIdProperty
-		String userIdProperty = config.getEmailClaimProperty();
-		if (Strings.isNullOrEmpty(userIdProperty)) {
-			userId = jwt.getSubject();
-		} else {
-			final Claim emailClaim = jwt.getClaim(userIdProperty);
-			if (emailClaim == null || emailClaim.isNull()) {
-				throw new BadRequestException("'%s' JWT access token field is required for userId access, but it was missing.", userIdProperty);
-			}
-			userId = emailClaim.asString();
-		}
-
-		List<String> permissions = Collections.emptyList();
-		final String permissionsClaimProperty = config.getPermissionsClaimProperty();
-		if (!Strings.isNullOrEmpty(permissionsClaimProperty)) {
-			Claim permissionsClaim = jwt.getClaim(permissionsClaimProperty);
-			if (permissionsClaim != null && !permissionsClaim.isNull() && !permissionsClaim.isMissing()) {
-				permissions = permissionsClaim.asList(String.class);
-			}
-		}
-
-		return new User(userId, permissions.stream().map(Permission::valueOf).collect(Collectors.toList()), jwt.getToken());
+		return new User(userId, permissionObjects, jwt.getToken());
 	}
 
+	private static String getUserId(final DecodedJWT jwt, final String userIdProperty) {
+		if (Strings.isNullOrEmpty(userIdProperty)) {
+			return jwt.getSubject();
+		}
+			
+		final Claim userIdClaim = jwt.getClaim(userIdProperty);
+		if (userIdClaim == null || userIdClaim.isNull()) {
+			throw new BadRequestException("'%s' JWT access token field is required for userId access, but it was missing.", userIdProperty);
+		}
+			
+		return userIdClaim.asString();
+	}
+	
+	private static List<String> getPermissions(final DecodedJWT jwt, final String permissionsProperty) {
+		if (Strings.isNullOrEmpty(permissionsProperty)) {
+			return List.of();
+		}
+		
+		final Claim permissionsClaim = jwt.getClaim(permissionsProperty);
+		if (permissionsClaim == null || permissionsClaim.isNull() || permissionsClaim.isMissing()) {
+			// If permissions claim is missing, return an empty list as this is entirely optional 
+			return List.of();
+		}
+		
+		return permissionsClaim.asList(String.class);
+	}
 }

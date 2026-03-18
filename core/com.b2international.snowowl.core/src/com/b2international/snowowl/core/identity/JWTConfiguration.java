@@ -28,15 +28,15 @@ public class JWTConfiguration {
 	private String secret;
 	private String signingKey;
 	private String verificationKey;
-	private String emailClaimProperty = "sub";
+	private String userIdClaimProperty = "sub";
 	private String permissionsClaimProperty = "permissions";
 	
 	public String getIssuer() {
 		return issuer;
 	}
 	
-	public String getEmailClaimProperty() {
-		return emailClaimProperty;
+	public String getUserIdClaimProperty() {
+		return userIdClaimProperty;
 	}
 
 	public String getJws() {
@@ -59,9 +59,20 @@ public class JWTConfiguration {
 		return verificationKey;
 	}
 	
-	public void setEmailClaimProperty(String emailClaimProperty) {
-		this.emailClaimProperty = emailClaimProperty;
+	public void setUserIdClaimProperty(String userIdClaimProperty) {
+		this.userIdClaimProperty = userIdClaimProperty;
 	}
+	
+	/*
+	 * XXX: Setter retained for backwards compatibility (IdentityConfiguration is a
+	 * subclass of JWTConfiguration and we supported JWT-related properties on the
+	 * top level of the identity section in earlier versions of Snow Owl)
+	 */
+	@Deprecated
+	public void setEmailClaimProperty(String emailClaimProperty) {
+		this.userIdClaimProperty = emailClaimProperty;
+	}
+
 	
 	public void setIssuer(String issuer) {
 		this.issuer = issuer;
