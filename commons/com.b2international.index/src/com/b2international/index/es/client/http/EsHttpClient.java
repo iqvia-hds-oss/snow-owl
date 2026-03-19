@@ -174,7 +174,8 @@ public final class EsHttpClient extends EsClientBase {
 			.setQuery(query)
 			.setScript(script)
 			.setSlices(UpdateByQueryRequest.AUTO_SLICES)
-			.setAbortOnVersionConflict(false);
+			.setAbortOnVersionConflict(false)
+			.setRefresh(false);
 		
 		return client.updateByQuery(updateByQueryRequest, EXTENDED_DEFAULT);
 	}
@@ -186,7 +187,8 @@ public final class EsHttpClient extends EsClientBase {
 				.setBatchSize(batchSize)
 				.setQuery(query)
 				.setSlices(DeleteByQueryRequest.AUTO_SLICES)
-				.setAbortOnVersionConflict(false);
+				.setAbortOnVersionConflict(false)
+				.setRefresh(false);
 			
 		return client.deleteByQuery(deleteByQueryRequest, EXTENDED_DEFAULT);
 	}
