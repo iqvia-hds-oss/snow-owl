@@ -3,12 +3,12 @@
 Snow Owl<sup>&reg;</sup> is a highly scalable, open source terminology server with revision-control capabilities and collaborative authoring platform features. It allows you to store, search and author high volumes of terminology artifacts quickly and efficiently.
 If you’d like to see Snow Owl in action, the [Snowray Terminology Service™](https://snowray.app) provides a managed terminology server and high-quality terminology content management from your web browser.
 
-[![build status](https://img.shields.io/github/actions/workflow/status/b2ihealthcare/snow-owl/maven.yml?branch=9.x&style=flat-square)](https://github.com/b2ihealthcare/snow-owl/actions)
+[![build status](https://img.shields.io/github/actions/workflow/status/b2ihealthcare/snow-owl/maven.yml?branch=10.x&style=flat-square)](https://github.com/b2ihealthcare/snow-owl/actions)
 [![latest release](https://img.shields.io/github/v/release/b2ihealthcare/snow-owl?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/releases/tag/v10.0.0)
 [![downloads](https://img.shields.io/github/downloads/b2ihealthcare/snow-owl/total.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/releases/)
 [![Docker](https://img.shields.io/docker/pulls/b2ihealthcare/snow-owl-oss?style=flat-square)](https://hub.docker.com/r/b2ihealthcare/snow-owl-oss)
-[![GitHub](https://img.shields.io/github/license/b2ihealthcare/snow-owl.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/blob/9.x/LICENSE)
-[![codecov](https://codecov.io/gh/b2ihealthcare/snow-owl/branch/9.x/graph/badge.svg?style=flat-square)](https://codecov.io/gh/b2ihealthcare/snow-owl)
+[![GitHub](https://img.shields.io/github/license/b2ihealthcare/snow-owl.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/blob/10.x/LICENSE)
+[![codecov](https://codecov.io/gh/b2ihealthcare/snow-owl/branch/10.x/graph/badge.svg?style=flat-square)](https://codecov.io/gh/b2ihealthcare/snow-owl)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl?ref=badge_shield)
 
 # Introduction
