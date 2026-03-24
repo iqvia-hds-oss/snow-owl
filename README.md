@@ -3,12 +3,12 @@
 Snow Owl<sup>&reg;</sup> is a highly scalable, open source terminology server with revision-control capabilities and collaborative authoring platform features. It allows you to store, search and author high volumes of terminology artifacts quickly and efficiently.
 If you’d like to see Snow Owl in action, the [Snowray Terminology Service™](https://snowray.app) provides a managed terminology server and high-quality terminology content management from your web browser.
 
-[![build status](https://img.shields.io/github/actions/workflow/status/b2ihealthcare/snow-owl/maven.yml?branch=9.x&style=flat-square)](https://github.com/b2ihealthcare/snow-owl/actions)
-[![latest release](https://img.shields.io/github/v/release/b2ihealthcare/snow-owl?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/releases/tag/v9.8.0)
+[![build status](https://img.shields.io/github/actions/workflow/status/b2ihealthcare/snow-owl/maven.yml?branch=10.x&style=flat-square)](https://github.com/b2ihealthcare/snow-owl/actions)
+[![latest release](https://img.shields.io/github/v/release/b2ihealthcare/snow-owl?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/releases/tag/v10.0.0)
 [![downloads](https://img.shields.io/github/downloads/b2ihealthcare/snow-owl/total.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/releases/)
 [![Docker](https://img.shields.io/docker/pulls/b2ihealthcare/snow-owl-oss?style=flat-square)](https://hub.docker.com/r/b2ihealthcare/snow-owl-oss)
-[![GitHub](https://img.shields.io/github/license/b2ihealthcare/snow-owl.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/blob/9.x/LICENSE)
-[![codecov](https://codecov.io/gh/b2ihealthcare/snow-owl/branch/9.x/graph/badge.svg?style=flat-square)](https://codecov.io/gh/b2ihealthcare/snow-owl)
+[![GitHub](https://img.shields.io/github/license/b2ihealthcare/snow-owl.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/blob/10.x/LICENSE)
+[![codecov](https://codecov.io/gh/b2ihealthcare/snow-owl/branch/10.x/graph/badge.svg?style=flat-square)](https://codecov.io/gh/b2ihealthcare/snow-owl)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl?ref=badge_shield)
 
 # Introduction
@@ -19,7 +19,7 @@ Features include:
     * Independent work branches offer work-in-process isolation, external business workflow integration and team collaboration
 * SNOMED CT and others
     * SNOMED CT terminology support
-        * RF2 Release File Specification as of 2025-07-01
+        * RF2 Release File Specification as of 2026-03-01
         * Support for Relationships with concrete values
         * Official and Custom Reference Sets
         * Expression Constraint Language v2.2.0 [spec](https://confluence.ihtsdotools.org/download/attachments/33493263/doc_ExpressionConstraintLanguage_v2.2-en-US_INT_20231122.pdf?api=v2), [implementation](https://github.com/b2ihealthcare/snomed-ecl)
@@ -39,16 +39,16 @@ Features include:
 
 # Download
 
-* [WINDOWS](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-oss.zip) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-oss.zip.sha1)
-* [LINUX](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-oss.tar.gz) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-oss.tar.gz.sha1) 
-* [RPM](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-rpm.rpm) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-rpm.rpm.sha1)
-* [DEB](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-deb.deb) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/9.8.0/com.b2international.snowowl.server.update-9.8.0-deb.deb.sha1)
+* [WINDOWS](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.zip) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.zip.sha1)
+* [LINUX](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.tar.gz) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.tar.gz.sha1) 
+* [RPM](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-rpm.rpm) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-rpm.rpm.sha1)
+* [DEB](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-deb.deb) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-deb.deb.sha1)
 
 {% hint style="info" %}
 This distribution only includes features licensed under the Apache 2.0 license. To get access to the full set of features, please contact [B2i Healthcare](mailto:info@b2ihealthcare.com).
 {% endhint %}
 
-View the detailed release notes [here](https://github.com/b2ihealthcare/snow-owl/releases/tag/v9.8.0).
+View the detailed release notes [here](https://github.com/b2ihealthcare/snow-owl/releases/tag/v10.0.0).
 
 Not the version you're looking for? View [past releases](https://github.com/b2ihealthcare/snow-owl/releases).
 
@@ -85,19 +85,19 @@ These instructions will get Snow Owl up and running on your local machine for de
 ## Prerequisites
 
 Snow Owl is an Equinox-OSGi based server. To develop plug-ins for Snow Owl you need to use Eclipse as IDE: 
-* Download Eclipse IDE for Eclipse Committers 2023-12 package from here: https://www.eclipse.org/downloads/packages/release/2023-12/r/eclipse-ide-eclipse-committers
+* Download Eclipse IDE for Eclipse Committers 2025-03 package from here: https://www.eclipse.org/downloads/packages/release/2025-03/r/eclipse-ide-eclipse-committers
 
 Required Eclipse plug-ins in order (install the listed features via `Help` &rarr; `Install New Software...`):
 
 *Note: you may have to untick the `Show only the latest versions of the available software` checkbox to get older versions of a feature. Please use the exact version specified below, not the latest point release.*
 
-* Groovy Development Tools (https://groovy.jfrog.io/ui/native/plugins-release/e4.30 or https://groovy.jfrog.io/artifactory/plugins-release-local/org/codehaus/groovy/groovy-eclipse-integration/5.2.0/e4.30)
-  * Eclipse Groovy Development Tools - 5.2.0 (in category "Main Package")
-* MWE2 (https://download.eclipse.org/modeling/emft/mwe/updates/releases/2.16.0/)
-  * MWE SDK 1.10.0 (MWE)
-* Xtext/Xtend (https://download.eclipse.org/modeling/tmf/xtext/updates/releases/2.33.0/)
-  * Xtend IDE 2.33.0 (Xtext)
-  * Xtext Complete SDK 2.33.0 (Xtext)
+* Groovy Development Tools (https://groovy.jfrog.io/ui/native/plugins-release/e4.35 or https://groovy.jfrog.io/artifactory/plugins-release-local/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.35)
+  * Eclipse Groovy Development Tools - 5.7.0 (in category "Main Package")
+* MWE2 (https://download.eclipse.org/modeling/emft/mwe/updates/releases/2.24.0/)
+  * MWE SDK 1.18.0 (MWE)
+* Xtext/Xtend (https://download.eclipse.org/modeling/tmf/xtext/updates/releases/2.38.0/)
+  * Xtend IDE 2.38.0 (Xtext)
+  * Xtext Complete SDK 2.38.0 (Xtext)
  
 ### Eclipse Preferences
 
