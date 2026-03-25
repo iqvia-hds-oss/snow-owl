@@ -686,4 +686,8 @@ Visit us at https://b2ihealthcare.com
          id="net.logstash.logback.logstash-logback-encoder"
          version="0.0.0"/>
 
+   <plugin
+         id="com.bucket4j.core"
+         version="0.0.0"/>
+
 </feature>
