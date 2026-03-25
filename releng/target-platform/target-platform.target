@@ -696,6 +696,13 @@
 			    <version>3.3.2</version>
 				<type>jar</type>
 			</dependency>
+			<!-- Rate limiting -->
+			<dependency>
+	  			<groupId>com.bucket4j</groupId>
+	  			<artifactId>bucket4j_jdk17-core</artifactId>
+	  			<version>8.17.0</version>
+	  			<type>jar</type>
+			</dependency>
 			<!-- Type tools, mostly for type argument resolution -->
 			<dependency>
 				<groupId>net.jodah</groupId>
