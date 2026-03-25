@@ -13,12 +13,12 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry exported="true" kind="lib" path="lib/annotations-17.0.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/docker-java-api-3.7.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/docker-java-transport-3.7.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/docker-java-transport-zerodep-3.7.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/docker-java-api-3.7.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/docker-java-transport-3.7.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/docker-java-transport-zerodep-3.7.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/duct-tape-1.0.8.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/testcontainers-2.0.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/testcontainers-elasticsearch-2.0.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/testcontainers-2.0.4.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/testcontainers-elasticsearch-2.0.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/system-rules-1.19.0.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

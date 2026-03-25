@@ -7,13 +7,13 @@ Bundle-Vendor: B2iHealthcare
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ClassPath: .,
  lib/annotations-17.0.0.jar,
- lib/docker-java-api-3.7.0.jar,
- lib/docker-java-transport-3.7.0.jar,
- lib/docker-java-transport-zerodep-3.7.0.jar,
+ lib/docker-java-api-3.7.1.jar,
+ lib/docker-java-transport-3.7.1.jar,
+ lib/docker-java-transport-zerodep-3.7.1.jar,
  lib/duct-tape-1.0.8.jar,
  lib/system-rules-1.19.0.jar,
- lib/testcontainers-2.0.3.jar,
- lib/testcontainers-elasticsearch-2.0.3.jar
+ lib/testcontainers-2.0.4.jar,
+ lib/testcontainers-elasticsearch-2.0.4.jar
 Export-Package: com.b2international.snowowl.rules,
  com.github.dockerjava.api.command,
  com.github.dockerjava.api.model,
