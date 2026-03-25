@@ -24,11 +24,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.databene.contiperf.PerfTest;
-import org.databene.contiperf.Required;
-import org.databene.contiperf.junit.ContiPerfRule;
-import org.databene.contiperf.junit.ContiPerfRuleExt;
-import org.junit.Rule;
 import org.junit.Test;
 
 import com.b2international.snowowl.core.domain.TransactionContext;
@@ -38,7 +33,11 @@ import com.b2international.snowowl.core.terminology.ComponentCategory;
 import com.b2international.snowowl.snomed.cis.domain.SctId;
 import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.datastore.request.*;
+import com.b2international.snowowl.snomed.datastore.request.SnomedConceptCreateRequestBuilder;
+import com.b2international.snowowl.snomed.datastore.request.SnomedDescriptionCreateRequestBuilder;
+import com.b2international.snowowl.snomed.datastore.request.SnomedRefSetMemberCreateRequestBuilder;
+import com.b2international.snowowl.snomed.datastore.request.SnomedRelationshipCreateRequestBuilder;
+import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 import com.google.common.collect.Sets;
 
@@ -49,12 +48,7 @@ public class SnomedReferenceSetDeletionPerformanceTest extends AbstractSnomedApi
 	
 	private static final int CONCEPT_CREATION_LIMIT = 1000;
 	
-	@Rule
-	public ContiPerfRule rule = new ContiPerfRuleExt();
-	
-	@Test
-	@PerfTest(invocations = 1)
-	@Required(totalTime = 15000) // max 10 seconds to execute large refset deletion tests, but this should not take longer than 3 sec
+	@Test(timeout = 15000) // max 10 seconds to execute large refset deletion tests, but this should not take longer than 3 sec
 	public void testLargeReferenceSetDeletion() {
 		final String refSetId = createNewRefSet(branchPath);
  		final Set<String> conceptIds = generateConceptIds(CONCEPT_CREATION_LIMIT);
