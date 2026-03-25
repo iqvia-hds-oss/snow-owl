@@ -55,7 +55,6 @@
 								docker-java-transport,
 								docker-java-transport-zerodep,
 								duct-tape,
-								jna,
 								testcontainers,
 								testcontainers-elasticsearch,
 								system-rules

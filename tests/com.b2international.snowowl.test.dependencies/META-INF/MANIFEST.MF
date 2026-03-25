@@ -11,7 +11,6 @@ Bundle-ClassPath: .,
  lib/docker-java-transport-3.7.0.jar,
  lib/docker-java-transport-zerodep-3.7.0.jar,
  lib/duct-tape-1.0.8.jar,
- lib/jna-5.18.1.jar,
  lib/system-rules-1.19.0.jar,
  lib/testcontainers-2.0.3.jar,
  lib/testcontainers-elasticsearch-2.0.3.jar
@@ -38,6 +37,8 @@ Require-Bundle: org.junit;bundle-version="4.11.0",
  com.fasterxml.jackson.core.jackson-annotations;bundle-version="2.18.4",
  org.apache.commons.commons-compress;bundle-version="1.26.0",
  org.apache.commons.commons-io;bundle-version="2.18.0",
- org.apache.commons.lang3;bundle-version="3.18.0"
+ org.apache.commons.lang3;bundle-version="3.18.0",
+ com.sun.jna;bundle-version="5.18.1",
+ com.sun.jna.platform;bundle-version="5.18.1"
 Bundle-ActivationPolicy: lazy
 Import-Package: org.slf4j;version="2.0.0"
