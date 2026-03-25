@@ -87,7 +87,7 @@ public final class SnomedCommand extends Command {
 		header = "Imports SNOMED CT content",
 		description = "Imports SNOMED CT content"
 	)
-	private static final class ImportCommand extends Command {
+	static final class ImportCommand extends Command {
 		
 		private static final String SUPPORTED_FORMAT = "rf2";
 		
@@ -141,7 +141,7 @@ public final class SnomedCommand extends Command {
 			header = "Collects SNOMED CT core component identifiers",
 			description = "Collect SNOMED CT identifiers"
 			)
-	private static final class IdentifiersCommand extends Command {
+	static final class IdentifiersCommand extends Command {
 				
 		private static final Set<String> ALL_SCTID_STATUSES = FluentIterable.from(IdentifierStatus.values()).transform(IdentifierStatus::getSerializedName).toSet();
 				
@@ -216,7 +216,7 @@ public final class SnomedCommand extends Command {
 		header = "Prints revision information about a SNOMED CT concept",
 		description = "Prints revision information about a SNOMED CT concept"
 	)
-	private static final class RevisionCheckCommand extends Command {
+	static final class RevisionCheckCommand extends Command {
 		
 		@Parameters(index = "0", paramLabel = "BRANCH", description = "The branch to filter the revisions")
 		String branch;

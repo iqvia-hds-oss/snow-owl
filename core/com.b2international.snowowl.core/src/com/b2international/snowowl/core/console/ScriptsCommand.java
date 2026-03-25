@@ -59,7 +59,7 @@ public class ScriptsCommand extends Command {
 		header = "Scripting shell commands",
 		description = ""
 	)	
-	private static final class RunCommand extends Command {
+	static final class RunCommand extends Command {
 
 		@Parameters(paramLabel = "PATH", description = "Absolute path to the script file to run.")
 		String path;
