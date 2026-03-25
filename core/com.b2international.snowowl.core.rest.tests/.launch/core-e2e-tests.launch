@@ -46,6 +46,7 @@
         <setEntry value="ch.qos.logback.classic@2:true"/>
         <setEntry value="ch.qos.logback.core@2:true"/>
         <setEntry value="com.b2international.snomed.ecl@default:default"/>
+        <setEntry value="com.bucket4j.core@default:default"/>
         <setEntry value="com.fasterxml.classmate@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.fasterxml.jackson.core.jackson-core@default:default"/>
@@ -168,16 +169,16 @@
         <setEntry value="org.eclipse.jetty.ee10.websocket.server@default:default"/>
         <setEntry value="org.eclipse.jetty.ee10.websocket.servlet@default:default"/>
         <setEntry value="org.eclipse.jetty.ee@default:default"/>
-        <setEntry value="org.eclipse.jetty.http@default:default"/>
-        <setEntry value="org.eclipse.jetty.io@default:default"/>
+        <setEntry value="org.eclipse.jetty.http*12.0.32@default:default"/>
+        <setEntry value="org.eclipse.jetty.io*12.0.32@default:default"/>
         <setEntry value="org.eclipse.jetty.jmx@default:default"/>
         <setEntry value="org.eclipse.jetty.jndi@default:default"/>
         <setEntry value="org.eclipse.jetty.osgi@default:default"/>
         <setEntry value="org.eclipse.jetty.plus@default:default"/>
-        <setEntry value="org.eclipse.jetty.security@default:default"/>
-        <setEntry value="org.eclipse.jetty.server@default:default"/>
-        <setEntry value="org.eclipse.jetty.session@default:default"/>
-        <setEntry value="org.eclipse.jetty.util@default:default"/>
+        <setEntry value="org.eclipse.jetty.security*12.0.32@default:default"/>
+        <setEntry value="org.eclipse.jetty.server*12.0.32@default:default"/>
+        <setEntry value="org.eclipse.jetty.session*12.0.32@default:default"/>
+        <setEntry value="org.eclipse.jetty.util*12.0.32@default:default"/>
         <setEntry value="org.eclipse.jetty.websocket.api@default:default"/>
         <setEntry value="org.eclipse.jetty.websocket.common@default:default"/>
         <setEntry value="org.eclipse.jetty.websocket.core.client@default:default"/>
@@ -235,7 +236,7 @@
         <setEntry value="org.reactivestreams.reactive-streams@default:default"/>
         <setEntry value="org.semanticweb.owl.owlapi@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
-        <setEntry value="slf4j.api@2:true"/>
+        <setEntry value="slf4j.api*2.0.17@2:true"/>
         <setEntry value="stax2-api@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
