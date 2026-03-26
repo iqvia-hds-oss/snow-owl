@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -306,6 +306,7 @@ public final class RemoteJobTracker implements IDisposableService {
 				try {
 					parameters = mapper.writeValueAsString(job.getParameters(mapper));
 				} catch (Throwable e) {
+					LOG.error("Couldn't serialize job parameters to JSON", e);
 					parameters = "";
 				}
 				put(RemoteJobEntry.builder()
