@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -63,6 +65,8 @@ import com.b2international.snowowl.core.branch.BranchPathUtils;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.events.util.Promise;
+import com.b2international.snowowl.core.jobs.JobRequests;
+import com.b2international.snowowl.core.jobs.RemoteJobEntry;
 import com.b2international.snowowl.core.request.CommitResult;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
@@ -199,7 +203,24 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 			.then()
 			.statusCode(400);
 	}
-
+	
+	@Test
+	public void parameterSerializeProperlyWhenRunAsJob() throws Exception {
+		// this produces an empty export, we only care about the parameter serialization in this test case
+		String jobId = SnomedRequests.rf2().prepareExport()
+				.setReleaseType(Rf2ReleaseType.DELTA)
+				.setCountryNamespaceElement("INT")
+				.setRefSetExportLayout(Rf2RefSetExportLayout.COMBINED)
+				.setStartEffectiveTime(LocalDate.now())
+				.build(SnomedDatastoreActivator.REPOSITORY_UUID, "MAIN")
+				.runAsJob("ExportJob")
+				.execute(getBus())
+				.getSync();
+		
+		RemoteJobEntry job = JobRequests.waitForJob(getBus(), jobId);
+		Assertions.assertThat(job.getParameters()).isNotEmpty();
+	}
+	
 	@Test
 	public void exportUnpublishedDeltaRelationships() throws Exception {
 		String statedRelationshipId = createNewRelationship(branchPath, Concepts.ROOT_CONCEPT, Concepts.PART_OF, Concepts.NAMESPACE_ROOT, Concepts.STATED_RELATIONSHIP);

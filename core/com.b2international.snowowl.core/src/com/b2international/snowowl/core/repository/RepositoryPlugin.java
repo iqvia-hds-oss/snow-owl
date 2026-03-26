@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import com.b2international.snowowl.eventbus.EventBusUtil;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.b2international.snowowl.eventbus.netty.EventBusNettyUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.net.HostAndPort;
 
@@ -90,6 +91,7 @@ public final class RepositoryPlugin extends Plugin {
 		env.services().registerService(IEventBus.class, EventBusUtil.getBus("server", maxThreads));
 		LOG.debug("Preparing JSON support");
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
+		mapper.registerModule(new JavaTimeModule());
 		mapper.registerModule(new PrimitiveCollectionModule());
 		env.services().registerService(ObjectMapper.class, mapper);
 		// initialize Notification support
