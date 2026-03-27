@@ -100,7 +100,7 @@ public final class IdentityPlugin extends Plugin {
 			jwksConfig.setJwksUrl(conf.getJwksUrl());
 			jwksConfig.setJws(conf.getJws());
 			jwksConfig.setIssuer(conf.getIssuer());
-			jwksConfig.setEmailClaimProperty(conf.getEmailClaimProperty());
+			jwksConfig.setUserIdClaimProperty(conf.getUserIdClaimProperty());
 			jwksConfig.setPermissionsClaimProperty(conf.getPermissionsClaimProperty());
 			
 			// add a JWKS URL identity provider
