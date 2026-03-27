@@ -1,0 +1,4 @@
+providers:
+  - jwks:
+      jws: RS256
+      emailClaimProperty: http://example.com/userId

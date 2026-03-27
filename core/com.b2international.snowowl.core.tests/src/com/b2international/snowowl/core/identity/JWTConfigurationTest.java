@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.InstantSource;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.After;
@@ -29,6 +30,8 @@ import org.junit.Test;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.SnowOwl;
+import com.b2international.snowowl.core.identity.jwks.JwksIdentityProviderConfig;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 
 /**
  * @since 8.1
@@ -122,6 +125,71 @@ public class JWTConfigurationTest extends BaseIdentityPluginTest {
 		assertThat(token.getAlgorithm()).isEqualTo("RS256");
 	}
 	
+	@Test
+	public void rs256_customUserIdClaim() throws Exception {
+		IdentityConfiguration conf = readConfig("rs256.yml");
+		JWTSupport jwtSupport = new IdentityPlugin().initJWT(env, conf);
+		String jwt = jwtSupport.generate("test@example.com", Map.of("http://example.com/userId", "user-id-value"));
+		
+		JWTConfiguration jwtConfigWithCustomClaim = new JWTConfiguration();
+		
+		jwtConfigWithCustomClaim.setIssuer(conf.getIssuer());
+		jwtConfigWithCustomClaim.setJws(conf.getJws());
+		jwtConfigWithCustomClaim.setSecret(conf.getSecret());
+		jwtConfigWithCustomClaim.setSigningKey(conf.getSigningKey());
+		jwtConfigWithCustomClaim.setVerificationKey(conf.getVerificationKey());
+		jwtConfigWithCustomClaim.setPermissionsClaimProperty(conf.getPermissionsClaimProperty());
+		
+		// Override the default userId claim property
+		jwtConfigWithCustomClaim.setUserIdClaimProperty("http://example.com/userId");
+		
+		// For verification we will use the same JWTSupport instance but this shouldn't cause any issues
+		DecodedJWT token = jwtSupport.verify(jwt);
+		User user = JWTSupport.toUser(token, jwtConfigWithCustomClaim);
+		assertThat(user.getUserId()).isEqualTo("user-id-value");
+	}
+	
+	@Test
+	public void rs256_customPermissionsClaim() throws Exception {
+		IdentityConfiguration conf = readConfig("rs256.yml");
+		JWTSupport jwtSupport = new IdentityPlugin().initJWT(env, conf);
+		String jwt = jwtSupport.generate("test@example.com", Map.of("http://example.com/permissions", List.of("read:snomedct")));
+		
+		JWTConfiguration jwtConfigWithCustomClaim = new JWTConfiguration();
+		
+		jwtConfigWithCustomClaim.setIssuer(conf.getIssuer());
+		jwtConfigWithCustomClaim.setJws(conf.getJws());
+		jwtConfigWithCustomClaim.setSecret(conf.getSecret());
+		jwtConfigWithCustomClaim.setSigningKey(conf.getSigningKey());
+		jwtConfigWithCustomClaim.setVerificationKey(conf.getVerificationKey());
+		jwtConfigWithCustomClaim.setUserIdClaimProperty(conf.getUserIdClaimProperty());
+		
+		// Override the default permissions claim property
+		jwtConfigWithCustomClaim.setPermissionsClaimProperty("http://example.com/permissions");
+		
+		DecodedJWT token = jwtSupport.verify(jwt);
+		User user = JWTSupport.toUser(token, jwtConfigWithCustomClaim);
+		assertThat(user.getPermissions()).extracting(Permission::getPermission).containsOnly("read:snomedct");
+	}
+	
+	@Test
+	public void rs256_emailClaimProperty_identityConfiguration() throws Exception {
+		IdentityConfiguration conf = readConfig("rs256_emailClaimProperty.yml");
+		assertThat(conf.getUserIdClaimProperty()).isEqualTo("http://example.com/userId");
+	}
+
+	@Test
+	public void rs256_emailClaimProperty_jwksIdentityProviderConfig() throws Exception {
+		// Deserialization of JwksIdentityProviderConfig needs the ClassPathScanner to be registered
+		ClassPathScanner scanner = new ClassPathScanner(JwksIdentityProviderConfig.class.getPackage().getName());
+		env.services().registerService(ClassPathScanner.class, scanner);
+
+		IdentityConfiguration conf = readConfig("rs256_emailClaimProperty_jwks.yml");
+
+		JwksIdentityProviderConfig jwksConf = (JwksIdentityProviderConfig) conf.getProviderConfigurations().get(0);
+		assertThat(jwksConf.getUserIdClaimProperty()).isEqualTo("http://example.com/userId");
+	}
+
 	@Test
 	public void rs256_VerifyOnly_X509() throws Exception {
 		// configure support for both signing and verifying first
