@@ -33,7 +33,7 @@
 		<!-- Testing -->
 		<testHeapSize>1g</testHeapSize>
 		<testLogConfigFile>${basedir}/src/configuration/logback-maven.xml</testLogConfigFile>
-		<testArgLine>${tycho.testArgLine} -Xms${testHeapSize} -Xmx${testHeapSize} -Dosgi.classloader.type=nonparallel -Djetty.http.port=9090 -XX:+AlwaysPreTouch --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/sun.security.x509=ALL-UNNAMED -Dlogback.configurationFile=${testLogConfigFile}</testArgLine>
+		<testArgLine>${tycho.testArgLine} -Xms${testHeapSize} -Xmx${testHeapSize} -Dosgi.classloader.type=nonparallel -Djetty.home.bundle=org.eclipse.jetty.ee10.osgi.boot -Djetty.http.port=9090 -XX:+AlwaysPreTouch --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/sun.security.x509=ALL-UNNAMED -Dlogback.configurationFile=${testLogConfigFile}</testArgLine>
 
 		<!-- Artifact distribution -->
 		<maven.repository.id>nexus_deployment</maven.repository.id>
