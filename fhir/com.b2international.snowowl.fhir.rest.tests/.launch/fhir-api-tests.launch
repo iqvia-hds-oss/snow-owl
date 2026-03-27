@@ -35,7 +35,7 @@
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.b2international.snowowl.fhir.rest.tests"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms2g -Xmx2g -Dosgi.classloader.type=nonparallel -Djetty.http.port=8080 --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED  -XX:+AlwaysPreTouch"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms2g -Xmx2g -Dosgi.classloader.type=nonparallel -Djetty.home.bundle=org.eclipse.jetty.ee10.osgi.boot -Djetty.http.port=8080 --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED  -XX:+AlwaysPreTouch"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <stringAttribute key="product" value="com.b2international.snowowl.product.product"/>
     <booleanAttribute key="run_in_ui_thread" value="false"/>
@@ -165,8 +165,12 @@
         <setEntry value="org.eclipse.equinox.transforms.hook@default:false"/>
         <setEntry value="org.eclipse.equinox.weaving.hook@default:false"/>
         <setEntry value="org.eclipse.jetty.alpn.client@default:default"/>
+        <setEntry value="org.eclipse.jetty.annotations@default:default"/>
         <setEntry value="org.eclipse.jetty.client@default:default"/>
+        <setEntry value="org.eclipse.jetty.compression.common@default:default"/>
+        <setEntry value="org.eclipse.jetty.compression.gzip@default:default"/>
         <setEntry value="org.eclipse.jetty.deploy@default:default"/>
+        <setEntry value="org.eclipse.jetty.ee.webapp@default:default"/>
         <setEntry value="org.eclipse.jetty.ee10.annotations@default:default"/>
         <setEntry value="org.eclipse.jetty.ee10.osgi.boot@default:default"/>
         <setEntry value="org.eclipse.jetty.ee10.plus@default:default"/>
@@ -177,18 +181,17 @@
         <setEntry value="org.eclipse.jetty.ee10.websocket.jakarta.server@default:default"/>
         <setEntry value="org.eclipse.jetty.ee10.websocket.server@default:default"/>
         <setEntry value="org.eclipse.jetty.ee10.websocket.servlet@default:default"/>
-        <setEntry value="org.eclipse.jetty.ee@default:default"/>
-        <setEntry value="org.eclipse.jetty.http*12.1.6@default:default"/>
-        <setEntry value="org.eclipse.jetty.io*12.1.6@default:default"/>
+        <setEntry value="org.eclipse.jetty.http@default:default"/>
+        <setEntry value="org.eclipse.jetty.io@default:default"/>
         <setEntry value="org.eclipse.jetty.jmx@default:default"/>
         <setEntry value="org.eclipse.jetty.jndi@default:default"/>
         <setEntry value="org.eclipse.jetty.osgi@default:default"/>
         <setEntry value="org.eclipse.jetty.plus@default:default"/>
-        <setEntry value="org.eclipse.jetty.security*12.1.6@default:default"/>
-        <setEntry value="org.eclipse.jetty.server*12.1.6@default:default"/>
+        <setEntry value="org.eclipse.jetty.security@default:default"/>
+        <setEntry value="org.eclipse.jetty.server@default:default"/>
         <setEntry value="org.eclipse.jetty.servlet-api@default:default"/>
-        <setEntry value="org.eclipse.jetty.session*12.1.6@default:default"/>
-        <setEntry value="org.eclipse.jetty.util*12.1.6@default:default"/>
+        <setEntry value="org.eclipse.jetty.session@default:default"/>
+        <setEntry value="org.eclipse.jetty.util@default:default"/>
         <setEntry value="org.eclipse.jetty.websocket-api@default:default"/>
         <setEntry value="org.eclipse.jetty.websocket.api@default:default"/>
         <setEntry value="org.eclipse.jetty.websocket.common@default:default"/>

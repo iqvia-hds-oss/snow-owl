@@ -33,7 +33,7 @@
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -console"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.b2international.snowowl.snomed.core.rest.tests"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms1g -Xmx1g -Dosgi.classloader.type=nonparallel -Djetty.home.bundle=org.eclipse.jetty.osgi.boot -Djetty.http.port=8080 --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED  -XX:+AlwaysPreTouch"/>
+    <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xms1g -Xmx1g -Dosgi.classloader.type=nonparallel -Djetty.home.bundle=org.eclipse.jetty.ee10.osgi.boot -Djetty.http.port=8080 --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED  -XX:+AlwaysPreTouch"/>
     <stringAttribute key="pde.version" value="3.3"/>
     <stringAttribute key="product" value="org.eclipse.platform.ide"/>
     <booleanAttribute key="run_in_ui_thread" value="false"/>
@@ -46,6 +46,7 @@
         <setEntry value="ch.qos.logback.classic@default:default"/>
         <setEntry value="ch.qos.logback.core@default:default"/>
         <setEntry value="com.b2international.snomed.ecl@default:default"/>
+        <setEntry value="com.bucket4j.core@default:default"/>
         <setEntry value="com.diffplug.osgi.extension.sun.misc@default:false"/>
         <setEntry value="com.diffplug.osgi.extension.sun.reflect@default:false"/>
         <setEntry value="com.fasterxml.classmate@default:default"/>
@@ -173,9 +174,6 @@
         <setEntry value="org.eclipse.jetty.websocket.core.server@default:default"/>
         <setEntry value="org.eclipse.jetty.websocket.server@default:default"/>
         <setEntry value="org.eclipse.jetty.xml@default:default"/>
-        <setEntry value="org.eclipse.jface.databinding@default:default"/>
-        <setEntry value="org.eclipse.jface.text@default:default"/>
-        <setEntry value="org.eclipse.jface@default:default"/>
         <setEntry value="org.eclipse.ltk.core.refactoring@default:default"/>
         <setEntry value="org.eclipse.osgi.compatibility.state@default:false"/>
         <setEntry value="org.eclipse.osgi.util@default:default"/>
@@ -229,7 +227,7 @@
         <setEntry value="org.semanticweb.elk@default:default"/>
         <setEntry value="org.semanticweb.owl.owlapi@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
-        <setEntry value="slf4j.api@default:default"/>
+        <setEntry value="slf4j.api*2.0.17@default:default"/>
         <setEntry value="stax2-api@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
