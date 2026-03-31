@@ -388,7 +388,7 @@ Visit us at https://b2ihealthcare.com
 
    <plugin
          id="com.b2international.groovy"
-         version="0.0.0"/>
+         version="5.0.5"/>
 
    <plugin
          id="org.apache.commons.commons-codec"
