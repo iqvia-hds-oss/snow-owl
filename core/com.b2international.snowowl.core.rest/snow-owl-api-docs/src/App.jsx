@@ -1,10 +1,8 @@
-import "antd/dist/antd.css";
 import "rapidoc";
 
 import Favicon from "./assets/favicon.svg?react";
 
 import React from "react";
-import { BackTop } from "antd";
 import { parse } from "qs";
 
 class App extends React.Component {
@@ -40,7 +38,6 @@ class App extends React.Component {
     const { apis, serverUrl, selectedKey } = this.state;
     return (
       <>
-        <BackTop />
         <rapi-doc
           key="api-docs"
           theme="light"

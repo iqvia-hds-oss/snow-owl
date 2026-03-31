@@ -20,8 +20,8 @@
 		<!-- Make sure this version matches the one present in the target-platform for swagger-annotations and models -->
 		<swagger.core.version>2.2.43</swagger.core.version>
 		<!-- Node.js version to use for building the API docs site -->
-		<node.version>v20.18.1</node.version>
-		<npm.version>10.9.2</npm.version>
+		<node.version>v22.22.2</node.version>
+		<npm.version>10.9.8</npm.version>
 	</properties>
 
 	<!-- NOTE: in case of dependency changes, please update the includeArtifactIds section in the maven-dependency-plugin configuration as well, listing all (exact and transitive) dependency artifactIds -->
