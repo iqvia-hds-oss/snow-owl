@@ -18,6 +18,7 @@ package com.b2international.snowowl.internal.eventbus.netty;
 import static org.junit.Assert.assertTrue;
 
 import java.net.InetSocketAddress;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLException;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,6 +76,8 @@ public class EventBusProtocolTest {
 		
 		final ClassLoader classLoader = getClass().getClassLoader();
 
+		Security.addProvider(new BouncyCastleProvider());
+		
 		final SelfSignedCertificate ssc = new SelfSignedCertificate();
 		final SslContext sslServerCtx = SslContextBuilder
 			.forServer(ssc.certificate(), ssc.privateKey())

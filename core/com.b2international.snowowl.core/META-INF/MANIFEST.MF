@@ -23,7 +23,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  com.b2international.groovy;bundle-version="3.0.24",
  com.b2international.snomed.ecl;bundle-version="[2.2.0,2.3.0)";visibility:=reexport,
  com.github.f4b6a3.uuid;bundle-version="5.3.7";visibility:=reexport,
- com.bucket4j.core;bundle-version="8.17.0"
+ com.bucket4j.core;bundle-version="8.17.0",
+ bcprov;bundle-version="1.83.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Bundle-ActivationPolicy: lazy
 Export-Package: com.auth0.jwt,
