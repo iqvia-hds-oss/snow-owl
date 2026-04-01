@@ -4,7 +4,7 @@ Bundle-Name: Groovy Wrapper Bundle
 Bundle-SymbolicName: com.b2international.groovy;singleton:=true
 Bundle-Version: 5.0.5
 Bundle-Vendor: B2i Healthcare
-Bundle-RequiredExecutionEnvironment: JavaSE-21
+Bundle-RequiredExecutionEnvironment: JavaSE-25
 Bundle-ClassPath: lib/groovy-5.0.5.jar,
  lib/groovy-json-5.0.5.jar,
  lib/groovy-templates-5.0.5.jar,
