@@ -13,6 +13,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+		<!-- Java version to use for compile and runtime -->
+		<java.version>25</java.version>
+
 		<!-- Dependency versions for Tycho's target platform filter -->
 		<elk.version>0.4.3</elk.version>
 		<guava.versionRange>[33.4.0,34.0.0)</guava.versionRange>
@@ -88,7 +91,7 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho.version}</version>
 				<configuration>
-					<executionEnvironment>org.eclipse.justj.openjdk.hotspot.jre.full-21</executionEnvironment>
+					<executionEnvironment>org.eclipse.justj.openjdk.hotspot.jre.full-${java.version}</executionEnvironment>
 					<dependency-resolution>
 						<localArtifacts>ignore</localArtifacts>
 					</dependency-resolution>
@@ -283,7 +286,7 @@
 					<version>${tycho.version}</version>
 					<configuration>
 						<useProjectSettings>false</useProjectSettings>
-						<release>21</release>
+						<release>${java.version}</release>
 						<excludeResources>
 							<excludeResource>**/*.groovy</excludeResource>
 						</excludeResources>
@@ -295,7 +298,7 @@
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.11.0</version>
 					<configuration>
-						<release>21</release>
+						<release>${java.version}</release>
 					</configuration>
 				</plugin>
 				<plugin>
