@@ -248,7 +248,7 @@
         <setEntry value="org.reactivestreams.reactive-streams@default:default"/>
         <setEntry value="org.semanticweb.owl.owlapi@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
-        <setEntry value="slf4j.api*2.0.17@default:default"/>
+        <setEntry value="slf4j.api@default:default"/>
         <setEntry value="stax2-api@default:default"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">

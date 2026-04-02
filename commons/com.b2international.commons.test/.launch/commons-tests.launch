@@ -131,7 +131,7 @@
         <setEntry value="org.osgi.util.pushstream@default:default"/>
         <setEntry value="org.osgi.util.xml@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
-        <setEntry value="slf4j.api*2.0.17@2:true"/>
+        <setEntry value="slf4j.api@2:true"/>
     </setAttribute>
     <setAttribute key="selected_workspace_bundles">
         <setEntry value="com.b2international.collections.api@default:default"/>
