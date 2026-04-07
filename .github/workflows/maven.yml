@@ -47,7 +47,14 @@ jobs:
 
     # Run the build
     - name: Build with Maven
-      run: ./mvnw -ntp -U -B clean verify
+      run: ./mvnw ${{ env.MAVEN_SWITCHES }} clean verify
+      env:
+        MAVEN_OPTS: '-Dstyle.color=always'
+        MAVEN_SWITCHES: >-
+          --show-version
+          --no-transfer-progress
+          --update-snapshots
+          --batch-mode
 
     # Upload Code Coverage
     - name: Upload Codecov
