@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Query;
 import com.b2international.index.query.SortBy;
 import com.b2international.snowowl.core.IDisposableService;
+import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -133,9 +134,9 @@ public final class RemoteJobTracker implements IDisposableService {
 			type = (String) jobParameters.get("type");
 			parameters = mapper.writeValueAsString(jobParameters);
 		} catch (Throwable e) {
-			parameters = "";
-			type = "";
+			throw new SnowowlRuntimeException("Couldn't serialize job parameters to JSON.", e);
 		}
+		
 		put(RemoteJobEntry.builder()
 				.id(jobId)
 				.key(job.getKey())
