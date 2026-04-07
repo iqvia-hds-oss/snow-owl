@@ -67,6 +67,8 @@ import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.events.util.Promise;
+import com.b2international.snowowl.core.jobs.JobRequests;
+import com.b2international.snowowl.core.jobs.RemoteJobEntry;
 import com.b2international.snowowl.core.request.CommitResult;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
@@ -80,6 +82,7 @@ import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
 import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
@@ -205,6 +208,23 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 		export(branchPath.getPath(), Map.of("type", "unknown"))
 			.then()
 			.statusCode(400);
+	}
+	
+	@Test
+	public void parameterSerializeProperlyWhenRunAsJob() throws Exception {
+		// this produces an empty export, we only care about the parameter serialization in this test case
+		String jobId = SnomedRequests.rf2().prepareExport()
+				.setReleaseType(Rf2ReleaseType.DELTA)
+				.setCountryNamespaceElement("INT")
+				.setRefSetExportLayout(Rf2RefSetExportLayout.COMBINED)
+				.setStartEffectiveTime(LocalDate.now())
+				.build(SnomedContentRule.SNOMEDCT)
+				.runAsJob("ExportJob")
+				.execute(getBus())
+				.getSync();
+		
+		RemoteJobEntry job = JobRequests.waitForJob(getBus(), jobId);
+		assertThat(job.getParameters()).isNotEmpty();
 	}
 
 	@Test
