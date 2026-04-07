@@ -55,7 +55,7 @@ jobs:
         # queries: security-extended,security-and-quality
     # Run the build
     - name: Build with Maven
-      run: ./mvnw -ntp clean verify
+      run: ./mvnw -ntp -U -B clean verify
     # Upload Code Coverage
     - name: Upload Codecov
       uses: codecov/codecov-action@v5.5.4
