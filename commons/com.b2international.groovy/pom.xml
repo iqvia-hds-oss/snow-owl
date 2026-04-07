@@ -10,49 +10,49 @@
 	<packaging>eclipse-plugin</packaging>
 	
 	<properties>
-		<groovy.version>3.0.24</groovy.version>
+		<groovy.version>5.0.5</groovy.version>
 	</properties>
 	
 	<!-- NOTE: in case of dependency changes, please update "includeArtifactIds" in maven-dependency-plugin's configuration as well, listing all (exact and transitive) dependency artifacts -->
 	<dependencies>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy</artifactId>
 			<version>${groovy.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-json</artifactId>
 			<version>${groovy.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-templates</artifactId>
 			<version>${groovy.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-xml</artifactId>
 			<version>${groovy.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-jsr223</artifactId>
 			<version>${groovy.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-dateutil</artifactId>
 			<version>${groovy.version}</version>
   			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
+			<groupId>org.apache.groovy</groupId>
 			<artifactId>groovy-sql</artifactId>
 			<version>${groovy.version}</version>
   			<scope>provided</scope>

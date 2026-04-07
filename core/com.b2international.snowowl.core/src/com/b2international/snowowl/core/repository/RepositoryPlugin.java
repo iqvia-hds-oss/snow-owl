@@ -16,11 +16,13 @@
 package com.b2international.snowowl.core.repository;
 
 import java.nio.file.Path;
+import java.security.Security;
 import java.security.cert.CertificateException;
 import java.util.Map;
 
 import javax.net.ssl.SSLException;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,6 +166,8 @@ public final class RepositoryPlugin extends Plugin {
 						
 					} else {
 						try {
+							
+							Security.addProvider(new BouncyCastleProvider());
 							
 							final SelfSignedCertificate ssc = new SelfSignedCertificate();
 							sslCtx = SslContextBuilder

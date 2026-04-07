@@ -43,9 +43,11 @@
     <booleanAttribute key="run_in_ui_thread" value="false"/>
     <setAttribute key="selected_target_bundles">
         <setEntry value="assertj-core@default:default"/>
+        <setEntry value="bcprov@default:default"/>
         <setEntry value="ch.qos.logback.classic@2:true"/>
         <setEntry value="ch.qos.logback.core@2:true"/>
         <setEntry value="com.b2international.snomed.ecl@default:default"/>
+        <setEntry value="com.bucket4j.core@default:default"/>
         <setEntry value="com.diffplug.osgi.extension.sun.misc@default:false"/>
         <setEntry value="com.diffplug.osgi.extension.sun.reflect@default:false"/>
         <setEntry value="com.fasterxml.classmate@default:default"/>
@@ -65,7 +67,6 @@
         <setEntry value="com.google.guava@default:default"/>
         <setEntry value="com.google.inject@default:default"/>
         <setEntry value="com.ibm.icu@default:default"/>
-        <setEntry value="com.sun.el.javax.el@default:default"/>
         <setEntry value="com.sun.jna.platform@default:default"/>
         <setEntry value="com.sun.jna@default:default"/>
         <setEntry value="de.svenkubiak.jBCrypt@default:default"/>

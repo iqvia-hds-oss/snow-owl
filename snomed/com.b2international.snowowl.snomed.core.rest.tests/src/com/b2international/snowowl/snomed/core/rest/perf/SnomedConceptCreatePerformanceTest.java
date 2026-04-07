@@ -17,10 +17,6 @@ package com.b2international.snowowl.snomed.core.rest.perf;
 
 import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewConcept;
 
-import org.databene.contiperf.PerfTest;
-import org.databene.contiperf.junit.ContiPerfRule;
-import org.databene.contiperf.junit.ContiPerfRuleExt;
-import org.junit.Rule;
 import org.junit.Test;
 
 import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
@@ -29,14 +25,12 @@ import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
  * @since 4.7
  */
 public class SnomedConceptCreatePerformanceTest extends AbstractSnomedApiTest {
-
-	@Rule
-	public ContiPerfRule rule = new ContiPerfRuleExt();
 	
 	@Test
-	@PerfTest(invocations = 10)
 	public void createConcept() throws Exception {
-		createNewConcept(branchPath);
+		for (int i = 0; i < 10; i++) {
+			createNewConcept(branchPath);
+		}
 	}
 	
 }

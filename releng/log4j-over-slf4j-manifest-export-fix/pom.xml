@@ -7,7 +7,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-		<slf4j.version>2.0.16</slf4j.version>
+		<slf4j.version>2.0.17</slf4j.version>
 		
 		<!-- Artifact distribution -->
 		<maven.repository.id>nexus_deployment</maven.repository.id>
@@ -39,7 +39,7 @@
 						<configuration>
 							<artifacts>
 								<artifact>
-									<id>org.slf4j:log4j-over-slf4j:2.0.16</id>
+									<id>org.slf4j:log4j-over-slf4j:${slf4j.version}</id>
 									<override>true</override>
 									<instructions>
 										<Bundle-Description>Log4j implemented over SLF4J</Bundle-Description>
@@ -62,7 +62,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-deploy-plugin</artifactId>
-				<version>3.1.1</version>
+				<version>3.1.4</version>
 				<executions>
 					<execution>
 						<id>default-deploy</id>

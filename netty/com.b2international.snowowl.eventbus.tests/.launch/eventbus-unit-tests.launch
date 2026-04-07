@@ -48,6 +48,8 @@
         <setEntry value="com.fasterxml.jackson.core.jackson-annotations@default:default"/>
         <setEntry value="com.google.guava.failureaccess@default:default"/>
         <setEntry value="com.google.guava@default:default"/>
+        <setEntry value="com.sun.jna.platform@default:default"/>
+        <setEntry value="com.sun.jna@default:default"/>
         <setEntry value="io.netty.buffer@default:default"/>
         <setEntry value="io.netty.codec-http@default:default"/>
         <setEntry value="io.netty.codec@default:default"/>

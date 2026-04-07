@@ -13,8 +13,6 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<!-- Rate limiting -->
-		<bucket4j.version>8.10.1</bucket4j.version>
 		<!-- RFC 6902 JSON Patch implementation - zjsonpatch requires Jackson 2.14+ and Commons Collections 4.4 -->
 		<zjsonpatch.version>0.4.16</zjsonpatch.version>
 		<!-- Graph algorithms lib -->
@@ -31,12 +29,6 @@
 
 	<!-- NOTE: in case of dependency changes, please update "includeArtifactIds" in maven-dependency-plugin's configuration as well, listing all (exact and transitive) dependency artifacts -->
 	<dependencies>
-		<dependency>
-    		<groupId>com.bucket4j</groupId>
-    		<artifactId>bucket4j-core</artifactId>
-    		<version>${bucket4j.version}</version>
-    		<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>com.flipkart.zjsonpatch</groupId>
 			<artifactId>zjsonpatch</artifactId>
@@ -98,7 +90,6 @@
 						<configuration>
 							<!-- Copying only the necessary JARs from the dependencies and their transitive stuff -->
 							<includeArtifactIds>
-								bucket4j-core,
 								zjsonpatch,
 								jgrapht-core,
 								jheaps,

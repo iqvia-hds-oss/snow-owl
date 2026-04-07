@@ -388,7 +388,7 @@ Visit us at https://b2ihealthcare.com
 
    <plugin
          id="com.b2international.groovy"
-         version="0.0.0"/>
+         version="5.0.5"/>
 
    <plugin
          id="org.apache.commons.commons-codec"
@@ -667,10 +667,6 @@ Visit us at https://b2ihealthcare.com
          version="0.0.0"/>
 
    <plugin
-         id="org.eclipse.jetty.ee"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.jetty.plus"
          version="0.0.0"/>
 
@@ -684,6 +680,26 @@ Visit us at https://b2ihealthcare.com
 
    <plugin
          id="net.logstash.logback.logstash-logback-encoder"
+         version="0.0.0"/>
+
+   <plugin
+         id="com.bucket4j.core"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.annotations"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.compression.common"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.compression.gzip"
+         version="0.0.0"/>
+
+   <plugin
+         id="org.eclipse.jetty.ee.webapp"
          version="0.0.0"/>
 
 </feature>
