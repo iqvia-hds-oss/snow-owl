@@ -39,10 +39,16 @@ Features include:
 
 # Download
 
+## Recommended
+
+Docker container based installations are the easiest to get started. Find more details about the open-source image here: https://hub.docker.com/r/b2ihealthcare/snow-owl-oss
+
+## Additional packages
+
+Pure extractable binaries can also be installed manually on most major operating systems:
+
 * [WINDOWS](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.zip) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.zip.sha1)
 * [LINUX](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.tar.gz) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-oss.tar.gz.sha1) 
-* [RPM](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-rpm.rpm) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-rpm.rpm.sha1)
-* [DEB](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-deb.deb) - [sha](https://artifacts.b2ihealthcare.com/repository/maven-releases/com/b2international/snowowl/com.b2international.snowowl.server.update/10.0.0/com.b2international.snowowl.server.update-10.0.0-deb.deb.sha1)
 
 {% hint style="info" %}
 This distribution only includes features licensed under the Apache 2.0 license. To get access to the full set of features, please contact [B2i Healthcare](mailto:info@b2ihealthcare.com).
