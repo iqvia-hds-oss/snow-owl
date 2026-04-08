@@ -5,7 +5,6 @@
 	<id>oss</id>
 	<formats>
 		<format>tar.gz</format>
-		<format>dir</format> <!-- Required for packaging to RPM -->
 	</formats>
 	<fileSets>
 		<!-- Equinox server base content -->
