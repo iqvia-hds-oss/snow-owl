@@ -65,6 +65,7 @@
 				<version>${tycho.version}</version>
 				<extensions>true</extensions>
 			</plugin>
+			
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-packaging-plugin</artifactId>
@@ -91,7 +92,6 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho.version}</version>
 				<configuration>
-					<executionEnvironment>org.eclipse.justj.openjdk.hotspot.jre.full-${java.version}</executionEnvironment>
 					<dependency-resolution>
 						<localArtifacts>ignore</localArtifacts>
 					</dependency-resolution>
@@ -269,6 +269,10 @@
 					<groupId>org.eclipse.tycho</groupId>
 					<artifactId>tycho-p2-director-plugin</artifactId>
 					<version>${tycho.version}</version>
+					<configuration>
+						<!-- Use the selected JustJ version repository to include the JRE -->
+	    				<productRepository>https://download.eclipse.org/justj/jres/${java.version}/updates/release/</productRepository>
+					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.eclipse.tycho</groupId>
