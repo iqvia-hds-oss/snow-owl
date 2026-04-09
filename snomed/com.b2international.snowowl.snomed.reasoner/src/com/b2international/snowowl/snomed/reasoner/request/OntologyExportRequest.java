@@ -38,7 +38,6 @@ import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.ReasonerTaxonomy;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.ReasonerTaxonomyBuilder;
 import com.b2international.snowowl.snomed.reasoner.exceptions.OntologyException;
@@ -80,8 +79,6 @@ final class OntologyExportRequest implements Request<BranchContext, String>, Acc
 		@SuppressWarnings("unchecked")
 		final Set<String> reasonerExcludedModuleIds = Collections3.toImmutableSet((Iterable) resource.getSettings()
 			.getOrDefault(Settings.REASONER_EXCLUDED_MODULE_IDS, Collections.emptySet()));
-		final SnomedCoreConfiguration configuration = context.service(SnomedCoreConfiguration.class);
-		final boolean concreteDomainSupportEnabled = configuration.isConcreteDomainSupported();
 		
 		final ReasonerTaxonomyBuilder taxonomyBuilder = new ReasonerTaxonomyBuilder(reasonerExcludedModuleIds, context.getPageSize());
 		
@@ -95,10 +92,6 @@ final class OntologyExportRequest implements Request<BranchContext, String>, Acc
 		
 		taxonomyBuilder.addNeverGroupedTypeIds(revisionSearcher);
 		taxonomyBuilder.addActiveAxioms(revisionSearcher);
-
-		if (concreteDomainSupportEnabled) {
-			taxonomyBuilder.addActiveConcreteDomainMembers(revisionSearcher);
-		}
 
 		final ReasonerTaxonomy taxonomy = taxonomyBuilder.build();
 		final OWLOntologyManager ontologyManager = OWLManager.createOWLOntologyManager();

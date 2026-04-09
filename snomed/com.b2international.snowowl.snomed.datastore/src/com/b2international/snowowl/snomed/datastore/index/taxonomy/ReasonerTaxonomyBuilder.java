@@ -19,9 +19,7 @@ import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedCon
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument.Expressions.exhaustive;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedDocument.Expressions.active;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedDocument.Expressions.modules;
-import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry.Expressions.refSetTypes;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry.Expressions.characteristicTypeId;
-import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry.Expressions.characteristicTypeIds;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry.Expressions.relationshipGroup;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry.Expressions.typeId;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -55,11 +53,11 @@ import com.b2international.index.query.SortBy.Order;
 import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.index.util.DecimalUtils;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
-import com.b2international.snowowl.snomed.datastore.*;
+import com.b2international.snowowl.snomed.datastore.StatementFragment;
+import com.b2international.snowowl.snomed.datastore.StatementFragmentWithDestination;
+import com.b2international.snowowl.snomed.datastore.StatementFragmentWithValue;
 import com.b2international.snowowl.snomed.datastore.index.entry.*;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.InternalIdMultimap.Builder;
 import com.google.common.base.Stopwatch;
@@ -77,11 +75,6 @@ public final class ReasonerTaxonomyBuilder {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger("reasoner-taxonomy");
 
-	private static final Set<String> CD_CHARACTERISTIC_TYPE_IDS = ImmutableSet.of(
-			Concepts.STATED_RELATIONSHIP, 
-			Concepts.ADDITIONAL_RELATIONSHIP,
-			Concepts.INFERRED_RELATIONSHIP);
-	
 	private final Stopwatch stopwatch;
 	private final Set<String> excludedModuleIds;
 	private final int pageSize;
@@ -108,10 +101,6 @@ public final class ReasonerTaxonomyBuilder {
 	private LongSet neverGroupedTypeIds;
 	private ImmutableSet.Builder<PropertyChain> propertyChains;
 	
-	private InternalIdMultimap.Builder<ConcreteDomainFragment> statedConcreteDomainMembers;
-	private InternalIdMultimap.Builder<ConcreteDomainFragment> additionalGroupedConcreteDomainMembers;
-	private InternalIdMultimap.Builder<ConcreteDomainFragment> inferredConcreteDomainMembers;
-
 
 	public ReasonerTaxonomyBuilder(final int pageSize) {
 		this(ImmutableSet.<String>of(), pageSize);
@@ -202,10 +191,6 @@ public final class ReasonerTaxonomyBuilder {
 		statedAxioms = InternalIdMultimap.builder(conceptMap);
 		neverGroupedTypeIds = PrimitiveSets.newLongOpenHashSetWithExpectedSize(4);
 		propertyChains = ImmutableSet.builder();
-		
-		statedConcreteDomainMembers = InternalIdMultimap.builder(conceptMap);
-		additionalGroupedConcreteDomainMembers = InternalIdMultimap.builder(conceptMap);
-		inferredConcreteDomainMembers = InternalIdMultimap.builder(conceptMap);
 		
 		return this;
 	}
@@ -870,172 +855,6 @@ public final class ReasonerTaxonomyBuilder {
 		return this;
 	}
 	
-	public ReasonerTaxonomyBuilder addActiveConcreteDomainMembers(final RevisionSearcher searcher) {
-		entering("Registering active concrete domain members using revision searcher");
-
-		final ExpressionBuilder whereExpressionBuilder = Expressions.bool()
-				.filter(active())
-				.filter(refSetTypes(Collections.singleton(SnomedRefSetType.CONCRETE_DATA_TYPE)))
-				.filter(characteristicTypeIds(CD_CHARACTERISTIC_TYPE_IDS));
-		
-		if (!excludedModuleIds.isEmpty()) {
-			whereExpressionBuilder.mustNot(modules(excludedModuleIds));
-		}
-
-		final List<ConcreteDomainFragment> statedFragments = new ArrayList<>(pageSize);
-		final List<ConcreteDomainFragment> inferredFragments = new ArrayList<>(pageSize);
-		final List<ConcreteDomainFragment> additionalGroupedFragments = new ArrayList<>(pageSize);
-		final String lastReferencedComponentId[] = { "" };
-
-		Query.select(SnomedRefSetMemberIndexEntry.class)
-			.where(whereExpressionBuilder.build())
-			.sortBy(SortBy.builder()
-				.sortByField(SnomedRefSetMemberIndexEntry.Fields.REFERENCED_COMPONENT_ID, Order.ASC)
-				.sortByField(SnomedRefSetMemberIndexEntry.Fields.ID, Order.ASC)
-				.build())
-			.limit(pageSize)
-			.build()
-			.stream(searcher)
-			.forEachOrdered(hits -> {
-				for (final SnomedRefSetMemberIndexEntry member : hits) {
-					final String referencedComponentId = member.getReferencedComponentId();
-	
-					if (lastReferencedComponentId[0].isEmpty()) {
-						lastReferencedComponentId[0] = referencedComponentId;
-					} else if (!lastReferencedComponentId[0].equals(referencedComponentId)) {
-						if (conceptMap.containsKey(lastReferencedComponentId[0])) {
-							statedConcreteDomainMembers.putAll(lastReferencedComponentId[0], statedFragments);
-							inferredConcreteDomainMembers.putAll(lastReferencedComponentId[0], inferredFragments);
-							additionalGroupedConcreteDomainMembers.putAll(lastReferencedComponentId[0], additionalGroupedFragments);
-						} else {
-							LOGGER.debug("Not registering CD members for concept {} as it is inactive.", lastReferencedComponentId[0]);
-						}
-						statedFragments.clear();
-						inferredFragments.clear();
-						additionalGroupedFragments.clear();
-						lastReferencedComponentId[0] = referencedComponentId;
-					}
-	
-					final String memberId = member.getId();
-					final long refsetId = Long.parseLong(member.getRefsetId());
-					final String serializedValue = SnomedRefSetUtil.serializeValue(member.getDataType(), member.getValue());
-					final Integer group = member.getRelationshipGroup();
-					final long typeId = Long.parseLong(member.getTypeId());
-					final boolean released = member.isReleased();
-	
-					final ConcreteDomainFragment fragment = new ConcreteDomainFragment(memberId, 
-							refsetId,
-							group,
-							serializedValue,
-							typeId,
-							released);
-	
-					if (Concepts.STATED_RELATIONSHIP.equals(member.getCharacteristicTypeId())) {
-						statedFragments.add(fragment);
-					} else if (Concepts.ADDITIONAL_RELATIONSHIP.equals(member.getCharacteristicTypeId()) && member.getRelationshipGroup() > 0) {
-						additionalGroupedFragments.add(fragment);
-					} else if (Concepts.INFERRED_RELATIONSHIP.equals(member.getCharacteristicTypeId())) {
-						inferredFragments.add(fragment);
-					}
-				}
-			});
-
-		if (!lastReferencedComponentId[0].isEmpty()) {
-			if (conceptMap.containsKey(lastReferencedComponentId[0])) {
-				statedConcreteDomainMembers.putAll(lastReferencedComponentId[0], statedFragments);
-				inferredConcreteDomainMembers.putAll(lastReferencedComponentId[0], inferredFragments);
-				additionalGroupedConcreteDomainMembers.putAll(lastReferencedComponentId[0], additionalGroupedFragments);
-			} else {
-				LOGGER.debug("Not registering CD members for concept {} as it is inactive.", lastReferencedComponentId[0]);
-			}
-			statedFragments.clear();
-			inferredFragments.clear();
-			additionalGroupedFragments.clear();
-		}
-
-		leaving("Registering active concrete domain members using revision searcher");
-		return this;
-	}
-
-	/*
-	 * XXX: sortedMembers should be sorted by referenced component ID; we can not verify this in advance
-	 */
-	public ReasonerTaxonomyBuilder addActiveConcreteDomainMembers(final Stream<SnomedReferenceSetMember> sortedMembers) {
-		entering("Registering active concrete domain members using stream");
-
-		final List<ConcreteDomainFragment> statedFragments = new ArrayList<>(pageSize);
-		final List<ConcreteDomainFragment> inferredFragments = new ArrayList<>(pageSize);
-		final List<ConcreteDomainFragment> additionalGroupedFragments = new ArrayList<>(pageSize);
-		String lastReferencedComponentId = "";
-
-		for (final List<SnomedReferenceSetMember> chunk : Iterables.partition(sortedMembers::iterator, pageSize)) {
-			for (final SnomedReferenceSetMember member : chunk) {
-				final String characteristicTypeId = (String) member.getProperties().get(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID);
-
-				if (member.isActive() 
-						&& SnomedRefSetUtil.getConcreteDomainRefSetMap().containsValue(member.getRefsetId())
-						&& CD_CHARACTERISTIC_TYPE_IDS.contains(characteristicTypeId)
-						&& !excludedModuleIds.contains(member.getModuleId())) {
-
-					final String referencedComponentId = member.getReferencedComponent().getId();
-
-					if (lastReferencedComponentId.isEmpty()) {
-						lastReferencedComponentId = referencedComponentId;
-					} else if (!lastReferencedComponentId.equals(referencedComponentId)) {
-						if (conceptMap.containsKey(lastReferencedComponentId)) {
-							statedConcreteDomainMembers.putAll(lastReferencedComponentId, statedFragments);
-							inferredConcreteDomainMembers.putAll(lastReferencedComponentId, inferredFragments);
-							additionalGroupedConcreteDomainMembers.putAll(lastReferencedComponentId, additionalGroupedFragments);
-						} else {
-							LOGGER.debug("Not registering CD members for concept {} as it is inactive.", lastReferencedComponentId);
-						}
-						statedFragments.clear();
-						inferredFragments.clear();
-						additionalGroupedFragments.clear();
-						lastReferencedComponentId = referencedComponentId;
-					}
-
-					final String memberId = member.getId();
-					final long refsetId = Long.parseLong(member.getRefsetId());
-					final String serializedValue = (String) member.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
-					final Integer group = (Integer) member.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
-					final long typeId = Long.parseLong((String) member.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID));
-
-					final ConcreteDomainFragment fragment = new ConcreteDomainFragment(memberId,
-							refsetId,
-							group,
-							serializedValue,
-							typeId,
-							false); // XXX: "injected" CD members will not set this flag correctly, but they should only be used in equivalence checks
-
-					if (Concepts.STATED_RELATIONSHIP.equals(characteristicTypeId)) {
-						statedFragments.add(fragment);
-					} else if (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId) && group > 0) {
-						additionalGroupedFragments.add(fragment);
-					} else if (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId)) {
-						inferredFragments.add(fragment);
-					}
-				}
-			}
-		}
-
-		if (!lastReferencedComponentId.isEmpty()) {
-			if (conceptMap.containsKey(lastReferencedComponentId)) {
-				statedConcreteDomainMembers.putAll(lastReferencedComponentId, statedFragments);
-				inferredConcreteDomainMembers.putAll(lastReferencedComponentId, inferredFragments);
-				additionalGroupedConcreteDomainMembers.putAll(lastReferencedComponentId, additionalGroupedFragments);
-			} else {
-				LOGGER.debug("Not registering CD members for concept {} as it is inactive.", lastReferencedComponentId);
-			}
-			statedFragments.clear();
-			inferredFragments.clear();
-			additionalGroupedFragments.clear();
-		}
-
-		leaving("Registering active concrete domain members using stream");
-		return this;
-	}
-
 	public ReasonerTaxonomy build() {
 		checkState(conceptMap != null, "finishConcepts() method was not called on taxonomy builder.");
 		
@@ -1057,10 +876,6 @@ public final class ReasonerTaxonomyBuilder {
 				statedAxioms.build(),
 				LongCollections.unmodifiableSet(neverGroupedTypeIds),
 				propertyChains.build(),
-				
-				statedConcreteDomainMembers.build(),
-				inferredConcreteDomainMembers.build(),
-				additionalGroupedConcreteDomainMembers.build(),
 				
 				null, 
 				null,

@@ -20,7 +20,10 @@ import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRe
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.getComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRefSetRestRequests.executeMemberAction;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRefSetRestRequests.updateRefSetComponent;
-import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.*;
+import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewConcept;
+import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewRefSet;
+import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createNewRelationship;
+import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.createRefSetMemberRequestBody;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests.createCodeSystem;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.createVersion;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.getNextAvailableEffectiveDate;
@@ -37,7 +40,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -56,7 +58,10 @@ import com.b2international.snowowl.core.request.CommitResult;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
-import com.b2international.snowowl.snomed.core.domain.refset.*;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedOWLRelationship;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMembers;
 import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
@@ -79,85 +84,6 @@ public class SnomedRefSetMemberApiTest extends AbstractSnomedApiTest {
 	@Test
 	public void getMemberNonExistingIdentifier() throws Exception {
 		getComponent(branchPath, SnomedComponentType.MEMBER, "00001111-0000-0000-0000-000000000000").statusCode(404);
-	}
-
-	@Test
-	public void createConcreteDomainMemberInvalidValue() {
-		createConcreteDomainParentConcept(branchPath);
-
-		String refSetId = createConcreteDomainRefSet(branchPath, DataType.INTEGER);
-		Json requestBody = createRefSetMemberRequestBody(refSetId, Concepts.ROOT_CONCEPT)
-				.with(Json.object(
-					SnomedRf2Headers.FIELD_TYPE_ID, Concepts.REFSET_ATTRIBUTE,
-					SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 0,
-					SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.STATED_RELATIONSHIP,
-					SnomedRf2Headers.FIELD_VALUE, "five", // bad
-					"commitComment", "Created new reference set member"
-				));
-
-		createComponent(branchPath, SnomedComponentType.MEMBER, requestBody).statusCode(400);
-	}
-
-	@Test
-	public void createConcreteDomainMember() {
-		createConcreteDomainParentConcept(branchPath);
-
-		String refSetId = createConcreteDomainRefSet(branchPath, DataType.DECIMAL);
-		Json requestBody = createRefSetMemberRequestBody(refSetId, Concepts.ROOT_CONCEPT)
-				.with(Json.object(
-					SnomedRf2Headers.FIELD_TYPE_ID, Concepts.REFSET_ATTRIBUTE, // Using "Reference set attribute" root as a data attribute
-					SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 0,
-					SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.STATED_RELATIONSHIP,
-					SnomedRf2Headers.FIELD_VALUE, "3.1415927", // bad
-					"commitComment", "Created new reference set member"
-				));
-
-		String memberId = assertCreated(createComponent(branchPath, SnomedComponentType.MEMBER, requestBody));
-
-		getComponent(branchPath, SnomedComponentType.MEMBER, memberId)
-			.statusCode(200)
-			.body(SnomedRf2Headers.FIELD_TYPE_ID, equalTo(Concepts.REFSET_ATTRIBUTE))
-			.body(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, equalTo(0))
-			.body(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, equalTo(Concepts.STATED_RELATIONSHIP))
-			.body(SnomedRf2Headers.FIELD_VALUE, equalTo("3.1415927"));
-	}
-
-	@Test
-	public void updateConcreteDomainMember() {
-		createConcreteDomainParentConcept(branchPath);
-
-		String refSetId = createConcreteDomainRefSet(branchPath, DataType.DECIMAL);
-		Json createRequest = createRefSetMemberRequestBody(refSetId, Concepts.ROOT_CONCEPT)
-				.with(Json.object(
-					SnomedRf2Headers.FIELD_TYPE_ID, Concepts.REFSET_ATTRIBUTE,
-					SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 1,
-					SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.STATED_RELATIONSHIP,
-					SnomedRf2Headers.FIELD_VALUE, "3.1415927",
-					"commitComment", "Created new concrete domain reference set member"
-				));
-
-		String memberId = assertCreated(createComponent(branchPath, SnomedComponentType.MEMBER, createRequest));
-
-		@SuppressWarnings("unchecked")
-		Map<String, Object> member = getComponent(branchPath, SnomedComponentType.MEMBER, memberId)
-		.statusCode(200)
-		.body(SnomedRf2Headers.FIELD_TYPE_ID, equalTo(Concepts.REFSET_ATTRIBUTE))
-		.body(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, equalTo(1))
-		.body(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, equalTo(Concepts.STATED_RELATIONSHIP))
-		.body(SnomedRf2Headers.FIELD_VALUE, equalTo("3.1415927"))
-		.extract().as(Map.class);
-
-		member.put(SnomedRf2Headers.FIELD_TYPE_ID, Concepts.CONCEPT_MODEL_ATTRIBUTE);
-		member.put(SnomedRf2Headers.FIELD_VALUE, "2.7182818");
-		member.put("commitComment", "Updated existing concrete domain reference set member");
-
-		updateRefSetComponent(branchPath, SnomedComponentType.MEMBER, memberId, member, false).statusCode(204);
-		getComponent(branchPath, SnomedComponentType.MEMBER, memberId)
-		.statusCode(200)
-		.body(SnomedRf2Headers.FIELD_TYPE_ID, equalTo(Concepts.CONCEPT_MODEL_ATTRIBUTE))
-		.body(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, equalTo(1))
-		.body(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, equalTo(Concepts.STATED_RELATIONSHIP))
-		.body(SnomedRf2Headers.FIELD_VALUE, equalTo("2.7182818"));
 	}
 
 	@Test

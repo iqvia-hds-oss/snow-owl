@@ -47,8 +47,6 @@ import com.b2international.collections.longs.LongSet;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValueType;
 import com.b2international.snowowl.snomed.core.domain.refset.DataType;
-import com.b2international.snowowl.snomed.datastore.ConcreteDomainFragment;
-import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
 import com.b2international.snowowl.snomed.datastore.StatementFragment;
 import com.b2international.snowowl.snomed.datastore.StatementFragmentWithDestination;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.InternalIdMap;
@@ -909,10 +907,6 @@ public final class DelegateOntology extends DelegateOntologyStub implements OWLM
 		final Set<OWLClassExpression> intersection = Sets.newHashSet();
 		final Collection<StatementFragment> statedFragments = statements.get(conceptId);
 
-		final Collection<ConcreteDomainFragment> statedConcreteDomainMembers = taxonomy
-				.getStatedConcreteDomainMembers()
-				.get(Long.toString(conceptId));
-
 		// "IS A" relationships are added as parents, groups and union groups are not taken into account
 		statedFragments.stream()
 			.filter(r -> IS_A == r.getTypeId())
@@ -927,11 +921,6 @@ public final class DelegateOntology extends DelegateOntologyStub implements OWLM
 			.entrySet()
 			.stream()
 			.forEachOrdered(ug -> addUnionGroup(ug, intersection));
-
-		// Ungrouped concept concrete domain members are also added directly
-		statedConcreteDomainMembers.stream()
-			.filter(c -> c.getGroup() == 0)
-			.forEachOrdered(c -> addConcreteDomainMember(c, intersection));
 
 		// Remaining stated relationships are wrapped in roleGroups
 		statedFragments.stream()
@@ -991,16 +980,7 @@ public final class DelegateOntology extends DelegateOntologyStub implements OWLM
 			.forEachOrdered(ug -> addUnionGroup(ug, groupIntersection));
 
 		if (group.getKey() > 0) {
-
-			// CD members should only be considered in non-zero groups
-			taxonomy.getStatedConcreteDomainMembers()
-				.get(Long.toString(conceptId))
-				.stream()
-				.filter(c -> c.getGroup() == group.getKey())
-				.forEachOrdered(c -> addConcreteDomainMember(c, groupIntersection));
-			
 			intersection.add(getRoleGroupExpression(getOWLObjectIntersectionOf(groupIntersection)));
-			
 		} else {
 			groupIntersection.forEach(ce -> {
 				final OWLClassExpression singleGroupExpression = getRoleGroupExpression(ce);
@@ -1009,19 +989,6 @@ public final class DelegateOntology extends DelegateOntologyStub implements OWLM
 		}
 	}
 
-	private void addConcreteDomainMember(final ConcreteDomainFragment member, final Set<OWLClassExpression> intersection) {
-		final long typeId = member.getTypeId();
-		final String serializedValue = member.getSerializedValue();
-		final DataType sctDataType = SnomedRefSetUtil.getDataType(Long.toString(member.getRefSetId()));
-		final OWL2Datatype owl2Datatype = getOWL2Datatype(sctDataType);
-
-		final OWLDataProperty property = getConceptDataProperty(typeId);
-		final OWLLiteral owlLiteral = getOWLLiteral(serializedValue, owl2Datatype);
-		final OWLDataHasValue valueExpression = getOWLDataHasValue(property, owlLiteral);
-		
-		intersection.add(valueExpression);
-	}
-	
 	/////////////////////////////////////////////////////
 	// Low-level building blocks for OWL 2 ontologies
 	/////////////////////////////////////////////////////

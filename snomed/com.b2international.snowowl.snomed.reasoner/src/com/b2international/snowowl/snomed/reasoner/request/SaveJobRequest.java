@@ -51,7 +51,6 @@ import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
 import com.b2international.snowowl.snomed.datastore.id.assigner.SnomedNamespaceAndModuleAssigner;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.*;
@@ -101,8 +100,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 	
 	private boolean fixEquivalences;
 	
-	private boolean handleConcreteDomains;
-
 	SaveJobRequest() {}
 	
 	void setClassificationId(final String classificationId) {
@@ -135,10 +132,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 	
 	void setFixEquivalences(final boolean fixEquivalences) {
 		this.fixEquivalences = fixEquivalences;
-	}
-	
-	void setHandleConcreteDomains(final boolean handleConcreteDomains) {
-		this.handleConcreteDomains = handleConcreteDomains;
 	}
 	
 	@Override
@@ -230,13 +223,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		final Set<String> conceptIdsToSkip = mergeEquivalentConcepts(context, bulkRequestBuilder, assigner);
 		applyRelationshipChanges(context, bulkRequestBuilder, assigner, conceptIdsToSkip);
 
-		if (handleConcreteDomains) {
-			// CD member support in configuration overrides the flag on the save request
-			final SnomedCoreConfiguration snomedCoreConfiguration = context.service(SnomedCoreConfiguration.class);
-			if (snomedCoreConfiguration.isConcreteDomainSupported()) {
-				applyConcreteDomainChanges(context, bulkRequestBuilder, assigner, conceptIdsToSkip);
-			}
-		}
 	}
 
 	private void applyRelationshipChanges(final BranchContext context, 
@@ -314,88 +300,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 								throw new IllegalStateException(String.format("Unexpected relationship change '%s' found with SCTID '%s'.", 
 										change.getChangeNature(), 
 										change.getRelationship().getOriginId()));
-						}
-					}
-				});
-
-		namespaceAndModuleAssigner.clear();
-	}
-
-	private void applyConcreteDomainChanges(final BranchContext context, 
-			final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
-			final Set<String> conceptIdsToSkip) {
-
-		ClassificationRequests.prepareSearchConcreteDomainChange()
-				.setLimit(context.getPageSize())
-				.setExpand("concreteDomainMember(inferredOnly:true)")
-				.filterByClassificationId(classificationId)
-				.stream(context)
-				.forEach(nextChanges -> {
-					final Set<String> conceptIds = nextChanges.stream()
-							.map(ConcreteDomainChange::getConcreteDomainMember)
-							.map(m -> m.getReferencedComponentId())
-							.collect(Collectors.toSet());
-
-					final Set<String> originMemberIds = nextChanges.stream()
-							.filter(change -> ChangeNature.NEW.equals(change.getChangeNature())
-									|| ChangeNature.UPDATED.equals(change.getChangeNature()))
-							.map(ConcreteDomainChange::getConcreteDomainMember)
-							.map(ReasonerConcreteDomainMember::getOriginMemberId)
-							.filter(id -> id != null)
-							.collect(Collectors.toSet());
-					
-					final Map<String, String> originReferencedComponentIds = SnomedRequests.prepareSearchMember()
-							.setLimit(originMemberIds.size())
-							.filterByIds(originMemberIds)
-							.build()
-							.execute(context)
-							.stream()
-							.collect(Collectors.toMap(
-									m -> m.getId(), // keys: ID of the "origin" CD member
-									m -> m.getReferencedComponent().getId())); // values: referenced component ID of the "origin" CD member
-
-					// Concepts which will be inactivated as part of equivalent concept merging should be excluded
-					conceptIds.removeAll(conceptIdsToSkip);
-					namespaceAndModuleAssigner.collectConcreteDomainModules(conceptIds);
-
-					for (final ConcreteDomainChange change : nextChanges) {
-						final ReasonerConcreteDomainMember referenceSetMember = change.getConcreteDomainMember();
-
-						// CD member changes related to merged concepts should not be applied
-						if (conceptIdsToSkip.contains(referenceSetMember.getReferencedComponentId())) {
-							continue;
-						}
-						
-						switch (change.getChangeNature()) {
-							case NEW: {
-									/*
-									 * Do not "infer" any CD member that is passed down from a concept that was
-									 * already merged by the equivalent concept merging step
-									 */
-									final String originReferencedComponentId = originReferencedComponentIds.get(referenceSetMember.getOriginMemberId());
-									if (!conceptIdsToSkip.contains(originReferencedComponentId)) {
-										addComponent(bulkRequestBuilder, namespaceAndModuleAssigner, referenceSetMember);
-									}
-								}
-								break;
-								
-							case UPDATED: {
-								final String originReferencedComponentId = originReferencedComponentIds.get(referenceSetMember.getOriginMemberId());
-									if (!conceptIdsToSkip.contains(originReferencedComponentId)) {
-										updateComponent(bulkRequestBuilder, namespaceAndModuleAssigner, referenceSetMember);
-									}
-								}
-								break;
-								
-							case REDUNDANT:
-								removeOrDeactivate(bulkRequestBuilder, namespaceAndModuleAssigner, referenceSetMember);
-								break;
-								
-							default:
-								throw new IllegalStateException(String.format("Unexpected CD member change '%s' found with UUID '%s'.", 
-										change.getChangeNature(), 
-										change.getConcreteDomainMember().getOriginMemberId()));
 						}
 					}
 				});

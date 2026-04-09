@@ -23,9 +23,6 @@ import java.util.Objects;
 
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValueType;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
-import com.b2international.snowowl.snomed.datastore.ConcreteDomainFragment;
-import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
 import com.b2international.snowowl.snomed.datastore.StatementFragmentWithValue;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.ReasonerTaxonomy;
 
@@ -40,16 +37,6 @@ final class NormalFormValue implements NormalFormProperty {
 	private final ReasonerTaxonomy reasonerTaxonomy;
 	private final long statementId;
 
-	private static RelationshipValue relationshipValue(final long refSetId, final String serializedValue) {
-		final DataType dataType = SnomedRefSetUtil.getDataType(Long.toString(refSetId));
-		switch (dataType) {
-			case DECIMAL: return new RelationshipValue(new BigDecimal(serializedValue));
-			case INTEGER: return new RelationshipValue(Integer.valueOf(serializedValue));
-			case STRING: return new RelationshipValue(serializedValue);
-			default: throw new IllegalArgumentException("Unsupported data type '" + dataType + "'.");
-		}
-	}
-	
 	private static RelationshipValue relationshipValue(final RelationshipValueType valueType, final String rawValue) {
 		switch (valueType) {
 			case DECIMAL: return new RelationshipValue(new BigDecimal(rawValue));
@@ -65,15 +52,6 @@ final class NormalFormValue implements NormalFormProperty {
 			relationshipValue(statement.getValueType(), statement.getRawValue()), 
 			statement.isReleased(), 
 			statement.getStatementId(),
-			reasonerTaxonomy);
-	}
-
-	public NormalFormValue(final ConcreteDomainFragment member, final ReasonerTaxonomy reasonerTaxonomy) {
-		this(
-			member.getTypeId(),
-			relationshipValue(member.getRefSetId(), member.getSerializedValue()),
-			member.isReleased(),
-			-1L,
 			reasonerTaxonomy);
 	}
 

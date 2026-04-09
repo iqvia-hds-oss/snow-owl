@@ -36,7 +36,6 @@ public final class SaveJobRequestBuilder
 	private String namespace;
 	private String assignerType;
 	private boolean fixEquivalences;
-	private boolean handleConcreteDomains;
 
 	public SaveJobRequestBuilder setClassificationId(final String classificationId) {
 		this.classificationId = classificationId;
@@ -78,11 +77,6 @@ public final class SaveJobRequestBuilder
 		return getSelf();
 	}
 	
-	public SaveJobRequestBuilder setHandleConcreteDomains(boolean handleConcreteDomains) {
-		this.handleConcreteDomains = handleConcreteDomains;
-		return getSelf();
-	}
-
 	@Override
 	protected Request<BranchContext, Boolean> doBuild() {
 		SaveJobRequest request = new SaveJobRequest();
@@ -94,7 +88,6 @@ public final class SaveJobRequestBuilder
 		request.setNamespace(namespace);
 		request.setAssignerType(assignerType);
 		request.setFixEquivalences(fixEquivalences);
-		request.setHandleConcreteDomains(handleConcreteDomains);
 		return request;
 	}
 }

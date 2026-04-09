@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,18 +31,14 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.*;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMembers;
-import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
-import com.b2international.snowowl.snomed.datastore.internal.rf2.*;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.ComponentIdSnomedDsvExportItem;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.SimpleSnomedDsvExportItem;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.SnomedDsvExportItemType;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.SnomedRefSetDSVExportModel;
 import com.b2international.snowowl.snomed.datastore.request.dsv.SnomedSimpleTypeRefSetDSVExporter.AncestorCollector;
 import com.b2international.snowowl.snomed.datastore.request.dsv.SnomedSimpleTypeRefSetDSVExporter.ConceptStreamFactory;
 
@@ -63,9 +58,6 @@ public class SnomedSimpleTypeRefSetDSVExporterTest {
 		Path root = Paths.get("target");
 		final Environment env = new Environment(root, root, root);
 		final SnowOwlConfiguration configuration = new SnowOwlConfiguration();
-		final SnomedCoreConfiguration coreConfiguration = configuration.getModuleConfig(SnomedCoreConfiguration.class);
-		coreConfiguration.setIntegerDatatypeRefsetIdentifier("rs1");
-		coreConfiguration.setBooleanDatatypeRefsetIdentifier("rs2");
 		
 		env.services().registerService(SnowOwlConfiguration.class, configuration);
 	}
@@ -665,141 +657,5 @@ public class SnomedSimpleTypeRefSetDSVExporterTest {
 		exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
 		exportContents = getContentsAndDelete(exporter);
 		assertEquals("Export file should have a header and a data row with an empty relationship destination SCTID and populated value", String.join(LS, expectedHeader, expectedDetails, expectedData) + LS, exportContents);
-	}
-	
-	@Test
-	public void exportSingleConceptMember() throws IOException {
-		
-		SnomedReferenceSetMember numberOfIngredients = new SnomedReferenceSetMember();
-		numberOfIngredients.setRefsetId(SnomedRefSetUtil.getRefSetId(DataType.INTEGER));
-		numberOfIngredients.setReferencedComponent(new SnomedConcept("c1"));
-		numberOfIngredients.setProperties(Map.of(
-			SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 0,
-			SnomedRf2Headers.FIELD_TYPE_ID, Concepts.HAS_ACTIVE_INGREDIENT, // close approximation again
-			SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.INFERRED_RELATIONSHIP,
-			SnomedRf2Headers.FIELD_VALUE, "99"
-		));
-		
-		// Grouped additional members are ignored
-		SnomedReferenceSetMember decoy1 = new SnomedReferenceSetMember();
-		decoy1.setRefsetId(SnomedRefSetUtil.getRefSetId(DataType.INTEGER));
-		decoy1.setReferencedComponent(new SnomedConcept("c1"));
-		decoy1.setProperties(Map.of(
-			SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 1,
-			SnomedRf2Headers.FIELD_TYPE_ID, Concepts.HAS_ACTIVE_INGREDIENT,
-			SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.ADDITIONAL_RELATIONSHIP,
-			SnomedRf2Headers.FIELD_VALUE, "10"
-		));
-		
-		// Irrelevant relationship types are also ignored
-		SnomedReferenceSetMember decoy2 = new SnomedReferenceSetMember();
-		decoy2.setRefsetId(SnomedRefSetUtil.getRefSetId(DataType.INTEGER));
-		decoy2.setReferencedComponent(new SnomedConcept("c1"));
-		decoy2.setProperties(Map.of(
-			SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 2,
-			SnomedRf2Headers.FIELD_TYPE_ID, Concepts.FINDING_SITE,
-			SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.INFERRED_RELATIONSHIP,
-			SnomedRf2Headers.FIELD_VALUE, "5"
-		));
-		
-		SnomedConcept concept = new SnomedConcept("c1");
-		concept.setMembers(new SnomedReferenceSetMembers(List.of(numberOfIngredients, decoy1, decoy2), null, 3, 3));
-		
-		SnomedConcepts chunk = new SnomedConcepts(List.of(concept), null, 1, 1);
-		ConceptStreamFactory conceptStreamFactory = (expand, locales, context, includeInactiveMembers, refSetId) -> Stream.of(chunk);
-		AncestorCollector ancestorCollector = (locales, ancestorId, context) -> new SnomedConcepts(0, 0);
-		
-		SnomedRefSetDSVExportModel exportSetting = new SnomedRefSetDSVExportModel();
-		exportSetting.setDelimiter("\t");
-		exportSetting.addExportItem(new SimpleSnomedDsvExportItem(SnomedDsvExportItemType.CONCEPT_ID));
-		exportSetting.addExportItem(new DatatypeSnomedDsvExportItem(SnomedDsvExportItemType.DATAYPE, Concepts.HAS_ACTIVE_INGREDIENT, "Ingredient count", false));
-		
-		String expectedHeader = exportSetting.getExportItems()
-			.stream()
-			.map(i -> i.getDisplayName())
-			.collect(Collectors.joining(exportSetting.getDelimiter()));
-		
-		String expectedData = String.join(exportSetting.getDelimiter(),
-			concept.getId(),
-			(String) numberOfIngredients.getProperties().get(SnomedRf2Headers.FIELD_VALUE));
-		
-		var exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
-		String exportContents = getContentsAndDelete(exporter);
-		assertEquals("Export file should have a header and a data row with CD member value", String.join(LS, expectedHeader, expectedData) + LS, exportContents);
-	}
-
-	@Test
-	public void exportSingleConceptBooleanMember() throws IOException {
-		
-		SnomedReferenceSetMember isVaccine = new SnomedReferenceSetMember();
-		isVaccine.setRefsetId(SnomedRefSetUtil.getRefSetId(DataType.BOOLEAN));
-		isVaccine.setReferencedComponent(new SnomedConcept("c1"));
-		isVaccine.setProperties(Map.of(
-			SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 0,
-			SnomedRf2Headers.FIELD_TYPE_ID, "isVaccine", // close approximation once more
-			SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.ADDITIONAL_RELATIONSHIP,
-			SnomedRf2Headers.FIELD_VALUE, "1"
-		));
-		
-		SnomedConcept concept = new SnomedConcept("c1");
-		concept.setMembers(new SnomedReferenceSetMembers(List.of(isVaccine), null, 1, 1));
-		
-		SnomedConcepts chunk = new SnomedConcepts(List.of(concept), null, 1, 1);
-		ConceptStreamFactory conceptStreamFactory = (expand, locales, context, includeInactiveMembers, refSetId) -> Stream.of(chunk);
-		AncestorCollector ancestorCollector = (locales, ancestorId, context) -> new SnomedConcepts(0, 0);
-		
-		SnomedRefSetDSVExportModel exportSetting = new SnomedRefSetDSVExportModel();
-		exportSetting.setDelimiter("\t");
-		exportSetting.addExportItem(new SimpleSnomedDsvExportItem(SnomedDsvExportItemType.CONCEPT_ID));
-		exportSetting.addExportItem(new DatatypeSnomedDsvExportItem(SnomedDsvExportItemType.DATAYPE, "isVaccine", "Vaccine", true));
-		
-		String expectedHeader = exportSetting.getExportItems()
-			.stream()
-			.map(i -> i.getDisplayName())
-			.collect(Collectors.joining(exportSetting.getDelimiter()));
-		
-		String expectedData = String.join(exportSetting.getDelimiter(), concept.getId(), "Yes");
-		
-		var exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
-		String exportContents = getContentsAndDelete(exporter);
-		assertEquals("Export file should have a header and a data row with boolean CD member value", String.join(LS, expectedHeader, expectedData) + LS, exportContents);
-	}
-
-	@Test
-	public void exportSingleConceptGroupedMember() throws IOException {
-		
-		SnomedReferenceSetMember numberOfIngredients = new SnomedReferenceSetMember();
-		numberOfIngredients.setRefsetId(SnomedRefSetUtil.getRefSetId(DataType.INTEGER));
-		numberOfIngredients.setReferencedComponent(new SnomedConcept("c1"));
-		numberOfIngredients.setProperties(Map.of(
-			SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 5,
-			SnomedRf2Headers.FIELD_TYPE_ID, Concepts.HAS_ACTIVE_INGREDIENT,
-			SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, Concepts.INFERRED_RELATIONSHIP,
-			SnomedRf2Headers.FIELD_VALUE, "99"
-		));
-		
-		SnomedConcept concept = new SnomedConcept("c1");
-		concept.setMembers(new SnomedReferenceSetMembers(List.of(numberOfIngredients), null, 1, 1));
-		
-		SnomedConcepts chunk = new SnomedConcepts(List.of(concept), null, 1, 1);
-		ConceptStreamFactory conceptStreamFactory = (expand, locales, context, includeInactiveMembers, refSetId) -> Stream.of(chunk);
-		AncestorCollector ancestorCollector = (locales, ancestorId, context) -> new SnomedConcepts(0, 0);
-		
-		SnomedRefSetDSVExportModel exportSetting = new SnomedRefSetDSVExportModel();
-		exportSetting.setDelimiter("\t");
-		exportSetting.addExportItem(new SimpleSnomedDsvExportItem(SnomedDsvExportItemType.CONCEPT_ID));
-		exportSetting.addExportItem(new DatatypeSnomedDsvExportItem(SnomedDsvExportItemType.DATAYPE, Concepts.HAS_ACTIVE_INGREDIENT, "Ingredient count", false));
-		
-		String expectedHeader = String.join(exportSetting.getDelimiter(),
-			"Concept ID",
-			"Ingredient count (AG5)");
-		
-		String expectedData = String.join(exportSetting.getDelimiter(),
-			concept.getId(),
-			(String) numberOfIngredients.getProperties().get(SnomedRf2Headers.FIELD_VALUE));
-		
-		var exporter = new SnomedSimpleTypeRefSetDSVExporter(null, conceptStreamFactory, ancestorCollector, exportSetting);
-		String exportContents = getContentsAndDelete(exporter);
-		assertEquals("Export file should have a header with group number and a data row with CD member value", String.join(LS, expectedHeader, expectedData) + LS, exportContents);
 	}	
 }

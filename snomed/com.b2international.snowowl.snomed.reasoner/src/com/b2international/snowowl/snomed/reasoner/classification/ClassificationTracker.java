@@ -43,7 +43,6 @@ import com.b2international.snowowl.core.jobs.RemoteJob;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.IInternalSctIdMultimap;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.IInternalSctIdSet;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.IReasonerTaxonomy;
-import com.b2international.snowowl.snomed.reasoner.diff.concretedomain.ConcreteDomainWriter;
 import com.b2international.snowowl.snomed.reasoner.diff.relationship.RelationshipWriter;
 import com.b2international.snowowl.snomed.reasoner.domain.ClassificationStatus;
 import com.b2international.snowowl.snomed.reasoner.index.ClassificationTaskDocument;
@@ -250,14 +249,12 @@ public final class ClassificationTracker implements IDisposableService {
 			indexEquivalentConcepts(writer, classificationId, inferredTaxonomy.getEquivalentConcepts());
 
 			final RelationshipWriter relationshipWriter = new RelationshipWriter(classificationId, writer);
-			final ConcreteDomainWriter concreteDomainWriter = new ConcreteDomainWriter(classificationId, writer);
 
-			normalFormGenerator.computeChanges(null, relationshipWriter, concreteDomainWriter);
+			normalFormGenerator.computeChanges(null, relationshipWriter);
 
 			final boolean hasEquivalentConcepts = !inferredTaxonomy.getUnsatisfiableConcepts().isEmpty()
 					|| !inferredTaxonomy.getEquivalentConcepts().isEmpty();
-			final boolean hasInferredChanges = relationshipWriter.hasInferredChanges()
-					|| concreteDomainWriter.hasInferredChanges();
+			final boolean hasInferredChanges = relationshipWriter.hasInferredChanges();
 			final boolean hasRedundantStatedChanges = relationshipWriter.hasRedundantStatedChanges();
 			
 			writer.bulkUpdate(new BulkUpdate<>(ClassificationTaskDocument.class, 

@@ -45,8 +45,6 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.ReasonerTaxonomy;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.ReasonerTaxonomyBuilder;
 import com.b2international.snowowl.snomed.reasoner.classification.ClassificationTracker;
@@ -132,12 +130,10 @@ final class ClassificationJobRequest implements Request<BranchContext, Boolean>,
 		@SuppressWarnings("unchecked")
 		final Set<String> reasonerExcludedModuleIds = Collections3.toImmutableSet((Iterable) resource.getSettings()
 			.getOrDefault(Settings.REASONER_EXCLUDED_MODULE_IDS, Collections.emptySet()));
-		final SnomedCoreConfiguration configuration = context.service(SnomedCoreConfiguration.class);
-		final boolean concreteDomainSupported = configuration.isConcreteDomainSupported();
 
 		final ReasonerTaxonomy taxonomy;
 		try (Locks<BranchContext> locks = Locks.forContext(DatastoreLockContextDescriptions.CLASSIFY, parentLockContext).lock(context)) {
-			taxonomy = buildTaxonomy(revisionSearcher, reasonerExcludedModuleIds, concreteDomainSupported, PAGE_SIZE);
+			taxonomy = buildTaxonomy(revisionSearcher, reasonerExcludedModuleIds, PAGE_SIZE);
 		} catch (final LockedException e) {
 			throw new ReasonerApiException("Couldn't acquire exclusive access to terminology store for classification; %s", e.getMessage(), e);
 		}
@@ -151,7 +147,7 @@ final class ClassificationJobRequest implements Request<BranchContext, Boolean>,
 			final DelegateOntology ontology = (DelegateOntology) ontologyManager.createOntology(ontologyIRI);
 			final ReasonerTaxonomyInferrer inferrer = new ReasonerTaxonomyInferrer(reasonerId, ontology, context);
 			final ReasonerTaxonomy inferredTaxonomy = inferrer.addInferences(taxonomy);
-			final NormalFormGenerator normalFormGenerator = new NormalFormGenerator(inferredTaxonomy, concreteDomainSupported);
+			final NormalFormGenerator normalFormGenerator = new NormalFormGenerator(inferredTaxonomy);
 			
 			tracker.classificationCompleted(classificationId, inferredTaxonomy, normalFormGenerator);
 
@@ -162,7 +158,7 @@ final class ClassificationJobRequest implements Request<BranchContext, Boolean>,
 		}
 	}
 
-	private ReasonerTaxonomy buildTaxonomy(final RevisionSearcher revisionSearcher, final Set<String> excludedModuleIds, final boolean concreteDomainSupported, final int pageSize) {
+	private ReasonerTaxonomy buildTaxonomy(final RevisionSearcher revisionSearcher, final Set<String> excludedModuleIds, final int pageSize) {
 		final ReasonerTaxonomyBuilder taxonomyBuilder = new ReasonerTaxonomyBuilder(excludedModuleIds, pageSize);
 		
 		taxonomyBuilder.addActiveConceptIds(revisionSearcher);
@@ -178,10 +174,6 @@ final class ClassificationJobRequest implements Request<BranchContext, Boolean>,
 		taxonomyBuilder.addNeverGroupedTypeIds(revisionSearcher);
 		taxonomyBuilder.addActiveAxioms(revisionSearcher);
 
-		if (concreteDomainSupported) {
-			taxonomyBuilder.addActiveConcreteDomainMembers(revisionSearcher);
-		}
-
 		// Add the extra definitions
 		taxonomyBuilder.addConceptFlags(additionalConcepts.stream());
 
@@ -193,13 +185,6 @@ final class ClassificationJobRequest implements Request<BranchContext, Boolean>,
 		taxonomyBuilder.addActiveInferredRelationships(relationshipSupplier.get());
 		taxonomyBuilder.addActiveAdditionalGroupedRelationships(relationshipSupplier.get());
 
-		if (concreteDomainSupported) {
-			final Stream<SnomedReferenceSetMember> conceptMembers = additionalConcepts.stream()
-				.flatMap(c -> c.getMembers().stream());
-			
-			taxonomyBuilder.addActiveConcreteDomainMembers(conceptMembers);
-		}
-		
 		return taxonomyBuilder.build();
 	}
 	

@@ -15,12 +15,10 @@
  */
 package com.b2international.snowowl.snomed.datastore.config;
 
-import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.refset.DataType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableBiMap;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -55,24 +53,6 @@ public class SnomedCoreConfiguration {
 	private long classificationCleanUpInterval = DEFAULT_CLASSIFICATION_CLEANUP_INTERVAL;
 	
 	@NotEmpty
-	private String concreteDomainTypeRefsetIdentifier = Concepts.REFSET_CONCRETE_DOMAIN_TYPE;
-	
-	@NotEmpty
-	private String stringDatatypeRefsetIdentifier = Concepts.REFSET_STRING_DATATYPE;
-	
-	@NotEmpty
-	private String booleanDatatypeRefsetIdentifier = Concepts.REFSET_BOOLEAN_DATATYPE;
-	
-	@NotEmpty
-	private String floatDatatypeRefsetIdentifier = Concepts.REFSET_FLOAT_DATATYPE;
-	
-	@NotEmpty
-	private String integerDatatypeRefsetIdentifier = Concepts.REFSET_INTEGER_DATATYPE;
-	
-	@NotEmpty
-	private String datetimeDatatypeRefsetIdentifier = Concepts.REFSET_DATETIME_DATATYPE;
-	
-	private boolean concreteDomainSupport = false;
 	
 	@NotNull
 	private SnomedMrcmConfig mrcmConfiguration = new SnomedMrcmConfig();
@@ -111,150 +91,6 @@ public class SnomedCoreConfiguration {
 		this.maxReasonerRuns = maxReasonerRuns;
 	}
 	
-	@Deprecated
-	@JsonProperty("concreteDomainSupport")
-	public boolean isConcreteDomainSupported() {
-		return concreteDomainSupport;
-	}
-	
-	@Deprecated
-	@JsonProperty("concreteDomainSupport")
-	public void setConcreteDomainSupported(boolean concreteDomainSupport) {
-		this.concreteDomainSupport = concreteDomainSupport;
-	}
-		
-	/**
-	 * The ID of the concrete domain type reference set identifier concept
-	 * 
-	 * @return the concreteDomainTypeRefsetIdentifier
-	 */
-	@Deprecated
-	@JsonProperty("concreteDomainTypeRefsetIdentifier")
-	public String getConcreteDomainTypeRefsetIdentifier() {
-		return concreteDomainTypeRefsetIdentifier;
-	}
-
-	/**
-	 * Sets the ID of the concrete domain type reference set identifier concept
-	 * 
-	 * @param concreteDomainTypeRefsetIdentifier the concreteDomainTypeRefsetIdentifier to set
-	 */
-	@Deprecated
-	@JsonProperty("concreteDomainTypeRefsetIdentifier")
-	public void setConcreteDomainTypeRefsetIdentifier(String concreteDomainTypeRefsetIdentifier) {
-		this.concreteDomainTypeRefsetIdentifier = concreteDomainTypeRefsetIdentifier;
-	}
-
-	/**
-	 * The ID of the string datatype reference set identifier concept
-	 * 
-	 * @return the stringDatatypeRefsetIdentifier
-	 */
-	@Deprecated
-	@JsonProperty("stringDataTypeRefsetIdentifier")
-	public String getStringDatatypeRefsetIdentifier() {
-		return stringDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * Sets the ID of the string datatype reference set identifier concept
-	 * 
-	 * @param stringDatatypeRefsetIdentifier the stringDatatypeRefsetIdentifier to set
-	 */
-	@Deprecated
-	@JsonProperty("stringDataTypeRefsetIdentifier")
-	public void setStringDatatypeRefsetIdentifier(String stringDatatypeRefsetIdentifier) {
-		this.stringDatatypeRefsetIdentifier = stringDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * The ID of the boolean datatype reference set identifier concept
-	 * 
-	 * @return the booleanDatatypeRefsetIdentifier
-	 */
-	@Deprecated
-	@JsonProperty("booleanDataTypeRefsetIdentifier")
-	public String getBooleanDatatypeRefsetIdentifier() {
-		return booleanDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * Sets the ID of the boolean datatype reference set identifier concept
-	 * 
-	 * @param booleanDatatypeRefsetIdentifier the booleanDatatypeRefsetIdentifier to set
-	 */
-	@Deprecated
-	@JsonProperty("booleanDataTypeRefsetIdentifier")
-	public void setBooleanDatatypeRefsetIdentifier(String booleanDatatypeRefsetIdentifier) {
-		this.booleanDatatypeRefsetIdentifier = booleanDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * The ID of the float datatype reference set identifier concept
-	 * 
-	 * @return the floatDatatypeRefsetIdentifier
-	 */
-	@Deprecated
-	@JsonProperty("floatDataTypeRefsetIdentifier")
-	public String getFloatDatatypeRefsetIdentifier() {
-		return floatDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * Sets the ID of the float datatype reference set identifier concept
-	 * 
-	 * @param floatDatatypeRefsetIdentifier the floatDatatypeRefsetIdentifier to set
-	 */
-	@Deprecated
-	@JsonProperty("floatDataTypeRefsetIdentifier")
-	public void setFloatDatatypeRefsetIdentifier(String floatDatatypeRefsetIdentifier) {
-		this.floatDatatypeRefsetIdentifier = floatDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * The ID of the integer datatype reference set identifier concept
-	 * 
-	 * @return the integerDatatypeRefsetIdentifier
-	 */
-	@Deprecated
-	@JsonProperty("integerDataTypeRefsetIdentifier")
-	public String getIntegerDatatypeRefsetIdentifier() {
-		return integerDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * Sets the ID of the integer datatype reference set identifier concept
-	 * 
-	 * @param integerDatatypeRefsetIdentifier the integerDatatypeRefsetIdentifier to set
-	 */
-	@Deprecated
-	@JsonProperty("integerDataTypeRefsetIdentifier")
-	public void setIntegerDatatypeRefsetIdentifier(String integerDatatypeRefsetIdentifier) {
-		this.integerDatatypeRefsetIdentifier = integerDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * The ID of the datetime datatype reference set identifier concept
-	 * 
-	 * @return the datetimeDatatypeRefsetIdentifier
-	 */
-	@Deprecated
-	@JsonProperty("datetimeDataTypeRefsetIdentifier")
-	public String getDatetimeDatatypeRefsetIdentifier() {
-		return datetimeDatatypeRefsetIdentifier;
-	}
-
-	/**
-	 * Sets the ID of the datetime datatype reference set identifier concept
-	 * 
-	 * @param datetimeDatatypeRefsetIdentifier the datetimeDatatypeRefsetIdentifier to set
-	 */
-	@Deprecated
-	@JsonProperty("datetimeDataTypeRefsetIdentifier")
-	public void setDatetimeDatatypeRefsetIdentifier(String datetimeDatatypeRefsetIdentifier) {
-		this.datetimeDatatypeRefsetIdentifier = datetimeDatatypeRefsetIdentifier;
-	}
-
 	public long getClassificationCleanUpInterval() {
 		return classificationCleanUpInterval;
 	}
@@ -268,28 +104,5 @@ public class SnomedCoreConfiguration {
 	public void setMrcmConfiguration(SnomedMrcmConfig mrcmConfiguration) {
 		this.mrcmConfiguration = mrcmConfiguration;
 	}
-	
-	/**
-	 * @return a BiMap holding all configured and supported concrete domain data type reference set IDs.
-	 * @since 9.7.1
-	 */
-	@JsonIgnore
-	public BiMap<DataType, String> getConcreteDomainRefSetMap() {
-		if (concreteDataTypeRefsetMap == null) {
-			synchronized (SYNC_OBJECT) {
-				if (concreteDataTypeRefsetMap == null) {
-					var concreteDataTypeRefsetMap = ImmutableBiMap.<DataType, String>builder()
-							.put(DataType.BOOLEAN, getBooleanDatatypeRefsetIdentifier())
-							.put(DataType.DATE, getDatetimeDatatypeRefsetIdentifier())
-							.put(DataType.DECIMAL, getFloatDatatypeRefsetIdentifier())
-							.put(DataType.INTEGER, getIntegerDatatypeRefsetIdentifier())
-							.put(DataType.STRING, getStringDatatypeRefsetIdentifier())
-							.build();
-					this.concreteDataTypeRefsetMap = concreteDataTypeRefsetMap;
-				}
-			}
-		}
-		return concreteDataTypeRefsetMap;
-	}
-	
+		
 }

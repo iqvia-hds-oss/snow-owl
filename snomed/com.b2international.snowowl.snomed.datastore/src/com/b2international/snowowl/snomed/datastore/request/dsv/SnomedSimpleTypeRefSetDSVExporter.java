@@ -21,6 +21,7 @@ import static com.google.common.collect.Maps.newHashMap;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -35,17 +36,17 @@ import com.b2international.snowowl.core.date.Dates;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcepts;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
-import com.b2international.snowowl.snomed.datastore.internal.rf2.*;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.AbstractSnomedDsvExportItem;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.ComponentIdSnomedDsvExportItem;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.SnomedDsvExportItemType;
+import com.b2international.snowowl.snomed.datastore.internal.rf2.SnomedRefSetDSVExportModel;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptRequestCache;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptSearchRequestBuilder;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.collect.*;
 
@@ -131,11 +132,9 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 
 	private Set<String> descriptionTypeIds;
 	private Set<String> relationshipTypeIds;
-	private Set<String> memberTypeIds;
 
 	private Multiset<String> descriptionCount; // maximum number of descriptions by type ID
 	private Map<String, SortedMultiset<Integer>> relationshipCount; // maximum number of properties by type ID and relationship group
-	private Map<String, SortedMultiset<Integer>> memberCount; // maximum number of properties by type ID and relationship group
 
 	/**
 	 * Creates a new instance with the export parameters.
@@ -178,7 +177,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 		monitor.beginTask("Export RefSet to DSV...", 100);
 		final Path exportPath = Files.createTempFile("dsv-export-" + refSetId + Dates.now(), ".csv");
 		try {
-			try (BufferedWriter writer = Files.newBufferedWriter(exportPath, Charsets.UTF_8)) {
+			try (BufferedWriter writer = Files.newBufferedWriter(exportPath, StandardCharsets.UTF_8)) {
 				computeHeader();
 				writeHeader(writer);
 				writeValues(monitor, writer);
@@ -208,7 +207,6 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 			switch (exportItem.getType()) {
 				case DESCRIPTION:
 				case RELATIONSHIP:
-				case DATAYPE:
 					final ComponentIdSnomedDsvExportItem componentIdItem = (ComponentIdSnomedDsvExportItem) exportItem;
 					relevantTypeIds.put(exportItem.getType(), componentIdItem.getComponentId());
 					break;
@@ -221,11 +219,9 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 		
 		descriptionTypeIds = relevantTypeIds.get(SnomedDsvExportItemType.DESCRIPTION);
 		relationshipTypeIds = relevantTypeIds.get(SnomedDsvExportItemType.RELATIONSHIP);
-		memberTypeIds = relevantTypeIds.get(SnomedDsvExportItemType.DATAYPE);
 		
 		descriptionCount = HashMultiset.create();
 		relationshipCount = newHashMap();
-		memberCount = newHashMap();
 		
 		getConceptStream(HEADER_EXPAND).forEachOrdered(this::computeHeader);
 	}
@@ -233,7 +229,6 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	private void computeHeader(final SnomedConcepts chunk) {
 		final Multiset<String> descriptionCountInChunk = HashMultiset.create(); 
 		final Map<String, Multiset<Integer>> relationshipCountInChunk = newHashMap();
-		final Map<String, Multiset<Integer>> memberCountInChunk = newHashMap();
 		
 		for (final SnomedConcept concept : chunk) {
 
@@ -275,30 +270,6 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 				}
 			}
 			
-			// Collect CD member occurrence counts by type ID and group
-			if (!memberTypeIds.isEmpty()) {
-				concept.getMembers()
-					.stream()
-					.filter(m -> {
-						if (!isApplicableMember(m)) {
-							return false;
-						}
-						
-						final String typeId = (String) m.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID);
-						return memberTypeIds.contains(typeId);
-					})
-					.forEachOrdered(m -> {
-						final Map<String, Object> properties = m.getProperties();
-						final String typeId = (String) properties.get(SnomedRf2Headers.FIELD_TYPE_ID);
-						final Integer relationshipGroup = (Integer) properties.get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
-						registerProperty(memberCountInChunk, typeId, relationshipGroup);
-					});
-	
-				if (!memberCountInChunk.isEmpty()) {
-					updateOccurrences(memberCountInChunk, memberCount);
-					memberCountInChunk.clear();
-				}
-			}
 		}
 	}
 
@@ -315,24 +286,6 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 			return (relationshipGroup == 0);
 		}
 	
-		return false;
-	}
-
-	private boolean isApplicableMember(final SnomedReferenceSetMember m) {
-		final Map<String, Object> properties = m.getProperties();
-		
-		// Allow inferred CD members regardless of group number
-		final String characteristicTypeId = (String) properties.get(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID);
-		if (Concepts.INFERRED_RELATIONSHIP.equals(characteristicTypeId)) {
-			return true;
-		}
-
-		// Allow additional CD members but only from group 0
-		if (Concepts.ADDITIONAL_RELATIONSHIP.equals(characteristicTypeId)) {
-			final int memberGroup = (int) properties.get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
-			return (memberGroup == 0);
-		}
-
 		return false;
 	}
 
@@ -397,30 +350,21 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 					break;
 				}
 					
-				case RELATIONSHIP: //$FALL-THROUGH$
-				case DATAYPE: {
+				case RELATIONSHIP: {
 					final ComponentIdSnomedDsvExportItem itemWithTypeId = (ComponentIdSnomedDsvExportItem) exportItem;
 					final String typeId = itemWithTypeId.getComponentId();
 					final String displayName = propertyTypeIdMap.getOrDefault(typeId, itemWithTypeId.getDisplayName());
 					
-					final boolean includePropertyId;
-					final Multiset<Integer> propertyCountForType;
 					
-					if (SnomedDsvExportItemType.RELATIONSHIP.equals(itemWithTypeId.getType())) {
-						// ID can only be included for relationships (and only for these items will "Destination" appear in the second row)
-						includePropertyId = includeRelationshipId;
-						propertyCountForType = relationshipCount.getOrDefault(typeId, NO_OCCURRENCES);
-					} else {
-						includePropertyId = false;
-						propertyCountForType = memberCount.getOrDefault(typeId, NO_OCCURRENCES);
-					}
+					// ID can only be included for relationships (and only for these items will "Destination" appear in the second row)
+					final Multiset<Integer> propertyCountForType = relationshipCount.getOrDefault(typeId, NO_OCCURRENCES);
 					
 					for (final Multiset.Entry<Integer> groupAndCount : propertyCountForType.entrySet()) {
 						final int group = groupAndCount.getElement();
 						final int occurrences = groupAndCount.getCount();
 						final String groupTag = (group == 0) ? "" : String.format(" (AG%s)", group);
 						final String groupedDisplayName = displayName + groupTag;
-						writeHeader(occurrences, propertyHeader, detailHeader, includePropertyId, groupedDisplayName, "Destination");
+						writeHeader(occurrences, propertyHeader, detailHeader, includeRelationshipId, groupedDisplayName, "Destination");
 					}
 					
 					break;
@@ -576,44 +520,6 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 						
 						break;
 					}
-
-					case DATAYPE: {
-						final DatatypeSnomedDsvExportItem datatypeItem = (DatatypeSnomedDsvExportItem) exportItem;
-						final String typeId = datatypeItem.getComponentId();
-						final Multiset<Integer> propertyCountForType = memberCount.getOrDefault(typeId, NO_OCCURRENCES);
-						
-						for (final Multiset.Entry<Integer> groupAndCount : propertyCountForType.entrySet()) {
-							final Integer group = groupAndCount.getElement();
-							final int occurrences = groupAndCount.getCount();
-							
-							// Empty string as key, CD member value literals for values
-							
-							final Multimap<String, String> valuesById = concept.getMembers()
-								.stream()
-								.filter(m -> {
-									if (!isApplicableMember(m)) {
-										return false;
-									}
-									
-									final Map<String, Object> properties = m.getProperties();
-									final String memberTypeId = (String) properties.get(SnomedRf2Headers.FIELD_TYPE_ID);
-									final Integer memberGroup = (Integer) properties.get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
-
-									return Objects.equals(memberGroup, group)
-										&& Objects.equals(memberTypeId, typeId);	
-								})
-								.collect(Multimaps.toMultimap(
-									m -> "",
-									m -> getSerializedValue(m, datatypeItem.isBooleanDatatype()),
-									MULTIMAP_FACTORY
-								));
-							
-							// "Destination IDs" are never included for CD members
-							addCells(occurrences, dataRow, false, valuesById);
-						}
-						
-						break;
-					}
 					
 					case PREFERRED_TERM:
 						if (includeDescriptionId) {
@@ -653,16 +559,6 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 			writer.write(joiner.join(dataRow));
 			writer.write(lineSeparator);
 			dataRow.clear();
-		}
-	}
-
-	private String getSerializedValue(final SnomedReferenceSetMember m, final boolean isBooleanDatatype) {
-		final String serializedValue = (String) m.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
-		
-		if (isBooleanDatatype) {
-			return "1".equals(serializedValue) ? "Yes" : "No";
-		} else {
-			return serializedValue;
 		}
 	}
 

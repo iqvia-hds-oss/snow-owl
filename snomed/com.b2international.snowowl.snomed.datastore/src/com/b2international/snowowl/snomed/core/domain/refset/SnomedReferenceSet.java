@@ -28,7 +28,6 @@ import com.b2international.snowowl.snomed.core.domain.SnomedComponent;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
-import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 import com.google.common.collect.ImmutableSet;
 
@@ -151,13 +150,6 @@ public final class SnomedReferenceSet extends SnomedComponent {
 	 */
 	public SnomedReferenceSetMembers getMembers() {
 		return members;
-	}
-	
-	/**
-	 * @return the {@link DataType} if this refset represents a concrete domain reference set, otherwise returns <code>null</code>.
-	 */
-	public DataType getDataType() {
-		return getType() == SnomedRefSetType.CONCRETE_DATA_TYPE ? SnomedRefSetUtil.getDataType(getId()) : null;
 	}
 	
 	public void setReferencedComponentType(String referencedComponent) {

@@ -23,7 +23,6 @@ public enum SnomedDsvExportItemType {
 
 	DESCRIPTION,  
 	RELATIONSHIP, 
-	DATAYPE, 
 
 	PREFERRED_TERM("Preferred term"), 
 	CONCEPT_ID("Concept ID"), 

@@ -76,7 +76,6 @@ public class SnomedEclShortcutTest extends BaseRevisionIndexTest {
 	@Before
 	public void setup() {
 		SnomedCoreConfiguration config = new SnomedCoreConfiguration();
-		config.setConcreteDomainSupported(true);
 		
 		context = TestBranchContext.on(MAIN)
 				.with(EclParser.class, new DefaultEclParser(INJECTOR.getInstance(IParser.class), INJECTOR.getInstance(IResourceValidator.class)))
