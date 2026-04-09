@@ -210,8 +210,6 @@ final class SnomedRefSetMemberCreateRequest implements SnomedComponentCreateRequ
 				return new SnomedComplexMapMemberCreateDelegate(this);
 			case COMPLEX_BLOCK_MAP:
 				return new SnomedComplexBlockMapMemberCreateDelegate(this);
-			case CONCRETE_DATA_TYPE:
-				return new SnomedConcreteDomainMemberCreateDelegate(this);
 			case DESCRIPTION_TYPE:
 				return new SnomedDescriptionTypeMemberCreateDelegate(this);
 			case EXTENDED_MAP:

@@ -53,8 +53,7 @@ public abstract class SnomedRefSetUtil {
 						SnomedRefSetType.SIMPLE,
 						SnomedRefSetType.ASSOCIATION,
 						SnomedRefSetType.ATTRIBUTE_VALUE,
-						SnomedRefSetType.QUERY,
-						SnomedRefSetType.CONCRETE_DATA_TYPE)
+						SnomedRefSetType.QUERY)
 			.putAll(SnomedRF2Folder.LANGUAGE, 
 						SnomedRefSetType.LANGUAGE)
 			.putAll(SnomedRF2Folder.MAP, 
@@ -138,8 +137,6 @@ public abstract class SnomedRefSetUtil {
 				return Concepts.REFSET_COMPLEX_BLOCK_MAP_TYPE;
 			case DESCRIPTION_TYPE:
 				return Concepts.REFSET_DESCRIPTION_TYPE;
-			case CONCRETE_DATA_TYPE:
-				return getCoreConfiguration().getConcreteDomainTypeRefsetIdentifier();
 			case ASSOCIATION:
 				return Concepts.REFSET_ASSOCIATION_TYPE;
 			case MODULE_DEPENDENCY:

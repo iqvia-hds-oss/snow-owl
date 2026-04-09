@@ -34,10 +34,8 @@ import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.uri.ComponentURI;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry.Builder;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry.Fields;
@@ -137,27 +135,6 @@ public class SnomedRefSetMemberDocumentSerializationTest extends BaseRevisionInd
 		final SnomedRefSetMemberIndexEntry actual = getRevision(RevisionBranch.MAIN_PATH, SnomedRefSetMemberIndexEntry.class, member.getId());
 		assertEquals(SnomedDescription.TYPE, actual.getReferencedComponentType());
 		assertDocEquals(member, actual);
-	}
-	
-	@Test
-	public void indexStringConcreteDomainMember() throws Exception {
-		final SnomedRefSetMemberIndexEntry member = createBaseMember()
-				.refsetId(Concepts.REFSET_B2I_EXAMPLE)
-				.referenceSetType(SnomedRefSetType.CONCRETE_DATA_TYPE)
-				.field(Fields.DATA_TYPE, DataType.STRING)
-				.field(SnomedRf2Headers.FIELD_VALUE, "TEST")
-				.build();
-			
-		indexRevision(RevisionBranch.MAIN_PATH, member);
-		final SnomedRefSetMemberIndexEntry actual = getRevision(RevisionBranch.MAIN_PATH, SnomedRefSetMemberIndexEntry.class, member.getId());
-		assertEquals("TEST", actual.getValue());
-		assertDocEquals(member, actual);
-		
-		// verify that concrete domain members have only a single value field indexed
-		final JsonNode json = getMapper().convertValue(member, JsonNode.class);
-		assertNull(json.get(Fields.BOOLEAN_VALUE));
-		assertNull(json.get(Fields.INTEGER_VALUE));
-		assertNull(json.get(Fields.DECIMAL_VALUE));
 	}
 	
 	@Test

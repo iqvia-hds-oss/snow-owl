@@ -20,7 +20,6 @@ import java.util.Collection;
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.snowowl.core.events.Request;
-import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
@@ -45,7 +44,6 @@ public abstract class RefSetSupport {
 			.put(SnomedRefSetType.ATTRIBUTE_VALUE, SnomedConcept.TYPE)
 			.put(SnomedRefSetType.ATTRIBUTE_VALUE, SnomedDescription.TYPE)
 			.put(SnomedRefSetType.ATTRIBUTE_VALUE, SnomedRelationship.TYPE)
-			.put(SnomedRefSetType.CONCRETE_DATA_TYPE, SnomedConcept.TYPE)
 			.put(SnomedRefSetType.COMPLEX_MAP, SnomedConcept.TYPE)
 			.put(SnomedRefSetType.COMPLEX_BLOCK_MAP, SnomedConcept.TYPE)
 			.put(SnomedRefSetType.DESCRIPTION_TYPE, SnomedConcept.TYPE)

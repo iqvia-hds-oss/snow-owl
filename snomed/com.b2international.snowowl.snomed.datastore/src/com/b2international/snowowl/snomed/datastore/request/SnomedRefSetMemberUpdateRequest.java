@@ -18,8 +18,6 @@ package com.b2international.snowowl.snomed.datastore.request;
 import java.util.Map;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.TransactionContext;
@@ -28,6 +26,8 @@ import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
 import com.google.common.collect.ImmutableSet;
+
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 4.5
@@ -131,8 +131,6 @@ final class SnomedRefSetMemberUpdateRequest extends SnomedComponentUpdateRequest
 				return new SnomedComplexMapMemberUpdateDelegate(this);
 			case COMPLEX_BLOCK_MAP:
 				return new SnomedComplexBlockMapMemberUpdateDelegate(this);
-			case CONCRETE_DATA_TYPE:
-				return new SnomedConcreteDomainMemberUpdateDelegate(this);
 			case DESCRIPTION_TYPE:
 				return new SnomedDescriptionTypeMemberUpdateDelegate(this);
 			case EXTENDED_MAP:

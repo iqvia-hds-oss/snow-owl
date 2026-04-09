@@ -27,13 +27,9 @@ import com.b2international.commons.CompareUtils;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.index.entry.*;
-import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry.Fields;
 
 /**
  * 
@@ -159,37 +155,6 @@ public abstract class DocumentBuilders {
 				.classAxiomRelationships(classAxioms);
 	}
 
-	public static SnomedRefSetMemberIndexEntry.Builder booleanMember(final String referencedComponentId, final String typeId, final Boolean value, final String characteristicTypeId) {
-		return concreteDomain(referencedComponentId, typeId, value, DataType.BOOLEAN, characteristicTypeId);
-	}
-	
-	public static SnomedRefSetMemberIndexEntry.Builder decimalMember(final String referencedComponentId, final String typeId, final BigDecimal value, final String characteristicTypeId) {
-		return concreteDomain(referencedComponentId, typeId, value, DataType.DECIMAL, characteristicTypeId);
-	}
-	
-	public static SnomedRefSetMemberIndexEntry.Builder integerMember(final String referencedComponentId, final String typeId, final int value, final String characteristicTypeId) {
-		return concreteDomain(referencedComponentId, typeId, value, DataType.INTEGER, characteristicTypeId);
-	}
-	
-	public static SnomedRefSetMemberIndexEntry.Builder stringMember(final String referencedComponentId, final String typeId, final String value, final String characteristicTypeId) {
-		return concreteDomain(referencedComponentId, typeId, value, DataType.STRING, characteristicTypeId);
-	}
-
-	public static SnomedRefSetMemberIndexEntry.Builder concreteDomain(final String referencedComponentId, final String typeId, final Object value, final DataType type, final String characteristicTypeId) {
-		return SnomedRefSetMemberIndexEntry.builder()
-				.id(UUID.randomUUID().toString())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.referencedComponentId(referencedComponentId)
-				.refsetId(RandomSnomedIdentiferGenerator.generateConceptId())
-				.referenceSetType(SnomedRefSetType.CONCRETE_DATA_TYPE)
-				.field(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, characteristicTypeId)
-				.field(SnomedRf2Headers.FIELD_TYPE_ID, typeId)
-				.field(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 0)
-				.field(Fields.DATA_TYPE, type)
-				.field(SnomedRf2Headers.FIELD_VALUE, value);
-	}
-	
 	public static SnomedRelationshipIndexEntry.Builder decimalValue(final String referencedComponentId, final String typeId, final BigDecimal value, final String characteristicTypeId) {
 		return relationshipWithValue(referencedComponentId, typeId, new RelationshipValue(value), characteristicTypeId);
 	}

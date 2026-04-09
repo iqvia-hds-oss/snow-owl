@@ -35,7 +35,6 @@ public final class Rf2Format {
 			.add(new Rf2AssociationRefSetContentType())
 			.add(new Rf2AttributeValueRefSetContentType())
 			.add(new Rf2SimpleRefSetContentType())
-			.add(new Rf2ConcreteDomainRefSetContentType())
 			.add(new Rf2QueryRefSetContentType())
 			// Refset/Language
 			.add(new Rf2LanguageRefSetContentType())

@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeFalse;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -92,25 +91,18 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 	private static final String DRUG_1D_MG = RandomSnomedIdentiferGenerator.generateConceptId();
 
 	private final String expressionForm;
-	private final boolean statementsWithValue;
 	
-	public SnomedEclEvaluationRequestTest(String expressionForm, boolean statementsWithValue) {
+	public SnomedEclEvaluationRequestTest(String expressionForm) {
 		this.expressionForm = expressionForm;
-		this.statementsWithValue = statementsWithValue;
 	}
 	
-	@Parameters(name = "{0} {1}")
+	@Parameters(name = "{0}")
 	public static Collection<Object[]> data() {
 		return Arrays.asList(new Object[][] {
-			// Test CD members in all three forms
-			{ Trees.INFERRED_FORM, false },
-			{ Trees.STATED_FORM,   false },
-			{ AXIOM,               false }, // special test parameter to indicate stated form on axiom members
-			
 			// New statements with value are expected to 
 			// appear in axiom and inferred form only
-			{ Trees.INFERRED_FORM, true  },
-			{ AXIOM,               true  }, 
+			{ Trees.INFERRED_FORM },
+			{ AXIOM }, 
 		});
 	}
 	
@@ -124,10 +116,6 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 	
 	protected final String getCharacteristicType() {
 		return isInferred() ? Concepts.INFERRED_RELATIONSHIP : Concepts.STATED_RELATIONSHIP;
-	}
-	
-	protected final boolean isStatementsWithValue() {
-		return statementsWithValue;
 	}
 	
 	@Test(expected = BadRequestException.class)
@@ -1072,36 +1060,6 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 	}
 	
 	@Test
-	public void refinementBooleanValueEquals() throws Exception {
-		// Boolean evaluation only works with CD members; skip test in value mode
-		assumeFalse(isStatementsWithValue());
-		
-		generateDrugHierarchy();
-		
-		final Expression actual = eval(String.format("<%s: %s = true", DRUG_ROOT, MANUFACTURED));
-		final Expression expected = and(
-			descendantsOf(DRUG_ROOT),
-			ids(Set.of(PANADOL_TABLET, TRIPHASIL_TABLET))
-		);
-		assertEquals(expected, actual);
-	}
-	
-	@Test
-	public void refinementBooleanValueNotEquals() throws Exception {
-		// Boolean evaluation only works with CD members; skip test in value mode
-		assumeFalse(isStatementsWithValue());
-
-		generateDrugHierarchy();
-		
-		final Expression actual = eval(String.format("<%s: %s != true", DRUG_ROOT, MANUFACTURED));
-		final Expression expected = and(
-			descendantsOf(DRUG_ROOT),
-			ids(Set.of(AMOXICILLIN_TABLET))
-		);
-		assertEquals(expected, actual);
-	}
-	
-	@Test
 	public void refinementStringEquals() throws Exception {
 		generateDrugHierarchy();
 		
@@ -1508,51 +1466,34 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 				.characteristicTypeId(isInferred() ? Concepts.STATED_RELATIONSHIP : Concepts.INFERRED_RELATIONSHIP) // inverse!
 				.build());
 		
-		if (isStatementsWithValue()) {
-			if (isAxiom()) {
-				staging
-				// trade names and strength as combined axioms
-				.stageNew(classAxiomsWithValue(PANADOL_TABLET, 
-					HAS_TRADE_NAME, "PANADOL", 0,
-					PREFERRED_STRENGTH, 500, 0).build())
-				.stageNew(classAxiomsWithValue(TRIPHASIL_TABLET, 
-					HAS_TRADE_NAME, "TRIPHASIL", 0,
-					PREFERRED_STRENGTH, -500, 0).build())
-				.stageNew(classAxiomsWithValue(AMOXICILLIN_TABLET, 
-					HAS_TRADE_NAME, "AMOXICILLIN", 0,
-					PREFERRED_STRENGTH, BigDecimal.valueOf(5.5d), 0).build())
-				// strengths as axioms
-				.stageNew(classAxiomsWithValue(ABACAVIR_TABLET, 
-					PREFERRED_STRENGTH, BigDecimal.valueOf(-5.5d), 0).build());
+		if (isAxiom()) {
+			staging
+			// trade names and strength as combined axioms
+			.stageNew(classAxiomsWithValue(PANADOL_TABLET, 
+				HAS_TRADE_NAME, "PANADOL", 0,
+				PREFERRED_STRENGTH, 500, 0).build())
+			.stageNew(classAxiomsWithValue(TRIPHASIL_TABLET, 
+				HAS_TRADE_NAME, "TRIPHASIL", 0,
+				PREFERRED_STRENGTH, -500, 0).build())
+			.stageNew(classAxiomsWithValue(AMOXICILLIN_TABLET, 
+				HAS_TRADE_NAME, "AMOXICILLIN", 0,
+				PREFERRED_STRENGTH, BigDecimal.valueOf(5.5d), 0).build())
+			// strengths as axioms
+			.stageNew(classAxiomsWithValue(ABACAVIR_TABLET, 
+				PREFERRED_STRENGTH, BigDecimal.valueOf(-5.5d), 0).build());
 
-			} else {
-				staging
-				// trade names
-				.stageNew(stringValue(PANADOL_TABLET, HAS_TRADE_NAME, "PANADOL", getCharacteristicType()).build())
-				.stageNew(stringValue(TRIPHASIL_TABLET, HAS_TRADE_NAME, "TRIPHASIL", getCharacteristicType()).build())
-				.stageNew(stringValue(AMOXICILLIN_TABLET, HAS_TRADE_NAME, "AMOXICILLIN", getCharacteristicType()).build())
-				// strengths
-				.stageNew(integerValue(PANADOL_TABLET, PREFERRED_STRENGTH, 500, getCharacteristicType()).build())
-				.stageNew(integerValue(TRIPHASIL_TABLET, PREFERRED_STRENGTH, -500, getCharacteristicType()).build())
-				.stageNew(decimalValue(AMOXICILLIN_TABLET, PREFERRED_STRENGTH, BigDecimal.valueOf(5.5d), getCharacteristicType()).build())
-				.stageNew(decimalValue(ABACAVIR_TABLET, PREFERRED_STRENGTH, BigDecimal.valueOf(-5.5d), getCharacteristicType()).build());
-				// XXX: manufactured flags are not indexed as relationships do not support boolean values
-			}
 		} else {
 			staging
 			// trade names
-			.stageNew(stringMember(PANADOL_TABLET, HAS_TRADE_NAME, "PANADOL", getCharacteristicType()).build())
-			.stageNew(stringMember(TRIPHASIL_TABLET, HAS_TRADE_NAME, "TRIPHASIL", getCharacteristicType()).build())
-			.stageNew(stringMember(AMOXICILLIN_TABLET, HAS_TRADE_NAME, "AMOXICILLIN", getCharacteristicType()).build())
+			.stageNew(stringValue(PANADOL_TABLET, HAS_TRADE_NAME, "PANADOL", getCharacteristicType()).build())
+			.stageNew(stringValue(TRIPHASIL_TABLET, HAS_TRADE_NAME, "TRIPHASIL", getCharacteristicType()).build())
+			.stageNew(stringValue(AMOXICILLIN_TABLET, HAS_TRADE_NAME, "AMOXICILLIN", getCharacteristicType()).build())
 			// strengths
-			.stageNew(integerMember(PANADOL_TABLET, PREFERRED_STRENGTH, 500, getCharacteristicType()).build())
-			.stageNew(integerMember(TRIPHASIL_TABLET, PREFERRED_STRENGTH, -500, getCharacteristicType()).build())
-			.stageNew(decimalMember(AMOXICILLIN_TABLET, PREFERRED_STRENGTH, BigDecimal.valueOf(5.5d), getCharacteristicType()).build())
-			.stageNew(decimalMember(ABACAVIR_TABLET, PREFERRED_STRENGTH, BigDecimal.valueOf(-5.5d), getCharacteristicType()).build())
-			// manufactured flags
-			.stageNew(booleanMember(PANADOL_TABLET, MANUFACTURED, true, getCharacteristicType()).build())
-			.stageNew(booleanMember(TRIPHASIL_TABLET, MANUFACTURED, true, getCharacteristicType()).build())
-			.stageNew(booleanMember(AMOXICILLIN_TABLET, MANUFACTURED, false, getCharacteristicType()).build());
+			.stageNew(integerValue(PANADOL_TABLET, PREFERRED_STRENGTH, 500, getCharacteristicType()).build())
+			.stageNew(integerValue(TRIPHASIL_TABLET, PREFERRED_STRENGTH, -500, getCharacteristicType()).build())
+			.stageNew(decimalValue(AMOXICILLIN_TABLET, PREFERRED_STRENGTH, BigDecimal.valueOf(5.5d), getCharacteristicType()).build())
+			.stageNew(decimalValue(ABACAVIR_TABLET, PREFERRED_STRENGTH, BigDecimal.valueOf(-5.5d), getCharacteristicType()).build());
+			// XXX: manufactured flags are not indexed as relationships do not support boolean values
 		}
 		
 		staging.commit(currentTime(), UUID.randomUUID().toString(), "Initialize generated drugs");
@@ -1764,9 +1705,7 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 				.statedParents(DRUG_ROOTL)
 				.build(),
 				
-			isStatementsWithValue() 
-				? integerValue(DRUG_1_MG, PREFERRED_STRENGTH, 1, getCharacteristicType()).build()
-				: integerMember(DRUG_1_MG, PREFERRED_STRENGTH, 1, getCharacteristicType()).build()
+			integerValue(DRUG_1_MG, PREFERRED_STRENGTH, 1, getCharacteristicType()).build()
 		);
 	}
 	
@@ -1777,9 +1716,7 @@ public class SnomedEclEvaluationRequestTest extends BaseSnomedEclEvaluationReque
 				.statedParents(DRUG_ROOTL)	
 				.build(),
 				
-			isStatementsWithValue()
-				? decimalValue(DRUG_1D_MG, PREFERRED_STRENGTH, BigDecimal.valueOf(1.0d), getCharacteristicType()).build()
-				: decimalMember(DRUG_1D_MG, PREFERRED_STRENGTH, BigDecimal.valueOf(1.0d), getCharacteristicType()).build()
+			decimalValue(DRUG_1D_MG, PREFERRED_STRENGTH, BigDecimal.valueOf(1.0d), getCharacteristicType()).build()
 		);
 	}
 	
