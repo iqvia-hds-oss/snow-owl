@@ -190,7 +190,7 @@ public final class EclExpression {
 		
 		return Promise.all(promises).then(statements -> {
 			Multimap<String, Integer> relationshipStatements = (Multimap<String, Integer>) statements.get(0);
-			Multimap<String, Integer> axiomStatements = (Multimap<String, Integer>) statements.get(2);
+			Multimap<String, Integer> axiomStatements = (Multimap<String, Integer>) statements.get(1);
 			return ImmutableSetMultimap.<String, Integer>builder()
 					.putAll(relationshipStatements)
 					.putAll(axiomStatements)
