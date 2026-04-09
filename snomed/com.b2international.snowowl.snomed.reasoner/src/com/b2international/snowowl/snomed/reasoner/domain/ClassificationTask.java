@@ -77,7 +77,6 @@ public final class ClassificationTask implements Serializable {
 	// fields below are set only if an appropriate expand option is present
 	private EquivalentConceptSets equivalentConceptSets; 
 	private RelationshipChanges relationshipChanges;
-	private ConcreteDomainChanges concreteDomainChanges;
 
 	public String getId() {
 		return id;
@@ -191,14 +190,6 @@ public final class ClassificationTask implements Serializable {
 		this.relationshipChanges = relationshipChanges;
 	}
 
-	public ConcreteDomainChanges getConcreteDomainChanges() {
-		return concreteDomainChanges;
-	}
-
-	public void setConcreteDomainChanges(final ConcreteDomainChanges concreteDomainChanges) {
-		this.concreteDomainChanges = concreteDomainChanges;
-	}
-
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
@@ -231,7 +222,6 @@ public final class ClassificationTask implements Serializable {
 		builder.append(", relationshipChanges=");
 		builder.append(relationshipChanges);
 		builder.append(", concreteDomainChanges=");
-		builder.append(concreteDomainChanges);
 		builder.append("]");
 		return builder.toString();
 	}
