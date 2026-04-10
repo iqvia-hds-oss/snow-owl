@@ -9,10 +9,6 @@ identity:
     - file:
         name: users
   
-snomed:
-  # Disable concrete domains, we are going to import the required concepts to an extension
-  concreteDomainSupport: false
-
 # cis:
 #  strategy : CIS
 #  cisBaseUrl: http://localhost:9090/snowowl/cis/
