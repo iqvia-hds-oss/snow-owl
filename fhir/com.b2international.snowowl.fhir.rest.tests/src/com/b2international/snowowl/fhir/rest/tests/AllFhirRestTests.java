@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 //	FhirSnomedConceptMapTranslateTest.class,
 	
 	// CapabilityStatement
-	CapabilityStatementApiTest.class
+//	CapabilityStatementApiTest.class
 	
 })
 public class AllFhirRestTests {

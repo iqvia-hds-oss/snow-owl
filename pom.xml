@@ -314,6 +314,7 @@
 						<failIfNoTests>false</failIfNoTests>
 						<trimStackTrace>false</trimStackTrace>
 						<argLine>${testArgLine}</argLine>
+						<forkedProcessTimeoutInSeconds>3600</forkedProcessTimeoutInSeconds>
 					</configuration>
 				</plugin>
 				<plugin>
