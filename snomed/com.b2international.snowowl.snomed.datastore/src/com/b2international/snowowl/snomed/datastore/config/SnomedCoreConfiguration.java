@@ -22,7 +22,6 @@ import com.google.common.collect.BiMap;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -51,8 +50,6 @@ public class SnomedCoreConfiguration {
 	@Min(5)
 	@Max(60)
 	private long classificationCleanUpInterval = DEFAULT_CLASSIFICATION_CLEANUP_INTERVAL;
-	
-	@NotEmpty
 	
 	@NotNull
 	private SnomedMrcmConfig mrcmConfiguration = new SnomedMrcmConfig();
