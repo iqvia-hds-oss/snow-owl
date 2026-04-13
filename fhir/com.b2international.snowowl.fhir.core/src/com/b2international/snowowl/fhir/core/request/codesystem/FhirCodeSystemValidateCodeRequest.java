@@ -31,7 +31,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 
@@ -45,7 +45,7 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 	private static final long serialVersionUID = 1L;
 
 	@NotNull
-	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes
+	@JsonProperty
 	private final CodeSystemValidateCodeParameters parameters;
 	
 	FhirCodeSystemValidateCodeRequest(CodeSystemValidateCodeParameters parameters) {

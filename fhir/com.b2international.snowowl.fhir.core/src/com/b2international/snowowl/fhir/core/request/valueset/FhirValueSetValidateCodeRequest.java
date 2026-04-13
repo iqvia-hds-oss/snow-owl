@@ -24,7 +24,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 8.0
@@ -32,8 +32,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 final class FhirValueSetValidateCodeRequest implements Request<ServiceProvider, ValueSetValidateCodeResultParameters> {
 
 	private static final long serialVersionUID = 2L;
-	
-	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes
+
+	@JsonProperty
 	private final ValueSetValidateCodeParameters parameters;
 	
 	public FhirValueSetValidateCodeRequest(ValueSetValidateCodeParameters parameters) {
