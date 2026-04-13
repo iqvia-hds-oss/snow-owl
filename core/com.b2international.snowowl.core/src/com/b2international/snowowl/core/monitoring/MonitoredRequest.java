@@ -15,13 +15,15 @@
  */
 package com.b2international.snowowl.core.monitoring;
 
+import static com.google.common.collect.Lists.newArrayList;
+
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.b2international.commons.StringUtils;
 import com.b2international.commons.json.Json;
 import com.b2international.commons.metric.Metrics;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -31,6 +33,7 @@ import com.b2international.snowowl.core.events.util.RequestHeaders;
 import com.b2international.snowowl.core.events.util.ResponseHeaders;
 import com.b2international.snowowl.core.identity.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -100,23 +103,49 @@ public final class MonitoredRequest<R> extends DelegatingRequest<ServiceProvider
 			final ObjectMapper mapper = context.service(ObjectMapper.class);
 			final Map<String, Object> body = mapper.convertValue(request, Map.class);
 			body.putAll(additionalInfo);
-			return mapper.writeValueAsString(truncateArrays(body));
+			return mapper.writeValueAsString(truncateMaps(body));
 		} catch (Throwable e) {
 			return "Unable to get request description: " + e.getMessage();
 		}
 	}
 
-	private static Map<String, Object> truncateArrays(Map<String, Object> json) {
+	private static Map<String, Object> truncateMaps(Map<String, Object> json) {
 		return Maps.transformValues(json, propertyValue -> {
 			if (propertyValue instanceof Map<?, ?>) {
-				return truncateArrays((Map<String, Object>) propertyValue);
+				return truncateMaps((Map<String, Object>) propertyValue);
 			} else if (propertyValue instanceof Iterable<?>) {
 				// TODO support arrays
-				return StringUtils.limitedToString((Iterable<?>) propertyValue, 10);
+				return truncateIterables((Iterable<?>) propertyValue, 10);
 			} else {
 				return propertyValue;
 			}
 		});
 	}
-	
+
+	private static Iterable<?> truncateIterables(Iterable<?> iterable, int limit) {
+        final List<Object> list = newArrayList();
+        
+        int i = 0;
+        for (final Object element : iterable) {
+
+        	if (i++ >= limit) {
+        		final int total = Iterables.size(iterable);
+        		if (total - limit > 0) {
+        			// The result will include an { "__skipped_items__": 99 } indicator object at the end of truncated arrays
+        			list.add(Map.of("__skipped_items__", total - limit));
+        		}
+                break;
+            }
+        	
+            if (element instanceof Map<?, ?>) {
+                list.add(truncateMaps((Map<String, Object>) element));
+            } else if (element instanceof Iterable<?>) {
+                list.add(truncateIterables((Iterable<?>) element, limit));
+            } else {
+                list.add(element);
+            }
+        }
+		
+		return list;
+	}
 }
