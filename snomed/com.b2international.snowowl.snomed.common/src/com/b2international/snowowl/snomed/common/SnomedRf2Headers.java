@@ -59,7 +59,7 @@ public abstract class SnomedRf2Headers {
 	public static final String FIELD_DESCRIPTION_FORMAT = "descriptionFormat";
 	public static final String FIELD_DESCRIPTION_LENGTH = "descriptionLength";
 	
-	// Field names introduced in concrete domain reference set and relationship concrete value files
+	// Field names introduced in relationship concrete value files
 	public static final String FIELD_VALUE = "value";
 	
 	// Field names introduced in attribute value type reference set files
@@ -135,7 +135,7 @@ public abstract class SnomedRf2Headers {
 		FIELD_CORRELATION_ID,
 		// description type
 		FIELD_DESCRIPTION_FORMAT,
-		// concrete domain
+		// concrete value
 		FIELD_CHARACTERISTIC_TYPE_ID,
 		FIELD_TYPE_ID,
 		// association
