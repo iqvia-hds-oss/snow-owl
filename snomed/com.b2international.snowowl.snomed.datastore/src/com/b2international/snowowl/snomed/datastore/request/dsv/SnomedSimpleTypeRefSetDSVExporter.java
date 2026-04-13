@@ -196,7 +196,7 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 	}
 
 	/*
-	 * Finds the maximum number of occurrences for each description, relationship and concrete data type; generates headers. 
+	 * Finds the maximum number of occurrences for each description, relationship; generates headers. 
 	 */
 	private void computeHeader() {
 		final SetMultimap<SnomedDsvExportItemType, String> relevantTypeIds = HashMultimap.create(); 
