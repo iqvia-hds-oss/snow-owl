@@ -95,15 +95,6 @@ public class SnomedComponents {
 	}
 	
 	/**
-	 * Creates and returns a new {@link SnomedConcreteDomainReferenceSetMemberBuilder SNOMED CT Concrete Domain Reference set member builder}.
-	 * 
-	 * @return
-	 */
-	public static SnomedConcreteDomainReferenceSetMemberBuilder newConcreteDomainReferenceSetMember() {
-		return new SnomedConcreteDomainReferenceSetMemberBuilder();
-	}
-
-	/**
 	 * Creates and returns a new {@link SnomedDescriptionTypeReferenceSetMemberBuilder SNOMED CT Description Format Reference set member builder}.
 	 * 
 	 * @return
