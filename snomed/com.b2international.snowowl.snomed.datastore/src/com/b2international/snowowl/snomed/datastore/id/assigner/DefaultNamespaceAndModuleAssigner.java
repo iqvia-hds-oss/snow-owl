@@ -21,7 +21,7 @@ import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.plugin.Component;
 
 /**
- * Simple assigner that allocates the default namespace and module for relationships and concrete domains.
+ * Simple assigner that allocates the default namespace and module for relationships.
  * 
  * @since 5.11.5
  */
@@ -51,16 +51,7 @@ public final class DefaultNamespaceAndModuleAssigner implements SnomedNamespaceA
 	}
 
 	@Override
-	public String getConcreteDomainModuleId(final String referencedConceptId) {
-		return defaultModule;
-	}
-
-	@Override
 	public void collectRelationshipModules(final Set<String> conceptIds) {
-	}
-
-	@Override
-	public void collectConcreteDomainModules(final Set<String> conceptIds) {
 	}
 
 	@Override

@@ -44,7 +44,7 @@ import com.google.common.collect.Sets;
  * the source concept's module is not in the current code system's module list,
  * in which case the specified <code>defaultNamespace</code> value will be used.
  * <p>
- * Relationship and concrete domain <b>modules</b> match the source concept's
+ * Relationship <b>modules</b> match the source concept's
  * module, unless it is not in the current code system's module list, in which
  * case the specified <code>defaultModule</code> value is used.
  * 
@@ -54,7 +54,6 @@ import com.google.common.collect.Sets;
 public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespaceAndModuleAssigner {
 	
 	private final LongKeyLongMap relationshipModuleMap = PrimitiveMaps.newLongKeyLongOpenHashMap();
-	private final LongKeyLongMap concreteDomainModuleMap = PrimitiveMaps.newLongKeyLongOpenHashMap();
 	private final Set<String> extensionModuleIds = Sets.newHashSet();
 	
 	private String defaultNamespace;
@@ -70,7 +69,6 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 		this.context = context;
 
 		relationshipModuleMap.clear();
-		concreteDomainModuleMap.clear();
 		extensionModuleIds.clear();
 		
 		initExtensionParentModules();
@@ -135,19 +133,6 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 	}
 
 	@Override
-	public String getConcreteDomainModuleId(final String referencedConceptId) {
-		final long referencedConceptIdAsLong = Long.parseLong(referencedConceptId);
-		checkArgument(concreteDomainModuleMap.containsKey(referencedConceptIdAsLong), "The concrete domain member module ID for '%s' was not collected.", referencedConceptId);
-		final String moduleId = Long.toString(concreteDomainModuleMap.get(referencedConceptIdAsLong));
-		
-		if (!extensionModuleIds.contains(moduleId)) {
-			return defaultModule;
-		}
-		
-		return moduleId;
-	}
-
-	@Override
 	public void collectRelationshipModules(final Set<String> conceptIds) {
 		relationshipModuleMap.clear();
 
@@ -155,17 +140,6 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 			final long conceptId = Long.parseLong(c.getId());
 			final long moduleId = Long.parseLong(c.getModuleId());
 			relationshipModuleMap.put(conceptId, moduleId);
-		});
-	}
-
-	@Override
-	public void collectConcreteDomainModules(final Set<String> conceptIds) {
-		concreteDomainModuleMap.clear();
-
-		collectModules(conceptIds, c -> {
-			final long conceptId = Long.parseLong(c.getId());
-			final long moduleId = Long.parseLong(c.getModuleId());
-			concreteDomainModuleMap.put(conceptId, moduleId);
 		});
 	}
 	
@@ -182,7 +156,6 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 	@Override
 	public void clear() {
 		relationshipModuleMap.clear();
-		concreteDomainModuleMap.clear();
 	}
 
 	@Override

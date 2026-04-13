@@ -25,7 +25,6 @@ import com.b2international.snowowl.core.plugin.ClassPathScanner;
  * Common interface for a namespace-module allocator which:
  * <ul>
  * <li>For each inferred relationship, returns the expected namespace and module ID, given the source concept ID;
- * <li>For each inferred concrete domain member, returns the expected module ID, given the "container" concept ID.
  * </ul>
  * 
  * @since 5.11.5
@@ -65,23 +64,9 @@ public interface SnomedNamespaceAndModuleAssigner {
 	String getRelationshipModuleId(String sourceConceptId);
 
 	/**
-	 * Returns a module concept to be assigned to a concrete domain based on its referenced component ID.
-	 * 
-	 * @param referencedConceptId
-	 *            the ID of the referenced concept to determine the module for
-	 * @return the module ID for the concrete domain member
-	 */
-	String getConcreteDomainModuleId(String referencedConceptId);
-
-	/**
 	 * @param conceptIds
 	 */
 	void collectRelationshipModules(Set<String> conceptIds);
-
-	/**
-	 * @param conceptIds
-	 */
-	void collectConcreteDomainModules(Set<String> conceptIds);
 
 	/**
 	 * Clears the internal maps of this assigner.
