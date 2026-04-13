@@ -62,13 +62,11 @@ public class SnomedSimpleTypeRefSetDSVExporter implements IRefSetDSVExporter {
 		.build();
 
 	private static final String HEADER_EXPAND = "descriptions(active:true), "
-		+ "relationships(active:true), "
-		+ "members(active:true, refSetType:\"CONCRETE_DATA_TYPE\")";
+		+ "relationships(active:true)";
 	
 	private static final String DATA_EXPAND = "pt(), "
 		+ "descriptions(active:true), "
-		+ "relationships(active:true, expand(destination(expand(pt())))), "
-		+ "members(active:true, refSetType:\"CONCRETE_DATA_TYPE\")";
+		+ "relationships(active:true, expand(destination(expand(pt()))))";
 
 	private static final SortedMultiset<Integer> NO_OCCURRENCES = ImmutableSortedMultiset.of();
 	
