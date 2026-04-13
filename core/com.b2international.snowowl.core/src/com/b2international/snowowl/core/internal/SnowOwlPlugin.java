@@ -43,6 +43,7 @@ import com.b2international.snowowl.core.monitoring.MonitoringConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.repository.JsonSupport;
+import com.b2international.snowowl.core.repository.ObjectMapperCustomizer;
 import com.b2international.snowowl.core.repository.PathTerminologyResourceResolver;
 import com.b2international.snowowl.core.request.suggest.ConceptSuggester;
 import com.b2international.snowowl.core.setup.ConfigurationRegistry;
@@ -87,6 +88,9 @@ public final class SnowOwlPlugin extends Plugin {
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
 		mapper.registerModule(new PrimitiveCollectionModule());
 		mapper.registerModule(new JavaTimeModule());
+		scanner.getComponentsByInterface(ObjectMapperCustomizer.class)
+			.forEach(customizer -> customizer.customize(mapper));
+		
 		env.services().registerService(ObjectMapper.class, mapper);
 		
 		env.services().registerService(TerminologyRegistry.class, TerminologyRegistry.INSTANCE);
