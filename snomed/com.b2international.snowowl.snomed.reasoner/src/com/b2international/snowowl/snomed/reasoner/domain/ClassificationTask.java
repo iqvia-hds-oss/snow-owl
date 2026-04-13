@@ -32,7 +32,6 @@ public final class ClassificationTask implements Serializable {
 	public static final class Expand {
 		public static final String EQUIVALENT_CONCEPT_SETS = "equivalentConceptSets";
 		public static final String RELATIONSHIP_CHANGES = "relationshipChanges";
-		public static final String CONCRETE_DOMAIN_CHANGES = "concreteDomainChanges";
 	}
 	
 	/**
@@ -221,7 +220,6 @@ public final class ClassificationTask implements Serializable {
 		builder.append(equivalentConceptSets);
 		builder.append(", relationshipChanges=");
 		builder.append(relationshipChanges);
-		builder.append(", concreteDomainChanges=");
 		builder.append("]");
 		return builder.toString();
 	}
