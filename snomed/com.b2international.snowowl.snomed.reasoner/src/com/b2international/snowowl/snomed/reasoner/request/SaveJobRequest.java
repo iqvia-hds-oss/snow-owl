@@ -47,10 +47,8 @@ import com.b2international.snowowl.core.internal.locks.DatastoreLockContextDescr
 import com.b2international.snowowl.core.locks.Locks;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.request.CommitResult;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.*;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.datastore.id.assigner.SnomedNamespaceAndModuleAssigner;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.*;
@@ -400,25 +398,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 			}
 		}
 		
-		// CD members are always "outbound", however, so the concept SCTID set can be reduced
-		assigner.clear();
-		assigner.collectConcreteDomainModules(conceptIdsToKeep);
-		
-		for (final SnomedConcept conceptToKeep : equivalentConcepts.keySet()) {
-			for (final SnomedReferenceSetMember member : conceptToKeep.getMembers()) {
-				if (member.getId().startsWith(IEquivalentConceptMerger.PREFIX_NEW)) {
-					member.setId(null);
-					addComponent(bulkRequestBuilder, assigner, member);
-				} else if (member.getId().startsWith(IEquivalentConceptMerger.PREFIX_UPDATED)) { 
-					// Trim the prefix from the ID to restore its original form
-					member.setId(member.getId().substring(IEquivalentConceptMerger.PREFIX_UPDATED.length()));
-					bulkRequestBuilder.add(member.toUpdateRequest());
-				} else if (!member.isActive()) {
-					removeOrDeactivate(bulkRequestBuilder, assigner, member);
-				}
-			}
-		}
-		
 		// Descriptions are also "outbound"
 		assigner.clear();
 		assigner.collectRelationshipModules(conceptIdsToKeep);
@@ -467,7 +446,7 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		
 		final SnomedNamespaceAndModuleAssigner assigner = SnomedNamespaceAndModuleAssigner.create(context, selectedType, moduleId, namespace);
 		
-		LOG.info("Reasoner service will use {} for relationship/concrete domain namespace and module assignment.", assigner);
+		LOG.info("Reasoner service will use {} for relationship namespace and module assignment.", assigner);
 		return assigner;
 	}
 
@@ -518,41 +497,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		} else {
 			request = SnomedRequests
 					.prepareDeleteRelationship(relationshipId)
-					.build();
-		}
-	
-		bulkRequestBuilder.add(request);
-	}
-
-	private void removeOrDeactivate(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final SnomedReferenceSetMember member) {
-		removeOrDeactivateMember(bulkRequestBuilder, namespaceAndModuleAssigner, member.isReleased(), member.getId(), member.getReferencedComponent().getId());
-	}
-
-	private void removeOrDeactivate(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final ReasonerConcreteDomainMember member) {
-		removeOrDeactivateMember(bulkRequestBuilder, namespaceAndModuleAssigner, member.isReleased(), member.getOriginMemberId(), member.getReferencedComponentId());
-	}
-
-	private void removeOrDeactivateMember(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder, 
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final boolean released, final String memberId, String referencedComponentId) {
-		
-		final Request<TransactionContext, Boolean> request;
-		
-		if (released) {
-			request = SnomedRequests
-					.prepareUpdateMember(memberId)
-					.setSource(ImmutableMap.<String, Object>builder()
-						.put(SnomedRf2Headers.FIELD_ACTIVE, false)
-						.put(SnomedRf2Headers.FIELD_MODULE_ID, namespaceAndModuleAssigner.getConcreteDomainModuleId(referencedComponentId))
-						.build())
-					.build();
-		} else {
-			request = SnomedRequests
-					.prepareDeleteMember(memberId)
 					.build();
 		}
 	
@@ -650,63 +594,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		bulkRequestBuilder.add(createRequest);
 	}
 
-	private void addComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
-			final ReasonerConcreteDomainMember member) {
-	
-		final String referencedComponentId = member.getReferencedComponentId();
-		final String referenceSetId = member.getReferenceSetId();
-		final String typeId = member.getTypeId();
-		final String serializedValue = member.getSerializedValue();
-		final int group = member.getGroup();
-		final String characteristicTypeId = member.getCharacteristicTypeId();
-		
-		addComponent(bulkRequestBuilder, namespaceAndModuleAssigner, 
-				referencedComponentId, referenceSetId, typeId,
-				serializedValue, group, characteristicTypeId);
-	}
-
-	private void addComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
-			final SnomedReferenceSetMember member) {
-		
-		final String referencedComponentId = member.getReferencedComponent().getId();
-		final String referenceSetId = member.getRefsetId();
-		final String typeId = (String) member.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID);
-		final String serializedValue = (String) member.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
-		final int group = (Integer) member.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
-		final String characteristicTypeId = (String) member.getProperties().get(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID);
-		
-		addComponent(bulkRequestBuilder, namespaceAndModuleAssigner, 
-				referencedComponentId, referenceSetId, typeId,
-				serializedValue, group, characteristicTypeId);
-	}
-	
-	private void addComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final String referencedComponentId,
-			final String referenceSetId, 
-			final String typeId, 
-			final String serializedValue, 
-			final int group,
-			final String characteristicTypeId) {
-		
-		final String moduleId = namespaceAndModuleAssigner.getConcreteDomainModuleId(referencedComponentId);
-	
-		final SnomedRefSetMemberCreateRequestBuilder createRequest = SnomedRequests.prepareNewMember()
-				.setActive(true)
-				.setModuleId(moduleId)
-				.setReferencedComponentId(referencedComponentId)
-				.setRefsetId(referenceSetId)
-				.setProperties(ImmutableMap.of(
-						SnomedRf2Headers.FIELD_TYPE_ID, typeId,
-						SnomedRf2Headers.FIELD_VALUE, serializedValue,
-						SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, group,
-						SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, characteristicTypeId));
-	
-		bulkRequestBuilder.add(createRequest);
-	}
-
 	private void addComponent(BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
 			SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
 			SnomedDescription description) {
@@ -738,20 +625,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 				.setRelationshipGroup(relationship.getGroup());
 		
 		bulkRequestBuilder.add(updateRequest);
-	}
-
-	private void updateComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final ReasonerConcreteDomainMember referenceSetMember) {
-		
-		final SnomedRefSetMemberUpdateRequestBuilder updateRequest = SnomedRequests
-				.prepareUpdateMember(referenceSetMember.getOriginMemberId())
-				.setSource(ImmutableMap.<String,Object>of(
-					SnomedRf2Headers.FIELD_VALUE, referenceSetMember.getSerializedValue(),
-					SnomedRf2Headers.FIELD_MODULE_ID, namespaceAndModuleAssigner.getConcreteDomainModuleId(referenceSetMember.getReferencedComponentId())
-				));
-
-		bulkRequestBuilder.add(updateRequest);		
 	}
 
 	@Override
