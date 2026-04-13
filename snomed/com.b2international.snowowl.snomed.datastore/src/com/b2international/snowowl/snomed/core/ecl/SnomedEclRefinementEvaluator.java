@@ -697,7 +697,7 @@ final class SnomedEclRefinementEvaluator {
 	// Helper Throwable class to quickly return from attribute constraint evaluation when all matches are valid
 	private static final class MatchAll extends Throwable {}
 	
-	/*Property data class which can represent both relationships and concrete domain members with all relevant properties required for ECL refinement evaluation*/
+	/*Property data class which can represent relationships with all relevant properties required for ECL refinement evaluation*/
 	static final class Property {
 		
 		private final String objectId;
