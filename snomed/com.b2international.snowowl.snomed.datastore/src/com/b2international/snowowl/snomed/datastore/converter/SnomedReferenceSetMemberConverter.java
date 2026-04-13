@@ -39,7 +39,6 @@ import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedOWLRelationship;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMembers;
-import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedOWLRelationshipDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptRequestCache;
@@ -189,11 +188,6 @@ public final class SnomedReferenceSetMemberConverter extends BaseRevisionResourc
 		props.computeIfPresent(SnomedRf2Headers.FIELD_SOURCE_EFFECTIVE_TIME, (key, currentValue) -> toEffectiveTime((long) currentValue));
 		props.computeIfPresent(SnomedRf2Headers.FIELD_TARGET_EFFECTIVE_TIME, (key, currentValue) -> toEffectiveTime((long) currentValue));
 
-		// convert concrete domain value to serialized String format
-		if (doc.getValue() != null) {
-			props.put(SnomedRf2Headers.FIELD_VALUE, SnomedRefSetUtil.serializeValue(doc.getDataType(), doc.getValue()));
-		}
-		
 		member.setProperties(props);
 		
 		String owlExpression = doc.getOwlExpression();
