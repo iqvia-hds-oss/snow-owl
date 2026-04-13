@@ -32,6 +32,7 @@ import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Sets;
 
 /**
@@ -51,6 +52,7 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 
 	private static final long serialVersionUID = 1L;
 	
+	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes
 	private final CodeSystemLookupParameters parameters;
 
 	FhirCodeSystemLookupRequest(CodeSystemLookupParameters parameters) {

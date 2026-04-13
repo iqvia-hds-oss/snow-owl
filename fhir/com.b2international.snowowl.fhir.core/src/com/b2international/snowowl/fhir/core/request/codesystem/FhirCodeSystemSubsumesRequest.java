@@ -24,6 +24,7 @@ import com.b2international.fhir.r5.operations.CodeSystemSubsumptionResultParamet
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Test the subsumption relationship between code/Coding A and code/Coding B given the semantics of subsumption in the underlying code system (see hierarchyMeaning).
@@ -35,6 +36,7 @@ final class FhirCodeSystemSubsumesRequest extends FhirRequest<CodeSystemSubsumpt
 
 	private static final long serialVersionUID = 1L;
 	
+	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes
 	private final CodeSystemSubsumptionParameters parameters;
 
 	public FhirCodeSystemSubsumesRequest(CodeSystemSubsumptionParameters parameters) {

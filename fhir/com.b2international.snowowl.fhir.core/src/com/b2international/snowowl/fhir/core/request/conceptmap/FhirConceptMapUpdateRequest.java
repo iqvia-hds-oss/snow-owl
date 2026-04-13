@@ -21,15 +21,15 @@ import java.util.Optional;
 
 import org.hl7.fhir.r5.model.ConceptMap;
 
-import jakarta.validation.constraints.NotNull;
-
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateRequest;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Updates an existing concept map or creates a new one if no concept map exists for the specified identifier.
@@ -42,6 +42,7 @@ final class FhirConceptMapUpdateRequest extends FhirResourceUpdateRequest {
 	private static final long serialVersionUID = 1L;
 	
 	@NotNull
+	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes (resources can also get large)
 	private final ConceptMap fhirConceptMap;
 	
 	@NotNull

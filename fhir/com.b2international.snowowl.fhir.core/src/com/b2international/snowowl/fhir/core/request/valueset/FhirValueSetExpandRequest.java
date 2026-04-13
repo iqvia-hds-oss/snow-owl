@@ -35,6 +35,7 @@ import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +48,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 
 	private static final long serialVersionUID = 1L;
 	
+	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes
 	private ValueSetExpandParameters parameters;
 
 	public FhirValueSetExpandRequest(ValueSetExpandParameters parameters) {

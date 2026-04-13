@@ -26,6 +26,7 @@ import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateRequest;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -41,6 +42,7 @@ final class FhirValueSetUpdateRequest extends FhirResourceUpdateRequest {
 	private static final long serialVersionUID = 1L;
 	
 	@NotNull
+	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes (resources can also get large)
 	private final ValueSet fhirValueSet;
 	
 	@NotNull

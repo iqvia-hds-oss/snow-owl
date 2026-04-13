@@ -22,14 +22,14 @@ import java.util.Optional;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 
-import jakarta.validation.constraints.NotNull;
-
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateRequest;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Updates an existing code system or creates a new one if no code system exists for the specified identifier.
@@ -44,6 +44,7 @@ final class FhirCodeSystemUpdateRequest extends FhirResourceUpdateRequest {
 	private static final int CONCEPT_LIMIT = 5000;
 
 	@NotNull
+	@JsonIgnore // prevent infinite recursion during serialization of FHIR datatypes (resources can also get large)
 	private final CodeSystem fhirCodeSystem;
 	
 	private final String author;
