@@ -1013,17 +1013,29 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 	private String targetComponentId;
 	// ATTRIBUTE VALUE
 	private String valueId;
+	
+	/**
+	 * @deprecated the below fields will be removed in 11.0.0
+	 */
 	// CONCRETE DOMAIN reference set members
+	@Deprecated
 	private DataType dataType;
 	
 	// only one of these value fields should be set when this represents a concrete domain member
+	@Deprecated
 	private String stringValue;
+	@Deprecated
 	private Boolean booleanValue;
+	@Deprecated
 	private Integer integerValue;
+	@Deprecated
 	private BigDecimal decimalValue;
 
+	@Deprecated
 	private Integer relationshipGroup;
+	@Deprecated
 	private String typeId;
+	@Deprecated
 	private String characteristicTypeId;
 	
 	// DESCRIPTION
