@@ -46,7 +46,6 @@ import com.b2international.collections.longs.LongIterator;
 import com.b2international.collections.longs.LongSet;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValueType;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
 import com.b2international.snowowl.snomed.datastore.StatementFragment;
 import com.b2international.snowowl.snomed.datastore.StatementFragmentWithDestination;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.InternalIdMap;
@@ -1005,17 +1004,6 @@ public final class DelegateOntology extends DelegateOntologyStub implements OWLM
 		return getDataFactory().getOWLNothing();
 	}
 
-	private OWL2Datatype getOWL2Datatype(final DataType dataType) {
-		switch (dataType) {
-			case BOOLEAN: return OWL2Datatype.XSD_BOOLEAN;
-			case DATE: return OWL2Datatype.XSD_DATE_TIME;
-			case DECIMAL: return OWL2Datatype.XSD_DECIMAL;
-			case INTEGER: return OWL2Datatype.XSD_INTEGER;
-			case STRING: return OWL2Datatype.XSD_STRING;
-			default: throw new IllegalStateException(MessageFormat.format("Unhandled datatype enum ''{0}''.", dataType));
-		}
-	}
-	
 	private OWL2Datatype getOWL2Datatype(final RelationshipValueType valueType) {
 		switch (valueType) {
 			case DECIMAL: return OWL2Datatype.XSD_DECIMAL;
