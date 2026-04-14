@@ -77,8 +77,6 @@ final class ClassificationSaveRequest implements Request<RepositoryContext, Stri
 	
 	private boolean fixEquivalences;
 
-	private boolean handleConcreteDomains;
-
 
 	ClassificationSaveRequest() {}
 	
@@ -112,10 +110,6 @@ final class ClassificationSaveRequest implements Request<RepositoryContext, Stri
 
 	void setFixEquivalences(final boolean fixEquivalences) {
 		this.fixEquivalences = fixEquivalences;
-	}
-
-	void setHandleConcreteDomains(final boolean handleConcreteDomains) {
-		this.handleConcreteDomains = handleConcreteDomains;
 	}
 
 	@Override
