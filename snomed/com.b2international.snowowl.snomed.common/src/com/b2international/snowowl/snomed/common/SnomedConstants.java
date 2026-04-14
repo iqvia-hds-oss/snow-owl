@@ -184,11 +184,17 @@ public abstract class SnomedConstants {
 		public static final String SDD_SIMPLE_TYPE_REFERENCE_SET = "69511000133108";
 
 		//concrete domain
+		@Deprecated
 		public static final String REFSET_BOOLEAN_DATATYPE = "759160691000154109";
+		@Deprecated
 		public static final String REFSET_DATETIME_DATATYPE = "492980241000154105";
+		@Deprecated
 		public static final String REFSET_INTEGER_DATATYPE = "373998411000154109";
+		@Deprecated
 		public static final String REFSET_FLOAT_DATATYPE = "744104701000154109";
+		@Deprecated
 		public static final String REFSET_STRING_DATATYPE = "513945551000154100";
+		@Deprecated
 		public static final String REFSET_CONCRETE_DOMAIN_TYPE = "289191171000154104";
 		public static final String REFSET_DEFINING_TYPE = "384696201000154108";
 		public static final String REFSET_MEASUREMENT_TYPE = "945726341000154109";
