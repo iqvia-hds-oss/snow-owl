@@ -62,7 +62,7 @@ final class NormalFormValue implements NormalFormProperty {
 	 * @param value the property value
 	 * @param reasonerTaxonomy
 	 *
-	 * @throws NullPointerException if the given concrete domain member is <code>null</code>
+	 * @throws NullPointerException if the given reasoner taxonomy is <code>null</code>
 	 */
 	private NormalFormValue(
 		final long typeId, 
