@@ -25,7 +25,7 @@ public interface ObjectMapperCustomizer {
 
 	/**
 	 * Can be used to register custom serializers, deserializers, modules, etc. to
-	 * the main {@link ObjectMapper} instance used by Snow Owl for all JSON
+	 * the main {@link ObjectMapper} instance used by Snow Owl for core JSON
 	 * (de-)serialization operations.
 	 * 
 	 * @param objectMapper the {@link ObjectMapper} to configure
