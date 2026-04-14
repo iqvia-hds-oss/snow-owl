@@ -61,8 +61,7 @@ public final class SnomedReasonerPlugin extends Plugin implements TerminologyRep
 			EquivalentConceptSetDocument.class,
 			ConceptChangeDocument.class,
 			DescriptionChangeDocument.class,
-			RelationshipChangeDocument.class,
-			ConcreteDomainChangeDocument.class
+			RelationshipChangeDocument.class
 		);
 	}
 	

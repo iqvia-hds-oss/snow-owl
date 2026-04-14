@@ -46,7 +46,6 @@ import com.b2international.snowowl.snomed.datastore.index.taxonomy.IReasonerTaxo
 import com.b2international.snowowl.snomed.reasoner.diff.relationship.RelationshipWriter;
 import com.b2international.snowowl.snomed.reasoner.domain.ClassificationStatus;
 import com.b2international.snowowl.snomed.reasoner.index.ClassificationTaskDocument;
-import com.b2international.snowowl.snomed.reasoner.index.ConcreteDomainChangeDocument;
 import com.b2international.snowowl.snomed.reasoner.index.EquivalentConceptSetDocument;
 import com.b2international.snowowl.snomed.reasoner.index.RelationshipChangeDocument;
 import com.google.common.collect.Iterables;
@@ -136,7 +135,6 @@ public final class ClassificationTracker implements IDisposableService {
 
 				writer.bulkDelete(new BulkDelete<>(ClassificationTaskDocument.class, ClassificationTaskDocument.Expressions.ids(deletedIds)));
 				writer.bulkDelete(new BulkDelete<>(EquivalentConceptSetDocument.class, EquivalentConceptSetDocument.Expressions.classificationId(deletedIds)));
-				writer.bulkDelete(new BulkDelete<>(ConcreteDomainChangeDocument.class, ConcreteDomainChangeDocument.Expressions.classificationId(deletedIds)));
 				writer.bulkDelete(new BulkDelete<>(RelationshipChangeDocument.class, RelationshipChangeDocument.Expressions.classificationId(deletedIds)));
 			}
 		}

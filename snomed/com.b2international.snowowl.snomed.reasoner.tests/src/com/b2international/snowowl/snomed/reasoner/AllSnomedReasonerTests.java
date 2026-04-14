@@ -20,7 +20,6 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import com.b2international.snowowl.snomed.reasoner.index.entry.ClassificationTaskSerializationTest;
-import com.b2international.snowowl.snomed.reasoner.index.entry.ConcreteDomainChangeSerializationTest;
 import com.b2international.snowowl.snomed.reasoner.index.entry.EquivalentConceptSetSerializationTest;
 import com.b2international.snowowl.snomed.reasoner.index.entry.RelationshipChangeSerializationTest;
 
@@ -32,7 +31,6 @@ import com.b2international.snowowl.snomed.reasoner.index.entry.RelationshipChang
 	ClassificationTaskSerializationTest.class,
 	EquivalentConceptSetSerializationTest.class,
 	RelationshipChangeSerializationTest.class,
-	ConcreteDomainChangeSerializationTest.class,
 })
 public class AllSnomedReasonerTests {
 
