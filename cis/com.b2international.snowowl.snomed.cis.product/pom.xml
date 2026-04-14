@@ -74,7 +74,9 @@
 						</goals>
 						<configuration>
 							<workDirectory>${project.build.directory}/assembly</workDirectory>
-							<descriptor>${basedir}/assembly/cis.xml</descriptor>
+							<descriptors>
+								<descriptor>${basedir}/assembly/cis.xml</descriptor>
+							</descriptors>
 							<tarLongFileMode>gnu</tarLongFileMode>
 						</configuration>
 					</execution>

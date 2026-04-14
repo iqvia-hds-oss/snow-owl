@@ -13,6 +13,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
+		<!-- Java version to use for compile and runtime -->
+		<java.version>25</java.version>
+
 		<!-- Dependency versions for Tycho's target platform filter -->
 		<elk.version>0.4.3</elk.version>
 		<guava.versionRange>[33.4.0,34.0.0)</guava.versionRange>
@@ -23,7 +26,7 @@
 		<slf4j.version>2.0.17</slf4j.version>
 		
 		<!-- Build tool/compiler versions -->
-		<tycho.version>4.0.12</tycho.version>
+		<tycho.version>5.0.2</tycho.version>
 		<jacoco.version>0.8.14</jacoco.version>
 		
 		<!-- Versioning -->
@@ -62,6 +65,7 @@
 				<version>${tycho.version}</version>
 				<extensions>true</extensions>
 			</plugin>
+			
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-packaging-plugin</artifactId>
@@ -88,7 +92,6 @@
 				<artifactId>target-platform-configuration</artifactId>
 				<version>${tycho.version}</version>
 				<configuration>
-					<executionEnvironment>org.eclipse.justj.openjdk.hotspot.jre.full-21</executionEnvironment>
 					<dependency-resolution>
 						<localArtifacts>ignore</localArtifacts>
 					</dependency-resolution>
@@ -266,6 +269,10 @@
 					<groupId>org.eclipse.tycho</groupId>
 					<artifactId>tycho-p2-director-plugin</artifactId>
 					<version>${tycho.version}</version>
+					<configuration>
+						<!-- Use the selected JustJ version repository to include the JRE -->
+	    				<productRepository>https://download.eclipse.org/justj/jres/${java.version}/updates/release/</productRepository>
+					</configuration>
 				</plugin>
 				<plugin>
 					<groupId>org.eclipse.tycho</groupId>
@@ -283,7 +290,7 @@
 					<version>${tycho.version}</version>
 					<configuration>
 						<useProjectSettings>false</useProjectSettings>
-						<release>21</release>
+						<release>${java.version}</release>
 						<excludeResources>
 							<excludeResource>**/*.groovy</excludeResource>
 						</excludeResources>
@@ -293,9 +300,9 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.11.0</version>
+					<version>3.15.0</version>
 					<configuration>
-						<release>21</release>
+						<release>${java.version}</release>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -343,14 +350,14 @@
 				</plugin>
 				<plugin>
 					<artifactId>maven-install-plugin</artifactId>
-					<version>3.1.1</version>
+					<version>3.1.4</version>
 					<configuration>
 						<installAtEnd>true</installAtEnd>
 					</configuration>
 				</plugin>
 				<plugin>
 					<artifactId>maven-deploy-plugin</artifactId>
-					<version>3.1.1</version>
+					<version>3.1.4</version>
 					<configuration>
 						<deployAtEnd>true</deployAtEnd>
 					</configuration>

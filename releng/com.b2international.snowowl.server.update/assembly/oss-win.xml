@@ -23,8 +23,8 @@
 			<directory>${win.product.path}/plugins</directory>
 			<outputDirectory>plugins</outputDirectory>
 			<includes>
-				<include>org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_*</include>
-				<include>org.eclipse.justj.openjdk.hotspot.jre.full.win32.x86_64_*/**/*</include>
+				<include>org.eclipse.justj.openjdk.hotspot.jre_*</include>
+				<include>org.eclipse.justj.openjdk.hotspot.jre_*/**/*</include>
 			</includes>
 		</fileSet>
 		<!-- Common files -->		

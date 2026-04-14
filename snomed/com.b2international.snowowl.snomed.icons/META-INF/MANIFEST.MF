@@ -5,7 +5,7 @@ Bundle-SymbolicName: com.b2international.snowowl.snomed.icons;singleton:=true
 Bundle-Vendor: B2i Healthcare
 Bundle-Version: 10.0.1.qualifier
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-21
+Bundle-RequiredExecutionEnvironment: JavaSE-25
 Require-Bundle: com.b2international.snowowl.core,
  com.b2international.snowowl.snomed.common
 Export-Package: com.b2international.snowowl.snomed.icons

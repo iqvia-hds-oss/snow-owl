@@ -3,10 +3,6 @@
 <target name="Snow Owl Target Platform Definition" sequenceNumber="32">
 <locations>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<repository location="https://download.eclipse.org/justj/jres/21/updates/release/latest"/>
-		<unit id="org.eclipse.justj.openjdk.hotspot.jre.full.feature.group" version="0.0.0"/>
-	</location>
-	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 		<unit id="org.eclipse.equinox.sdk.feature.group" version="3.23.2000.v20260203-2149"/>
 		<unit id="org.eclipse.pde.feature.group" version="3.16.600.v20260226-0420"/>
 		<unit id="org.eclipse.platform.feature.group" version="4.39.0.v20260226-0420"/>
@@ -57,7 +53,7 @@
 		<unit id="com.b2international.snomed.ecl.feature.feature.group" version="0.0.0"/>
 		<unit id="com.b2international.snomed.ecl.ui.feature.feature.group" version="0.0.0"/>
 	</location>
-	<location includeSource="true" missingManifest="error" type="Maven">
+	<location includeSource="true" includeMode="planner" missingManifest="error" type="Maven">
 		<dependencies>
 			<!-- SLF4J Logging and Logback -->
 			<dependency>
@@ -634,7 +630,7 @@
 			<dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-lang3</artifactId>
-				<version>3.19.0</version>
+				<version>3.20.0</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
