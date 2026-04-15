@@ -135,9 +135,6 @@ public abstract class SnomedRf2Headers {
 		FIELD_CORRELATION_ID,
 		// description type
 		FIELD_DESCRIPTION_FORMAT,
-		// concrete value
-		FIELD_CHARACTERISTIC_TYPE_ID,
-		FIELD_TYPE_ID,
 		// association
 		FIELD_TARGET_COMPONENT_ID,
 		// ext. map
