@@ -196,7 +196,9 @@ public abstract class SnomedConstants {
 		public static final String REFSET_STRING_DATATYPE = "513945551000154100";
 		@Deprecated
 		public static final String REFSET_CONCRETE_DOMAIN_TYPE = "289191171000154104";
+		@Deprecated
 		public static final String REFSET_DEFINING_TYPE = "384696201000154108";
+		@Deprecated
 		public static final String REFSET_MEASUREMENT_TYPE = "945726341000154109";
 
 		public static final String REFSET_DRUG_TO_SOURCE_DRUG_SIMPLE_MAP = "776245861000133102";
