@@ -63,7 +63,6 @@ public final class SnomedRefSetMemberSearchRequest extends SnomedSearchRequest<S
 			// String types, ECL support
 			.put(SnomedRf2Headers.FIELD_REFERENCED_COMPONENT_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::referencedComponentIds, true))
 			.put(SnomedRf2Headers.FIELD_ACCEPTABILITY_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::acceptabilityIds, true))
-			.put(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::characteristicTypeIds, true))
 			.put(SnomedRf2Headers.FIELD_CORRELATION_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::correlationIds, true))
 			.put(SnomedRf2Headers.FIELD_DESCRIPTION_FORMAT, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::descriptionFormats, true))
 			.put(SnomedRf2Headers.FIELD_MAP_CATEGORY_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::mapCategoryIds, true))
@@ -88,7 +87,6 @@ public final class SnomedRefSetMemberSearchRequest extends SnomedSearchRequest<S
 			.put(SnomedRf2Headers.FIELD_OWL_EXPRESSION, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::owlExpressions, false))
 			
 			// Integer types
-			.put(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::relationshipGroups, false))
 			.put(SnomedRf2Headers.FIELD_MAP_GROUP, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::mapGroups, false))
 			.put(SnomedRf2Headers.FIELD_MAP_PRIORITY, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::mapPriority, false))
 			.put(SnomedRf2Headers.FIELD_MAP_BLOCK, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::mapBlock, false))
