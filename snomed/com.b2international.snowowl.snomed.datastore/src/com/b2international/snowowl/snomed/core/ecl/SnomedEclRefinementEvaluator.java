@@ -358,11 +358,7 @@ final class SnomedEclRefinementEvaluator {
 			if (refinement.isReversed()) {
 				throw new BadRequestException("Reversed flag is not supported in data type based comparison (string/numeric)");
 			} else {
-				final Promise<Collection<Property>> statementsWithValue = evalStatementsWithValue(context, focusConceptIds, typeConceptFilter, (DataTypeComparison) comparison);
-				return statementsWithValue.then(results -> {
-					final Collection<Property> s = (Collection<Property>) results;
-					return FluentIterable.from(s).toSet();
-				});
+				return evalStatementsWithValue(context, focusConceptIds, typeConceptFilter, (DataTypeComparison) comparison);
 			}
 		} else {
 			return SnomedEclEvaluationRequest.throwUnsupported(comparison);
