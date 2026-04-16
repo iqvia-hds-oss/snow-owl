@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * SNOMED CT related application level configuration parameters.
@@ -45,9 +44,6 @@ public class SnomedCoreConfiguration {
 	@Min(5)
 	@Max(60)
 	private long classificationCleanUpInterval = DEFAULT_CLASSIFICATION_CLEANUP_INTERVAL;
-	
-	@NotNull
-	private SnomedMrcmConfig mrcmConfiguration = new SnomedMrcmConfig();
 	
 	/**
 	 * @return the number of reasoners that are permitted to run simultaneously.
@@ -84,14 +80,4 @@ public class SnomedCoreConfiguration {
 		return classificationCleanUpInterval;
 	}
 
-	@JsonProperty("mrcm")
-	public SnomedMrcmConfig getMrcmConfiguration() {
-		return mrcmConfiguration;
-	}
-
-	@JsonProperty("mrcm")
-	public void setMrcmConfiguration(SnomedMrcmConfig mrcmConfiguration) {
-		this.mrcmConfiguration = mrcmConfiguration;
-	}
-		
 }

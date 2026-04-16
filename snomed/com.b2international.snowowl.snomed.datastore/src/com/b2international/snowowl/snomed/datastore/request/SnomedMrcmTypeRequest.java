@@ -16,27 +16,28 @@
 package com.b2international.snowowl.snomed.datastore.request;
 
 import static com.b2international.index.revision.Revision.Fields.ID;
+import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings.ALLOWED_DATA_ATTRIBUTE_EXPRESSION;
+import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings.ALLOWED_OBJECT_ATTRIBUTE_EXPRESSION;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry.Fields.MRCM_RULE_REFSET_ID;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.b2international.commons.options.Options;
 import com.b2international.snomed.ecl.Ecl;
-import com.b2international.snowowl.core.ApplicationContext;
-import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.branch.Branch;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
+import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.core.MrcmAttributeType;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMembers;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
-import com.b2international.snowowl.snomed.datastore.config.SnomedMrcmConfig;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 
 /**
@@ -90,13 +91,11 @@ final class SnomedMrcmTypeRequest extends SearchResourceRequest<BranchContext, S
 		
 		final String eclConstraint;
 		
-		SnomedMrcmConfig mrcmConfiguration = ApplicationContext.getInstance()
-			.getServiceChecked(SnowOwlConfiguration.class)
-			.getModuleConfig(SnomedCoreConfiguration.class)
-			.getMrcmConfiguration();
-		
-		String allowedDataAttributesExpression = mrcmConfiguration.getAllowedDataAttributesExpression();
-		String allowedObjectAttributesExpression = mrcmConfiguration.getAllowedObjectAttributesExpression();
+		Map<String,Object> settings = getResourceSettings(context);
+		String defaultObjectAttributeExpresion = "<" + Concepts.CONCEPT_MODEL_OBJECT_ATTRIBUTE;
+		String defaultDataAttributeExpresion = "<" + Concepts.CONCEPT_MODEL_DATA_ATTRIBUTE;
+		String allowedDataAttributesExpression = (String) settings.getOrDefault(ALLOWED_DATA_ATTRIBUTE_EXPRESSION, defaultDataAttributeExpresion);
+		String allowedObjectAttributesExpression = (String) settings.getOrDefault(ALLOWED_OBJECT_ATTRIBUTE_EXPRESSION, defaultObjectAttributeExpresion);
 		
 		switch (attributeType) {
 		case DATA: 
@@ -161,4 +160,21 @@ final class SnomedMrcmTypeRequest extends SearchResourceRequest<BranchContext, S
 		return new SnomedReferenceSetMembers(limit, 0);
 	}
 	
+	private Map<String, Object> getResourceSettings(BranchContext context) {
+		final String path = context.path();
+		final Map<String, CodeSystem> snomedCodeSystems = CodeSystemRequests.prepareSearchCodeSystem()
+			.filterByToolingId(SnomedTerminologyComponentConstants.TOOLING_ID)
+			.streamAsync(context, b -> b.buildAsync())
+			.flatMap(codeSystems -> codeSystems.stream())
+			.filter(cs -> path.equals(cs.getBranchPath()) || path.startsWith(cs.getBranchPath() + Branch.SEPARATOR))
+			.collect(Collectors.toMap(CodeSystem::getId, Function.identity()));
+		
+		final Optional<CodeSystem> currentCodeSystem = snomedCodeSystems.values()
+			.stream()
+			// Longest matching working branch path (or prefix) wins
+			.max(Comparator.comparing(cs -> cs.getBranchPath().length()));
+
+		return currentCodeSystem.get().getSettings();
+	}
+
 }
