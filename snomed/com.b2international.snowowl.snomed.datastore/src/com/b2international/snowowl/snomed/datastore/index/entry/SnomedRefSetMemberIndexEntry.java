@@ -458,10 +458,15 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 		// ATTRIBUTE VALUE
 		private String valueId;
 		// CONCRETE DOMAIN reference set members
+		@Deprecated
 		private DataType dataType;
+		@Deprecated
 		private Object value;
+		@Deprecated
 		private Integer relationshipGroup;
+		@Deprecated
 		private String typeId;
+		@Deprecated
 		private String characteristicTypeId;
 		// DESCRIPTION
 		private Integer descriptionLength;
@@ -612,16 +617,19 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder relationshipGroup(Integer relationshipGroup) {
 			this.relationshipGroup = relationshipGroup;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder typeId(String typeId) {
 			this.typeId = typeId;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder characteristicTypeId(final String characteristicTypeId) {
 			this.characteristicTypeId = characteristicTypeId;
 			return getSelf();
@@ -702,21 +710,25 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder decimalValue(final BigDecimal value) {
 			this.value = value;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder booleanValue(final Boolean value) {
 			this.value = value;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder integerValue(final Integer value) {
 			this.value = value;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder stringValue(final String value) {
 			this.value = value;
 			return getSelf();
