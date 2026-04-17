@@ -16,6 +16,8 @@
 package com.b2international.snowowl.snomed.datastore.request;
 
 import static com.b2international.index.revision.Revision.Fields.ID;
+import static com.b2international.snowowl.snomed.common.SnomedConstants.DEFAULT_DATA_ATTRIBUTE_EXPRESSION;
+import static com.b2international.snowowl.snomed.common.SnomedConstants.DEFAULT_OBJECT_ATTRIBUTE_EXPRESSION;
 import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings.ALLOWED_DATA_ATTRIBUTE_EXPRESSION;
 import static com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings.ALLOWED_OBJECT_ATTRIBUTE_EXPRESSION;
 import static com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry.Fields.MRCM_RULE_REFSET_ID;
@@ -31,7 +33,6 @@ import com.b2international.snomed.ecl.Ecl;
 import com.b2international.snowowl.core.Resource;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
-import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.MrcmAttributeType;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
@@ -91,10 +92,8 @@ final class SnomedMrcmTypeRequest extends SearchResourceRequest<BranchContext, S
 		final String eclConstraint;
 		
 		Map<String,Object> settings = context.service(Resource.class).getSettings();
-		String defaultObjectAttributeExpresion = "<" + Concepts.CONCEPT_MODEL_OBJECT_ATTRIBUTE;
-		String defaultDataAttributeExpresion = "<" + Concepts.CONCEPT_MODEL_DATA_ATTRIBUTE;
-		String allowedDataAttributesExpression = (String) settings.getOrDefault(ALLOWED_DATA_ATTRIBUTE_EXPRESSION, defaultDataAttributeExpresion);
-		String allowedObjectAttributesExpression = (String) settings.getOrDefault(ALLOWED_OBJECT_ATTRIBUTE_EXPRESSION, defaultObjectAttributeExpresion);
+		String allowedDataAttributesExpression = (String) settings.getOrDefault(ALLOWED_DATA_ATTRIBUTE_EXPRESSION, DEFAULT_DATA_ATTRIBUTE_EXPRESSION);
+		String allowedObjectAttributesExpression = (String) settings.getOrDefault(ALLOWED_OBJECT_ATTRIBUTE_EXPRESSION, DEFAULT_OBJECT_ATTRIBUTE_EXPRESSION);
 		
 		switch (attributeType) {
 		case DATA: 
