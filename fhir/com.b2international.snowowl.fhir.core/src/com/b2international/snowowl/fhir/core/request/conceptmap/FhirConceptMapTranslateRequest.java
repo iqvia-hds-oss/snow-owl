@@ -29,6 +29,7 @@ import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * @since 8.0
@@ -37,6 +38,7 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 
 	private static final long serialVersionUID = 1L;
 	
+	@JsonProperty
 	private final ConceptMapTranslateParameters parameters;
 
 	public FhirConceptMapTranslateRequest(ConceptMapTranslateParameters parameters) {

@@ -57,7 +57,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 //	FhirSnomedConceptMapTranslateTest.class,
 	
 	// CapabilityStatement
-//	CapabilityStatementApiTest.class
+	CapabilityStatementApiTest.class
 	
 })
 public class AllFhirRestTests {
