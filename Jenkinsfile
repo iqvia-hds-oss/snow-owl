@@ -40,7 +40,7 @@ try {
 
 	chat.notifyBuild()
 
-	node('build-jdk21') {
+	node('build-jdk25') {
 
 		stage('Checkout repository') {
 
@@ -58,7 +58,7 @@ try {
 
 		stage('Build') {
 
-			withMaven(jdk: 'OpenJDK_21', globalMavenSettingsConfig: custom_maven_global_settings, publisherStrategy: 'EXPLICIT', traceability: true) {
+			withMaven(jdk: 'OpenJDK_25', globalMavenSettingsConfig: custom_maven_global_settings, publisherStrategy: 'EXPLICIT', traceability: true) {
 				sh "./mvnw clean ${mavenPhase} -Dmaven.test.skip=${skipTests} -Dmaven.install.skip=true"
 			}
 

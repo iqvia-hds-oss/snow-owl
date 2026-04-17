@@ -28,12 +28,16 @@ import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
+import org.apache.commons.lang3.SystemProperties;
+import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.core.runtime.FileLocator;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
+import org.testcontainers.dockerclient.DockerClientProviderStrategy;
+import org.testcontainers.dockerclient.UnixSocketClientProviderStrategy;
 import org.testcontainers.images.builder.Transferable;
 import org.testcontainers.utility.MountableFile;
 
@@ -46,7 +50,7 @@ import com.google.common.collect.ImmutableMap;
  * memoize it in a ClassRule or singleton rule in order to use the same instance unless you need a specific Elasticsearch version and separate
  * container for a given test.
  * 
- * @since 10.0.0.rc1
+ * @since 10.0.0
  */
 public final class ElasticsearchContainer {
 
@@ -90,6 +94,13 @@ public final class ElasticsearchContainer {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(elasticsearchDockerImageVersion), "'elasticsearchDockerImageVersion' may not be null or empty.");
 		this.elasticsearchDockerImageVersion = elasticsearchDockerImageVersion;
 		var elasticsearchDockerImage = String.format("docker.elastic.co/elasticsearch/elasticsearch:%s", elasticsearchDockerImageVersion);
+
+		// before creating the first Elasticsearchcontainer, make sure we trigger one client provider strategy init so that it won't fail when doing the first actual init
+		// required only in CI Linux environments where the DOCKER_HOST env var is not set and we rely on the unix socket to init the docker client
+		if (SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC) {
+			DockerClientProviderStrategy.getFirstValidStrategy(List.of(new UnixSocketClientProviderStrategy()));
+		}
+		
 		this.container = new org.testcontainers.elasticsearch.ElasticsearchContainer(elasticsearchDockerImage);
 		// XXX elasticsearch-default-memory-vm.options is a classpath resource in the testcontainers-elasticsearch jar since 7.17.4
 		// loading it from the classpath won't work because testcontainers is not ready to handle bundleresource URLs specific to Eclipse OSGi 

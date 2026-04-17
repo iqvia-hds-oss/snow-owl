@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
  */
 public class CapabilityStatementApiTest extends FhirRestTest {
 	
-	@Test
+	@Test(timeout = 15000)
 	public void capabilityStatementTest_4_0() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when()
@@ -54,7 +54,7 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 			.body("rest[0].resource[0]", notNullValue());
 	}
 	
-	@Test
+	@Test(timeout = 15000)
 	public void capabilityStatementTest_5_0_0() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when().get("metadata")
@@ -75,7 +75,7 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 			.body("rest[0].resource[0]", notNullValue());
 	}
 	
-	@Test
+	@Test(timeout = 15000)
 	public void operationDefinitionTest() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when()
@@ -87,7 +87,7 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 			.body("base", equalTo("http://hl7.org/fhir/OperationDefinition/CodeSystem-lookup"));
 	}
 
-	@Test
+	@Test(timeout = 15000)
 	public void nonExistentOperationDefinitionTest() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when()
@@ -99,7 +99,7 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 			.body("issue[0].code", equalTo("not-found"));
 	}
 	
-	@Test
+	@Test(timeout = 15000)
 	public void versions() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when()

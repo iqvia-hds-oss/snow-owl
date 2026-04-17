@@ -4,7 +4,7 @@ Bundle-Name: Test Dependencies
 Bundle-SymbolicName: com.b2international.snowowl.test.dependencies;singleton:=true
 Bundle-Version: 10.0.1.qualifier
 Bundle-Vendor: B2iHealthcare
-Bundle-RequiredExecutionEnvironment: JavaSE-21
+Bundle-RequiredExecutionEnvironment: JavaSE-25
 Bundle-ClassPath: .,
  lib/annotations-17.0.0.jar,
  lib/docker-java-api-3.7.1.jar,
@@ -37,7 +37,7 @@ Require-Bundle: org.junit;bundle-version="4.11.0",
  com.fasterxml.jackson.core.jackson-annotations;bundle-version="2.18.4",
  org.apache.commons.commons-compress;bundle-version="1.26.0",
  org.apache.commons.commons-io;bundle-version="2.18.0",
- org.apache.commons.lang3;bundle-version="3.18.0",
+ org.apache.commons.lang3;bundle-version="3.18.0";visibility:=reexport,
  com.sun.jna;bundle-version="5.18.1",
  com.sun.jna.platform;bundle-version="5.18.1"
 Bundle-ActivationPolicy: lazy

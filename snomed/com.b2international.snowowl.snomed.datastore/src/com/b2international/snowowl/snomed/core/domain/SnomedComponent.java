@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonFormat.Shape;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Strings;
 
 /**
@@ -69,10 +68,21 @@ public abstract class SnomedComponent extends BaseComponent {
 
 	/**
 	 * Returns the component's current status as a boolean value.
+	 * Dev note: this is the intended way to check whether a component is active or not as it reads better then {@link #getActive()}.
 	 *  
 	 * @return {@code true} if the component is active, {@code false} if it is inactive
 	 */
 	public Boolean isActive() {
+		return active;
+	}
+	
+	/**
+	 * Returns the component's current status as a boolean value.
+	 * Dev note: this is the true getter for the boxed active flag, required for systems that rely on true Java Bean semantics.
+	 *  
+	 * @return {@code true} if the component is active, {@code false} if it is inactive
+	 */
+	public Boolean getActive() {
 		return active;
 	}
 
