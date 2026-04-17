@@ -24,62 +24,26 @@ import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toMap;
 
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.b2international.commons.BooleanUtils;
 import com.b2international.commons.StringUtils;
-import com.b2international.snowowl.core.ApplicationContext;
-import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.config.SnowOwlConfiguration;
-import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRF2Folder;
 import com.b2international.snowowl.snomed.core.domain.refset.DataType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multimap;
 
 /** 
  * Utility class collecting commons operations related to SNOMED CT reference sets. 
  */
 public abstract class SnomedRefSetUtil {
-	
-	/**
-	 * @return
-	 * @deprecated - datatype refset id mapping has been moved to the {@link SnomedCoreConfiguration#getConcreteDomainRefSetMap()} method, but eventually in 10.0.0 it will be replaced with resource settings metadata entries to support per codesystem configuration of these values, will be removed in 10.0.0
-	 */
-	public static final BiMap<DataType, String> getConcreteDomainRefSetMap() {
-		return getCoreConfiguration().getConcreteDomainRefSetMap();
-	}
-	
-	/**
-	 * 
-	 * @param context
-	 * @return
-	 * @deprecated - see {@link #getConcreteDomainRefSetMap()} for reasons of deprecation, will be removed in 10.0.0
-	 */
-	public static final BiMap<DataType, String> getConcreteDomainRefSetMap(ServiceProvider context) {
-		return getCoreConfiguration(context).getConcreteDomainRefSetMap();
-	}
-
-	/**
-	 * @return
-	 * @deprecated - see {@link #getConcreteDomainRefSetMap()} for reasons of deprecation, will be removed in 10.0.0
-	 */
-	public static final SnomedCoreConfiguration getCoreConfiguration() {
-		return getCoreConfiguration(ApplicationContext.getServiceForClass(Environment.class));
-	}
-	
-	/**
-	 * 
-	 * @param context
-	 * @return
-	 * @deprecated - see {@link #getConcreteDomainRefSetMap()} for reasons of deprecation, will be removed in 10.0.0
-	 */
-	public static final SnomedCoreConfiguration getCoreConfiguration(ServiceProvider context) {
-		return context.service(SnowOwlConfiguration.class).getModuleConfig(SnomedCoreConfiguration.class);
-	}
 	
 	public static final Multimap<SnomedRF2Folder, SnomedRefSetType> FOLDER_TO_REFSET_TYPE_MAP = ImmutableListMultimap.<SnomedRF2Folder, SnomedRefSetType>builder()
 			.putAll(SnomedRF2Folder.TERMINOLOGY, 
@@ -89,8 +53,7 @@ public abstract class SnomedRefSetUtil {
 						SnomedRefSetType.SIMPLE,
 						SnomedRefSetType.ASSOCIATION,
 						SnomedRefSetType.ATTRIBUTE_VALUE,
-						SnomedRefSetType.QUERY,
-						SnomedRefSetType.CONCRETE_DATA_TYPE)
+						SnomedRefSetType.QUERY)
 			.putAll(SnomedRF2Folder.LANGUAGE, 
 						SnomedRefSetType.LANGUAGE)
 			.putAll(SnomedRF2Folder.MAP, 
@@ -112,37 +75,6 @@ public abstract class SnomedRefSetUtil {
 	public static final Map<SnomedRefSetType, SnomedRF2Folder> REFSET_TYPE_TO_FOLDER_MAP = FOLDER_TO_REFSET_TYPE_MAP.entries().stream()
 			.collect(collectingAndThen(toMap(Entry::getValue, Entry::getKey), ImmutableMap::copyOf));
 
-	/**
-	 * Returns with the identifier concept ID of the concrete domain reference set specified by the data type enumeration.
-	 * <br>May return with {@code null}.
-	 * @param dataType the data type.
-	 * @return the identifier concept ID of the SNOMED&nbsp;CT concrete domain reference set.
-	 * @deprecated - see {@link #getConcreteDomainRefSetMap()} for reasons of deprecation, will be removed in 10.0.0
-	 */
-	public static String getRefSetId(final DataType dataType) {
-		return getConcreteDomainRefSetMap().get(dataType);
-	}
-	
-	/**
-	 * Returns the proper {@link DataType} for the specified reference set id. The mapping is based on the IDs provided by the configuration.
-	 * @param refsetId the id of the concrete domain reference set
-	 * @return the proper datatype for the specified reference set id
-	 * @deprecated - see {@link #getConcreteDomainRefSetMap()} for reasons of deprecation, will be removed in 10.0.0
-	 */
-	public static DataType getDataType(String refsetId) {
-		return getConcreteDomainRefSetMap().inverse().get(refsetId);
-	}
-	
-	/**
-	 * Checks whether the supplied reference set identifier corresponds to a valid concrete domain type reference set.
-	 * @param refSetId the reference set ID to check
-	 * @return {@code true} if the ID matches a concrete domain type reference set, {@code false} otherwise  
-	 * @deprecated - see {@link #getConcreteDomainRefSetMap()} for reasons of deprecation, will be removed in 10.0.0
-	 */
-	public static boolean isConcreteDomain(final String refSetId) {
-		return getConcreteDomainRefSetMap().containsValue(refSetId);
-	}
-	
 	/**
 	 * Returns {@code true} if the specified reference set type is either complex map or extended map type.
 	 * @param type the type to check.
@@ -205,8 +137,6 @@ public abstract class SnomedRefSetUtil {
 				return Concepts.REFSET_COMPLEX_BLOCK_MAP_TYPE;
 			case DESCRIPTION_TYPE:
 				return Concepts.REFSET_DESCRIPTION_TYPE;
-			case CONCRETE_DATA_TYPE:
-				return getCoreConfiguration().getConcreteDomainTypeRefsetIdentifier();
 			case ASSOCIATION:
 				return Concepts.REFSET_ASSOCIATION_TYPE;
 			case MODULE_DEPENDENCY:

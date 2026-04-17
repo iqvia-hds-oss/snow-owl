@@ -16,7 +16,6 @@
 package com.b2international.snowowl.snomed.datastore.index.entry;
 
 import static com.b2international.index.query.Expressions.*;
-import static com.google.common.base.Preconditions.checkArgument;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,7 +26,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.b2international.commons.collections.Collections3;
-import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.index.Doc;
 import com.b2international.index.mapping.Field;
 import com.b2international.index.query.Expression;
@@ -52,7 +50,6 @@ import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Strings;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
 
 /**
  * Lightweight representation of a SNOMED CT reference set member.
@@ -321,14 +318,6 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 			return matchAny(Fields.ACCEPTABILITY_ID, acceptabilityIds);
 		}
 		
-		public static Expression characteristicTypeIds(Collection<String> characteristicTypeIds) {
-			return matchAny(Fields.CHARACTERISTIC_TYPE_ID, characteristicTypeIds);
-		}
-		
-		public static Expression characteristicTypeId(String characteristicTypeId) {
-			return exactMatch(Fields.CHARACTERISTIC_TYPE_ID, characteristicTypeId);
-		}
-		
 		public static Expression correlationIds(Collection<String> correlationIds) {
 			return matchAny(Fields.CORRELATION_ID, correlationIds);
 		}
@@ -367,60 +356,6 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 		
 		public static Expression rangeConstraint(String rangeConstraint) {
 			return exactMatch(Fields.MRCM_RANGE_CONSTRAINT, rangeConstraint);
-		}
-		
-		public static Expression values(DataType type, Collection<? extends Object> values) {
-			switch (type) {
-			case BOOLEAN:
-				if (values.size() > 1) {
-					throw new BadRequestException("Only one boolean filter value (either true or false) is allowed. Got: %s", values);
-				}
-				return match(Fields.BOOLEAN_VALUE, (Boolean) Iterables.getOnlyElement(values));
-			case STRING: 
-				return matchAny(Fields.STRING_VALUE, FluentIterable.from(values).filter(String.class).toSet());
-			case INTEGER:
-				return matchAnyInt(Fields.INTEGER_VALUE, FluentIterable.from(values).filter(Integer.class).toSet());
-			case DECIMAL:
-				return matchAnyDecimal(Fields.DECIMAL_VALUE, FluentIterable.from(values).filter(BigDecimal.class).toSet());
-			default:
-				throw new UnsupportedOperationException("Unsupported data type when filtering by values, " + type);
-			}
-		}
-		
-		public static Expression valueRange(DataType type, final Object lower, final Object upper, boolean includeLower, boolean includeUpper) {
-			switch (type) {
-			case STRING: 
-				return matchRange(Fields.STRING_VALUE, (String) lower, (String) upper, includeLower, includeUpper);
-			case INTEGER:
-				return matchRange(Fields.INTEGER_VALUE, (Integer) lower, (Integer) upper, includeLower, includeUpper);
-			case DECIMAL:
-				return matchRange(Fields.DECIMAL_VALUE, (BigDecimal) lower, (BigDecimal) upper, includeLower, includeUpper);
-			default:
-				throw new UnsupportedOperationException("Unsupported data type when filtering by values, " + type);
-			}
-		}
-		
-		public static Expression dataTypes(Collection<DataType> dataTypes) {
-			return matchAny(Fields.DATA_TYPE, FluentIterable.from(dataTypes)
-					.transform(DataType::name)
-					.toSet());
-		}
-		
-		public static Expression relationshipGroup(int relationshipGroup) {
-			return match(Fields.RELATIONSHIP_GROUP, relationshipGroup);
-		}
-		
-		public static Expression relationshipGroups(Iterable<Integer> relationshipGroups) {
-			return matchAnyInt(Fields.RELATIONSHIP_GROUP, relationshipGroups);
-		}
-		
-		public static Expression relationshipGroup(int relationshipGroupStart, int relationshipGroupEnd) {
-			checkArgument(relationshipGroupStart <= relationshipGroupEnd, "Group end should be greater than or equal to groupStart");
-			if (relationshipGroupStart == relationshipGroupEnd) {
-				return relationshipGroup(relationshipGroupStart);
-			} else {
-				return matchRange(Fields.RELATIONSHIP_GROUP, relationshipGroupStart, relationshipGroupEnd);
-			}
 		}
 		
 		public static Expression typeIds(Collection<String> typeIds) {
@@ -523,10 +458,15 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 		// ATTRIBUTE VALUE
 		private String valueId;
 		// CONCRETE DOMAIN reference set members
+		@Deprecated
 		private DataType dataType;
+		@Deprecated
 		private Object value;
+		@Deprecated
 		private Integer relationshipGroup;
+		@Deprecated
 		private String typeId;
+		@Deprecated
 		private String characteristicTypeId;
 		// DESCRIPTION
 		private Integer descriptionLength;
@@ -677,16 +617,19 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder relationshipGroup(Integer relationshipGroup) {
 			this.relationshipGroup = relationshipGroup;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder typeId(String typeId) {
 			this.typeId = typeId;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder characteristicTypeId(final String characteristicTypeId) {
 			this.characteristicTypeId = characteristicTypeId;
 			return getSelf();
@@ -767,21 +710,25 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder decimalValue(final BigDecimal value) {
 			this.value = value;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder booleanValue(final Boolean value) {
 			this.value = value;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder integerValue(final Integer value) {
 			this.value = value;
 			return getSelf();
 		}
 		
+		@Deprecated
 		public Builder stringValue(final String value) {
 			this.value = value;
 			return getSelf();
@@ -1013,17 +960,29 @@ public final class SnomedRefSetMemberIndexEntry extends SnomedDocument {
 	private String targetComponentId;
 	// ATTRIBUTE VALUE
 	private String valueId;
+	
+	/**
+	 * @deprecated the below fields will be removed in 11.0.0
+	 */
 	// CONCRETE DOMAIN reference set members
+	@Deprecated
 	private DataType dataType;
 	
 	// only one of these value fields should be set when this represents a concrete domain member
+	@Deprecated
 	private String stringValue;
+	@Deprecated
 	private Boolean booleanValue;
+	@Deprecated
 	private Integer integerValue;
+	@Deprecated
 	private BigDecimal decimalValue;
 
+	@Deprecated
 	private Integer relationshipGroup;
+	@Deprecated
 	private String typeId;
+	@Deprecated
 	private String characteristicTypeId;
 	
 	// DESCRIPTION

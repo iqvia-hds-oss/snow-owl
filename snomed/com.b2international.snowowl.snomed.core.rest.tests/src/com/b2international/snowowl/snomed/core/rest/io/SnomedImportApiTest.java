@@ -36,7 +36,6 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.FixMethodOrder;
@@ -796,12 +795,6 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
   		
   	}
   	
-  	@Test
-	public void import41_ConcreteDomainRefSetContentImportError_IfConfigIsMissing() throws Exception {
-  		assertImportDeltaRf2("SnomedCT_Release_CD_20250530_concrete_domain_refset_members.zip")
-  			.body("error.message", CoreMatchers.startsWith("Missing configuration for concrete domain data type refset id"));
-	}
-	
 	private void importDeltaAndValidateBranchHeadTimestampUpdate(IBranchPath branch, String importArchiveFileName,
 			boolean createVersions) {
 		importAndValidateBranchHeadTimestampUpdate(branchPath, importArchiveFileName, createVersions, Rf2ReleaseType.DELTA);

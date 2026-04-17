@@ -40,7 +40,6 @@ import com.b2international.snowowl.snomed.cis.ISnomedIdentifierService;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.*;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
 import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
@@ -626,37 +625,6 @@ public abstract class SnomedRestFixtures {
 			REFERENCED_COMPONENT_CACHE.put(key, referencedComponentId);
 		}
 		return REFERENCED_COMPONENT_CACHE.get(key);
-	}
-
-	public static void createConcreteDomainParentConcept(IBranchPath conceptPath) {
-		SnomedCoreConfiguration snomedConfiguration = getSnomedCoreConfiguration();
-
-		Map<?, ?> parentConceptRequestBody = Json.assign(createConceptRequestBody(Concepts.REFSET_ROOT_CONCEPT))
-				.with("id", snomedConfiguration.getConcreteDomainTypeRefsetIdentifier())
-				.with("commitComment", "Created concrete domain reference set parent concept");
-
-		createComponent(conceptPath, SnomedComponentType.CONCEPT, parentConceptRequestBody).statusCode(201);
-		getComponent(conceptPath, SnomedComponentType.CONCEPT, Concepts.REFSET_CONCRETE_DOMAIN_TYPE).statusCode(200);
-	}
-
-	public static String createConcreteDomainRefSet(IBranchPath refSetPath, DataType dataType) {
-		String refSetId = SnomedRefSetUtil.getRefSetId(dataType);
-
-		Map<?, ?> refSetRequestBody = Json.assign(
-			createConceptRequestBody(Concepts.REFSET_CONCRETE_DOMAIN_TYPE),
-			Json.object(
-				"id", refSetId,
-				"type", SnomedRefSetType.CONCRETE_DATA_TYPE,
-				"referencedComponentType", SnomedConcept.TYPE,
-				"commitComment", "Created new concrete domain reference set"
-			)
-		);
-
-		createComponent(refSetPath, SnomedComponentType.REFSET, refSetRequestBody).statusCode(201);
-		getComponent(refSetPath, SnomedComponentType.CONCEPT, refSetId).statusCode(200);
-		getComponent(refSetPath, SnomedComponentType.REFSET, refSetId).statusCode(200);
-
-		return refSetId;
 	}
 	
 	public static Json getValidProperties(SnomedRefSetType refSetType, String referencedComponentId) {

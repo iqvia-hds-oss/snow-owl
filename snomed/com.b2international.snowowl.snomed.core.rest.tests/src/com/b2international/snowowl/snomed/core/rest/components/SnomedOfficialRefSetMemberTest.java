@@ -43,7 +43,6 @@ public class SnomedOfficialRefSetMemberTest extends SnomedRefSetMemberParameteri
 		return Arrays.asList(new Object[][] {
 			{ 	SnomedRefSetType.ASSOCIATION					}, 
 			{ 	SnomedRefSetType.ATTRIBUTE_VALUE				}, 
-			//  Concrete data type reference sets are tested separately 
 			{ 	SnomedRefSetType.COMPLEX_MAP					},
 			{ 	SnomedRefSetType.DESCRIPTION_TYPE				}, 
 			{ 	SnomedRefSetType.EXTENDED_MAP					},

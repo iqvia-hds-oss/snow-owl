@@ -38,11 +38,6 @@ public enum ComponentCategory {
 	RELATIONSHIP,
 
 	/**
-	 * A scalar value or measurement associated with another component.
-	 */
-	CONCRETE_DOMAIN,
-
-	/**
 	 * A set of unique set members.
 	 */
 	SET,

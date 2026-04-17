@@ -43,11 +43,9 @@ import com.b2international.snowowl.core.jobs.RemoteJob;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.IInternalSctIdMultimap;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.IInternalSctIdSet;
 import com.b2international.snowowl.snomed.datastore.index.taxonomy.IReasonerTaxonomy;
-import com.b2international.snowowl.snomed.reasoner.diff.concretedomain.ConcreteDomainWriter;
 import com.b2international.snowowl.snomed.reasoner.diff.relationship.RelationshipWriter;
 import com.b2international.snowowl.snomed.reasoner.domain.ClassificationStatus;
 import com.b2international.snowowl.snomed.reasoner.index.ClassificationTaskDocument;
-import com.b2international.snowowl.snomed.reasoner.index.ConcreteDomainChangeDocument;
 import com.b2international.snowowl.snomed.reasoner.index.EquivalentConceptSetDocument;
 import com.b2international.snowowl.snomed.reasoner.index.RelationshipChangeDocument;
 import com.google.common.collect.Iterables;
@@ -137,7 +135,6 @@ public final class ClassificationTracker implements IDisposableService {
 
 				writer.bulkDelete(new BulkDelete<>(ClassificationTaskDocument.class, ClassificationTaskDocument.Expressions.ids(deletedIds)));
 				writer.bulkDelete(new BulkDelete<>(EquivalentConceptSetDocument.class, EquivalentConceptSetDocument.Expressions.classificationId(deletedIds)));
-				writer.bulkDelete(new BulkDelete<>(ConcreteDomainChangeDocument.class, ConcreteDomainChangeDocument.Expressions.classificationId(deletedIds)));
 				writer.bulkDelete(new BulkDelete<>(RelationshipChangeDocument.class, RelationshipChangeDocument.Expressions.classificationId(deletedIds)));
 			}
 		}
@@ -250,14 +247,12 @@ public final class ClassificationTracker implements IDisposableService {
 			indexEquivalentConcepts(writer, classificationId, inferredTaxonomy.getEquivalentConcepts());
 
 			final RelationshipWriter relationshipWriter = new RelationshipWriter(classificationId, writer);
-			final ConcreteDomainWriter concreteDomainWriter = new ConcreteDomainWriter(classificationId, writer);
 
-			normalFormGenerator.computeChanges(null, relationshipWriter, concreteDomainWriter);
+			normalFormGenerator.computeChanges(null, relationshipWriter);
 
 			final boolean hasEquivalentConcepts = !inferredTaxonomy.getUnsatisfiableConcepts().isEmpty()
 					|| !inferredTaxonomy.getEquivalentConcepts().isEmpty();
-			final boolean hasInferredChanges = relationshipWriter.hasInferredChanges()
-					|| concreteDomainWriter.hasInferredChanges();
+			final boolean hasInferredChanges = relationshipWriter.hasInferredChanges();
 			final boolean hasRedundantStatedChanges = relationshipWriter.hasRedundantStatedChanges();
 			
 			writer.bulkUpdate(new BulkUpdate<>(ClassificationTaskDocument.class, 

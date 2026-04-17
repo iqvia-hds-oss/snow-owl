@@ -67,11 +67,6 @@ public abstract class AbstractSnomedDsvExportItem implements Serializable {
 				final String componentId = inputStream.readUTF();
 				final String componentLabel = inputStream.readUTF();
 				return new ComponentIdSnomedDsvExportItem(type, componentId, componentLabel);
-			case DATAYPE:
-				final String dataTypeId = inputStream.readUTF();
-				final String dataTypeLabel = inputStream.readUTF();
-				final boolean booleanDatatype = inputStream.readBoolean();
-				return new DatatypeSnomedDsvExportItem(type, dataTypeId, dataTypeLabel, booleanDatatype);
 			default:
 				return new SimpleSnomedDsvExportItem(type);
 		}

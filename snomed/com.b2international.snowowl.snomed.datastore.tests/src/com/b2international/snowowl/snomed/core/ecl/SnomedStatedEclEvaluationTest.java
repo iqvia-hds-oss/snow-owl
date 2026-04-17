@@ -81,7 +81,6 @@ public class SnomedStatedEclEvaluationTest extends BaseRevisionIndexTest {
 	@Before
 	public void setup() {
 		SnomedCoreConfiguration config = new SnomedCoreConfiguration();
-		config.setConcreteDomainSupported(true);
 		
 		RepositoryConfiguration repositoryConfig = new RepositoryConfiguration();
 		IndexConfiguration indexConfiguration = new IndexConfiguration();

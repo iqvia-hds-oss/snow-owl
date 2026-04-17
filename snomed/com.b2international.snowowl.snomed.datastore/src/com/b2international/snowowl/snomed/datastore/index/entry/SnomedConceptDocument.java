@@ -623,7 +623,6 @@ public final class SnomedConceptDocument extends SnomedComponentDocument {
 	public static boolean isStructural(final String refSetId, final SnomedRefSetType type) {
 		switch (type) {
 			case LANGUAGE: //$FALL-THROUGH$
-			case CONCRETE_DATA_TYPE: //$FALL-THROUGH$
 			case ASSOCIATION: //$FALL-THROUGH$
 			case MODULE_DEPENDENCY: //$FALL-THROUGH$
 				return true;

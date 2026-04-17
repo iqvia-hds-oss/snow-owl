@@ -90,7 +90,6 @@ public abstract class BaseSnomedEclEvaluationRequestTest extends BaseRevisionInd
 	@Before
 	public void setup() {
 		SnomedCoreConfiguration config = new SnomedCoreConfiguration();
-		config.setConcreteDomainSupported(true);
 		
 		RepositoryConfiguration repositoryConfig = new RepositoryConfiguration();
 		IndexConfiguration indexConfiguration = new IndexConfiguration();

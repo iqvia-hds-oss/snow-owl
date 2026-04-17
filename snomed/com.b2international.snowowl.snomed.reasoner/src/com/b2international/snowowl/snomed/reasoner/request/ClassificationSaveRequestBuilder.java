@@ -36,7 +36,6 @@ public final class ClassificationSaveRequestBuilder
 	private String namespace = null;
 	private String assignerType = null;
 	private boolean fixEquivalences = true;
-	private boolean handleConcreteDomains = true;
 	
 	ClassificationSaveRequestBuilder() { }
 	
@@ -80,11 +79,6 @@ public final class ClassificationSaveRequestBuilder
 		return getSelf();
 	}
 	
-	public ClassificationSaveRequestBuilder setHandleConcreteDomains(boolean handleConcreteDomains) {
-		this.handleConcreteDomains = handleConcreteDomains;
-		return getSelf();
-	}
-
 	@Override
 	protected Request<RepositoryContext, String> doBuild() {
 		ClassificationSaveRequest request = new ClassificationSaveRequest();
@@ -96,7 +90,6 @@ public final class ClassificationSaveRequestBuilder
 		request.setNamespace(namespace);
 		request.setAssignerType(assignerType);
 		request.setFixEquivalences(fixEquivalences);
-		request.setHandleConcreteDomains(handleConcreteDomains);
 		return request;
 	}
 }

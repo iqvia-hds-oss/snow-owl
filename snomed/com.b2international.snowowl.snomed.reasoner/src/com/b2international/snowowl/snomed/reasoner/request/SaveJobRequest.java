@@ -47,11 +47,8 @@ import com.b2international.snowowl.core.internal.locks.DatastoreLockContextDescr
 import com.b2international.snowowl.core.locks.Locks;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.request.CommitResult;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.*;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
 import com.b2international.snowowl.snomed.datastore.id.assigner.SnomedNamespaceAndModuleAssigner;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.*;
@@ -101,8 +98,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 	
 	private boolean fixEquivalences;
 	
-	private boolean handleConcreteDomains;
-
 	SaveJobRequest() {}
 	
 	void setClassificationId(final String classificationId) {
@@ -135,10 +130,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 	
 	void setFixEquivalences(final boolean fixEquivalences) {
 		this.fixEquivalences = fixEquivalences;
-	}
-	
-	void setHandleConcreteDomains(final boolean handleConcreteDomains) {
-		this.handleConcreteDomains = handleConcreteDomains;
 	}
 	
 	@Override
@@ -230,13 +221,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		final Set<String> conceptIdsToSkip = mergeEquivalentConcepts(context, bulkRequestBuilder, assigner);
 		applyRelationshipChanges(context, bulkRequestBuilder, assigner, conceptIdsToSkip);
 
-		if (handleConcreteDomains) {
-			// CD member support in configuration overrides the flag on the save request
-			final SnomedCoreConfiguration snomedCoreConfiguration = context.service(SnomedCoreConfiguration.class);
-			if (snomedCoreConfiguration.isConcreteDomainSupported()) {
-				applyConcreteDomainChanges(context, bulkRequestBuilder, assigner, conceptIdsToSkip);
-			}
-		}
 	}
 
 	private void applyRelationshipChanges(final BranchContext context, 
@@ -314,88 +298,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 								throw new IllegalStateException(String.format("Unexpected relationship change '%s' found with SCTID '%s'.", 
 										change.getChangeNature(), 
 										change.getRelationship().getOriginId()));
-						}
-					}
-				});
-
-		namespaceAndModuleAssigner.clear();
-	}
-
-	private void applyConcreteDomainChanges(final BranchContext context, 
-			final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
-			final Set<String> conceptIdsToSkip) {
-
-		ClassificationRequests.prepareSearchConcreteDomainChange()
-				.setLimit(context.getPageSize())
-				.setExpand("concreteDomainMember(inferredOnly:true)")
-				.filterByClassificationId(classificationId)
-				.stream(context)
-				.forEach(nextChanges -> {
-					final Set<String> conceptIds = nextChanges.stream()
-							.map(ConcreteDomainChange::getConcreteDomainMember)
-							.map(m -> m.getReferencedComponentId())
-							.collect(Collectors.toSet());
-
-					final Set<String> originMemberIds = nextChanges.stream()
-							.filter(change -> ChangeNature.NEW.equals(change.getChangeNature())
-									|| ChangeNature.UPDATED.equals(change.getChangeNature()))
-							.map(ConcreteDomainChange::getConcreteDomainMember)
-							.map(ReasonerConcreteDomainMember::getOriginMemberId)
-							.filter(id -> id != null)
-							.collect(Collectors.toSet());
-					
-					final Map<String, String> originReferencedComponentIds = SnomedRequests.prepareSearchMember()
-							.setLimit(originMemberIds.size())
-							.filterByIds(originMemberIds)
-							.build()
-							.execute(context)
-							.stream()
-							.collect(Collectors.toMap(
-									m -> m.getId(), // keys: ID of the "origin" CD member
-									m -> m.getReferencedComponent().getId())); // values: referenced component ID of the "origin" CD member
-
-					// Concepts which will be inactivated as part of equivalent concept merging should be excluded
-					conceptIds.removeAll(conceptIdsToSkip);
-					namespaceAndModuleAssigner.collectConcreteDomainModules(conceptIds);
-
-					for (final ConcreteDomainChange change : nextChanges) {
-						final ReasonerConcreteDomainMember referenceSetMember = change.getConcreteDomainMember();
-
-						// CD member changes related to merged concepts should not be applied
-						if (conceptIdsToSkip.contains(referenceSetMember.getReferencedComponentId())) {
-							continue;
-						}
-						
-						switch (change.getChangeNature()) {
-							case NEW: {
-									/*
-									 * Do not "infer" any CD member that is passed down from a concept that was
-									 * already merged by the equivalent concept merging step
-									 */
-									final String originReferencedComponentId = originReferencedComponentIds.get(referenceSetMember.getOriginMemberId());
-									if (!conceptIdsToSkip.contains(originReferencedComponentId)) {
-										addComponent(bulkRequestBuilder, namespaceAndModuleAssigner, referenceSetMember);
-									}
-								}
-								break;
-								
-							case UPDATED: {
-								final String originReferencedComponentId = originReferencedComponentIds.get(referenceSetMember.getOriginMemberId());
-									if (!conceptIdsToSkip.contains(originReferencedComponentId)) {
-										updateComponent(bulkRequestBuilder, namespaceAndModuleAssigner, referenceSetMember);
-									}
-								}
-								break;
-								
-							case REDUNDANT:
-								removeOrDeactivate(bulkRequestBuilder, namespaceAndModuleAssigner, referenceSetMember);
-								break;
-								
-							default:
-								throw new IllegalStateException(String.format("Unexpected CD member change '%s' found with UUID '%s'.", 
-										change.getChangeNature(), 
-										change.getConcreteDomainMember().getOriginMemberId()));
 						}
 					}
 				});
@@ -496,25 +398,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 			}
 		}
 		
-		// CD members are always "outbound", however, so the concept SCTID set can be reduced
-		assigner.clear();
-		assigner.collectConcreteDomainModules(conceptIdsToKeep);
-		
-		for (final SnomedConcept conceptToKeep : equivalentConcepts.keySet()) {
-			for (final SnomedReferenceSetMember member : conceptToKeep.getMembers()) {
-				if (member.getId().startsWith(IEquivalentConceptMerger.PREFIX_NEW)) {
-					member.setId(null);
-					addComponent(bulkRequestBuilder, assigner, member);
-				} else if (member.getId().startsWith(IEquivalentConceptMerger.PREFIX_UPDATED)) { 
-					// Trim the prefix from the ID to restore its original form
-					member.setId(member.getId().substring(IEquivalentConceptMerger.PREFIX_UPDATED.length()));
-					bulkRequestBuilder.add(member.toUpdateRequest());
-				} else if (!member.isActive()) {
-					removeOrDeactivate(bulkRequestBuilder, assigner, member);
-				}
-			}
-		}
-		
 		// Descriptions are also "outbound"
 		assigner.clear();
 		assigner.collectRelationshipModules(conceptIdsToKeep);
@@ -563,7 +446,7 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		
 		final SnomedNamespaceAndModuleAssigner assigner = SnomedNamespaceAndModuleAssigner.create(context, selectedType, moduleId, namespace);
 		
-		LOG.info("Reasoner service will use {} for relationship/concrete domain namespace and module assignment.", assigner);
+		LOG.info("Reasoner service will use {} for relationship namespace and module assignment.", assigner);
 		return assigner;
 	}
 
@@ -614,41 +497,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		} else {
 			request = SnomedRequests
 					.prepareDeleteRelationship(relationshipId)
-					.build();
-		}
-	
-		bulkRequestBuilder.add(request);
-	}
-
-	private void removeOrDeactivate(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final SnomedReferenceSetMember member) {
-		removeOrDeactivateMember(bulkRequestBuilder, namespaceAndModuleAssigner, member.isReleased(), member.getId(), member.getReferencedComponent().getId());
-	}
-
-	private void removeOrDeactivate(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final ReasonerConcreteDomainMember member) {
-		removeOrDeactivateMember(bulkRequestBuilder, namespaceAndModuleAssigner, member.isReleased(), member.getOriginMemberId(), member.getReferencedComponentId());
-	}
-
-	private void removeOrDeactivateMember(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder, 
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final boolean released, final String memberId, String referencedComponentId) {
-		
-		final Request<TransactionContext, Boolean> request;
-		
-		if (released) {
-			request = SnomedRequests
-					.prepareUpdateMember(memberId)
-					.setSource(ImmutableMap.<String, Object>builder()
-						.put(SnomedRf2Headers.FIELD_ACTIVE, false)
-						.put(SnomedRf2Headers.FIELD_MODULE_ID, namespaceAndModuleAssigner.getConcreteDomainModuleId(referencedComponentId))
-						.build())
-					.build();
-		} else {
-			request = SnomedRequests
-					.prepareDeleteMember(memberId)
 					.build();
 		}
 	
@@ -746,63 +594,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 		bulkRequestBuilder.add(createRequest);
 	}
 
-	private void addComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
-			final ReasonerConcreteDomainMember member) {
-	
-		final String referencedComponentId = member.getReferencedComponentId();
-		final String referenceSetId = member.getReferenceSetId();
-		final String typeId = member.getTypeId();
-		final String serializedValue = member.getSerializedValue();
-		final int group = member.getGroup();
-		final String characteristicTypeId = member.getCharacteristicTypeId();
-		
-		addComponent(bulkRequestBuilder, namespaceAndModuleAssigner, 
-				referencedComponentId, referenceSetId, typeId,
-				serializedValue, group, characteristicTypeId);
-	}
-
-	private void addComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
-			final SnomedReferenceSetMember member) {
-		
-		final String referencedComponentId = member.getReferencedComponent().getId();
-		final String referenceSetId = member.getRefsetId();
-		final String typeId = (String) member.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID);
-		final String serializedValue = (String) member.getProperties().get(SnomedRf2Headers.FIELD_VALUE);
-		final int group = (Integer) member.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP);
-		final String characteristicTypeId = (String) member.getProperties().get(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID);
-		
-		addComponent(bulkRequestBuilder, namespaceAndModuleAssigner, 
-				referencedComponentId, referenceSetId, typeId,
-				serializedValue, group, characteristicTypeId);
-	}
-	
-	private void addComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final String referencedComponentId,
-			final String referenceSetId, 
-			final String typeId, 
-			final String serializedValue, 
-			final int group,
-			final String characteristicTypeId) {
-		
-		final String moduleId = namespaceAndModuleAssigner.getConcreteDomainModuleId(referencedComponentId);
-	
-		final SnomedRefSetMemberCreateRequestBuilder createRequest = SnomedRequests.prepareNewMember()
-				.setActive(true)
-				.setModuleId(moduleId)
-				.setReferencedComponentId(referencedComponentId)
-				.setRefsetId(referenceSetId)
-				.setProperties(ImmutableMap.of(
-						SnomedRf2Headers.FIELD_TYPE_ID, typeId,
-						SnomedRf2Headers.FIELD_VALUE, serializedValue,
-						SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, group,
-						SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, characteristicTypeId));
-	
-		bulkRequestBuilder.add(createRequest);
-	}
-
 	private void addComponent(BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
 			SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner, 
 			SnomedDescription description) {
@@ -834,20 +625,6 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 				.setRelationshipGroup(relationship.getGroup());
 		
 		bulkRequestBuilder.add(updateRequest);
-	}
-
-	private void updateComponent(final BulkRequestBuilder<TransactionContext> bulkRequestBuilder,
-			final SnomedNamespaceAndModuleAssigner namespaceAndModuleAssigner,
-			final ReasonerConcreteDomainMember referenceSetMember) {
-		
-		final SnomedRefSetMemberUpdateRequestBuilder updateRequest = SnomedRequests
-				.prepareUpdateMember(referenceSetMember.getOriginMemberId())
-				.setSource(ImmutableMap.<String,Object>of(
-					SnomedRf2Headers.FIELD_VALUE, referenceSetMember.getSerializedValue(),
-					SnomedRf2Headers.FIELD_MODULE_ID, namespaceAndModuleAssigner.getConcreteDomainModuleId(referenceSetMember.getReferencedComponentId())
-				));
-
-		bulkRequestBuilder.add(updateRequest);		
 	}
 
 	@Override

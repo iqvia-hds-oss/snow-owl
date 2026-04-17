@@ -47,10 +47,6 @@ public abstract class ClassificationRequests {
 		return new EquivalentConceptSetSearchRequestBuilder();
 	}
 
-	public static ConcreteDomainChangeSearchRequestBuilder prepareSearchConcreteDomainChange() {
-		return new ConcreteDomainChangeSearchRequestBuilder();
-	}
-
 	public static RelationshipChangeSearchRequestBuilder prepareSearchRelationshipChange() {
 		return new RelationshipChangeSearchRequestBuilder();
 	}

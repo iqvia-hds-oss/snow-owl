@@ -495,13 +495,6 @@ public final class Rf2TransactionContext extends DelegatingTransactionContext {
 				builder = SnomedComponents.newMRCMModuleScopeReferenceSetMember()
 						.withMRCMRuleRefsetId(rf2Component.getPropertyValue(SnomedRf2Headers.FIELD_MRCM_RULE_REFSET_ID));
 				break;
-			case CONCRETE_DATA_TYPE:
-				builder = SnomedComponents.newConcreteDomainReferenceSetMember()
-						.withCharacteristicTypeId(rf2Component.getPropertyValue(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID))
-						.withGroup(Integer.parseInt(rf2Component.getPropertyValue(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP)))
-						.withTypeId(rf2Component.getPropertyValue(SnomedRf2Headers.FIELD_TYPE_ID))
-						.withSerializedValue(rf2Component.getPropertyValue(SnomedRf2Headers.FIELD_VALUE));
-				break;
 			case QUERY:
 				builder = SnomedComponents.newQueryMember()
 						.withQuery(rf2Component.getPropertyValue(SnomedRf2Headers.FIELD_QUERY));

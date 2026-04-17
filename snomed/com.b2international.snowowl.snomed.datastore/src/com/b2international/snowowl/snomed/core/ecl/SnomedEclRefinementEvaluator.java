@@ -33,7 +33,6 @@ import org.eclipse.xtext.util.PolymorphicDispatcher;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.exceptions.BadRequestException;
-import com.b2international.commons.options.Options;
 import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Expressions.ExpressionBuilder;
@@ -46,10 +45,7 @@ import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.tree.Trees;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
@@ -362,76 +358,13 @@ final class SnomedEclRefinementEvaluator {
 			if (refinement.isReversed()) {
 				throw new BadRequestException("Reversed flag is not supported in data type based comparison (string/numeric)");
 			} else {
-				final Promise<Collection<Property>> statementsWithValue = evalStatementsWithValue(context, focusConceptIds, typeConceptFilter, (DataTypeComparison) comparison);
-				final Promise<Collection<Property>> members = evalMembers(context, focusConceptIds, typeConceptFilter, (DataTypeComparison) comparison);
-				return Promise.all(statementsWithValue, members).then(results -> {
-					final Collection<Property> s = (Collection<Property>) results.get(0);
-					final Collection<Property> m = (Collection<Property>) results.get(1);
-					return FluentIterable.concat(s, m).toSet();
-				});
+				return evalStatementsWithValue(context, focusConceptIds, typeConceptFilter, (DataTypeComparison) comparison);
 			}
 		} else {
 			return SnomedEclEvaluationRequest.throwUnsupported(comparison);
 		}
 	}
 		
-	private Promise<Collection<Property>> evalMembers(BranchContext context, Set<String> focusConceptIds, Collection<String> typeIds, DataTypeComparison comparison) {
-		final List<Object> values;
-		final DataType type;
-		if (comparison instanceof BooleanValueComparison) {
-			values = List.of(((BooleanValueComparison) comparison).isValue());
-			type = DataType.BOOLEAN;
-		} else if (comparison instanceof StringValueComparison) {
-			StringValueComparison stringValueComparison = (StringValueComparison) comparison;
-			SearchTerm searchTerm = stringValueComparison.getValue();
-			if (searchTerm instanceof TypedSearchTerm) {
-				values = List.of(SnomedEclEvaluationRequest.extractTerm(((TypedSearchTerm) searchTerm).getClause()));
-			} else if (searchTerm instanceof TypedSearchTermSet) {
-				values = ((TypedSearchTermSet) searchTerm).getClauses().stream().map(SnomedEclEvaluationRequest::extractTerm).collect(Collectors.toList());
-			} else {
-				return SnomedEclEvaluationRequest.throwUnsupported(searchTerm);
-			}
-			type = DataType.STRING;
-		} else if (comparison instanceof IntegerValueComparison) {
-			values = List.of(((IntegerValueComparison) comparison).getValue());
-			type = DataType.INTEGER;
-		} else if (comparison instanceof DecimalValueComparison) {
-			values = List.of(((DecimalValueComparison) comparison).getValue());
-			type = DataType.DECIMAL;
-		} else {
-			return SnomedEclEvaluationRequest.throwUnsupported(comparison);
-		}
-		
-		final SearchResourceRequest.Operator operator = toSearchOperator(comparison.getOp());
-		
-		final Options propFilter = Options.builder()
-				.put(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, getCharacteristicTypes(expressionForm))
-				.put(SnomedRf2Headers.FIELD_TYPE_ID, typeIds)
-				.put(SnomedRefSetMemberIndexEntry.Fields.DATA_TYPE, type)
-				.put(SnomedRf2Headers.FIELD_VALUE, values)
-				.put(SearchResourceRequest.operator(SnomedRf2Headers.FIELD_VALUE), operator)
-				.build();
-
-		// TODO: does this request need to support filtering by group?
-		
-		return SnomedRequests.prepareSearchMember()
-				.filterByActive(true)
-				.filterByRefSetType(SnomedRefSetType.CONCRETE_DATA_TYPE)
-				.filterByReferencedComponent(focusConceptIds)
-				.filterByProps(propFilter)
-				.setEclExpressionForm(expressionForm)
-				.setLimit(context.getPageSize())
-				.<Property>transformAsync(context, req -> req.build(context.path()), members -> members.stream().map(input -> {
-					return new Property(
-							input.getReferencedComponent().getId(), 
-							(String) input.getProperties().get(SnomedRf2Headers.FIELD_TYPE_ID),
-							input.getProperties().get(SnomedRf2Headers.FIELD_VALUE), 
-							(Integer) input.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP)
-						);
-					})
-				);
-	}
-
 	private Promise<Collection<Property>> evalStatementsWithValue(
 		BranchContext context, 
 		Set<String> focusConceptIds, 
@@ -760,7 +693,7 @@ final class SnomedEclRefinementEvaluator {
 	// Helper Throwable class to quickly return from attribute constraint evaluation when all matches are valid
 	private static final class MatchAll extends Throwable {}
 	
-	/*Property data class which can represent both relationships and concrete domain members with all relevant properties required for ECL refinement evaluation*/
+	/*Property data class which can represent relationships with all relevant properties required for ECL refinement evaluation*/
 	static final class Property {
 		
 		private final String objectId;

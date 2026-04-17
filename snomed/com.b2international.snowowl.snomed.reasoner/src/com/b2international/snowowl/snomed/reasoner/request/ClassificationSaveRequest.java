@@ -18,10 +18,6 @@ package com.b2international.snowowl.snomed.reasoner.request;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.validation.constraints.NotNull;
-
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.authorization.AccessControl;
 import com.b2international.snowowl.core.branch.Branch;
@@ -37,6 +33,9 @@ import com.b2international.snowowl.snomed.reasoner.domain.ClassificationTask;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Runs pre-save checks on the given classification task, signals the tracker
@@ -78,8 +77,6 @@ final class ClassificationSaveRequest implements Request<RepositoryContext, Stri
 	
 	private boolean fixEquivalences;
 
-	private boolean handleConcreteDomains;
-
 
 	ClassificationSaveRequest() {}
 	
@@ -113,10 +110,6 @@ final class ClassificationSaveRequest implements Request<RepositoryContext, Stri
 
 	void setFixEquivalences(final boolean fixEquivalences) {
 		this.fixEquivalences = fixEquivalences;
-	}
-
-	void setHandleConcreteDomains(final boolean handleConcreteDomains) {
-		this.handleConcreteDomains = handleConcreteDomains;
 	}
 
 	@Override
@@ -157,7 +150,6 @@ final class ClassificationSaveRequest implements Request<RepositoryContext, Stri
 				.setNamespace(namespace)
 				.setAssignerType(assignerType)
 				.setFixEquivalences(fixEquivalences)
-				.setHandleConcreteDomains(handleConcreteDomains)
 				.build(branchPath);
 
 		return JobRequests.prepareSchedule()

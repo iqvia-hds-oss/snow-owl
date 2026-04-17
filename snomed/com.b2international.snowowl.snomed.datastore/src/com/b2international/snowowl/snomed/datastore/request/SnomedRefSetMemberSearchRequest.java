@@ -25,7 +25,6 @@ import java.util.SortedMap;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.IllegalQueryParameterException;
-import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.commons.options.Options;
 import com.b2international.index.Hits;
 import com.b2international.index.query.Expression;
@@ -35,7 +34,6 @@ import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.repository.RevisionDocument;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
-import com.b2international.snowowl.snomed.core.domain.refset.DataType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMembers;
 import com.b2international.snowowl.snomed.datastore.SnomedRefSetUtil;
@@ -65,7 +63,6 @@ public final class SnomedRefSetMemberSearchRequest extends SnomedSearchRequest<S
 			// String types, ECL support
 			.put(SnomedRf2Headers.FIELD_REFERENCED_COMPONENT_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::referencedComponentIds, true))
 			.put(SnomedRf2Headers.FIELD_ACCEPTABILITY_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::acceptabilityIds, true))
-			.put(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::characteristicTypeIds, true))
 			.put(SnomedRf2Headers.FIELD_CORRELATION_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::correlationIds, true))
 			.put(SnomedRf2Headers.FIELD_DESCRIPTION_FORMAT, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::descriptionFormats, true))
 			.put(SnomedRf2Headers.FIELD_MAP_CATEGORY_ID, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::mapCategoryIds, true))
@@ -90,7 +87,6 @@ public final class SnomedRefSetMemberSearchRequest extends SnomedSearchRequest<S
 			.put(SnomedRf2Headers.FIELD_OWL_EXPRESSION, new SnomedRefsetMemberFieldQueryHandler<>(String.class, SnomedRefSetMemberIndexEntry.Expressions::owlExpressions, false))
 			
 			// Integer types
-			.put(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::relationshipGroups, false))
 			.put(SnomedRf2Headers.FIELD_MAP_GROUP, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::mapGroups, false))
 			.put(SnomedRf2Headers.FIELD_MAP_PRIORITY, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::mapPriority, false))
 			.put(SnomedRf2Headers.FIELD_MAP_BLOCK, new SnomedRefsetMemberFieldQueryHandler<>(Integer.class, SnomedRefSetMemberIndexEntry.Expressions::mapBlock, false))
@@ -213,51 +209,6 @@ public final class SnomedRefSetMemberSearchRequest extends SnomedSearchRequest<S
 				if (propKeys.remove(refsetFieldName)) {
 					SnomedRefsetMemberFieldQueryHandler<?> handler = SUPPORTED_MEMBER_FIELDS.get(refsetFieldName);
 					handler.prepareQuery(queryBuilder, op, propsFilter.getCollection(refsetFieldName, (Class) handler.getFieldType()), values -> evaluateEclFilter(context, values));
-				}
-			}
-			
-			// special concrete domain refset member handling, both data type and value
-			final Collection<DataType> dataTypes = propsFilter.getCollection(SnomedRefSetMemberIndexEntry.Fields.DATA_TYPE, DataType.class);
-			if (propKeys.remove(SnomedRefSetMemberIndexEntry.Fields.DATA_TYPE)) {
-				queryBuilder.filter(dataTypes(dataTypes));
-			}
-			if (propKeys.remove(SnomedRf2Headers.FIELD_VALUE)) {
-				if (dataTypes.size() != 1)  {
-					throw new BadRequestException("DataType filter must be specified if filtering by value");
-				}
-				final DataType dataType = Iterables.getOnlyElement(dataTypes);
-				final String operatorKey = SearchResourceRequest.operator(SnomedRf2Headers.FIELD_VALUE);
-				SearchResourceRequest.Operator op;
-				if (propKeys.remove(operatorKey)) {
-					op = propsFilter.get(operatorKey, Operator.class);
-				} else {
-					op = SearchResourceRequest.Operator.EQUALS;
-				}
-				final Collection<Object> attributeValues = propsFilter.getCollection(SnomedRf2Headers.FIELD_VALUE, Object.class);
-				switch (op) {
-				case EQUALS:
-					queryBuilder.filter(values(dataType, attributeValues));
-					break;
-				case NOT_EQUALS:
-					queryBuilder.mustNot(values(dataType, attributeValues));
-					break;
-				case LESS_THAN:
-					checkRangeValue(attributeValues);
-					queryBuilder.filter(valueRange(dataType, null, Iterables.getOnlyElement(attributeValues), false, false));
-					break;
-				case LESS_THAN_EQUALS:
-					checkRangeValue(attributeValues);
-					queryBuilder.filter(valueRange(dataType, null, Iterables.getOnlyElement(attributeValues), false, true));
-					break;
-				case GREATER_THAN:
-					checkRangeValue(attributeValues);
-					queryBuilder.filter(valueRange(dataType, Iterables.getOnlyElement(attributeValues), null, false, false));
-					break;
-				case GREATER_THAN_EQUALS:
-					checkRangeValue(attributeValues);
-					queryBuilder.filter(valueRange(dataType, Iterables.getOnlyElement(attributeValues), null, true, false));
-					break;
-				default: throw new NotImplementedException("Unsupported concrete domain value operator %s", op);
 				}
 			}
 			

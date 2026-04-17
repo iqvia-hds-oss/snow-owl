@@ -21,9 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
-import com.b2international.commons.options.Options;
 import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.snomed.ecl.Ecl;
@@ -33,16 +31,11 @@ import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.ecl.EclSerializer;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.repository.RevisionDocument;
-import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.ecl.EclEvaluationRequest;
 import com.b2international.snowowl.eventbus.IEventBus;
-import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcepts;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
-import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.core.tree.Trees;
-import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
@@ -50,6 +43,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+
+import jakarta.validation.constraints.NotNull;
 
 /**
  * @since 5.4
@@ -183,34 +178,6 @@ public final class EclExpression {
 					return ImmutableSetMultimap.copyOf(groupsByRelationshipId);
 				}));
 		
-		// search concrete domain members
-		if (context.service(SnomedCoreConfiguration.class).isConcreteDomainSupported()) {
-			final Options propFilter = Options.builder()
-					.put(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, characteristicTypes)
-					// any group that is not in zero group
-					.put(SearchResourceRequest.operator(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP), SearchResourceRequest.Operator.NOT_EQUALS)
-					.put(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, 0)
-					.build();
-			
-			promises.add(
-				SnomedRequests.prepareSearchMember()
-					.all()
-					.filterByActive(true)
-					.filterByReferencedComponent(sourceIds)
-					.filterByRefSetType(SnomedRefSetType.CONCRETE_DATA_TYPE)
-					.filterByProps(propFilter)
-					.setEclExpressionForm(expressionForm)
-					.build(context.service(ResourceURI.class))
-					.execute(context.service(IEventBus.class))
-					.then(members -> {
-						final Multimap<String, SnomedReferenceSetMember> relationshipsBySource = Multimaps.index(members, m -> m.getReferencedComponent().getId());
-						return Multimaps.transformValues(relationshipsBySource, m -> (Integer) m.getProperties().get(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP));
-					})
-			);
-		} else {
-			promises.add(Promise.immediate(ImmutableSetMultimap.of()));
-		}
-		
 		// search owl axiom members
 		if (isStated()) {
 			ImmutableSetMultimap.Builder<String, Integer> groupedAxioms = ImmutableSetMultimap.builder();
@@ -223,11 +190,9 @@ public final class EclExpression {
 		
 		return Promise.all(promises).then(statements -> {
 			Multimap<String, Integer> relationshipStatements = (Multimap<String, Integer>) statements.get(0);
-			Multimap<String, Integer> concreteDomainStatements = (Multimap<String, Integer>) statements.get(1);
-			Multimap<String, Integer> axiomStatements = (Multimap<String, Integer>) statements.get(2);
+			Multimap<String, Integer> axiomStatements = (Multimap<String, Integer>) statements.get(1);
 			return ImmutableSetMultimap.<String, Integer>builder()
 					.putAll(relationshipStatements)
-					.putAll(concreteDomainStatements)
 					.putAll(axiomStatements)
 					.build();
 		});

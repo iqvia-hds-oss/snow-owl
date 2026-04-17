@@ -17,7 +17,6 @@ package com.b2international.snowowl.snomed.reasoner.classification;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
-import com.b2international.snowowl.snomed.datastore.ConcreteDomainFragment;
 import com.b2international.snowowl.snomed.datastore.StatementFragment;
 import com.b2international.snowowl.snomed.reasoner.diff.OntologyChangeProcessor;
 
@@ -26,7 +25,5 @@ import com.b2international.snowowl.snomed.reasoner.diff.OntologyChangeProcessor;
  */
 public interface INormalFormGenerator {
 
-	void computeChanges(IProgressMonitor monitor, 
-			OntologyChangeProcessor<StatementFragment> statementProcessor,
-			OntologyChangeProcessor<ConcreteDomainFragment> concreteDomainProcessor);
+	void computeChanges(IProgressMonitor monitor, OntologyChangeProcessor<StatementFragment> statementProcessor);
 }

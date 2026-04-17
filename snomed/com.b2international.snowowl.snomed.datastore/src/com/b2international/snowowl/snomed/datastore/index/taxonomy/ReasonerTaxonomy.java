@@ -23,7 +23,6 @@ import java.util.Set;
 import com.b2international.collections.longs.LongKeyMap;
 import com.b2international.collections.longs.LongList;
 import com.b2international.collections.longs.LongSet;
-import com.b2international.snowowl.snomed.datastore.ConcreteDomainFragment;
 import com.b2international.snowowl.snomed.datastore.StatementFragment;
 
 /**
@@ -51,10 +50,6 @@ public final class ReasonerTaxonomy implements IReasonerTaxonomy {
 	private final LongSet neverGroupedTypeIds;
 	private final Set<PropertyChain> propertyChains;
 	
-	private final InternalIdMultimap<ConcreteDomainFragment> statedConcreteDomainMembers;
-	private final InternalIdMultimap<ConcreteDomainFragment> inferredConcreteDomainMembers;
-	private final InternalIdMultimap<ConcreteDomainFragment> additionalGroupedConcreteDomainMembers;
-
 	private final InternalIdEdges inferredAncestors;
 	private final InternalSctIdSet unsatisfiableConcepts;
 	private final InternalSctIdMultimap equivalentConcepts;
@@ -79,10 +74,6 @@ public final class ReasonerTaxonomy implements IReasonerTaxonomy {
 			final LongSet neverGroupedTypeIds,
 			final Set<PropertyChain> propertyChains, 
 			
-			final InternalIdMultimap<ConcreteDomainFragment> statedConcreteDomainMembers,
-			final InternalIdMultimap<ConcreteDomainFragment> inferredConcreteDomainMembers,
-			final InternalIdMultimap<ConcreteDomainFragment> additionalGroupedConcreteDomainMembers, 
-			
 			final InternalIdEdges inferredAncestors,
 			final InternalSctIdSet unsatisfiableConcepts,
 			final InternalSctIdMultimap equivalentConcepts, 
@@ -105,10 +96,6 @@ public final class ReasonerTaxonomy implements IReasonerTaxonomy {
 		this.axioms = axioms;
 		this.neverGroupedTypeIds = neverGroupedTypeIds;
 		this.propertyChains = propertyChains;
-		
-		this.statedConcreteDomainMembers = statedConcreteDomainMembers;
-		this.inferredConcreteDomainMembers = inferredConcreteDomainMembers;
-		this.additionalGroupedConcreteDomainMembers = additionalGroupedConcreteDomainMembers;
 		
 		this.inferredAncestors = inferredAncestors;
 		this.unsatisfiableConcepts = unsatisfiableConcepts;
@@ -182,18 +169,6 @@ public final class ReasonerTaxonomy implements IReasonerTaxonomy {
 		return propertyChains;
 	}
 
-	public InternalIdMultimap<ConcreteDomainFragment> getStatedConcreteDomainMembers() {
-		return statedConcreteDomainMembers;
-	}
-	
-	public InternalIdMultimap<ConcreteDomainFragment> getInferredConcreteDomainMembers() {
-		return inferredConcreteDomainMembers;
-	}
-	
-	public InternalIdMultimap<ConcreteDomainFragment> getAdditionalGroupedConcreteDomainMembers() {
-		return additionalGroupedConcreteDomainMembers;
-	}
-	
 	public LongList getIterationOrder() {
 		return iterationOrder;
 	}
@@ -230,10 +205,6 @@ public final class ReasonerTaxonomy implements IReasonerTaxonomy {
 				axioms,
 				neverGroupedTypeIds,
 				propertyChains,
-				
-				statedConcreteDomainMembers, 
-				inferredConcreteDomainMembers,
-				additionalGroupedConcreteDomainMembers,
 				
 				newInferredAncestors, 
 				newUnsatisfiableConcepts,

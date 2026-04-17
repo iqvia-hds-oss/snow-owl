@@ -53,12 +53,6 @@ public final class SnomedReferenceSetMemberRestSearch extends SnomedRestSearch {
 	@Parameter(description = "The description format identifier(s) to match in case of description format refset members")
 	private List<String> descriptionFormat;
 	
-	@Parameter(description = "The characteristic type identifier(s) to match in case of concrete domain refset members")
-	private List<String> characteristicTypeId;
-	
-	@Parameter(description = "The attribute type identifier(s) to match in case of concrete domain refset members")
-	private List<String> typeId;
-	
 	@Parameter(description = "The map category identifier(s) to match in case of extended refset members")
 	private List<String> mapCategoryId;
 	
@@ -73,9 +67,6 @@ public final class SnomedReferenceSetMemberRestSearch extends SnomedRestSearch {
 	
 	@Parameter(description = "The rule refset identifier(s) to match in case of mrcm module scope refset members")
 	private List<String> mrcmRuleRefSetId;
-	
-	@Parameter(description = "The relationship group value(s) to match in case of concrete domain refset members")
-	private List<String> relationshipGroup;
 	
 	@Parameter(description = "The map target value(s) to match in case of mapping refset members")
 	private List<String> mapTarget;
@@ -142,22 +133,6 @@ public final class SnomedReferenceSetMemberRestSearch extends SnomedRestSearch {
 		this.descriptionFormat = descriptionFormat;
 	}
 
-	public List<String> getCharacteristicTypeId() {
-		return characteristicTypeId;
-	}
-
-	public void setCharacteristicTypeId(List<String> characteristicTypeId) {
-		this.characteristicTypeId = characteristicTypeId;
-	}
-
-	public List<String> getTypeId() {
-		return typeId;
-	}
-
-	public void setTypeId(List<String> typeId) {
-		this.typeId = typeId;
-	}
-
 	public List<String> getMapCategoryId() {
 		return mapCategoryId;
 	}
@@ -196,14 +171,6 @@ public final class SnomedReferenceSetMemberRestSearch extends SnomedRestSearch {
 
 	public void setMrcmRuleRefSetId(List<String> mrcmRuleRefSetId) {
 		this.mrcmRuleRefSetId = mrcmRuleRefSetId;
-	}
-
-	public List<String> getRelationshipGroup() {
-		return relationshipGroup;
-	}
-
-	public void setRelationshipGroup(List<String> relationshipGroup) {
-		this.relationshipGroup = relationshipGroup;
 	}
 
 	public List<String> getMapTarget() {
@@ -248,12 +215,6 @@ public final class SnomedReferenceSetMemberRestSearch extends SnomedRestSearch {
 		if (!CompareUtils.isEmpty(getDescriptionFormat())) {
 			propFilter.put(SnomedRf2Headers.FIELD_DESCRIPTION_FORMAT, getDescriptionFormat());
 		}
-		if (!CompareUtils.isEmpty(getCharacteristicTypeId())) {
-			propFilter.put(SnomedRf2Headers.FIELD_CHARACTERISTIC_TYPE_ID, getCharacteristicTypeId());
-		}
-		if (!CompareUtils.isEmpty(getTypeId())) {
-			propFilter.put(SnomedRf2Headers.FIELD_TYPE_ID, getTypeId());
-		}
 		if (!CompareUtils.isEmpty(getMapCategoryId())) {
 			propFilter.put(SnomedRf2Headers.FIELD_MAP_CATEGORY_ID, getMapCategoryId());
 		}
@@ -265,9 +226,6 @@ public final class SnomedReferenceSetMemberRestSearch extends SnomedRestSearch {
 		}
 		if (!CompareUtils.isEmpty(getRuleStrengthId())) {
 			propFilter.put(SnomedRf2Headers.FIELD_MRCM_RULE_STRENGTH_ID, getRuleStrengthId());
-		}
-		if (!CompareUtils.isEmpty(getRelationshipGroup())) {
-			propFilter.put(SnomedRf2Headers.FIELD_RELATIONSHIP_GROUP, getRelationshipGroup());
 		}
 		if (!CompareUtils.isEmpty(getMapTarget())) {
 			propFilter.put(SnomedRf2Headers.FIELD_MAP_TARGET, getMapTarget());

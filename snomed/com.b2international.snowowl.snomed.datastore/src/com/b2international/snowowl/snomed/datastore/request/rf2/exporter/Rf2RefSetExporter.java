@@ -120,8 +120,6 @@ public class Rf2RefSetExporter extends Rf2Exporter<SnomedRefSetMemberSearchReque
 
 	private String getCombinedRefSetName() {
 		switch (refSetType) {
-			case CONCRETE_DATA_TYPE:
-				return "ConcreteDomainReferenceSet";
 			case OWL_AXIOM: //$FALL-THROUGH$
 			case OWL_ONTOLOGY:
 				return "OWLExpression";
@@ -276,8 +274,6 @@ public class Rf2RefSetExporter extends Rf2Exporter<SnomedRefSetMemberSearchReque
 				return "c";
 			case ASSOCIATION:
 				return "c";
-			case CONCRETE_DATA_TYPE: 
-				return "sicc";
 			case QUERY: 
 				return "s";
 			case DESCRIPTION_TYPE: 
@@ -322,8 +318,6 @@ public class Rf2RefSetExporter extends Rf2Exporter<SnomedRefSetMemberSearchReque
 			return SnomedRf2Headers.LANGUAGE_TYPE_HEADER;
 		case ASSOCIATION:
 			return SnomedRf2Headers.ASSOCIATION_TYPE_HEADER;
-		case CONCRETE_DATA_TYPE:
-			return SnomedRf2Headers.CONCRETE_DATA_TYPE_HEADER;
 		case QUERY:
 			return SnomedRf2Headers.QUERY_TYPE_HEADER;
 		case DESCRIPTION_TYPE: 
