@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,5 +39,13 @@ public class FhirResourceUpdateResult {
 	
 	public String getId() {
 		return id;
+	}
+
+	public static FhirResourceUpdateResult created(String resourceId) {
+		return new FhirResourceUpdateResult(Action.CREATED, resourceId);
+	}
+	
+	public static FhirResourceUpdateResult updated(String resourceId) {
+		return new FhirResourceUpdateResult(Action.UPDATED, resourceId);
 	}
 }
