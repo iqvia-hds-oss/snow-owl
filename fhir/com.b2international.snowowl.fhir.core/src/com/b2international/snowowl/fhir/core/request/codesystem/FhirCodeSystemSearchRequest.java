@@ -90,8 +90,12 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		}
 
 		/*
-		 * TODO: When encountering the SNOMED CT base URL, add a filter that replaces it
-		 * with the "definitive" SNOMED CT resource URL instead. 
+		 * TODO: When encountering the SNOMED CT base URL without a specific version filter, 
+		 * add a filter that replaces it with the "definitive" SNOMED CT resource URL instead. 
+		 * 
+		 * This is currently the HEAD of the International Edition to match the behavior of
+		 * FhirValueSetExpandRequest#expandImplicitValueSet(ServiceProvider, String) but is 
+		 * subject to change in the future, see SO-6575.
 		 * 
 		 * The flag should be stored on the resource document but it is OK to have it 
 		 * snapshotted when a version is created. Querying the "definitive" version should 
@@ -110,12 +114,10 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		 *   
 		 * - Users can't set a past version as "definitive", only LATEST versions
 		 */
-		if (hasBaseSnomedUri) {
-			urls.add(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008");
-		}
-		
 		if (!urls.isEmpty()) {
 			query.filter(ResourceDocument.Expressions.urls(urls));
+		} else if (hasBaseSnomedUri) {
+			query.filter(ResourceDocument.Expressions.url(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
 		} else {
 			query.filter(Expressions.matchNone());
 		}
