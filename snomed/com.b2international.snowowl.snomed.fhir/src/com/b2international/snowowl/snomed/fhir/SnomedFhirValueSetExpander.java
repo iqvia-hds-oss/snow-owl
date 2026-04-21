@@ -100,16 +100,17 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 
 		expansion.addExtension(FhirValueSetExpander.EXTENSION_AFTER_PROPERTY_URL, new StringType(concepts.getSearchAfter()));
 		
-		final String baseUrl = valueSet.getUserString("baseUrl");
+		final String version = valueSet.getUserString("version");
 		
 		for (Concept concept : concepts) {
 			var contains = new ValueSet.ValueSetExpansionContainsComponent()
 				.setCode(concept.getId())
-				.setSystem(baseUrl)
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(version)
 				.setDisplay(concept.getTerm());
 			
 			if (parameters.getIncludeDesignations() != null && parameters.getIncludeDesignations().getValue()) {
-				includeDesignations(baseUrl, concept, contains);
+				includeDesignations(version, concept, contains);
 			}
 			
 			expansion.addContains(contains);
@@ -118,7 +119,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 		return valueSet.setExpansion(expansion);
 	}
 
-	private void includeDesignations(final String baseUrl, Concept concept, ValueSetExpansionContainsComponent contains) {
+	private void includeDesignations(final String version, Concept concept, ValueSetExpansionContainsComponent contains) {
 		/*
 		 * XXX: We create multiple tooling-independent representations in the general
 		 * concept representation, these need to be collapsed back into a single
@@ -145,7 +146,8 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 
 			// Extract information about the description type here because it is used both in "designation-use-context" and the converted designation
 			final Coding typeCoding = new Coding()
-				.setSystem(baseUrl)
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(version)
 				.setCode(snomedDescription.getTypeId())
 				.setDisplay(SnomedDisplayTermType.PT.getLabel(snomedDescription.getType()));
 
@@ -153,16 +155,16 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 
 				// Extension "context" encodes the language reference set ID
 				final Coding contextCoding = new Coding()
-					// FIXME: "system" may need to be set to the code system's URL we are calling from
-					.setSystem(baseUrl)
+					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+					.setVersion(version)
 					.setCode(languageRefsetId);
 				
 				// Extension "role" encodes the acceptability ID for the language reference set
 				final Acceptability acceptability = acceptabilityMap.get(languageRefsetId);
 				
 				final Coding roleCoding = new Coding()
-					// FIXME: "system" may need to be set to the code system's URL we are calling from
-					.setSystem(baseUrl)
+					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+					.setVersion(version)
 					.setCode(acceptability.getConceptId())
 					.setDisplay(acceptability.getLabel());
 				

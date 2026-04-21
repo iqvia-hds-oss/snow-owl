@@ -36,7 +36,6 @@ import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
@@ -100,29 +99,35 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 			return null;
 		}
 		
+		// restrict to only SNOMED CT for now, re-enable if clients relied on implicit value set expansion for other code systems
+		if (!FhirModelHelpers.isSnomedUri(urlValue)) {
+			return null;
+		}
+		
 		// extract the non-query part from the URL value
-		String baseUrl = urlValue.split("\\?")[0];
+		String version = urlValue.split("\\?")[0];
 		String query = "";
 		if (urlValue.contains("?")) {
 			query = urlValue.split("\\?")[1];
 		}
 		
-		// if this is the base URI string, then always append the core module to represent the International Edition properly
-		if ("http://snomed.info/sct".equals(baseUrl)) {
-			baseUrl = baseUrl.concat("/900000000000207008");
+		// if this is the SNOMED CT base URI string then append the core module to represent the International Edition
+		if (FhirModelHelpers.SNOMED_BASE_URI_STRING.equals(version)) {
+			version = version.concat("/900000000000207008");
 		}
 		
 		// try to lookup the CodeSystem using the baseUrl
 		CodeSystem codeSystem = FhirRequests.codeSystems().prepareSearch()
-				.one()
-				.filterByUrl(baseUrl)
-				.buildAsync()
-				.execute(context)
-				.getEntry().stream().findFirst()
-				.map(Bundle.BundleEntryComponent.class::cast)
-				.map(Bundle.BundleEntryComponent::getResource)
-				.map(CodeSystem.class::cast)
-				.orElse(null);
+			.one()
+			.filterByUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.filterByVersion(version)
+			.buildAsync()
+			.execute(context)
+			.getEntry().stream().findFirst()
+			.map(Bundle.BundleEntryComponent.class::cast)
+			.map(Bundle.BundleEntryComponent::getResource)
+			.map(CodeSystem.class::cast)
+			.orElse(null);
 		
 		// if no CodeSystem stored to use as Value Set source, return NotFound response
 		if (codeSystem == null) {
@@ -130,7 +135,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 		}
 		
 		// return the content of the CodeSystem as Value Set
-		String id = Hashing.goodFastHash(8).hashString(urlValue, Charsets.UTF_8).toString();
+		String id = Hashing.goodFastHash(8).hashString(urlValue, StandardCharsets.UTF_8).toString();
 		ValueSet valueSet = (ValueSet) new ValueSet()
 			.setUrl(urlValue)
 			// according to https://terminology.hl7.org/SNOMEDCT.html#snomed-ct-implicit-value-sets publication status is always ACTIVE
@@ -140,7 +145,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 		// XXX: Use the code system's tooling ID as the expand service selector
 		valueSet.setUserData(TerminologyResource.Fields.TOOLING_ID, codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID));
 		valueSet.setUserData("codeSystemUri", FhirModelHelpers.resourceUriFrom(codeSystem));
-		valueSet.setUserData("baseUrl", baseUrl);
+		valueSet.setUserData("version", version);
 		
 		ValueSet.ValueSetComposeComponent compose = null;
 		
@@ -166,15 +171,13 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 				
 				// configure compose for ECL
 				compose = new ValueSet.ValueSetComposeComponent();
-				compose.addInclude(
-					new ValueSet.ConceptSetComponent()
-						.addFilter(
-							new ValueSet.ConceptSetFilterComponent()
-								.setProperty("constraint")
-								.setOp(FilterOperator.EQUAL)
-								.setValue(ecl)
-						)
-				);
+				compose.addInclude()
+					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+					.addFilter()
+						.setProperty("constraint")
+						.setOp(FilterOperator.EQUAL)
+						.setValue(ecl);
+
 			} else if (fhirVsValue.startsWith("isa/")) {
 				String parent = fhirVsValue.replace("isa/", "");
 				
@@ -182,18 +185,16 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 				valueSet
 					.setName(String.format("%s Concept %s and descendants", codeSystem.getName(), parent))
 					.setDescription(String.format("All SNOMED CT concepts for %s", parent));
+			
 				// configure compose for IS A
 				compose = new ValueSet.ValueSetComposeComponent();
-				compose.addInclude(
-					new ValueSet.ConceptSetComponent()
-						.setSystem(baseUrl)
-						.addFilter(
-							new ValueSet.ConceptSetFilterComponent()
-								.setProperty("constraint")
-								.setOp(FilterOperator.ISA)
-								.setValue(parent)
-						)
-				);
+				compose.addInclude()
+					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+					.addFilter()
+						.setProperty("constraint")
+						.setOp(FilterOperator.ISA)
+						.setValue(parent);
+
 			} else if (fhirVsValue.startsWith("refset/")) {
 				String refsetId = fhirVsValue.replace("refset/", "");
 				if (Strings.isNullOrEmpty(refsetId)) {
@@ -204,18 +205,15 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 					valueSet
 						.setName(String.format("%s Reference Set %s", codeSystem.getName(), refsetId))
 						.setDescription(String.format("All SNOMED CT concepts in the reference set %s", refsetId));
+					
 					// configure compose for REFSET
 					compose = new ValueSet.ValueSetComposeComponent();
-					compose.addInclude(
-						new ValueSet.ConceptSetComponent()
-							.setSystem(baseUrl)
-							.addFilter(
-								new ValueSet.ConceptSetFilterComponent()
-									.setProperty("concept")
-									.setOp(FilterOperator.IN)
-									.setValue(refsetId)
-							)
-					);
+					compose.addInclude()
+						.setSystem(version)
+						.addFilter()
+							.setProperty("concept")
+							.setOp(FilterOperator.IN)
+							.setValue(refsetId);
 				}
 			} else {
 				// no support for this unknown filter, return 404
