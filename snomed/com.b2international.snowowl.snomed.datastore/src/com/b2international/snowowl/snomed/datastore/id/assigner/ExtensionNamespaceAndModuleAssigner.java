@@ -17,20 +17,17 @@ package com.b2international.snowowl.snomed.datastore.id.assigner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import com.b2international.collections.PrimitiveMaps;
 import com.b2international.collections.longs.LongKeyLongMap;
-import com.b2international.snowowl.core.branch.Branch;
-import com.b2international.snowowl.core.codesystem.CodeSystem;
-import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.Resource;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedComponentDocument;
@@ -74,35 +71,14 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 		initExtensionParentModules();
 	}
 	
-	@SuppressWarnings({ "unchecked", "deprecation" })
+	@SuppressWarnings({ "unchecked" })
 	private void initExtensionParentModules() {
-		final String path = context.path();
-		final Map<String, CodeSystem> snomedCodeSystems = CodeSystemRequests.prepareSearchCodeSystem()
-			.all()
-			.filterByToolingId(SnomedTerminologyComponentConstants.TOOLING_ID)
-			.buildAsync()
-			.get(context)
-			.stream()
-			/*
-			 * The current branch should be either a working branch, or a descendant of the
-			 * code system's working branch.
-			 */
-			.filter(cs -> path.equals(cs.getBranchPath()) || path.startsWith(cs.getBranchPath() + Branch.SEPARATOR))
-			.collect(Collectors.toMap(CodeSystem::getId, Function.identity()));
-		
-		final Optional<CodeSystem> currentCodeSystem = snomedCodeSystems.values()
-			.stream()
-			// Longest matching working branch path (or prefix) wins
-			.max(Comparator.comparing(cs -> cs.getBranchPath().length()));
-
 		// Collect module IDs based on code system metadata
-		if (!currentCodeSystem.isEmpty()) {
-			final Collection<String> moduleIds = (Collection<String>) currentCodeSystem.get()
-				.getSettings()
-				.getOrDefault(Settings.MODULE_IDS, List.of());
-			
-			extensionModuleIds.addAll(moduleIds);
-		}
+		final Collection<String> moduleIds = (Collection<String>) context.service(Resource.class)
+			.getSettings()
+			.getOrDefault(Settings.MODULE_IDS, List.of());
+		
+		extensionModuleIds.addAll(moduleIds);
 	}
 
 	@Override
