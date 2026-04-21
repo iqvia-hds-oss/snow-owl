@@ -61,6 +61,7 @@ public final class R5ObjectFields {
 		// XXX do we need usageContexts???
 		// XXX do we need jurisdictions???
 		public static final String PURPOSE = "purpose";
+		public static final String COPYRIGHT = "copyright";
 		
 		public static final Set<String> MANDATORY = ImmutableSet.<String>builder()
 				.addAll(Resource.MANDATORY)
@@ -71,7 +72,7 @@ public final class R5ObjectFields {
 				.addAll(Resource.SUMMARY)
 				.add(URL, VERSION, NAME, TITLE, DATE, PUBLISHER, CONTACT)
 				.build();
-		
+
 	}
 	
 	public static final class CodeSystem extends MetadataResource {
@@ -86,7 +87,6 @@ public final class R5ObjectFields {
 		// XXX do we need versionNeeded???
 		// XXX do we need supplements???
 
-		public static final String COPYRIGHT = "copyright";
 		
 		// complex properties
 		public static final String IDENTIFIER = "identifier";

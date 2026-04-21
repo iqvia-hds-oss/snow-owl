@@ -32,6 +32,8 @@ public class FhirModelHelpers {
 
 	public static final String OID_PREFIX = "urn:oid:";
 	
+	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
+
 	public static ResourceURI resourceUriFrom(Resource resource) {
 		return ResourceURI.of(resource.getResourceType().name().toLowerCase() + "s", resource.getId());
 	}
@@ -64,12 +66,16 @@ public class FhirModelHelpers {
 		}
 	}
 	
-	public static final boolean isOid(CanonicalType system) {
+	public static boolean isOid(CanonicalType system) {
 		return system != null & isOid(system.getValue());
 	}
 	
-	public static final boolean isOid(String system) {
+	public static boolean isOid(String system) {
 		return system != null && system.startsWith(OID_PREFIX);
+	}
+	
+	public static boolean isSnomedUri(String uri) {
+		return uri != null && (uri.equals(SNOMED_BASE_URI_STRING) || uri.startsWith(SNOMED_BASE_URI_STRING + "/"));
 	}
 
 	public static String getSystemWithoutOidPrefix(CanonicalType system) {

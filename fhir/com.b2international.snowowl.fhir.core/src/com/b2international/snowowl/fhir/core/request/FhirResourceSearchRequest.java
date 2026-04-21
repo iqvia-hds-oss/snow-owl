@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,16 @@
 package com.b2international.snowowl.fhir.core.request;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.*;
+import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.BundleType;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
@@ -33,6 +37,7 @@ import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
 import com.b2international.fhir.FhirCodeSystems;
 import com.b2international.index.Hits;
+import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.index.query.Query;
@@ -41,6 +46,7 @@ import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.domain.RepositoryContext;
+import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.search.TermFilter;
@@ -51,6 +57,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 /**
+ * Retrieves FHIR terminology resources (CodeSystem, ValueSet, ConceptMap) based
+ * on the provided search criteria and field selection, performing field mapping
+ * and transformation between the native (Snow Owl) and the external (FHIR) model.
+ * 
  * @since 8.0
  */
 public abstract class FhirResourceSearchRequest<T extends MetadataResource> extends SearchResourceRequest<RepositoryContext, Bundle> {
@@ -77,143 +87,149 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		LAST_UPDATED, 
 	}
 	
+	private Bundle prepareBundle() {
+		final Meta meta = new Meta();
+		meta.setLastUpdatedElement(FhirModelHelpers.toInstantElement(new Date()));
+
+		if (!CompareUtils.isEmpty(fields())) {
+			meta.addTag(FhirCodeSystems.CODING_SUBSETTED);
+		}
+
+		final Bundle bundle = new Bundle(BundleType.SEARCHSET);
+		bundle.setId(IDs.base62UUID());
+		bundle.setMeta(meta);
+		
+		return bundle;
+	}
+
 	@Override
-	protected Bundle createEmptyResult(int limit) {
+	protected final Bundle createEmptyResult(final int limit) {
 		return prepareBundle().setTotal(0);
 	}
 	
-	@Override
-	protected final Bundle doExecute(RepositoryContext context) throws IOException {
-		// apply proper field selection
-		List<String> fields = replaceFieldsToLoad(fields());
-		
-		// prepare filters
-		final ExpressionBuilder resourcesQuery = Expressions.bool()
-				// the current resource type and versions of that resource type
-				.filter(ResourceDocument.Expressions.resourceType(getResourceType())); 
-		
-		// resource and version doc has id field
-		addIdFilter(resourcesQuery, ids -> Expressions.bool()
-				.should(ResourceDocument.Expressions.ids(ids))
-				.should(ResourceDocument.Expressions.urls(ids))
-				.build()); 
-		// apply _name filter to the id fields, we use the same value for both id and name
-		addFilter(resourcesQuery, OptionKey.NAME, String.class, ResourceDocument.Expressions::ids); 
-		addFilter(resourcesQuery, OptionKey.URL, String.class, ResourceDocument.Expressions::urls);
-		addFilter(resourcesQuery, OptionKey.STATUS, String.class, ResourceDocument.Expressions::statuses);
-		addFilter(resourcesQuery, OptionKey.VERSION, String.class, VersionDocument.Expressions::versions);
-		
-		if (containsKey(OptionKey.TITLE)) {
-			final String titleFilterValue = getString(OptionKey.TITLE);
-			if (containsKey(OptionKey.NAME)) {
-				// if there is a name filter as well, just add the title filter as is
-				resourcesQuery.must(TermFilter.match().term(titleFilterValue).build().toExpression(ResourceDocument.Fields.TITLE));
-			} else {
-				// if there is no name filter
-				resourcesQuery.must(Expressions.bool()
-					.should(TermFilter.match().term(titleFilterValue).build().toExpression(ResourceDocument.Fields.TITLE))
-					// apply the title filter value in both as is an full UPPERCASE form as an exact name filter with a boost of 1000 score
-					.should(Expressions.boost(Expressions.matchAny(ResourceDocument.Fields.ID, List.of(titleFilterValue, titleFilterValue.toUpperCase())), 100f))
-				.build());
-			}
-		}
-		
-		Hits<ResourceFragment> internalResources = context.service(RevisionSearcher.class)
-				.search(Query.select(ResourceFragment.class)
-				.from(ResourceDocument.class, VersionDocument.class)
-				.fields(fields)
-				.where(resourcesQuery.build())
-				.searchAfter(searchAfter())
-				.limit(limit())
-				.minScore(minScore())
-				.sortBy(querySortBy(context))
-				.build());
-		
-		// in case of version fragments, extract their CodeSystem only information from the latest CodeSystem document (no need to represent older data there)
-		fillResourceOnlyProperties(context, internalResources, fields);
-			
-		return prepareBundle()
-				.setEntry(internalResources.stream().map(codeSystem -> toFhirResourceEntry(context, codeSystem)).collect(Collectors.toList()))
-//				.after(internalResources.getSearchAfter())
-				.setTotal(internalResources.getTotal());
-	}
-
-	private final List<String> replaceFieldsToLoad(List<String> fields) {
-		List<String> fieldsToLoad = Lists.newArrayList(fields);
-		// if any fields defined for field selection, then make sure toolingId, resourceType and id is part of the selection, so it is returned and will be available when needed
-		if (!fieldsToLoad.isEmpty()) {
-			if (!fieldsToLoad.contains(ResourceDocument.Fields.ID)) {
-				fieldsToLoad.add(ResourceDocument.Fields.ID);
-			}
-			if (!fieldsToLoad.contains(ResourceDocument.Fields.RESOURCE_TYPE)) {
-				fieldsToLoad.add(ResourceDocument.Fields.RESOURCE_TYPE);
-			}
-			if (!fieldsToLoad.contains(ResourceDocument.Fields.TOOLING_ID)) {
-				fieldsToLoad.add(ResourceDocument.Fields.TOOLING_ID);
-			}
-			if (!fieldsToLoad.contains(ResourceDocument.Fields.CREATED_AT)) {
-				fieldsToLoad.add(ResourceDocument.Fields.CREATED_AT);
-			}
-			if (!fieldsToLoad.contains(ResourceDocument.Fields.UPDATED_AT)) {
-				fieldsToLoad.add(ResourceDocument.Fields.UPDATED_AT);
-			}
-			if (!fieldsToLoad.contains(VersionDocument.Fields.VERSION)) {
-				fieldsToLoad.add(VersionDocument.Fields.VERSION);
-			}
-		}
-		
-		// remove all fields that are not part of the current resource model
-		fieldsToLoad.removeAll(EXTERNAL_FHIR_RESOURCE_FIELDS);
-		fieldsToLoad.removeAll(getExternalFhirResourceFields());
-		// replace publisher with internal settings field (publisher is stored within resource metadata)
-		if (fieldsToLoad.contains(R5ObjectFields.MetadataResource.PUBLISHER)) {
-			fieldsToLoad.remove(R5ObjectFields.MetadataResource.PUBLISHER);
-			fieldsToLoad.add(ResourceDocument.Fields.SETTINGS);
-		}
-		// replace identifier with internal oid field
-		if (fieldsToLoad.contains(R5ObjectFields.CodeSystem.IDENTIFIER)) {
-			fieldsToLoad.remove(R5ObjectFields.CodeSystem.IDENTIFIER);
-			fieldsToLoad.add(ResourceDocument.Fields.OID);
-		}
-		
-		// for all supported FHIR Metadata Resources replace the incoming date property with the effectiveTime when requesting it
-		if (fieldsToLoad.contains(R5ObjectFields.MetadataResource.DATE)) {
-			fieldsToLoad.remove(R5ObjectFields.MetadataResource.DATE);
-			fieldsToLoad.add(VersionDocument.Fields.EFFECTIVE_TIME);
-		}
-		
-		// support any specific field selection changes
-		configureFieldsToLoad(fieldsToLoad);
-		
-		return fieldsToLoad;
-	}
-
 	/**
-	 * Subclasses may optionally override the current field selection list of they know that an index field is not present or named differently in their specific model.
-	 * @param fields
-	 */
-	protected void configureFieldsToLoad(List<String> fields) {
-	}
-
-	protected final Bundle prepareBundle() {
-		return (Bundle) new Bundle(BundleType.SEARCHSET)
-				.setId(getResourceType()) // TODO is this a good ID here?
-				.setMeta(new Meta()
-						.addTag(CompareUtils.isEmpty(fields()) ? null : FhirCodeSystems.CODING_SUBSETTED)
-						.setLastUpdatedElement(FhirModelHelpers.toInstantElement(new Date())));
-	}
-
-	/**
-	 * @return the Snow Owl resource type representation to search for the appropriate documents in the underlying index
+	 * @return the Snow Owl resource type representation to search for the
+	 * appropriate documents in the underlying index
 	 */
 	protected abstract String getResourceType();
-	
+
+	private final void addFhirIdFilter(final RepositoryContext context, final ExpressionBuilder query) {
+		// Both documents have an "id" and a "url" field; we will use the expression from ResourceDocument purely by choice
+		addIdFilter(query, ids -> Expressions.bool()
+			.should(ResourceDocument.Expressions.ids(ids))
+			.should(ResourceDocument.Expressions.urls(ids))
+			.build());
+	}
+
+	/**
+	 * Subclasses may override this method to add special handling for the URL
+	 * filter. The default implementation uses the provided values to match the
+	 * "url" field on both ResourceDocument and VersionDocument instances.
+	 * 
+	 * @param query
+	 */
+	protected void addUrlFilter(final ExpressionBuilder query) {
+		addFilter(query, OptionKey.URL, String.class, ResourceDocument.Expressions::urls);
+	}
+
+	/**
+	 * Subclasses may override this method to add special handling for the version
+	 * filter. The default implementation uses the provided values to match the
+	 * "version" field on VersionDocument instances.
+	 * 
+	 * @param query
+	 */
+	protected void addVersionFilter(final ExpressionBuilder query) {
+		addFilter(query, OptionKey.VERSION, String.class, VersionDocument.Expressions::versions);
+	}
+
+	/**
+	 * Subclasses may override this method to specify additional FHIR resource
+	 * fields that should be removed from the field selection and not loaded from
+	 * the underlying index. The default implementation returns an empty set.
+	 * 
+	 * @return
+	 */
 	protected Set<String> getExternalFhirResourceFields() {
+		// Known shared fields are listed in the EXTERNAL_FHIR_RESOURCE_FIELDS constant
 		return Set.of();
 	}
-	
-	private void fillResourceOnlyProperties(RepositoryContext context, Hits<ResourceFragment> internalResources, List<String> fields) throws IOException {
+
+	/**
+	 * Subclasses may override this method to handle additional cases of field
+	 * mapping between the external FHIR and the internal Snow Owl model. The
+	 * default implementation does nothing.
+	 * 
+	 * @param fields
+	 */
+	protected void configureFieldsToLoad(final List<String> fields) {
+		// Empty by default, the fields shared across all resource types are handled above
+	}
+
+	private List<String> replaceFieldsToLoad(final List<String> fields) {
+		final List<String> internalFields = Lists.newArrayList(fields);
+		
+		// If any fields were listed for field selection, make sure the ones we usually need are still included
+		if (!internalFields.isEmpty()) {
+			
+			if (!internalFields.contains(ResourceDocument.Fields.ID)) {
+				internalFields.add(ResourceDocument.Fields.ID);
+			}
+			
+			if (!internalFields.contains(ResourceDocument.Fields.RESOURCE_TYPE)) {
+				internalFields.add(ResourceDocument.Fields.RESOURCE_TYPE);
+			}
+			
+			if (!internalFields.contains(ResourceDocument.Fields.TOOLING_ID)) {
+				internalFields.add(ResourceDocument.Fields.TOOLING_ID);
+			}
+			
+			if (!internalFields.contains(ResourceDocument.Fields.CREATED_AT)) {
+				internalFields.add(ResourceDocument.Fields.CREATED_AT);
+			}
+			
+			if (!internalFields.contains(ResourceDocument.Fields.UPDATED_AT)) {
+				internalFields.add(ResourceDocument.Fields.UPDATED_AT);
+			}
+			
+			if (!internalFields.contains(VersionDocument.Fields.VERSION)) {
+				internalFields.add(VersionDocument.Fields.VERSION);
+			}
+		}
+		
+		// Remove all fields that are not part of the current resource model
+		internalFields.removeAll(EXTERNAL_FHIR_RESOURCE_FIELDS);
+		internalFields.removeAll(getExternalFhirResourceFields());
+		
+		// Replace publisher with internal settings field (publisher is stored within resource metadata)
+		if (internalFields.remove(R5ObjectFields.MetadataResource.PUBLISHER)) {
+			internalFields.add(ResourceDocument.Fields.SETTINGS);
+		}
+
+		// Replace identifier with internal OID field
+		if (internalFields.remove(R5ObjectFields.CodeSystem.IDENTIFIER)) {
+			internalFields.add(ResourceDocument.Fields.OID);
+		}
+		
+		// Replace date with internal effectiveTime field
+		if (internalFields.remove(R5ObjectFields.MetadataResource.DATE)) {
+			internalFields.add(VersionDocument.Fields.EFFECTIVE_TIME);
+		}
+		
+		// Consult search request subclasses for any additional field mapping
+		configureFieldsToLoad(internalFields);
+		
+		return internalFields;
+	}
+
+	private void fillResourceOnlyProperties(
+		final RepositoryContext context, 
+		final Hits<ResourceFragment> internalResources, 
+		final List<String> fields
+	) throws IOException {
+		
 		for (final ResourceFragment fragment : internalResources) {
+			
 			if (CompareUtils.isEmpty(fragment.getVersion())) {
 				// This fragment was created from a resource document, set resourceDescription and continue
 				fragment.setResourceDescription(fragment.getDescription());
@@ -221,7 +237,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			}
 			
 			if (!CompareUtils.isEmpty(fragment.getStatus())) {
-				// This fragment was created from a version with snapshot (it has a resource status on it)
+				// This fragment was created from a version with snapshot, nothing to do
+				// (the required information is baked into version documents since 8.7.0)
 				continue;
 			}
 			
@@ -252,137 +269,239 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			}
 		}
 	}
-	
-	protected final Bundle.BundleEntryComponent toFhirResourceEntry(RepositoryContext context, ResourceFragment fragment) {
-		return new Bundle.BundleEntryComponent().setResource(toFhirResource(context, fragment));
-	}
-	
-	protected T toFhirResource(RepositoryContext context, ResourceFragment resource) {
-		T entry = (T) createResource()
-				// mandatory fields
-				.setStatus(toPublicationStatus(resource.getStatus()))
-				.setId(resource.getId())
-				.setMeta(toMeta(resource));
-		
-		// attach toolingId as userData
-		entry.setUserData(TerminologyResource.Fields.TOOLING_ID, resource.getToolingId());
-		
-		// optional fields
-		// we are using the ID of the resource as machine readable name
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, resource::getId, entry::setName);
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.TITLE, resource::getTitle, entry::setTitle);
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.URL, resource::getUrl, entry::setUrl);
-		includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> toNarrative(resource), entry::setText);
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.VERSION, resource::getVersion, entry::setVersion);
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.PUBLISHER, () -> getPublisher(resource), entry::setPublisher);
-		includeIfFieldSelected(R5ObjectFields.Resource.LANGUAGE, resource::getLanguage, entry::setLanguage);
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> FhirModelHelpers.toDateTimeElement(resource.getEffectiveTime()), entry::setDateElement);
-		// XXX: use the resource's description in all cases
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.DESCRIPTION, resource::getResourceDescription, entry::setDescription);
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.PURPOSE, resource::getPurpose, entry::setPurpose);
 
-		if (CompareUtils.isEmpty(fields()) || fields().contains(R5ObjectFields.CodeSystem.CONTACT)) {
-			ContactDetail contact = getContact(resource);
-			if (contact != null) {
-				entry.addContact(contact);
-			}
-		}
-		
-		// XXX: inclusion of the copyright field is pushed to each search request subclass as specific resource 
-		// and builder subtypes are available there.
-		//
-		// includeIfFieldSelected(R5ObjectFields.CodeSystem.COPYRIGHT, resource::getCopyright, entry::copyright);
-		
-		expandResourceSpecificFields(context, entry, resource);
-		
-		return entry;
-	}
+	protected abstract T createResource();
 
-	private PublicationStatus toPublicationStatus(String status) {
+	private PublicationStatus toPublicationStatus(final String status) {
 		try {
 			return PublicationStatus.fromCode(status);
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			// ignore any errors coming from status detection and treat it as unknown status
 			return PublicationStatus.UNKNOWN;
 		}
 	}
 
-	private Meta toMeta(ResourceFragment resource) {
+	private Meta toMeta(final Long updatedAt, final Long createdAt) {
 		final Meta meta = new Meta();
-			// updatedAt returns version creation time (createdAt and updatedAt is the same) or latest updateAt value from the resource :gold:
-		meta.setLastUpdatedElement(Optional.ofNullable(resource.getUpdatedAt())
-			// fall back to createdAt if updatedAt is not present
-			.or(() -> Optional.ofNullable(resource.getCreatedAt()))
-			.map(FhirModelHelpers::toInstantElement)
-			// or null if none of them
-			.orElse(null)
-		);
+
+		// updatedAt returns version creation time (createdAt and updatedAt is the same) or latest updateAt value from the resource :gold:
+		if (updatedAt != null) {
+			meta.setLastUpdatedElement(FhirModelHelpers.toInstantElement(updatedAt));
+		} else if (createdAt != null) {
+			meta.setLastUpdatedElement(FhirModelHelpers.toInstantElement(createdAt));
+		}
+		
 		return meta;
 	}
 
-	private Narrative toNarrative(ResourceFragment resource) {
-		XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
-		div.setValueAsString("<div xmlns=\"http://www.w3.org/1999/xhtml\"></div>");
-		return new Narrative().setDiv(div).setStatus(NarrativeStatus.EMPTY);
-	}
-
-	private String getPublisher(ResourceFragment resource) {
-		Map<String, Object> settings = resource.getSettings();
-		if (settings == null) {
-			return "";
-		}
-		
-		return (String) settings.getOrDefault(R5ObjectFields.CodeSystem.PUBLISHER, "");
-	}
-
-	private ContactDetail getContact(ResourceFragment resource) {
-		if (StringUtils.isEmpty(resource.getContact())) {
-			return null;
-		}
-		
-		return new ContactDetail()
-				.addTelecom(new ContactPoint()
-						.setSystem(ContactPointSystem.URL)
-						.setValue(resource.getContact()));
-	}
-	
-	protected void expandResourceSpecificFields(RepositoryContext context, T entry, ResourceFragment resource) {
-	}
-
-	protected abstract T createResource();
-
-	protected final <C> void includeIfFieldSelected(String field, Supplier<C> getter, Consumer<C> setter) {
+	protected final <C> void includeIfFieldSelected(final String field, final Supplier<C> getter, final Consumer<C> setter) {
 		if (CompareUtils.isEmpty(fields()) || fields().contains(field)) {
 			setter.accept(getter.get());
 		}
 	}
+
+	private Narrative getBlankNarrative() {
+		// We are not generating any narrative text for the resources so return an empty <div> element
+		final XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
+		return new Narrative(NarrativeStatus.EMPTY, div);
+	}
+
+	private String getPublisher(final Map<String, Object> settings) {
+		if (settings == null) {
+			return "";
+		} else {
+			return (String) settings.getOrDefault(R5ObjectFields.CodeSystem.PUBLISHER, "");
+		}
+	}
 	
+	private DateTimeType toDateTimeType(final Long effectiveTime) {
+		return FhirModelHelpers.toDateTimeElement(effectiveTime);
+	}
+
+	private ContactDetail toContactDetail(final String contact) {
+		if (StringUtils.isEmpty(contact)) {
+			return null;
+		}
+		
+		final ContactDetail contactDetail = new ContactDetail();
+		
+		contactDetail.addTelecom()
+			.setSystem(ContactPointSystem.URL)
+			.setValue(contact);
+			
+		return contactDetail;
+	}
+
 	/**
+	 * Subclasses may override this method to set additional properties on the
+	 * resulting FHIR resource based on the provided ResourceFragment and field
+	 * selection settings.
+	 * <p>
+	 * The default implementation does nothing, as the base class already handles
+	 * the most common fields across all resource types.
+	 * 
+	 * @param context
+	 * @param entry
+	 * @param resource
+	 */
+	protected void expandResourceSpecificFields(final RepositoryContext context, final T entry, final ResourceFragment resource) {
+		// Empty method body
+	}
+
+	private T toFhirResource(final RepositoryContext context, final ResourceFragment resource) {
+		final T entry = createResource();
+		
+		entry.setId(resource.getId());
+		entry.setStatus(toPublicationStatus(resource.getStatus()));
+		entry.setMeta(toMeta(resource.getUpdatedAt(), resource.getCreatedAt()));
+		
+		entry.setUserData(TerminologyResource.Fields.TOOLING_ID, resource.getToolingId());
+		
+		// We are using the raw ID of the resource as machine readable name
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, resource::getId, entry::setName);
+		// We have a description field available both for the resource and the version, here the one for the resource is needed
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.DESCRIPTION, resource::getResourceDescription, entry::setDescription);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.TITLE, resource::getTitle, entry::setTitle);
+		includeIfFieldSelected(R5ObjectFields.Resource.LANGUAGE, resource::getLanguage, entry::setLanguage);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.PURPOSE, resource::getPurpose, entry::setPurpose);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.COPYRIGHT, resource::getCopyright, entry::setCopyright);
+
+		includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> getBlankNarrative(), entry::setText);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.PUBLISHER, () -> getPublisher(resource.getSettings()), entry::setPublisher);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> toDateTimeType(resource.getEffectiveTime()), entry::setDateElement);
+		// addContact(contact) is a no-op if contact is null so we can safely call it here
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.CONTACT, () -> toContactDetail(resource.getContact()), entry::addContact);
+		
+		/*
+		 * XXX: Subclasses usually don't modify properties that are already set here in the superclass, however
+		 * "url" and "version" may require special handling for some resource types. In case of CodeSystems, 
+		 * this happens in FhirCodeSystemSearchRequest#expandResourceSpecificFields.
+		 */
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.URL, resource::getUrl, entry::setUrl);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.VERSION, resource::getVersion, entry::setVersion);
+		
+		expandResourceSpecificFields(context, entry, resource);
+
+		return entry;
+	}
+
+	private Bundle.BundleEntryComponent toFhirResourceEntry(final RepositoryContext context, final ResourceFragment fragment) {
+		return new Bundle.BundleEntryComponent().setResource(toFhirResource(context, fragment));
+	}
+
+	@Override
+	protected final Bundle doExecute(final RepositoryContext context) throws IOException {
+		
+		// Match resource and version documents with the given resource type
+		final ExpressionBuilder query = Expressions.bool()
+			.filter(ResourceDocument.Expressions.resourceType(getResourceType())); 
+		
+		// Support filtering by the FHIR resource ID which needs to be transformed to the internal ID first
+		addFhirIdFilter(context, query);
+		
+		/*
+		 * The "name" property can be used to query the native resource ID. Values do
+		 * not always line up with the regexp restrictions in the FHIR specification for
+		 * "name" but failing that test should only result in a validation warning.
+		 */
+		addFilter(query, OptionKey.NAME, String.class, ResourceDocument.Expressions::ids);
+		
+		// Let subclasses decide whether special handling is needed for URL and version filters
+		addUrlFilter(query);
+		addVersionFilter(query);
+		
+		// Smart search for titles
+		if (containsKey(OptionKey.TITLE)) {
+			final String titleFilterValue = getString(OptionKey.TITLE);
+			
+			// Both ResourceDocument and VersionDocument have a "title" field; we will use the constant from ResourceDocument
+			final Expression titleMatchExpression = TermFilter.match()
+				.term(titleFilterValue)
+				.build()
+				.toExpression(ResourceDocument.Fields.TITLE);
+			
+			if (containsKey(OptionKey.NAME)) {
+				
+				// The name filter already locks the search to a specific resource, so we can apply the title filter as a simple matcher
+				query.must(titleMatchExpression);
+				
+			} else {
+				
+				// Without a name filter, the title filter will also try to match native IDs with a high boost
+				final Expression idMatchExpression = Expressions.matchAny(ResourceDocument.Fields.ID, 
+					List.of(titleFilterValue, titleFilterValue.toUpperCase()));
+				
+				query.must(Expressions.bool()
+					.should(titleMatchExpression)
+					.should(Expressions.boost(idMatchExpression, 100.0f))
+					.build());
+			}
+		}
+
+		// The rest of the filters (currently only "status") are applied without special handling
+		addFilter(query, OptionKey.STATUS, String.class, ResourceDocument.Expressions::statuses);
+
+		// Map requested fields to their internal counterpart; remove FHIR-specific fields that do not map to a document field 
+		final List<String> internalFields = replaceFieldsToLoad(fields());
+
+		// Execute the search query across both resource and version documents, mapping them to a common ResourceFragment representation
+		final Hits<ResourceFragment> internalResources = context.service(RevisionSearcher.class)
+			.search(Query.select(ResourceFragment.class)
+			.from(ResourceDocument.class, VersionDocument.class)
+			.fields(internalFields)
+			.where(query.build())
+			.searchAfter(searchAfter())
+			.limit(limit())
+			.minScore(minScore())
+			.sortBy(querySortBy(context))
+			.build());
+		
+		// Populate properties that only exist on the resource document (either copied to version documents in newer Snow Owl releases or from the state  
+		fillResourceOnlyProperties(context, internalResources, internalFields);
+			
+		final List<BundleEntryComponent> entries = internalResources.stream()
+			.map(fragment -> toFhirResourceEntry(context, fragment))
+			.collect(Collectors.toList());
+		
+		final Bundle searchResults = prepareBundle() 
+			.setEntry(entries)
+			.setTotal(internalResources.getTotal());
+		
+		if (internalResources.getSearchAfter() != null) {
+			searchResults.setUserData("searchAfter", internalResources.getSearchAfter());
+		}
+
+		return searchResults;
+	}
+
+	/**
+	 * Common representation for both resource and version documents to simplify search and mapping logic.
+	 * 
 	 * @since 8.0
 	 */
 	protected static class ResourceFragment {
-		String id;
-		String version;
-		String description;
-		String resourceType;
-		Long createdAt;
-		Long updatedAt;
-		String toolingId;
-		String url;
-		String branchPath;
-		Long effectiveTime;
+		private String id;
+		private String version;
+		private String description;
+		private String resourceType;
+		private Long createdAt;
+		private Long updatedAt;
+		private String toolingId;
+		private String url;
+		private String branchPath;
+		private Long effectiveTime;
 		
-		String resourceDescription;
-		String title;
-		String status;
-		String contact;
-		String copyright;
-		String language;
-		String purpose;
-		String oid;
-		Map<String, Object> settings;
+		private String resourceDescription;
+		private String title;
+		private String status;
+		private String contact;
+		private String copyright;
+		private String language;
+		private String purpose;
+		private String oid;
+		private Map<String, Object> settings;
 		
-		RevisionBranchPoint created;
+		private RevisionBranchPoint created;
 		
 		public final ResourceURI getResourceURI() {
 			return ResourceURI.of(resourceType, id);
@@ -468,79 +587,79 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			return created;
 		}
 		
-		public void setId(String id) {
+		public void setId(final String id) {
 			this.id = id;
 		}
 		
-		public void setVersion(String version) {
+		public void setVersion(final String version) {
 			this.version = version;
 		}
 		
-		public void setDescription(String description) {
+		public void setDescription(final String description) {
 			this.description = description;
 		}
 		
-		public void setResourceType(String resourceType) {
+		public void setResourceType(final String resourceType) {
 			this.resourceType = resourceType;
 		}
 		
-		public void setCreatedAt(Long createdAt) {
+		public void setCreatedAt(final Long createdAt) {
 			this.createdAt = createdAt;
 		}
 		
-		public void setUpdatedAt(Long updatedAt) {
+		public void setUpdatedAt(final Long updatedAt) {
 			this.updatedAt = updatedAt;
 		}
 		
-		public void setToolingId(String toolingId) {
+		public void setToolingId(final String toolingId) {
 			this.toolingId = toolingId;
 		}
 		
-		public void setUrl(String url) {
+		public void setUrl(final String url) {
 			this.url = url;
 		}
 		
-		public void setBranchPath(String branchPath) {
+		public void setBranchPath(final String branchPath) {
 			this.branchPath = branchPath;
 		}
 		
-		public void setResourceDescription(String resourceDescription) {
+		public void setResourceDescription(final String resourceDescription) {
 			this.resourceDescription = resourceDescription;
 		}
 		
-		public void setTitle(String title) {
+		public void setTitle(final String title) {
 			this.title = title;
 		}
 		
-		public void setStatus(String status) {
+		public void setStatus(final String status) {
 			this.status = status;
 		}
 		
-		public void setContact(String contact) {
+		public void setContact(final String contact) {
 			this.contact = contact;
 		}
 		
-		public void setCopyright(String copyright) {
+		public void setCopyright(final String copyright) {
 			this.copyright = copyright;
 		}
 		
-		public void setLanguage(String language) {
+		public void setLanguage(final String language) {
 			this.language = language;
 		}
 		
-		public void setPurpose(String purpose) {
+		public void setPurpose(final String purpose) {
 			this.purpose = purpose;
 		}
 		
-		public void setOid(String oid) {
+		public void setOid(final String oid) {
 			this.oid = oid;
 		}
 		
-		public void setSettings(Map<String, Object> settings) {
+		public void setSettings(final Map<String, Object> settings) {
 			this.settings = settings;
 		}
 		
-		public void setCreated(RevisionBranchPoint created) {
+		public void setCreated(final RevisionBranchPoint created) {
 			this.created = created;
 		}
 	}
