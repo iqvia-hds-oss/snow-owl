@@ -15,12 +15,14 @@
  */
 package com.b2international.snowowl.fhir.core.request.packages;
 
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @since 10.1.0
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public final record FhirPackageJson(String name, String version) {
-
+public final record FhirPackageJson(String name, String version, @JsonAlias("fhir-version-list") List<String> fhirVersions) {
 }

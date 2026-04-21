@@ -23,24 +23,30 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.file.PathUtils;
+import org.elasticsearch.core.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.setup.Environment;
+import com.b2international.snowowl.fhir.core.FhirResourceParser;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemWriteSupport;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapWriteSupport;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetWriteSupport;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Iterables;
 
 /**
  * Request class for loading FHIR packages.
@@ -70,6 +76,10 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 	@JsonProperty
 	private FhirLoadPackageParameters parameters;
 	
+	private transient int importedCodeSystems;
+	private transient int importedValueSets;
+	private transient int importedConceptMaps;
+	
 	void setParameters(FhirLoadPackageParameters parameters) {
 		this.parameters = parameters;
 	}
@@ -98,6 +108,14 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 			throw new BadRequestException(String.format("Received FHIR package '%s' has a different version '%s' that the requested one '%s'.", fhirPackage.getPackageJson().name(), fhirPackage.getPackageJson().version(), parameters.getName().getValue()));
 		}
 		
+		if (fhirPackage.getPackageJson().fhirVersions().isEmpty()) {
+			throw new BadRequestException(String.format("Received FHIR package does not declare the fhirVersions property in package.json which is required to properly load and import the resources."));
+		}
+		
+		if (fhirPackage.getPackageJson().fhirVersions().size() > 1) {
+			throw new BadRequestException(String.format("Received FHIR package declares more than one value in the fhirVersions property which is currently not supported."));
+		}
+		
 		// package.json is valid and there are entries to import, extract all recognized files
 		LOG.info("Extracting FHIR package '{}'", packageFile.getFileName());
 		Path packageFolder;
@@ -113,11 +131,12 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		
 		fhirPackage.extractTo(packageFolder);
 		
+		final FhirResourceParser resourceParser = new FhirResourceParser(FhirResourceParser.FORMAT_JSON, Iterables.getOnlyElement(fhirPackage.getPackageJson().fhirVersions()));
 		try {
-			importFiles(context, packageFolder);
+			importFiles(context, packageFolder, resourceParser);
 		} finally {
 			try {
-				Files.delete(packageFolder);
+				PathUtils.deleteDirectory(packageFolder);
 			} catch (IOException e) {
 				throw new SnowowlRuntimeException("Failed to delete temporary directory of FHIR package", e);
 			}
@@ -128,29 +147,55 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		return result;
 	}
 	
-	private void importFiles(ServiceProvider context, Path packageFolder) {
-		FhirCodeSystemWriteSupport codeSystemOps = context.service(FhirCodeSystemWriteSupport.class);
-		FhirValueSetWriteSupport valueSetOps = context.service(FhirValueSetWriteSupport.class);
-		FhirConceptMapWriteSupport conceptMapOps = context.service(FhirConceptMapWriteSupport.class);
+	private void importFiles(ServiceProvider context, Path packageFolder, final FhirResourceParser resourceParser) {
+		FhirCodeSystemWriteSupport codeSystemWriteSupport = context.optionalService(FhirCodeSystemWriteSupport.class).orElse(null);
+		FhirValueSetWriteSupport valueSetOps = context.optionalService(FhirValueSetWriteSupport.class).orElse(null);
+		FhirConceptMapWriteSupport conceptMapOps = context.optionalService(FhirConceptMapWriteSupport.class).orElse(null);
+		
+		// current server entitlements does not allow importing any FHIR resource
+		if (codeSystemWriteSupport == null && valueSetOps == null && conceptMapOps == null) {
+			return;
+		}
+		
 		try {
 			Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER))
 				.forEach(pathToImport -> {
-					// TODO resource conversion to proper FHIR format
 					// parse into raw JSON, read fhirVersion parameter then based on that parse the content into proper model?
-//					org.hl7.fhir.r5.model.CodeSystem cs = mapper.convertValue(resourceNode, org.hl7.fhir.r5.model.CodeSystem.class);
-					
-					if (pathToImport.getFileName().startsWith(CODE_SYSTEM)) {
-//						codeSystemOps.update(context, cs, "system", null, null, null, null);
-//						codeSystemCount++;
-					} else if (pathToImport.getFileName().startsWith(VALUE_SET)) {
-//						valueSetOps.update(context, vs, "system", null, null, null, null);
-//						valueSetCount++;
-					} else if (pathToImport.getFileName().startsWith(CONCEPT_MAP)) {
-//						conceptMapOps.update(context, cm, "system", null, null, null, null);
-//						conceptMapCount++;
-					} else {
-						// raise warning about extract but not handled file
+					try (var reader = Files.newInputStream(pathToImport)) {
+						if (pathToImport.getFileName().toString().startsWith(CODE_SYSTEM)) {
+							if (codeSystemWriteSupport != null) {
+								org.hl7.fhir.r5.model.CodeSystem cs = (org.hl7.fhir.r5.model.CodeSystem) resourceParser.parseResource(reader);
+								codeSystemWriteSupport.update(context, cs, "system", null, null, null, null);
+								importedCodeSystems++;
+							} else {
+								// TODO register that resource cannot be imported via this server due to missing entitlement
+							}
+						} else if (pathToImport.getFileName().toString().startsWith(VALUE_SET)) {
+							if (valueSetOps != null) {
+								org.hl7.fhir.r5.model.ValueSet vs = (org.hl7.fhir.r5.model.ValueSet) resourceParser.parseResource(reader);
+								valueSetOps.update(context, vs, Map.of(), "system", null, null, null, null);
+								importedValueSets++;
+							} else {
+								// TODO register that resource cannot be imported via this server due to missing entitlement
+							}
+						} else if (pathToImport.getFileName().toString().startsWith(CONCEPT_MAP)) {
+							if (conceptMapOps != null) {
+								org.hl7.fhir.r5.model.ConceptMap cm = (org.hl7.fhir.r5.model.ConceptMap) resourceParser.parseResource(reader);
+								conceptMapOps.update(context, cm, Map.of(), null, null, null, null, null);
+								importedConceptMaps++;
+							} else {
+								// TODO register that resource cannot be imported via this server due to missing entitlement
+							}
+						} else {
+							// raise error about extracted but not handled file
+							throw new NotImplementedException("Resource type should be handled by the implementation but not implemented: " + pathToImport.getFileName());
+						}
+					} catch (IOException e) {
+						// unable to convert JSON to resource
+						// TODO register the error in an error response and 
+						e.printStackTrace();
 					}
+					
 				});
 		} catch (IOException e) {
 			throw new SnowowlRuntimeException("Failed to list FHIR package directory", e);

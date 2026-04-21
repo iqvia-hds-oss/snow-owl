@@ -16,9 +16,12 @@
 package com.b2international.snowowl.fhir.rest.tests.packages;
 
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import java.time.LocalDate;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.junit.Test;
@@ -34,24 +37,25 @@ import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 /**
  * @since 10.1.0
  */
-public class FhirLoadPackageApiTest extends FhirRestTest {
+public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSystemWriteSupport {
 
 	@Override
 	public void before() {
-		// register writer to only simulate the actual import of the various resources
-		ApplicationContext.getInstance().registerService(FhirCodeSystemWriteSupport.class, new FhirCodeSystemWriteSupport() {
-			@Override
-			public FhirResourceUpdateResult update(ServiceProvider context, CodeSystem fhirCodeSystem, String author, String owner, String ownerProfileName,
-					LocalDate defaultEffectiveDate, String bundleId) {
-				return FhirResourceUpdateResult.created(bundleId);
-			}
-		});
+		// register writer to simulate the actual import of the various resources
+		ApplicationContext.getInstance().registerService(FhirCodeSystemWriteSupport.class, this);
 	}
+	
+	@Override
+	public void after() {
+		ApplicationContext.getInstance().unregisterService(FhirCodeSystemWriteSupport.class);
+	}
+	
+	private SortedSet<String> visitedResources = new TreeSet<String>();
 	
 	@Test
 	public void downloadFromRegistry() throws Exception {
 		var parameters = new FhirLoadPackageParameters()
-				.setName("hl7.fhir.r4.examples")
+				.setName("hl7.fhir.r4.core")
 				.setVersion("4.0.1");
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
@@ -63,6 +67,8 @@ public class FhirLoadPackageApiTest extends FhirRestTest {
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("success"))
 			.body("parameter[0].valueBoolean", equalTo(true));
+		
+		assertThat(visitedResources).contains("abstract-types");
 	}
 	
 	@Test
@@ -75,6 +81,15 @@ public class FhirLoadPackageApiTest extends FhirRestTest {
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("success"))
 			.body("parameter[0].valueBoolean", equalTo(true));
+		
+		assertThat(visitedResources).contains("abstract-types");
+	}
+	
+	@Override
+	public FhirResourceUpdateResult update(ServiceProvider context, CodeSystem fhirCodeSystem, String author, String owner, String ownerProfileName,
+			LocalDate defaultEffectiveDate, String bundleId) {
+		visitedResources.add(fhirCodeSystem.getId());
+		return FhirResourceUpdateResult.created(bundleId);
 	}
 	
 }
