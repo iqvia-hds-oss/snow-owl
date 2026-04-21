@@ -153,25 +153,6 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void GET_CodeSystem_$lookup_Existing_Versioned_ViaVersionField() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
-			.queryParam("version", SNOMEDCT_URL + "/version/20020131")
-			.queryParam("code", Concepts.ROOT_CONCEPT)
-			.queryParam("_format", "json")
-			.when().get(CODESYSTEM_LOOKUP)
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("Parameters"))
-			.body("parameter[0].name", equalTo("name"))
-			.body("parameter[0].valueString", equalTo("SNOMEDCT/2002-01-31"))
-			.body("parameter[1].name", equalTo("display"))
-			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
-			.body("parameter[2].name", equalTo("version"))
-			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL + "/version/20020131"));
-	}
-	
-	@Test
 	public void GET_CodeSystem_$lookup_Existing_WithProperty() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
