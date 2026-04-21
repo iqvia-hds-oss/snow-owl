@@ -113,7 +113,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	 */
 	protected abstract String getResourceType();
 
-	private final void addFhirIdFilter(final RepositoryContext context, final ExpressionBuilder query) {
+	private final void addFhirIdFilter(final ExpressionBuilder query) {
 		// Both documents have an "id" and a "url" field; we will use the expression from ResourceDocument purely by choice
 		addIdFilter(query, ids -> Expressions.bool()
 			.should(ResourceDocument.Expressions.ids(ids))
@@ -397,7 +397,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			.filter(ResourceDocument.Expressions.resourceType(getResourceType())); 
 		
 		// Support filtering by the FHIR resource ID which needs to be transformed to the internal ID first
-		addFhirIdFilter(context, query);
+		addFhirIdFilter(query);
 		
 		/*
 		 * The "name" property can be used to query the native resource ID. Values do
