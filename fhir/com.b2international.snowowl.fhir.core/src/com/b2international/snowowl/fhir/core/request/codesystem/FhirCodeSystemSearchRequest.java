@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.model.Identifier;
 import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 
 import com.b2international.commons.StringUtils;
+import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceURI;
@@ -71,6 +72,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		
 		// We will remove all user-supplied SNOMED CT URIs from the URL filter and add values from the version filter instead
 		final Set<String> urls = newHashSet(getCollection(OptionKey.URL, String.class));
+		final boolean hasBaseSnomedUri = urls.contains(FhirModelHelpers.SNOMED_BASE_URI_STRING);
 		urls.removeIf(FhirModelHelpers::isSnomedUri);
 		
 		if (containsKey(OptionKey.VERSION)) {
@@ -85,10 +87,6 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 			versions.stream()
 				.filter(FhirModelHelpers::isSnomedUri)
 				.forEachOrdered(urls::add);
-		}
-
-		if (!urls.isEmpty()) {
-			query.filter(ResourceDocument.Expressions.urls(urls));
 		}
 
 		/*
@@ -112,6 +110,15 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		 *   
 		 * - Users can't set a past version as "definitive", only LATEST versions
 		 */
+		if (hasBaseSnomedUri) {
+			urls.add(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008");
+		}
+		
+		if (!urls.isEmpty()) {
+			query.filter(ResourceDocument.Expressions.urls(urls));
+		} else {
+			query.filter(Expressions.matchNone());
+		}
 	}
 	
 	@Override
@@ -126,6 +133,12 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		
 		if (!versions.isEmpty()) {
 			query.filter(VersionDocument.Expressions.versions(versions));
+		} else {
+			/*
+			 * If we have removed all versions, this means they were all SNOMED CT URIs 
+			 * and so we do not need to restrict the result set further by values in
+			 * the "version" field.
+			 */
 		}
 	}
 	
