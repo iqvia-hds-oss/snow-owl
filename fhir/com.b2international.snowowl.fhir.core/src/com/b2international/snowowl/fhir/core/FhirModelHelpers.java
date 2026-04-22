@@ -155,4 +155,13 @@ public class FhirModelHelpers {
 			versionConsumer.accept(resourceUri.getPath());
 		}
 	}
+
+	public static CanonicalType toCanonicalType(
+		final ResourceURI resourceUri, 
+		final Function<ResourceURI, String> mapperFunction
+	) {
+		final CanonicalType canonicalType = new CanonicalType();
+		setSystemAndVersion(resourceUri, mapperFunction, canonicalType::setValue, canonicalType::addVersion);
+		return canonicalType;
+	}
 }
