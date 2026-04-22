@@ -16,6 +16,9 @@
 package com.b2international.snowowl.fhir.core;
 
 import java.util.Date;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.DateTimeType;
@@ -24,6 +27,13 @@ import org.hl7.fhir.r5.model.Resource;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.snowowl.core.ResourceURI;
+import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.request.ResourceRequests;
+import com.b2international.snowowl.core.terminology.TerminologyRegistry;
+import com.b2international.snowowl.core.version.Version;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 /**
  * @since 9.4.0
@@ -94,4 +104,55 @@ public class FhirModelHelpers {
 		return system;
 	}
 	
+	private static String getUrlForResourceUri(final ServiceProvider context, final ResourceURI resourceUri) {
+		if (TerminologyRegistry.UNSPECIFIED.equals(resourceUri.getResourceId())) {
+			return "";
+		}
+		
+		final Optional<Version> versionWithURI = ResourceRequests.prepareSearchVersion()
+			.one()
+			.filterByResource(resourceUri)
+			.buildAsync()
+			.execute(context)
+			.first();
+			
+		if (versionWithURI.isPresent()) {
+			return versionWithURI.get().getUrl();
+		}
+			
+		return ResourceRequests.prepareGet(resourceUri)
+			.buildAsync()
+			.execute(context)
+			.getUrl();
+	}
+	
+	public static Function<ResourceURI, String> createResourceUriToUrlFunction(final ServiceProvider context) {
+		final CacheLoader<ResourceURI, String> loader = CacheLoader.from(resourceUri -> getUrlForResourceUri(context, resourceUri));
+		final LoadingCache<ResourceURI, String> urlByResourceId = CacheBuilder.newBuilder().build(loader);
+		return urlByResourceId;
+	}
+	
+	public static void setSystemAndVersion(
+		final ResourceURI resourceUri, 
+		final Function<ResourceURI, String> mapperFunction, 
+		final Consumer<String> systemConsumer, 
+		final Consumer<String> versionConsumer
+	) {
+		final String fhirUrl = mapperFunction.apply(resourceUri);
+		
+		if (isSnomedUri(fhirUrl)) {
+			// For SNOMED CT we need to use the base URL as the system and the original URL as the version
+			systemConsumer.accept(FhirModelHelpers.SNOMED_BASE_URI_STRING);
+			versionConsumer.accept(fhirUrl);
+			return;
+		}
+			
+		// In other cases we can use the resulting URL as the system...
+		systemConsumer.accept(fhirUrl);
+		
+		// ...and extract the path portion as the version
+		if (!resourceUri.isHead() && !resourceUri.isNext()) {
+			versionConsumer.accept(resourceUri.getPath());
+		}
+	}
 }
