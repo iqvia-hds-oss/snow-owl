@@ -14,14 +14,6 @@
 		<repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20210223232630/repository"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="org.objectweb.asm" version="9.9.1"/>
-		<unit id="org.objectweb.asm.commons" version="9.9.1"/>
-		<unit id="org.objectweb.asm.tree" version="9.9.1"/>
-		<unit id="org.objectweb.asm.tree.analysis" version="9.9.1"/>
-		<unit id="org.objectweb.asm.util" version="9.9.1"/>
-		<repository location="https://download.eclipse.org/tools/orbit/simrel/maven-osgi/release/4.39.0"/>
-	</location>
-	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 		<unit id="org.eclipse.emf.base.feature.group" version="2.44.0.v20251210-1145"/>
 		<unit id="org.eclipse.emf.ecore.feature.group" version="2.43.0.v20251210-1145"/>
 		<unit id="org.eclipse.emf.edit.feature.group" version="2.24.0.v20250910-1205"/>
@@ -615,6 +607,37 @@
 				<groupId>it.unimi.dsi</groupId>
 				<artifactId>fastutil</artifactId>
 				<version>8.5.16</version>
+				<type>jar</type>
+			</dependency>
+			<!-- Objectweb ASM required for Xtext and Elasticsearch (when upgrading make sure the version is supported by Xtext or it does not get duplicated from that repository) -->
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-commons</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-tree</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-analysis</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-util</artifactId>
+				<version>9.9.1</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Testing libraries (REST API, Assertions and Mocking) -->
