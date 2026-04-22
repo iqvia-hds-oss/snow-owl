@@ -17,8 +17,10 @@ package com.b2international.snowowl.fhir.core.request.codesystem;
 
 import static com.google.common.collect.Sets.newHashSet;
 
-import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
@@ -26,6 +28,7 @@ import org.hl7.fhir.r5.model.Identifier;
 import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 
 import com.b2international.commons.StringUtils;
+import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.snowowl.core.RepositoryManager;
@@ -66,59 +69,53 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 	
 	@Override
 	protected void addUrlFilter(final ExpressionBuilder query) {
-		if (!containsKey(OptionKey.URL) && !containsKey(OptionKey.VERSION)) {
+		if (!containsKey(OptionKey.URL)) {
 			return;
 		}
 		
-		// We will remove all user-supplied SNOMED CT URIs from the URL filter and add values from the version filter instead
+		// Remove all user-supplied SNOMED CT URIs from the URL filter, we don't want the FHIR API to find them this way
 		final Set<String> urls = newHashSet(getCollection(OptionKey.URL, String.class));
-		final boolean hasBaseSnomedUri = urls.contains(FhirModelHelpers.SNOMED_BASE_URI_STRING);
+		final boolean hadBaseSnomedUri = urls.contains(FhirModelHelpers.SNOMED_BASE_URI_STRING);
 		urls.removeIf(FhirModelHelpers::isSnomedUri);
-		
-		if (containsKey(OptionKey.VERSION)) {
-			/*
-			 * XXX: SNOMED CT version URIs are stored as resource URLs, so we need to add
-			 * them to the URL filter instead. Ideally this would be pushed down to a
-			 * tooling-specific handler but at this point we don't know which tooling is
-			 * being queried.
-			 */
-			final Collection<String> versions = getCollection(OptionKey.VERSION, String.class);
-			
-			versions.stream()
-				.filter(FhirModelHelpers::isSnomedUri)
-				.forEachOrdered(urls::add);
-		}
 
-		/*
-		 * TODO: When encountering the SNOMED CT base URL without a specific version filter, 
-		 * add a filter that replaces it with the "definitive" SNOMED CT resource URL instead. 
-		 * 
-		 * This is currently the HEAD of the International Edition to match the behavior of
-		 * FhirValueSetExpandRequest#expandImplicitValueSet(ServiceProvider, String) but is 
-		 * subject to change in the future, see SO-6575.
-		 * 
-		 * The flag should be stored on the resource document but it is OK to have it 
-		 * snapshotted when a version is created. Querying the "definitive" version should 
-		 * be based on the creation date (not the effective date) of version documents, 
-		 * this way we can ensure that the "definitive" version is always the version 
-		 * that had the flag set the last time.
-		 * 
-		 * Some things for future consideration:
-		 * 
-		 * - If the flag is not set on any version, we should return the most recent version
-		 *   for the "SNOMEDCT" resource as fallback if it exists, with any version from the
-		 *   "snomedct" tooling as a secondary fallback
-		 *   
-		 * - If the flag is set on multiple resources, the most recent "definitive" version 
-		 *   will flip-flop between the resources each time a new version is created
-		 *   
-		 * - Users can't set a past version as "definitive", only LATEST versions
-		 */
+		final Set<String> snomedUrls = getCollection(OptionKey.VERSION, String.class)
+			.stream()
+			.filter(FhirModelHelpers::isSnomedUri)
+			.collect(Collectors.toSet());
+		
+		urls.addAll(snomedUrls);
+		
 		if (!urls.isEmpty()) {
 			query.filter(ResourceDocument.Expressions.urls(urls));
-		} else if (hasBaseSnomedUri) {
+		} else if (hadBaseSnomedUri) {
+			/*
+			 * TODO: When encountering the SNOMED CT base URL without a specific version filter, 
+			 * add a filter that replaces it with the "definitive" SNOMED CT resource URL instead. 
+			 * 
+			 * This is currently the HEAD of the International Edition to match the behavior of
+			 * FhirValueSetExpandRequest#expandImplicitValueSet(ServiceProvider, String) but is 
+			 * subject to change in the future, see SO-6575.
+			 * 
+			 * The flag should be stored on the resource document but it is OK to have it 
+			 * snapshotted when a version is created. Querying the "definitive" version should 
+			 * be based on the creation date (not the effective date) of version documents, 
+			 * this way we can ensure that the "definitive" version is always the version 
+			 * that had the flag set the last time.
+			 * 
+			 * Some things for consideration:
+			 * 
+			 * - If the flag is not set on any version, we should return the most recent version
+			 *   for the "SNOMEDCT" resource as fallback if it exists, with any version from the
+			 *   "snomedct" tooling as a secondary fallback
+			 *   
+			 * - If the flag is set on multiple resources, the most recent "definitive" version 
+			 *   will flip-flop between the resources each time a new version is created
+			 *   
+			 * - Users can't set a past version as "definitive", only LATEST versions
+			 */			
 			query.filter(ResourceDocument.Expressions.url(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
 		} else {
+			// An explicit URL filter was provided but all values got eliminated
 			query.filter(Expressions.matchNone());
 		}
 	}
@@ -128,19 +125,49 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		if (!containsKey(OptionKey.VERSION)) {
 			return;
 		}
-			
-		// Similar to the above, but this time we are removing SNOMED CT version URIs from the version filter
-		final Set<String> versions = newHashSet(getCollection(OptionKey.VERSION, String.class));
-		versions.removeIf(FhirModelHelpers::isSnomedUri);
+
+		/*
+		 * When we have both SNOMED CT URLs (moved from the version filter) and
+		 * non-SNOMED version IDs, we must OR the two conditions instead of AND-ing
+		 * them. Otherwise resources matching non-SNOMED versions would be incorrectly
+		 * restricted to only those that also match the SNOMED CT URL filter.
+		 * 
+		 * Ideally this would be pushed down to a tooling-specific handler but at this
+		 * point we don't know which tooling is being queried.
+		 */
+		final Map<Boolean, List<String>> versionsByKind = getCollection(OptionKey.VERSION, String.class)
+			.stream()
+			.collect(Collectors.partitioningBy(FhirModelHelpers::isSnomedUri));
 		
-		if (!versions.isEmpty()) {
-			query.filter(VersionDocument.Expressions.versions(versions));
+		final List<String> snomedVersions = versionsByKind.get(true);
+		final List<String> nonSnomedVersions = versionsByKind.get(false);
+
+		final Expression urlExpression;
+		if (!snomedVersions.isEmpty()) {
+			urlExpression = ResourceDocument.Expressions.urls(snomedVersions);
 		} else {
-			/*
-			 * If we have removed all versions, this means they were all SNOMED CT URIs 
-			 * and so we do not need to restrict the result set further by values in
-			 * the "version" field.
-			 */
+			urlExpression = null;
+		}
+		
+		final Expression versionExpression;
+		if (!nonSnomedVersions.isEmpty()) {
+			versionExpression = VersionDocument.Expressions.versions(nonSnomedVersions);
+		} else {
+			versionExpression = null;
+		}
+		
+		if (urlExpression != null && versionExpression != null) {
+			query.filter(Expressions.bool()
+				.should(urlExpression)
+				.should(versionExpression)
+				.build());
+		} else if (urlExpression != null) {
+			query.filter(urlExpression);
+		} else if (versionExpression != null) {
+			query.filter(versionExpression);
+		} else {
+			// An explicit version filter was provided but all values got eliminated
+			query.filter(Expressions.matchNone());
 		}
 	}
 	
