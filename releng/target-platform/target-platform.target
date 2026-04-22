@@ -14,18 +14,6 @@
 		<repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20210223232630/repository"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="bcpg" version="1.83.0"/>
-		<unit id="bcpkix" version="1.83.0"/>
-		<unit id="bcprov" version="1.83.0"/>
-		<unit id="bcutil" version="1.83.0"/>
-		<unit id="org.objectweb.asm" version="9.9.1"/>
-		<unit id="org.objectweb.asm.commons" version="9.9.1"/>
-		<unit id="org.objectweb.asm.tree" version="9.9.1"/>
-		<unit id="org.objectweb.asm.tree.analysis" version="9.9.1"/>
-		<unit id="org.objectweb.asm.util" version="9.9.1"/>
-		<repository location="https://download.eclipse.org/tools/orbit/simrel/maven-osgi/release/4.39.0"/>
-	</location>
-	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 		<unit id="org.eclipse.emf.base.feature.group" version="2.44.0.v20251210-1145"/>
 		<unit id="org.eclipse.emf.ecore.feature.group" version="2.43.0.v20251210-1145"/>
 		<unit id="org.eclipse.emf.edit.feature.group" version="2.24.0.v20250910-1205"/>
@@ -55,6 +43,31 @@
 	</location>
 	<location includeSource="true" includeMode="planner" missingManifest="error" type="Maven">
 		<dependencies>
+			<!-- Load bouncycastle version from Maven for more control over its actual version -->
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcpg-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcpkix-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcutil-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
 			<!-- SLF4J Logging and Logback -->
 			<dependency>
 				<groupId>org.slf4j</groupId>
@@ -321,127 +334,127 @@
 			<dependency>
 			    <groupId>org.eclipse.jetty</groupId>
 			    <artifactId>jetty-annotations</artifactId>
-			    <version>12.1.6</version>
+			    <version>12.1.8</version>
 			    <type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-osgi</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-deploy</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-http</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-io</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-jmx</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-jndi</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-plus</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-security</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-server</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 			    <groupId>org.eclipse.jetty</groupId>
 			    <artifactId>jetty-session</artifactId>
-			    <version>12.1.6</version>
+			    <version>12.1.8</version>
 			    <type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-util</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-xml</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-core-server</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-jetty-server</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-jetty-api</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-core-common</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-jetty-common</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.websocket</groupId>
 				<artifactId>jetty-websocket-core-client</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-client</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-alpn-client</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -454,81 +467,81 @@
 			<dependency>
 				<groupId>org.eclipse.jetty.compression</groupId>
 				<artifactId>jetty-compression-common</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.compression</groupId>
 				<artifactId>jetty-compression-gzip</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Jetty EE generic module required for all Jakarta EE version specific bundles -->
 			<dependency>
 			    <groupId>org.eclipse.jetty.ee</groupId>
 			    <artifactId>jetty-ee-webapp</artifactId>
-			    <version>12.1.6</version>
+			    <version>12.1.8</version>
 			    <type>jar</type>
 			</dependency>
 			<!-- Add Jetty EE10 (or bump to a more recent Jakarta EE version) packages here -->
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-servlet</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.osgi</groupId>
 				<artifactId>jetty-ee10-osgi-boot</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-annotations</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-plus</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10</groupId>
 				<artifactId>jetty-ee10-webapp</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jetty-server</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jakarta-common</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-servlet</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jakarta-server</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.eclipse.jetty.ee10.websocket</groupId>
 				<artifactId>jetty-ee10-websocket-jakarta-client</artifactId>
-				<version>12.1.6</version>
+				<version>12.1.8</version>
 				<type>jar</type>
 			</dependency>
 			<!-- OWL API and Protege dependencies for classification and reasoner support -->
@@ -594,6 +607,37 @@
 				<groupId>it.unimi.dsi</groupId>
 				<artifactId>fastutil</artifactId>
 				<version>8.5.16</version>
+				<type>jar</type>
+			</dependency>
+			<!-- Objectweb ASM required for Xtext and Elasticsearch (when upgrading make sure the version is supported by Xtext or it does not get duplicated from that repository) -->
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-commons</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-tree</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-analysis</artifactId>
+				<version>9.9.1</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.ow2.asm</groupId>
+				<artifactId>asm-util</artifactId>
+				<version>9.9.1</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Testing libraries (REST API, Assertions and Mocking) -->
