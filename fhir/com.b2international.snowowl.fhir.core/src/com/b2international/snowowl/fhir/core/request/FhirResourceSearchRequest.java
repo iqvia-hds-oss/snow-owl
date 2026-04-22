@@ -355,7 +355,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		entry.setStatus(toPublicationStatus(resource.getStatus()));
 		entry.setMeta(toMeta(resource.getUpdatedAt(), resource.getCreatedAt()));
 		
+		// Add tooling ID and "native" resource URI as user data to be used for later processing if needed
 		entry.setUserData(TerminologyResource.Fields.TOOLING_ID, resource.getToolingId());
+		entry.setUserData(TerminologyResource.Fields.RESOURCE_URI, resource.getResourceURI());
 		
 		// We are using the raw ID of the resource as machine readable name
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, resource::getId, entry::setName);
