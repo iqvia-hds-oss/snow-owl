@@ -14,10 +14,6 @@
 		<repository location="https://download.eclipse.org/tools/orbit/downloads/drops/R20210223232630/repository"/>
 	</location>
 	<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-		<unit id="bcpg" version="1.83.0"/>
-		<unit id="bcpkix" version="1.83.0"/>
-		<unit id="bcprov" version="1.83.0"/>
-		<unit id="bcutil" version="1.83.0"/>
 		<unit id="org.objectweb.asm" version="9.9.1"/>
 		<unit id="org.objectweb.asm.commons" version="9.9.1"/>
 		<unit id="org.objectweb.asm.tree" version="9.9.1"/>
@@ -55,6 +51,31 @@
 	</location>
 	<location includeSource="true" includeMode="planner" missingManifest="error" type="Maven">
 		<dependencies>
+			<!-- Load bouncycastle version from Maven for more control over its actual version -->
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcpg-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcpkix-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcprov-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
+			<dependency>
+				<groupId>org.bouncycastle</groupId>
+				<artifactId>bcutil-jdk18on</artifactId>
+				<version>1.84</version>
+				<type>jar</type>
+			</dependency>
 			<!-- SLF4J Logging and Logback -->
 			<dependency>
 				<groupId>org.slf4j</groupId>
