@@ -37,7 +37,9 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
+import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.fhir.core.FhirResourceParser;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
@@ -157,6 +159,8 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 			return;
 		}
 		
+		final String author = context.service(User.class).getUserId();
+		
 		try {
 			Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER))
 				.forEach(pathToImport -> {
@@ -165,7 +169,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 						if (pathToImport.getFileName().toString().startsWith(CODE_SYSTEM)) {
 							if (codeSystemWriteSupport != null) {
 								org.hl7.fhir.r5.model.CodeSystem cs = (org.hl7.fhir.r5.model.CodeSystem) resourceParser.parseResource(reader);
-								codeSystemWriteSupport.update(context, cs, "system", null, null, null, null);
+								codeSystemWriteSupport.update(context, cs, "system", null, null, null, IComponent.ROOT_ID);
 								importedCodeSystems++;
 							} else {
 								// TODO register that resource cannot be imported via this server due to missing entitlement
@@ -173,7 +177,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 						} else if (pathToImport.getFileName().toString().startsWith(VALUE_SET)) {
 							if (valueSetOps != null) {
 								org.hl7.fhir.r5.model.ValueSet vs = (org.hl7.fhir.r5.model.ValueSet) resourceParser.parseResource(reader);
-								valueSetOps.update(context, vs, Map.of(), "system", null, null, null, null);
+								valueSetOps.update(context, vs, Map.of(), author, author, author, null, IComponent.ROOT_ID);
 								importedValueSets++;
 							} else {
 								// TODO register that resource cannot be imported via this server due to missing entitlement
@@ -181,7 +185,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 						} else if (pathToImport.getFileName().toString().startsWith(CONCEPT_MAP)) {
 							if (conceptMapOps != null) {
 								org.hl7.fhir.r5.model.ConceptMap cm = (org.hl7.fhir.r5.model.ConceptMap) resourceParser.parseResource(reader);
-								conceptMapOps.update(context, cm, Map.of(), null, null, null, null, null);
+								conceptMapOps.update(context, cm, Map.of(), author, author, author, null, IComponent.ROOT_ID);
 								importedConceptMaps++;
 							} else {
 								// TODO register that resource cannot be imported via this server due to missing entitlement
