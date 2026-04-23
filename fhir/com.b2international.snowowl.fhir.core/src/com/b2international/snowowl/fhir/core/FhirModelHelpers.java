@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.model.InstantType;
 import org.hl7.fhir.r5.model.Resource;
 
 import com.b2international.commons.CompareUtils;
+import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.ResourceRequests;
@@ -109,12 +110,19 @@ public class FhirModelHelpers {
 			return "";
 		}
 		
-		final Optional<Version> versionWithURI = ResourceRequests.prepareSearchVersion()
-			.one()
-			.filterByResource(resourceUri)
-			.buildAsync()
-			.execute(context)
-			.first();
+		final Optional<Version> versionWithURI;
+		
+		if (!StringUtils.isEmpty(resourceUri.getPath())) {
+			versionWithURI = ResourceRequests.prepareSearchVersion()
+				.one()
+				.filterByResource(resourceUri.withoutPath())
+				.filterByVersionId(resourceUri.getPath())
+				.buildAsync()
+				.execute(context)
+				.first();
+		} else {
+			versionWithURI = Optional.empty();
+		}
 			
 		if (versionWithURI.isPresent()) {
 			return versionWithURI.get().getUrl();
