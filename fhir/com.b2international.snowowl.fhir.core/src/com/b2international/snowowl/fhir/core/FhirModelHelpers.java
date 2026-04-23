@@ -16,6 +16,7 @@
 package com.b2international.snowowl.fhir.core;
 
 import java.util.Date;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -27,6 +28,7 @@ import org.hl7.fhir.r5.model.Resource;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
+import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.ResourceRequests;
@@ -105,9 +107,31 @@ public class FhirModelHelpers {
 		return system;
 	}
 	
+	/**
+	 * Provides a fallback URN for resource URIs that cannot be resolved to an
+	 * actual resource. This suggests an internal inconsistency in the data, but
+	 * allows the system to continue building a FHIR response without throwing an
+	 * exception.
+	 * <p>
+	 * Consumers will most likely not be able to do anything meaningful with the
+	 * returned value, but it is still useful for debugging and error reporting
+	 * purposes.
+	 * 
+	 * @param resourceUri
+	 * @return
+	 */
+	private static String getUrnForUnresolvedUri(final ResourceURI resourceUri) {
+		final String resourceType = resourceUri.getResourceType()
+			.toLowerCase(Locale.ENGLISH);
+		final String resourceUriWithoutType = resourceUri.getResourceId()
+			.toLowerCase(Locale.ENGLISH);
+		
+		return String.format("urn:snowowl:%s:%s", resourceType, resourceUriWithoutType);
+	}
+
 	private static String getUrlForResourceUri(final ServiceProvider context, final ResourceURI resourceUri) {
 		if (TerminologyRegistry.UNSPECIFIED.equals(resourceUri.getResourceId())) {
-			return "";
+			return getUrnForUnresolvedUri(resourceUri);
 		}
 		
 		final Optional<Version> versionWithURI;
@@ -128,10 +152,16 @@ public class FhirModelHelpers {
 			return versionWithURI.get().getUrl();
 		}
 			
-		return ResourceRequests.prepareGet(resourceUri)
-			.buildAsync()
-			.execute(context)
-			.getUrl();
+		try {
+			
+			return ResourceRequests.prepareGet(resourceUri)
+				.buildAsync()
+				.execute(context)
+				.getUrl();
+			
+		} catch (final NotFoundException e) {
+			return getUrnForUnresolvedUri(resourceUri);
+		}
 	}
 	
 	public static Function<ResourceURI, String> createResourceUriToUrlFunction(final ServiceProvider context) {
