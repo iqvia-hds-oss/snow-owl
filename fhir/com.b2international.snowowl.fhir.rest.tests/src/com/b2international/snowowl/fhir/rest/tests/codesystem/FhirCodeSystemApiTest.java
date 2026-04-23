@@ -287,7 +287,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void GET_CodeSystem_Elements_multiple_settings() throws Exception {
+	public void GET_CodeSystem_multiple_Elements_stored_in_settings() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("_id", getTestCodeSystemId())
 			// Both publisher and caseSensitive are stored settings, this case tests if issues arise when 
