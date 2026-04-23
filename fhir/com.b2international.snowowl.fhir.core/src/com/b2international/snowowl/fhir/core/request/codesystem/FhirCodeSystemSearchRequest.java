@@ -27,6 +27,7 @@ import com.b2international.commons.CompareUtils;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
+import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.FhirResourceSearchRequest;
 
@@ -39,6 +40,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 	
 	private static final Set<String> EXTERNAL_FHIR_CODESYSTEM_FIELDS = Set.of(
 		R5ObjectFields.CodeSystem.COUNT,
+		R5ObjectFields.CodeSystem.CASE_SENSITIVE,
 		R5ObjectFields.CodeSystem.CONTENT,
 		R5ObjectFields.CodeSystem.CONCEPT,
 		R5ObjectFields.CodeSystem.FILTER,
@@ -68,8 +70,20 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 	}
 	
 	@Override
+	protected void configureFieldsToLoad(List<String> fields) {
+		super.configureFieldsToLoad(fields);
+		
+		// replace caseSensitive with internal settings field (stored within resource metadata)
+		if (fields.contains(R5ObjectFields.CodeSystem.CASE_SENSITIVE)) {
+			fields.remove(R5ObjectFields.CodeSystem.CASE_SENSITIVE);
+			fields.add(ResourceDocument.Fields.SETTINGS);
+		}
+	}
+	
+	@Override
 	protected void expandResourceSpecificFields(RepositoryContext context, CodeSystem entry, ResourceFragment resource) {
 		includeIfFieldSelected(R5ObjectFields.CodeSystem.COPYRIGHT, resource::getCopyright, entry::setCopyright);
+		includeIfFieldSelected(R5ObjectFields.CodeSystem.CASE_SENSITIVE, () -> (Boolean) resource.getSettings().getOrDefault(R5ObjectFields.CodeSystem.CASE_SENSITIVE, true), entry::setCaseSensitive);
 		includeIfFieldSelected(R5ObjectFields.CodeSystem.IDENTIFIER, () -> {
 			if (!CompareUtils.isEmpty(resource.getOid())) {
 				return new Identifier()

@@ -173,6 +173,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("entry[0].resource.title", equalTo("Title of " + getTestCodeSystemId()))
 			.body("entry[0].resource.property", notNullValue())
 			.body("entry[0].resource.filter", notNullValue())
+			.body("entry[0].resource.caseSensitive", equalTo(true))
 			//no concept definitions are part of the summary
 			.body("entry.resource", not(hasItem("concept")));
 	}
@@ -223,6 +224,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("entry[0].resource.url", nullValue())
 			.body("entry[0].resource.name", nullValue())
 			.body("entry[0].resource.copyright", nullValue())
+			.body("entry[0].resource.caseSignificance", nullValue())
 			.body("entry[0].resource.count", nullValue())
 			.body("entry[0].resource.text", nullValue());
 	}
@@ -282,6 +284,34 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			// requested fields
 			.body("entry[0].resource.name", equalTo(getTestCodeSystemId()))
 			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()));
+	}
+	
+	@Test
+	public void GET_CodeSystem_multiple_Elements_stored_in_settings() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("_id", getTestCodeSystemId())
+			// Both publisher and caseSensitive are stored settings, this case tests if issues arise when 
+			// the settings field is called multiple times
+			.queryParam("_elements", "publisher", "caseSensitive")
+			.when().get(CODESYSTEM)
+			.then().assertThat() 
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("meta.tag.code", hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode()))
+			.body("total", equalTo(1))
+			.body("type", equalTo("searchset"))
+			// mandatory fields
+			.body("entry[0].resource.status", equalTo("draft"))
+			.body("entry[0].resource.content", equalTo("not-present"))
+			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			// summary and optional fields
+			.body("entry[0].resource.text", nullValue())
+			.body("entry[0].resource.count", nullValue())
+			.body("entry[0].resource.concept", nullValue()) 
+			.body("entry[0].resource.copyright", nullValue()) 
+			// requested fields
+			.body("entry[0].resource.publisher", equalTo("SNOMED International"))
+			.body("entry[0].resource.caseSensitive", equalTo(true));
 	}
 	
 	@Test
