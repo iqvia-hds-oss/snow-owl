@@ -35,13 +35,13 @@ public final class FhirLoadPackageParameters extends BaseParameters {
 	private static final String PARAM_NAME = "name";
 	private static final String PARAM_VERSION = "version";
 	private static final String PARAM_REGISTRY = "registry";
-	private static final String PARAM_DEPENDENCIES = "dependencies";
+	private static final String PARAM_RESOLVE_DEPENDENCIES = "resolveDependencies";
 
 	private static final SortedSet<String> ACCEPTED_PARAMETER_NAMES = ImmutableSortedSet.of(
 		PARAM_NAME,
 		PARAM_VERSION,
 		PARAM_REGISTRY,
-		PARAM_DEPENDENCIES
+		PARAM_RESOLVE_DEPENDENCIES
 	);
 
 	public FhirLoadPackageParameters() {
@@ -91,16 +91,16 @@ public final class FhirLoadPackageParameters extends BaseParameters {
 		return this;
 	}
 
-	public BooleanType getDependencies() {
-		return getParameterValue(PARAM_DEPENDENCIES, Parameters.ParametersParameterComponent::getValueBooleanType);
+	public BooleanType getResolveDependencies() {
+		return getParameterValue(PARAM_RESOLVE_DEPENDENCIES, Parameters.ParametersParameterComponent::getValueBooleanType);
 	}
 
-	public FhirLoadPackageParameters setDependencies(Boolean dependencies) {
-		return setDependencies(new BooleanType(dependencies));
+	public FhirLoadPackageParameters setResolveDependencies(Boolean resolveDependencies) {
+		return setResolveDependencies(new BooleanType(resolveDependencies));
 	}
 
-	public FhirLoadPackageParameters setDependencies(BooleanType dependencies) {
-		addParameter(PARAM_DEPENDENCIES, dependencies);
+	public FhirLoadPackageParameters setResolveDependencies(BooleanType resolveDependencies) {
+		addParameter(PARAM_RESOLVE_DEPENDENCIES, resolveDependencies);
 		return this;
 	}
 

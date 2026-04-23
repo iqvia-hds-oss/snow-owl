@@ -200,7 +200,7 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 	 * resources (CodeSystem, ValueSet, ConceptMap).
 	 * 
 	 * @param file - The FHIR package tarball file
-	 * @param dependencies - Whether to load dependencies (default: true)
+	 * @param resolveDependencies - Whether to load dependencies (default: true)
 	 * @param accept - Accept header
 	 * @param _format - Alternative response format
 	 * @param _pretty - Pretty print flag
@@ -231,9 +231,9 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		@RequestPart("file")
 		final MultipartFile file,
 		
-		@Parameter(description = "Load dependencies (default: true)")
-		@RequestParam(value = "dependencies", defaultValue = "true")
-		final Boolean dependencies,
+		@Parameter(description = "Resolve and load dependencies (default: true)")
+		@RequestParam(value = "resolveDependencies", defaultValue = "true")
+		final Boolean resolveDependencies,
 		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT, required = false)
@@ -262,7 +262,7 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		attachments.upload(fhirPackageAttachmentId, file.getInputStream());
 		
 		FhirLoadPackageParameters params = new FhirLoadPackageParameters();
-		params.setDependencies(dependencies);
+		params.setResolveDependencies(resolveDependencies);
 		return loadPackage(params, new Attachment(fhirPackageAttachmentId, file.getOriginalFilename()), accept, _format, _pretty);
 	}
 
