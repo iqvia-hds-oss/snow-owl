@@ -24,9 +24,13 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.b2international.index.Analyzers;
 import com.b2international.index.Doc;
 import com.b2international.index.ID;
+import com.b2international.index.Normalizers;
 import com.b2international.index.mapping.Field;
+import com.b2international.index.mapping.FieldAlias;
+import com.b2international.index.mapping.FieldAlias.FieldAliasType;
 import com.b2international.index.migrate.DocumentMappingMigrationStrategy;
 import com.b2international.index.migrate.SchemaRevision;
 import com.b2international.index.query.Expression;
@@ -58,6 +62,11 @@ import com.google.common.base.MoreObjects;
 			description = "add dependencies",
 			strategy = DocumentMappingMigrationStrategy.REINDEX_SCRIPT,
 			migrator = VersionDocumentSchemaMigratorV9_0.class
+		),
+		@SchemaRevision(
+			version = 3,
+			description = "add text search support to title field",
+			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
 		)
 	}
 )
@@ -407,6 +416,14 @@ public final class VersionDocument implements CommitSubject, Serializable {
 
 	// a snapshot of the corresponding resource document fields at the point of versioning (not indexed)
 	private final String resourceDescription;
+	
+	@Field(
+		aliases = {
+			@FieldAlias(name = "prefix", type = FieldAliasType.TEXT, analyzer = Analyzers.PREFIX, searchAnalyzer = Analyzers.TOKENIZED),
+			@FieldAlias(name = "text", type = FieldAliasType.TEXT, analyzer = Analyzers.TOKENIZED, searchAnalyzer = Analyzers.TOKENIZED_SYNONYMS),
+			@FieldAlias(name = "exact", type = FieldAliasType.KEYWORD, normalizer = Normalizers.LOWER_ASCII)
+		}
+	)
 	private final String title;
 	private final String status;
 	private final String contact;
