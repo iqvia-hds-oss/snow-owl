@@ -48,8 +48,6 @@ final class FhirConceptMapSearchRequest extends FhirResourceSearchRequest<Concep
 	
 	@Override
 	protected void expandResourceSpecificFields(RepositoryContext context, ConceptMap entry, ResourceFragment resource) {
-		includeIfFieldSelected(R5ObjectFields.CodeSystem.COPYRIGHT, resource::getCopyright, entry::setCopyright);
-
 		FhirConceptMapResourceConverter converter = context.service(RepositoryManager.class)
 				.get(resource.getToolingId())
 				.optionalService(FhirConceptMapResourceConverter.class)

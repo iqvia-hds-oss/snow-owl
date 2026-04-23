@@ -51,8 +51,6 @@ final class FhirValueSetSearchRequest extends FhirResourceSearchRequest<ValueSet
 	
 	@Override
 	protected void expandResourceSpecificFields(RepositoryContext context, ValueSet entry, ResourceFragment resource) {
-		includeIfFieldSelected(R5ObjectFields.CodeSystem.COPYRIGHT, resource::getCopyright, entry::setCopyright);
-		
 		FhirValueSetResourceConverter converter = context.service(RepositoryManager.class)
 				.get(resource.getToolingId())
 				.optionalService(FhirValueSetResourceConverter.class)
