@@ -452,6 +452,10 @@ public abstract class SnomedConstants {
 		public static final String ATTRIBUTE_TYPE_TARGET_EFFECTIVE_TIME = "900000000000537000";
 	}
 	
+	// Default allowed MRCM object/data expressions
+	public static final String DEFAULT_OBJECT_ATTRIBUTE_EXPRESSION = "<" + Concepts.CONCEPT_MODEL_OBJECT_ATTRIBUTE;
+	public static final String DEFAULT_DATA_ATTRIBUTE_EXPRESSION = "<" + Concepts.CONCEPT_MODEL_DATA_ATTRIBUTE;
+	
 	// RF2 effective time format
 	public static final String RF2_EFFECTIVE_TIME_FORMAT = "yyyyMMdd";
 	

@@ -77,7 +77,7 @@ public final class R5ObjectFields {
 	
 	public static final class CodeSystem extends MetadataResource {
 		
-		// XXX do we need caseSensitive???
+		public static final String CASE_SENSITIVE = "caseSensitive";
 		public static final String CONTENT = "content";
 		public static final String VALUE_SET = "valueSet";
 		// TODO valueSet
@@ -101,7 +101,7 @@ public final class R5ObjectFields {
 		
 		public static final Set<String> SUMMARY = ImmutableSet.<String>builder()
 				.addAll(MetadataResource.SUMMARY)
-				.add(COUNT, FILTER, PROPERTY, IDENTIFIER)
+				.add(COUNT, FILTER, PROPERTY, IDENTIFIER, CASE_SENSITIVE)
 				.build();
 		
 		public static final Set<String> SUMMARY_TEXT = ImmutableSet.<String>builder()
@@ -116,6 +116,7 @@ public final class R5ObjectFields {
 				.addAll(SUMMARY)
 				.add(TEXT)
 				.add(CONCEPT)
+				.add(CASE_SENSITIVE)
 				.add(COPYRIGHT)
 				.add(VALUE_SET)
 				.build();

@@ -49,6 +49,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 	
 	private static final Set<String> EXTERNAL_FHIR_CODESYSTEM_FIELDS = Set.of(
 		R5ObjectFields.CodeSystem.COUNT,
+		R5ObjectFields.CodeSystem.CASE_SENSITIVE,
 		R5ObjectFields.CodeSystem.CONTENT,
 		R5ObjectFields.CodeSystem.CONCEPT,
 		R5ObjectFields.CodeSystem.FILTER,
@@ -180,7 +181,18 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 	protected CodeSystem createResource() {
 		return new CodeSystem();
 	}
-	
+
+  @Override
+	protected void configureFieldsToLoad(List<String> fields) {
+		super.configureFieldsToLoad(fields);
+		
+		// replace caseSensitive with internal settings field (stored within resource metadata)
+		if (fields.contains(R5ObjectFields.CodeSystem.CASE_SENSITIVE)) {
+			fields.remove(R5ObjectFields.CodeSystem.CASE_SENSITIVE);
+			fields.add(ResourceDocument.Fields.SETTINGS);
+		}
+	}
+  
 	private Identifier getIdentifier(final String oid) {
 		if (StringUtils.isEmpty(oid)) {
 			return null;
@@ -198,7 +210,8 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 		
 		// addIdentifier() is a no-op if the input is null so we can safely call it here
 		includeIfFieldSelected(R5ObjectFields.CodeSystem.IDENTIFIER, () -> getIdentifier(resource.getOid()), entry::addIdentifier);
-
+    includeIfFieldSelected(R5ObjectFields.CodeSystem.CASE_SENSITIVE, () -> (Boolean) resource.getSettings().getOrDefault(R5ObjectFields.CodeSystem.CASE_SENSITIVE, true), entry::setCaseSensitive);
+    
 		// The rest of the field inclusions is specific to code system tooling, we need to obtain the appropriate converter for this purpose
 		final FhirCodeSystemResourceConverter converter = context.service(RepositoryManager.class)
 			.get(resource.getToolingId())

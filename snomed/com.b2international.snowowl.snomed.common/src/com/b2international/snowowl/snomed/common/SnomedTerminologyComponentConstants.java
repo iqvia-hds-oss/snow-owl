@@ -59,6 +59,8 @@ public abstract class SnomedTerminologyComponentConstants {
 		public static final String LANGUAGES = "languages";
 		public static final String NAMESPACE_MODULE_ASSIGNER = "namespaceModuleAssigner";
 		public static final String REASONER_EXCLUDED_MODULE_IDS = "reasonerExcludedModuleIds";
+		public static final String ALLOWED_OBJECT_ATTRIBUTE_EXPRESSION = "allowedObjectAttributesExpression";
+		public static final String ALLOWED_DATA_ATTRIBUTE_EXPRESSION = "allowedDataAttributesExpression";
 	}
 	
 	/**
