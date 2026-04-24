@@ -321,7 +321,6 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("entry[0].resource.count", equalTo(NUM_CONCEPTS))
 			// summary and optional fields
 			.body("entry[0].resource.text", nullValue())
-			.body("entry[0].resource.count", nullValue())
 			.body("entry[0].resource.concept", nullValue()) 
 			.body("entry[0].resource.copyright", nullValue()) 
 			// requested fields
