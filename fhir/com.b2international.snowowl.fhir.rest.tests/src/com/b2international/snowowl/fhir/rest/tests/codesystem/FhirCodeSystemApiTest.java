@@ -315,8 +315,10 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			// mandatory fields
 			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("not-present"))
+			.body("entry[0].resource.content", equalTo("complete"))
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			// returned because we need to calculate the concept count for the content property
+			.body("entry[0].resource.count", equalTo(NUM_CONCEPTS))
 			// summary and optional fields
 			.body("entry[0].resource.text", nullValue())
 			.body("entry[0].resource.count", nullValue())
