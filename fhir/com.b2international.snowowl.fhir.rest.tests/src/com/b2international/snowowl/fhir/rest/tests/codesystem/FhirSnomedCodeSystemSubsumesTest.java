@@ -106,5 +106,19 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("parameter[0].name", equalTo("outcome"))
 			.body("parameter[0].valueCode", equalTo("subsumed-by"));
 	}
-
+	
+	@Test
+	public void GET_CodeSystem_$subsumes_Subsumes_BaseURI() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("codeA", ORGANISM_TOP_LEVEL)
+			.queryParam("codeB", BACTERIA)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			// .queryParam("version", ...) is omitted to test whether the base URI alone can be used
+			.when().get(CODESYSTEM_SUBSUMES)
+			.then().assertThat()
+			.statusCode(200)
+			.body("parameter[0].name", equalTo("outcome"))
+			.body("parameter[0].valueCode", equalTo("subsumes"));
+	}
+	
 }

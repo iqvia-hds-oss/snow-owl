@@ -157,7 +157,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void GET_CodeSystem_$lookup_Existing_System() throws Exception {
+	public void GET_CodeSystem_$lookup_Existing_BaseURI() throws Exception {
 		
 		SnomedRequests.prepareUpdateConcept(Concepts.ROOT_CONCEPT)
 			.setEffectiveTime("20260427")
@@ -168,7 +168,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
-			// "version" is omitted to test that SNOMEDCT HEAD is used by default
+			// .queryParam("version", ...) is omitted to test that whether the base URI alone can be used
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.queryParam("property", SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())
 			.queryParam("_format", "json")

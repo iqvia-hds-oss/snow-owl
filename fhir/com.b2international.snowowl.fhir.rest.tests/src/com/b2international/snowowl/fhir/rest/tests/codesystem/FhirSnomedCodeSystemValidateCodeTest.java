@@ -84,6 +84,21 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.body("parameter[1]", nullValue());
 	}
 	
+	
+	@Test
+	public void GET_CodeSystem_$validate_code_BaseURI() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+		.queryParam("url", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+		// .queryParam("version", ...) is omitted to test whether the base URI alone can be used
+		.queryParam("code", Concepts.ROOT_CONCEPT)
+		.when().get(CODESYSTEM_VALIDATE_CODE)
+		.then().assertThat()
+		.statusCode(200)
+		.body("parameter[0].name", equalTo("result"))
+		.body("parameter[0].valueBoolean", equalTo(true))
+		.body("parameter[1]", nullValue());
+	}
+	
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R4() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()
