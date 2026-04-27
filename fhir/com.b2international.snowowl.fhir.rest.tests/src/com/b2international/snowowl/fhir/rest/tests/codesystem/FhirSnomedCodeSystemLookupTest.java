@@ -30,6 +30,10 @@ import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.b2international.snowowl.snomed.fhir.SnomedFhirConstants;
+import com.b2international.snowowl.test.commons.Services;
+import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 
 import io.restassured.path.json.JsonPath;
@@ -150,6 +154,37 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
 			.body("parameter[2].name", equalTo("version"))
 			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL + "/version/20020131"));
+	}
+	
+	@Test
+	public void GET_CodeSystem_$lookup_Existing_System() throws Exception {
+		
+		SnomedRequests.prepareUpdateConcept(Concepts.ROOT_CONCEPT)
+			.setEffectiveTime("20260427")
+			.force(true)
+			.build(SnomedContentRule.SNOMEDCT, RestExtensions.USER, "Set effective time to a future value")
+			.execute(Services.bus())
+			.getSync();
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			// "version" is omitted to test that SNOMEDCT HEAD is used by default
+			.queryParam("code", Concepts.ROOT_CONCEPT)
+			.queryParam("property", SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())
+			.queryParam("_format", "json")
+			.when().get(CODESYSTEM_LOOKUP)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("name"))
+			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
+			.body("parameter[1].name", equalTo("display"))
+			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[3].name", equalTo("property"))
+			.body("parameter[3].part[0].valueCode", equalTo(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode()))
+			.body("parameter[3].part[1].valueDateTime", equalTo("2026-04-27"));
 	}
 	
 	@Test

@@ -165,7 +165,8 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		if (parameters.isPropertyRequested(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())) {
 			properties.add(new CodeSystemLookupResultParameters.Property()
 					.setCode(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())
-					.setValue(new DateTimeType(EffectiveTimes.format(snomedConcept.getEffectiveTime(), DateFormats.SHORT))));
+					// FHIR DateTimeType expects YYYY-mm-dd format (with a dash separator in positions 4 and 7) 
+					.setValue(new DateTimeType(EffectiveTimes.format(snomedConcept.getEffectiveTime(), DateFormats.DEFAULT))));
 		}
 		
 		// Optionally requested properties
