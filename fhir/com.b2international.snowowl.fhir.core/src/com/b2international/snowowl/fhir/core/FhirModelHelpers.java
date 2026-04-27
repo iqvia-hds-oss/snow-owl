@@ -31,6 +31,7 @@ import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
@@ -47,8 +48,13 @@ public class FhirModelHelpers {
 	
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
 
-	public static ResourceURI resourceUriFrom(Resource resource) {
-		return ResourceURI.of(resource.getResourceType().name().toLowerCase() + "s", resource.getId());
+	public static ResourceURI resourceUriFrom(final Resource resource) {
+		final ResourceURI resourceUri = (ResourceURI) resource.getUserData(TerminologyResource.Fields.RESOURCE_URI);
+		if (resourceUri != null) {
+			return resourceUri;
+		} else {
+			return ResourceURI.of(resource.getResourceType().name().toLowerCase() + "s", resource.getId());
+		}
 	}
 	
 	public static DateTimeType toDateTimeElement(Long date) {
