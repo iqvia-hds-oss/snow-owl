@@ -144,8 +144,8 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 		
 		// XXX: Use the code system's tooling ID as the expand service selector
 		valueSet.setUserData(TerminologyResource.Fields.TOOLING_ID, codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID));
-		valueSet.setUserData("codeSystemUri", FhirModelHelpers.resourceUriFrom(codeSystem));
-		valueSet.setUserData("version", version);
+		valueSet.setUserData(FhirValueSetExpander.USERDATA_CODE_SYSTEM_URI, FhirModelHelpers.resourceUriFrom(codeSystem));
+		valueSet.setUserData(FhirValueSetExpander.USERDATA_CODE_SYSTEM_VERSION, version);
 		
 		ValueSet.ValueSetComposeComponent compose = null;
 		

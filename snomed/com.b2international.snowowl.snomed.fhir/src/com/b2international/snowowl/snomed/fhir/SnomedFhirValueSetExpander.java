@@ -57,7 +57,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 		final String termFilter = parameters.getFilter() == null ? null : parameters.getFilter().getValue();
 		
 		ConceptSearchRequestBuilder req = CodeSystemRequests.prepareSearchConcepts()
-			.filterByCodeSystemUri((ResourceURI) valueSet.getUserData("codeSystemUri"))
+			.filterByCodeSystemUri((ResourceURI) valueSet.getUserData(FhirValueSetExpander.USERDATA_CODE_SYSTEM_URI))
 			.filterByActive(parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue())
 			.filterByTerm(termFilter)
 			.setLimit(parameters.getCount() == null ? 10 : parameters.getCount().getValue())
@@ -100,7 +100,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 
 		expansion.addExtension(FhirValueSetExpander.EXTENSION_AFTER_PROPERTY_URL, new StringType(concepts.getSearchAfter()));
 		
-		final String version = valueSet.getUserString("version");
+		final String version = valueSet.getUserString(FhirValueSetExpander.USERDATA_CODE_SYSTEM_VERSION);
 		
 		for (Concept concept : concepts) {
 			var contains = new ValueSet.ValueSetExpansionContainsComponent()
