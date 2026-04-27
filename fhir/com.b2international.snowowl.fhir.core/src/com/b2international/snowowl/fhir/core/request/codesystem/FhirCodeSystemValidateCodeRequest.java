@@ -56,9 +56,14 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 	@Override
 	public CodeSystemValidateCodeResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
 		final Set<Coding> codings = collectCodingsToValidate(parameters);
+		
 		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
-		final ResourceURI codeSystemUri = FhirModelHelpers.resourceUriFrom(codeSystem);
-
+		ResourceURI codeSystemUri = FhirModelHelpers.resourceUriFrom(codeSystem);
+		
+		if (parameters.getDate() != null) {
+			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
+		}
+		
 		final Map<String, Coding> codingsById = codings.stream()
 			.collect(Collectors.toMap(
 				c -> c.getCode(), 
