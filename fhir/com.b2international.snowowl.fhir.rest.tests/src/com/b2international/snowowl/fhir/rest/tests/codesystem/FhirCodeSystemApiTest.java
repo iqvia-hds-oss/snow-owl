@@ -386,38 +386,6 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"));
 	}
 
-	// FIXME: Can't test matching by FHIR URL as it requires non-SCT terminology tooling support
-	
-//	@Test
-//	public void GET_CodeSystem_Url_Match_Single() throws Exception {
-//		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-//			.queryParam("url", SNOMEDCT_URL)
-//			.when().get(CODESYSTEM)
-//			.then().assertThat()
-//			.statusCode(200)
-//			.body("resourceType", equalTo("Bundle"))
-//			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-//			.body("total", equalTo(1))
-//			.body("type", equalTo("searchset"))
-//			.body("entry[0].resource.id", equalTo("SNOMEDCT"))
-//			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL));
-//	}
-//	
-//	@Test
-//	public void GET_CodeSystem_Url_Match_Multiple() throws Exception {
-//		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-//			.queryParam("url", SNOMEDCT_URL, getTestCodeSystemUrl())
-//			.when().get(CODESYSTEM)
-//			.then().assertThat()
-//			.statusCode(200)
-//			.body("resourceType", equalTo("Bundle"))
-//			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-//			.body("total", equalTo(2))
-//			.body("type", equalTo("searchset"))
-//			.body("entry.resource.id", hasItems("SNOMEDCT", getTestCodeSystemId()))
-//			.body("entry.resource.url", hasItems(SNOMEDCT_URL, getTestCodeSystemUrl()));
-//	}
-
 	@Test
 	public void GET_CodeSystem_System_NoMatch() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
@@ -430,52 +398,6 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(0))
 			.body("type", equalTo("searchset"));
 	}
-	
-//	@Test
-//	public void GET_CodeSystem_System_Match_Single() throws Exception {
-//		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-//			.queryParam("system", SNOMEDCT_URL)
-//			.when().get(CODESYSTEM)
-//			.then().assertThat()
-//			.statusCode(200)
-//			.body("resourceType", equalTo("Bundle"))
-//			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-//			.body("total", equalTo(1))
-//			.body("type", equalTo("searchset"))
-//			.body("entry[0].resource.id", equalTo("SNOMEDCT"))
-//			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL));
-//	}
-//	
-//	@Test
-//	public void GET_CodeSystem_System_Match_Multiple() throws Exception {
-//		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-//			.queryParam("system", SNOMEDCT_URL, getTestCodeSystemUrl())
-//			.when().get(CODESYSTEM)
-//			.then().assertThat()
-//			.statusCode(200)
-//			.body("resourceType", equalTo("Bundle"))
-//			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-//			.body("total", equalTo(2))
-//			.body("type", equalTo("searchset"))
-//			.body("entry.resource.id", hasItems("SNOMEDCT", getTestCodeSystemId()))
-//			.body("entry.resource.url", hasItems(SNOMEDCT_URL, getTestCodeSystemUrl()));
-//	}
-//	
-//	@Test
-//	public void GET_CodeSystem_System_And_Url_Intersection_Match() throws Exception {
-//		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-//			.queryParam("url", SNOMEDCT_URL, getTestCodeSystemUrl())
-//			.queryParam("system", SNOMEDCT_URL)
-//			.when().get(CODESYSTEM)
-//			.then().assertThat()
-//			.statusCode(200)
-//			.body("resourceType", equalTo("Bundle"))
-//			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-//			.body("total", equalTo(1))
-//			.body("type", equalTo("searchset"))
-//			.body("entry[0].resource.id", equalTo("SNOMEDCT"))
-//			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL));
-//	}
 	
 	@Test
 	public void GET_CodeSystem_Version_NoMatch() throws Exception {
