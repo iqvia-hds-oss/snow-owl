@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.elasticsearch.core.List;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.junit.Test;
 
@@ -84,6 +85,27 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 			.body("parameter[0].valueBoolean", equalTo(true));
 		
 		assertThat(visitedResources).contains("abstract-types");
+	}
+	
+	@Test
+	public void filterByUrl() throws Exception {
+		var parameters = new FhirLoadPackageParameters()
+				.setName("hl7.fhir.r4.core")
+				.setVersion("4.0.1")
+				// import only a single resource from this package
+				.setResourceUrl(List.of("http://hl7.org/fhir/abstract-types"));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(LOAD_PACKAGE)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("success"))
+			.body("parameter[0].valueBoolean", equalTo(true));
+		
+		assertThat(visitedResources).containsOnly("abstract-types");
 	}
 	
 	@Override

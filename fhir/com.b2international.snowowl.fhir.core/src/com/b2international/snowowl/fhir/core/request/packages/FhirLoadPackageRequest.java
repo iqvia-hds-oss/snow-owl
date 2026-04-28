@@ -16,6 +16,7 @@
 package com.b2international.snowowl.fhir.core.request.packages;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -25,10 +26,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.elasticsearch.core.Map;
+import org.hl7.fhir.r5.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -162,47 +165,66 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		final String author = context.service(User.class).getUserId();
 		
 		try {
-			Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER))
-				.forEach(pathToImport -> {
-					// parse into raw JSON, read fhirVersion parameter then based on that parse the content into proper model?
-					try (var reader = Files.newInputStream(pathToImport)) {
-						if (pathToImport.getFileName().toString().startsWith(CODE_SYSTEM)) {
-							if (codeSystemWriteSupport != null) {
-								org.hl7.fhir.r5.model.CodeSystem cs = (org.hl7.fhir.r5.model.CodeSystem) resourceParser.parseResource(reader);
-								codeSystemWriteSupport.update(context, cs, "system", null, null, null, IComponent.ROOT_ID);
-								importedCodeSystems++;
-							} else {
-								// TODO register that resource cannot be imported via this server due to missing entitlement
-							}
-						} else if (pathToImport.getFileName().toString().startsWith(VALUE_SET)) {
-							if (valueSetOps != null) {
-								org.hl7.fhir.r5.model.ValueSet vs = (org.hl7.fhir.r5.model.ValueSet) resourceParser.parseResource(reader);
-								valueSetOps.update(context, vs, Map.of(), author, author, author, null, IComponent.ROOT_ID);
-								importedValueSets++;
-							} else {
-								// TODO register that resource cannot be imported via this server due to missing entitlement
-							}
-						} else if (pathToImport.getFileName().toString().startsWith(CONCEPT_MAP)) {
-							if (conceptMapOps != null) {
-								org.hl7.fhir.r5.model.ConceptMap cm = (org.hl7.fhir.r5.model.ConceptMap) resourceParser.parseResource(reader);
-								conceptMapOps.update(context, cm, Map.of(), author, author, author, null, IComponent.ROOT_ID);
-								importedConceptMaps++;
-							} else {
-								// TODO register that resource cannot be imported via this server due to missing entitlement
-							}
-						} else {
-							// raise error about extracted but not handled file
-							throw new NotImplementedException("Resource type should be handled by the implementation but not implemented: " + pathToImport.getFileName());
-						}
-					} catch (IOException e) {
-						// unable to convert JSON to resource
-						// TODO register the error in an error response and 
-						e.printStackTrace();
+			Iterable<Path> filesToImport = Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER))::iterator;
+			for (var pathToImport : filesToImport) {
+				// TODO parse into raw JSON, read fhirVersion parameter then based on that parse the content into proper model?
+				Resource resource = readResource(resourceParser, pathToImport);
+				
+				var resourceUrlsToImport = parameters.getResourceUrl().stream().map(UriType::getValue).collect(Collectors.toSet());
+				// check if resource is selected to be imported through resourceUrl filter
+				if (resource instanceof CanonicalResource canonicalResource && !resourceUrlsToImport.isEmpty() && !resourceUrlsToImport.contains(canonicalResource.getUrl())) {
+					break;
+				}
+				
+				switch (resource.getResourceType()) {
+				case CodeSystem:
+					if (codeSystemWriteSupport != null) {
+						codeSystemWriteSupport.update(context, (CodeSystem) resource, "system", null, null, null, IComponent.ROOT_ID);
+						importedCodeSystems++;
+					} else {
+						// TODO register that resource cannot be imported via this server due to missing entitlement
+					}					
+					break;
+				case ValueSet:
+					if (valueSetOps != null) {
+						valueSetOps.update(context, (ValueSet) resource, Map.of(), author, author, author, null, IComponent.ROOT_ID);
+						importedValueSets++;
+					} else {
+						// TODO register that resource cannot be imported via this server due to missing entitlement
 					}
+					break;
+				case ConceptMap:
+					if (conceptMapOps != null) {
+						conceptMapOps.update(context, (ConceptMap) resource, Map.of(), author, author, author, null, IComponent.ROOT_ID);
+						importedConceptMaps++;
+					} else {
+						// TODO register that resource cannot be imported via this server due to missing entitlement
+					}
+					break;
+				default:
+					throw new NotImplementedException("Missing implementation for resource type import " + resource.getResourceType());
+				}
 					
-				});
+			}
 		} catch (IOException e) {
 			throw new SnowowlRuntimeException("Failed to list FHIR package directory", e);
+		}
+	}
+
+	private Resource readResource(FhirResourceParser resourceParser, Path pathToImport) {
+		try (var reader = Files.newInputStream(pathToImport)) {
+			if (pathToImport.getFileName().toString().startsWith(CODE_SYSTEM) 
+					|| pathToImport.getFileName().toString().startsWith(VALUE_SET)
+					|| pathToImport.getFileName().toString().startsWith(CONCEPT_MAP)) {
+				return resourceParser.parseResource(reader);
+			} else {
+				// raise error about extracted but not handled file
+				throw new NotImplementedException("Resource type should be handled by the implementation but not implemented: " + pathToImport.getFileName());
+			}
+		} catch (IOException e) {
+			// unable to convert JSON to resource
+			// TODO register the error in an error response and 
+			throw new SnowowlRuntimeException(e.getMessage(), e);
 		}
 	}
 
