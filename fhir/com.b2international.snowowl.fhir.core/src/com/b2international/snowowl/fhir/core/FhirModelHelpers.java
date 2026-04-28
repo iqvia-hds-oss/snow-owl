@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2024-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,11 @@ import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
+import com.google.common.base.CharMatcher;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.hash.Hashing;
 
 /**
  * @since 9.4.0
@@ -47,6 +49,11 @@ public class FhirModelHelpers {
 	public static final String OID_PREFIX = "urn:oid:";
 	
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
+
+	private static final CharMatcher HEX_MATCHER = CharMatcher.inRange('0', '9')
+			.or(CharMatcher.inRange('a', 'f'))
+			.or(CharMatcher.inRange('A', 'F'))
+			.precomputed();
 
 	public static ResourceURI resourceUriFrom(final Resource resource) {
 		final ResourceURI resourceUri = (ResourceURI) resource.getUserData(TerminologyResource.Fields.RESOURCE_URI);
@@ -207,5 +214,133 @@ public class FhirModelHelpers {
 		final CanonicalType canonicalType = new CanonicalType();
 		setSystemAndVersion(resourceUri, mapperFunction, canonicalType::setValue, canonicalType::addVersion);
 		return canonicalType;
+	}
+
+	/**
+	 * Converts a native resource ID to a FHIR-compatible resource ID.
+	 * <p>
+	 * Rules are evaluated in order in a left-to-right pass and only the first
+	 * matching rule is applied, no stacking of multiple rules occurs:
+	 * <ol>
+	 * <li>Each occurrence of {@code "/"} is replaced with {@code "--"}</li>
+	 * <li>Each occurrence of {@code "--"} is replaced with {@code ".h"}</li>
+	 * <li>Each occurrence of {@code "_"} is replaced with {@code ".u"}</li>
+	 * <li>If the resulting ID would be longer than 64 characters, return the 
+	 * first 46 characters of the result, then {@code ".c"}, then 16 hex digits 
+	 * of a SipHash-2-4 tag of the original input to ensure uniqueness while 
+	 * retaining a recoverable prefix of the original ID
+	 * </ol>
+	 * If none of the rules match, the input is returned unchanged.
+	 *
+	 * @param nativeId the native resource ID to convert
+	 * @return the FHIR-compatible resource ID
+	 */
+	public static String toFhirResourceId(final String nativeId) {
+		if (nativeId == null) {
+			return null;
+		}
+		
+		final StringBuilder sb = new StringBuilder(nativeId.length());
+		int i = 0;
+		
+		while (i < nativeId.length()) {
+			if (nativeId.charAt(i) == '/') {
+				sb.append("--");
+				i++;
+			} else if (nativeId.startsWith("--", i)) {
+				sb.append(".h");
+				i += 2;
+			} else if (nativeId.charAt(i) == '_') {
+				sb.append(".u");
+				i++;
+			} else {
+				sb.append(nativeId.charAt(i));
+				i++;
+			}
+		}
+		
+		if (sb.length() > 64) {
+			final String hash = Hashing.sipHash24()
+				.hashUnencodedChars(nativeId)
+				.toString();
+			
+			// Carve out space for the hash trailer and append it
+			sb.setLength((64 - 2 - 16));
+			sb.append(".c");
+			sb.append(hash);
+		}
+		
+		return sb.toString();
+	}
+
+	/**
+	 * Reverses a FHIR resource ID previously produced by {@link #toFhirResourceId(String)}, 
+	 * recovering the original native resource ID or its prefix.
+	 * <p>
+	 * The following substitutions are applied in a single left-to-right pass:
+	 * <ol>
+	 * <li>Each occurrence of {@code "--"} is replaced with {@code "/"}</li>
+	 * <li>Each occurrence of {@code ".h"} is replaced with {@code "--"}</li>
+	 * <li>Each occurrence of {@code ".u"} is replaced with {@code "_"}</li>
+	 * </ol>
+	 * When rule 4 (length truncation with hash) was applied during encoding, the
+	 * original string cannot be fully recovered. In that case only the prefix that
+	 * was retained during encoding is returned (after reverse-substitution),
+	 * without the hash trailer.
+	 * <p>The caller can detect this situation by checking whether {@code fhirId} 
+	 * matches the pattern {@code <14 chars>.c<12 hex digits>} before calling this method.
+	 *
+	 * @param fhirId the FHIR resource ID to reverse
+	 * @return the original native resource ID, or its recoverable prefix
+	 */
+	public static String fromFhirResourceId(final String fhirId) {
+		if (fhirId == null) {
+			return null;
+		}
+
+		if (isTruncatedFhirResourceId(fhirId)) {
+			// Only the first 46 characters are recoverable
+			return reverseSubstitutes(fhirId.substring(0, 46));
+		} else {
+			return reverseSubstitutes(fhirId);
+		}
+	}
+
+	/**
+	 * Checks whether the given FHIR resource ID matches the pattern of a truncated
+	 * ID produced by {@link #toFhirResourceId(String)} when the input was too long.
+	 * 
+	 * @param fhirId the FHIR resource ID to check
+	 * @return {@code true} if the ID matches the pattern of a truncated ID, 
+	 * {@code false} otherwise
+	 */
+	public static boolean isTruncatedFhirResourceId(final String fhirId) {
+		return fhirId.length() == 64
+			&& fhirId.charAt(46) == '.'
+			&& fhirId.charAt(47) == 'c'
+			&& HEX_MATCHER.matchesAllOf(fhirId.substring(48));
+	}
+
+	private static String reverseSubstitutes(final String fhirId) {
+		final StringBuilder sb = new StringBuilder(fhirId.length());
+		int i = 0;
+		
+		while (i < fhirId.length()) {
+			if (fhirId.startsWith("--", i)) {
+				sb.append('/');
+				i += 2;
+			} else if (fhirId.startsWith(".h", i)) {
+				sb.append("--");
+				i += 2;
+			} else if (fhirId.startsWith(".u", i)) {
+				sb.append('_');
+				i += 2;
+			} else {
+				sb.append(fhirId.charAt(i));
+				i++;
+			}
+		}
+		
+		return sb.toString();
 	}
 }
