@@ -19,6 +19,7 @@ import static com.b2international.snowowl.test.commons.rest.RestExtensions.given
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import java.util.List;
 

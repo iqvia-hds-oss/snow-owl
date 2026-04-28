@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.rest.tests.conceptmap;
 
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.*;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import java.util.List;
 

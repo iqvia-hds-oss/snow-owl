@@ -18,6 +18,7 @@ package com.b2international.snowowl.fhir.rest.tests.codesystem;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import org.hl7.fhir.r5.model.Coding;
 import org.junit.Test;

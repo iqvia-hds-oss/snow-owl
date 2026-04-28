@@ -19,6 +19,7 @@ import static com.b2international.snowowl.test.commons.rest.RestExtensions.given
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import org.junit.Test;
 
