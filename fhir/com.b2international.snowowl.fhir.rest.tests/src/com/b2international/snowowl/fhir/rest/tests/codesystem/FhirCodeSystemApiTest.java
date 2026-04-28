@@ -42,6 +42,10 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	
 	private static final int NUM_CONCEPTS = 1943;
 
+	private String getTestFhirId() {
+		return FhirModelHelpers.toFhirResourceId(getTestCodeSystemId());
+	}
+
 	@Test
 	public void GET_CodeSystem() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
@@ -52,7 +56,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", greaterThanOrEqualTo(1)) // actual number depends on test data, just verify existence
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()))
 			.body("entry[0].resource.valueSet", equalTo(String.join("?", getTestCodeSystemUrl(), SnomedUri.QueryPart.PREFIX_VS)))
@@ -88,7 +92,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_IdFilter_Match() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.when().get(CODESYSTEM)
 			.then().assertThat()
 			.statusCode(200)
@@ -105,7 +109,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 		String anotherCodeSystemId = createCodeSystem(UUID.randomUUID().toString());
 		String thirdCodeSystemId = createCodeSystem(UUID.randomUUID().toString());
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId(), anotherCodeSystemId)
+			.queryParam("_id", getTestFhirId(), FhirModelHelpers.toFhirResourceId(anotherCodeSystemId))
 			.when().get(CODESYSTEM)
 			.then().assertThat()
 			.statusCode(200)
@@ -114,8 +118,8 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(2))
 			.body("entry.resource.id", allOf(
-				hasItems(getTestCodeSystemId(), anotherCodeSystemId), 
-				not(hasItem(thirdCodeSystemId))))
+				hasItems(getTestFhirId(), FhirModelHelpers.toFhirResourceId(anotherCodeSystemId)), 
+				not(hasItem(FhirModelHelpers.toFhirResourceId(thirdCodeSystemId)))))
 			.body("entry.resource.url", hasItem(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry.resource.version", hasItem(getTestCodeSystemUrl()));
 	}
@@ -144,7 +148,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(1))
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()));
 	}
@@ -163,15 +167,15 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(2))
 			.body("entry.resource.id", allOf(
-				hasItems(getTestCodeSystemId(), anotherCodeSystemId),
-				not(hasItem(thirdCodeSystemId))))
+				hasItems(getTestFhirId(), FhirModelHelpers.toFhirResourceId(anotherCodeSystemId)),
+				not(hasItem(FhirModelHelpers.toFhirResourceId(thirdCodeSystemId)))))
 			.body("entry.resource.version", hasItem(getTestCodeSystemUrl()));
 	}
 	
 	@Test
 	public void GET_CodeSystem_Summary_True() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.queryParam("_summary", true)
 			.when().get(CODESYSTEM)
 			.then().assertThat()
@@ -180,7 +184,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode()))
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(1))
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			.body("entry[0].resource.title", equalTo("Title of " + getTestCodeSystemId()))
 			.body("entry[0].resource.property", notNullValue())
 			.body("entry[0].resource.filter", notNullValue())
@@ -192,7 +196,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_Summary_Text() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.queryParam("_summary", "text")
 			.when().get(CODESYSTEM)
 			.then().assertThat()
@@ -202,7 +206,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(1))
 			// only text, id, meta and mandatory
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			.body("entry[0].resource.status", equalTo("draft"))
 			.body("entry[0].resource.content", equalTo("complete"))
 			.body("entry[0].resource.meta", notNullValue())
@@ -217,7 +221,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_Summary_Data() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.queryParam("_summary", "data")
 			.when().get(CODESYSTEM)
 			.then().assertThat()
@@ -243,7 +247,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_Summary_Count() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.queryParam("_summary", "count")
 			.when().get(CODESYSTEM)
 			.then().assertThat()
@@ -258,7 +262,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_Summary_False() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.queryParam("_summary", false)
 			.when().get(CODESYSTEM)
 			.then().assertThat()
@@ -267,7 +271,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()));
 	}
@@ -275,7 +279,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_Elements() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.queryParam("_elements", "name", "url")
 			.when().get(CODESYSTEM)
 			.then().assertThat() 
@@ -287,7 +291,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			// mandatory fields
 			.body("entry[0].resource.status", equalTo("draft"))
 			.body("entry[0].resource.content", equalTo("complete"))
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			// returned because we need to calculate the concept count for the content property
 			.body("entry[0].resource.count", equalTo(NUM_CONCEPTS))
 			// summary and optional fields
@@ -302,7 +306,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_multiple_Elements_stored_in_settings() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			// Both publisher and caseSensitive are stored settings, this case tests if issues arise when 
 			// the settings field is called multiple times
 			.queryParam("_elements", "publisher", "caseSensitive")
@@ -316,7 +320,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			// mandatory fields
 			.body("entry[0].resource.status", equalTo("draft"))
 			.body("entry[0].resource.content", equalTo("complete"))
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			// returned because we need to calculate the concept count for the content property
 			.body("entry[0].resource.count", equalTo(NUM_CONCEPTS))
 			// summary and optional fields
@@ -331,7 +335,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_ElementsMixedWithSummaryFields() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("_id", getTestCodeSystemId())
+			.queryParam("_id", getTestFhirId())
 			.queryParam("_elements", 
 				R5ObjectFields.CodeSystem.ID, 
 				R5ObjectFields.CodeSystem.META, 
@@ -349,7 +353,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
 			// mandatory fields
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.id", equalTo(getTestFhirId()))
 			.body("entry[0].resource.status", equalTo("draft"))
 			.body("entry[0].resource.content", equalTo("complete"))
 			// requested fields
@@ -423,7 +427,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
+			.body("entry[0].resource.id", equalTo(FhirModelHelpers.toFhirResourceId("SNOMEDCT/2002-01-31")))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
 			.body("entry[0].resource.version", equalTo(SNOMEDCT_URL + "/version/20020131"))
@@ -441,12 +445,12 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(2))
 			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
+			.body("entry[0].resource.id", equalTo(FhirModelHelpers.toFhirResourceId("SNOMEDCT/2002-01-31")))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
 			.body("entry[0].resource.version", equalTo(SNOMEDCT_URL + "/version/20020131"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"))
-			.body("entry[1].resource.id", equalTo("SNOMEDCT/2020-01-31"))
+			.body("entry[1].resource.id", equalTo(FhirModelHelpers.toFhirResourceId("SNOMEDCT/2020-01-31")))
 			.body("entry[1].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[1].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20200131?fhir_vs"))
 			.body("entry[1].resource.version", equalTo(SNOMEDCT_URL + "/version/20200131"))
@@ -481,7 +485,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo("GET_CodeSystem_Status_Match_Single"))
+			.body("entry[0].resource.id", equalTo(FhirModelHelpers.toFhirResourceId("GET_CodeSystem_Status_Match_Single")))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()))
 			// This is the PublicationStatus code "mysterious" maps to
@@ -503,7 +507,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(39))
 			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo("GET_CodeSystem_Status_Match_Multiple"))
+			.body("entry[0].resource.id", equalTo(FhirModelHelpers.toFhirResourceId("GET_CodeSystem_Status_Match_Multiple")))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()))
 			// This is the PublicationStatus code "mysterious" maps to
@@ -517,11 +521,11 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystemId() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.when().get(CODESYSTEM_ID, getTestCodeSystemId())
+			.when().get(CODESYSTEM_ID, getTestFhirId())
 			.then().assertThat()
 			.statusCode(200)
 			.body("resourceType", equalTo("CodeSystem"))
-			.body("id", equalTo(getTestCodeSystemId()))
+			.body("id", equalTo(getTestFhirId()))
 			.body("url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("version", equalTo(getTestCodeSystemUrl()))
 			.body("status", equalTo("draft"));
@@ -530,11 +534,11 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystemId_Versioned() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.when().get(CODESYSTEM_ID, "SNOMEDCT/2002-01-31")
+			.when().get(CODESYSTEM_ID, FhirModelHelpers.toFhirResourceId("SNOMEDCT/2002-01-31"))
 			.then().assertThat()
 			.statusCode(200)
 			.body("resourceType", equalTo("CodeSystem"))
-			.body("id", equalTo("SNOMEDCT/2002-01-31"))
+			.body("id", equalTo(FhirModelHelpers.toFhirResourceId("SNOMEDCT/2002-01-31")))
 			.body("url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("status", equalTo("active"))
 			.body("version", equalTo(SNOMEDCT_URL + "/version/20020131"))
@@ -550,7 +554,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	public void GET_CodeSystemId_Summary_Count_BadRequest() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("_summary", "count")
-			.when().get(CODESYSTEM_ID, getTestCodeSystemId())
+			.when().get(CODESYSTEM_ID, getTestFhirId())
 			.then().assertThat()
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))

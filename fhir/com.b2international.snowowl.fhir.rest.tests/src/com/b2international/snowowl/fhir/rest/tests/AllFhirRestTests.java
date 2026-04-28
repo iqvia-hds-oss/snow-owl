@@ -42,6 +42,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 @SuiteClasses({
 	// Helpers
 	SnomedUriParsingTest.class,
+	FhirResourceIdMappingTest.class,
 	
 	// Resource types
 	FhirCodeSystemApiTest.class,
