@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,13 @@ package com.b2international.snowowl.fhir.rest.tests;
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.model.Resource;
 
+import com.b2international.snowowl.test.commons.fhir.FhirApiEndpoints;
+
 /**
  * Superclass for common test functionality
  * @since 6.3
  */
-public class FhirTest {
+public abstract class BaseFhirRestTest implements FhirApiEndpoints {
 	
 	protected final String toJson(Resource resource) throws Exception {
 		return new JsonParser().composeString(resource);

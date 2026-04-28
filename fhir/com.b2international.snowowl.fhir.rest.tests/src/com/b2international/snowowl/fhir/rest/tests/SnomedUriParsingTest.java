@@ -32,7 +32,7 @@ import com.b2international.snowowl.snomed.fhir.SnomedUri.QueryPartDefinition;
 /**
  * @since 6.7
  */
-public class SnomedUriParsingTest extends FhirTest {
+public class SnomedUriParsingTest {
 	
 	@Rule
 	public ExpectedException exception = ExpectedException.none();

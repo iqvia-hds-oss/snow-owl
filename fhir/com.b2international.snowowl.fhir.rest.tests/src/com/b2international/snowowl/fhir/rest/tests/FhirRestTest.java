@@ -38,7 +38,7 @@ import io.restassured.path.json.JsonPath;
  * 
  * @since 6.9
  */
-public abstract class FhirRestTest extends FhirTest {
+public abstract class FhirRestTest extends BaseFhirRestTest {
 	
 	protected static final String APPLICATION_FHIR_JSON = "application/fhir+json";
 	
@@ -48,18 +48,6 @@ public abstract class FhirRestTest extends FhirTest {
 	
 	@Rule
 	public TestMethodNameRule methodNameRule = new TestMethodNameRule();
-	
-	public static final class Endpoints {
-		public static final String CODESYSTEM = "/CodeSystem";
-		public static final String CODESYSTEM_ID = "/CodeSystem/{id}";
-		public static final String CODESYSTEM_LOOKUP = "/CodeSystem/$lookup";
-		public static final String CODESYSTEM_SUBSUMES = "/CodeSystem/$subsumes";
-		public static final String CODESYSTEM_VALIDATE_CODE = "/CodeSystem/$validate-code";
-
-		public static final String VALUESET = "/ValueSet";
-		public static final String VALUESET_ID = "/ValueSet/{id}";
-
-	}
 	
 	protected final String getTestCodeSystemId() {
 		return methodNameRule.get().replaceAll("\\$", "");
