@@ -113,12 +113,51 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	 */
 	protected abstract String getResourceType();
 
-	private final void addFhirIdFilter(final ExpressionBuilder query) {
-		// Both documents have an "id" and a "url" field; we will use the expression from ResourceDocument purely by choice
-		addIdFilter(query, ids -> Expressions.bool()
-			.should(ResourceDocument.Expressions.ids(ids))
-			.should(ResourceDocument.Expressions.urls(ids))
-			.build());
+	private final void addFhirIdFilter(final RepositoryContext context, final ExpressionBuilder query) {
+		addIdFilter(query, ids -> {
+	
+			// Decide if the incoming FHIR-compatible IDs are complete or truncated
+			final Map<Boolean, Set<String>> fhirIds = ids.stream()
+				.collect(Collectors.partitioningBy(
+					FhirModelHelpers::isTruncatedFhirResourceId, 
+					Collectors.toSet()));
+			
+			// Run a pre-flight search request to find the complete IDs for the truncated ones first
+			final Set<String> truncatedFhirIds = fhirIds.get(Boolean.TRUE);
+			final Set<String> truncatedInternalIdPrefixes = truncatedFhirIds.stream()
+				.map(FhirModelHelpers::fromFhirResourceId)
+				.collect(Collectors.toSet());
+
+			final Set<String> completeInternalIds = fhirIds.get(Boolean.FALSE).stream()
+				.map(FhirModelHelpers::fromFhirResourceId)
+				.collect(Collectors.toSet());
+
+			if (!truncatedFhirIds.isEmpty()) {
+				Hits<String> idHits;
+				
+				try {
+					
+					idHits = context.service(RevisionSearcher.class)
+						.search(Query.select(String.class)
+							.from(ResourceDocument.class, VersionDocument.class)
+							.fields(ResourceDocument.Fields.ID)
+							.where(ResourceDocument.Expressions.idPrefixes(truncatedInternalIdPrefixes))
+							.limit(truncatedInternalIdPrefixes.size())
+							.build());
+					
+				} catch (final IOException e) {
+					throw new RuntimeException(e);
+				}
+				
+				// Apply the transformation from internal to FHIR ID again and see which ones were actually requested in the original filter
+				idHits.stream()
+					.filter(id -> truncatedFhirIds.contains(FhirModelHelpers.toFhirResourceId(id)))
+					.forEach(completeInternalIds::add);
+			}
+			
+			// Both resource and version documents have an "id" field; we will use the expression from ResourceDocument
+			return ResourceDocument.Expressions.ids(completeInternalIds);
+		});
 	}
 
 	/**
@@ -351,7 +390,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	private T toFhirResource(final RepositoryContext context, final ResourceFragment resource) {
 		final T entry = createResource();
 		
-		entry.setId(resource.getId());
+		entry.setId(FhirModelHelpers.toFhirResourceId(resource.getId()));
 		entry.setStatus(toPublicationStatus(resource.getStatus()));
 		entry.setMeta(toMeta(resource.getUpdatedAt(), resource.getCreatedAt()));
 		
@@ -359,8 +398,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		entry.setUserData(TerminologyResource.Fields.TOOLING_ID, resource.getToolingId());
 		entry.setUserData(TerminologyResource.Fields.RESOURCE_URI, resource.getResourceURI());
 		
-		// We are using the raw ID of the resource as machine readable name
+		// Copy Snow Owl's native identifier to "name" when requested to be included
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, resource::getId, entry::setName);
+		
 		// We have a description field available both for the resource and the version, here the one for the resource is needed
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DESCRIPTION, resource::getResourceDescription, entry::setDescription);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.TITLE, resource::getTitle, entry::setTitle);
@@ -399,7 +439,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			.filter(ResourceDocument.Expressions.resourceType(getResourceType())); 
 		
 		// Support filtering by the FHIR resource ID which needs to be transformed to the internal ID first
-		addFhirIdFilter(query);
+		addFhirIdFilter(context, query);
 		
 		/*
 		 * The "name" property can be used to query the native resource ID. Values do
