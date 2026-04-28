@@ -16,15 +16,14 @@
 package com.b2international.snowowl.fhir.core.request.packages;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -40,9 +39,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
-import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.events.Request;
-import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.fhir.core.FhirResourceParser;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
@@ -52,6 +49,8 @@ import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetWriteS
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * Request class for loading FHIR packages.
@@ -76,6 +75,20 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				|| packageName.startsWith(VALUE_SET)
 				|| packageName.startsWith(CONCEPT_MAP);
 
+	
+	@JsonProperty
+	private final String author;
+	@JsonProperty
+	private final String owner;
+	@JsonProperty
+	private final String ownerProfileName;
+	@JsonProperty
+	private final LocalDate defaultEffectiveDate;
+	
+	@NotEmpty
+	@JsonProperty
+	private final String bundleId;
+	
 	private Attachment packageToLoad;
 	
 	@JsonProperty
@@ -85,14 +98,22 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 	private transient int importedValueSets;
 	private transient int importedConceptMaps;
 	
-	void setParameters(FhirLoadPackageParameters parameters) {
-		this.parameters = parameters;
+	FhirLoadPackageRequest(final String author, final String owner, final String ownerProfileName, final LocalDate defaultEffectiveDate, final String bundleId) {
+		this.author = author;
+		this.owner = owner;
+		this.ownerProfileName = ownerProfileName;
+		this.defaultEffectiveDate = defaultEffectiveDate;
+		this.bundleId = bundleId;
 	}
 	
 	void setPackageToLoad(Attachment packageToLoad) {
 		this.packageToLoad = packageToLoad;
 	}
-
+	
+	void setParameters(FhirLoadPackageParameters parameters) {
+		this.parameters = parameters;
+	}
+	
 	@Override
 	public FhirLoadPackageResultParameters execute(ServiceProvider context) {
 		final Path packageFile = fetchFhirPackage(context);
@@ -162,8 +183,6 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 			return;
 		}
 		
-		final String author = context.service(User.class).getUserId();
-		
 		try {
 			Iterable<Path> filesToImport = Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER))::iterator;
 			for (var pathToImport : filesToImport) {
@@ -179,7 +198,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				switch (resource.getResourceType()) {
 				case CodeSystem:
 					if (codeSystemWriteSupport != null) {
-						codeSystemWriteSupport.update(context, (CodeSystem) resource, "system", null, null, null, IComponent.ROOT_ID);
+						codeSystemWriteSupport.update(context, (CodeSystem) resource, author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
 						importedCodeSystems++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement
@@ -187,7 +206,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 					break;
 				case ValueSet:
 					if (valueSetOps != null) {
-						valueSetOps.update(context, (ValueSet) resource, Map.of(), author, author, author, null, IComponent.ROOT_ID);
+						valueSetOps.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
 						importedValueSets++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement
@@ -195,7 +214,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 					break;
 				case ConceptMap:
 					if (conceptMapOps != null) {
-						conceptMapOps.update(context, (ConceptMap) resource, Map.of(), author, author, author, null, IComponent.ROOT_ID);
+						conceptMapOps.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
 						importedConceptMaps++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement

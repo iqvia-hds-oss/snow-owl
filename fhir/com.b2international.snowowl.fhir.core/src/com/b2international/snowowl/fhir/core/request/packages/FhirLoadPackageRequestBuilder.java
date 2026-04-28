@@ -15,8 +15,12 @@
  */
 package com.b2international.snowowl.fhir.core.request.packages;
 
+import java.time.LocalDate;
+
+import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.attachments.Attachment;
+import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.events.BaseRequestBuilder;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SystemRequestBuilder;
@@ -32,30 +36,66 @@ public final class FhirLoadPackageRequestBuilder
 
 	public static final String DEFAULT_PACKAGE_REGISTRY = "https://packages.fhir.org";
 	
-	private FhirLoadPackageParameters parameters;
 	private Attachment packageToLoad;
 	
-	public FhirLoadPackageRequestBuilder setParameters(FhirLoadPackageParameters parameters) {
-		this.parameters = parameters;
-		return getSelf();
-	}
+	private String author;
+	private String owner;
+	private String ownerProfileName;
+	private LocalDate defaultEffectiveDate;
+	private String bundleId = IComponent.ROOT_ID;
+	
+	private FhirLoadPackageParameters parameters;
 	
 	public FhirLoadPackageRequestBuilder setPackageToLoad(Attachment packageToLoad) {
 		this.packageToLoad = packageToLoad;
 		return getSelf();
 	}
 	
+	public FhirLoadPackageRequestBuilder setAuthor(String author) {
+		this.author = author;
+		return this;
+	}
+	
+	public FhirLoadPackageRequestBuilder setOwner(final String owner) {
+		this.owner = owner;
+		return this;
+	}
+	
+	public FhirLoadPackageRequestBuilder setOwnerProfileName(final String ownerProfileName) {
+		this.ownerProfileName = ownerProfileName;
+		return this;
+	}
+	
+	public FhirLoadPackageRequestBuilder setDefaultEffectiveDate(final LocalDate defaultEffectiveDate) {
+		this.defaultEffectiveDate = defaultEffectiveDate;
+		return this;
+	}
+
+	public FhirLoadPackageRequestBuilder setBundleId(final String bundleId) {
+		if (!StringUtils.isEmpty(bundleId)) {
+			this.bundleId = bundleId;
+		} else {
+			this.bundleId = IComponent.ROOT_ID;
+		}
+		return this;
+	}
+	
+	public FhirLoadPackageRequestBuilder setParameters(FhirLoadPackageParameters parameters) {
+		this.parameters = parameters;
+		return getSelf();
+	}
+	
 	@Override
 	protected Request<ServiceProvider, FhirLoadPackageResultParameters> doBuild() {
-		FhirLoadPackageRequest req = new FhirLoadPackageRequest();
+		FhirLoadPackageRequest req = new FhirLoadPackageRequest(author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
 		
 		// if package registry is not defined, set it to default
 		if (!parameters.hasRegistryValue()) {
 			parameters.setRegistry(DEFAULT_PACKAGE_REGISTRY);
 		}
 		
-		req.setParameters(parameters);
 		req.setPackageToLoad(packageToLoad);
+		req.setParameters(parameters);
 		return req;
 	}
 

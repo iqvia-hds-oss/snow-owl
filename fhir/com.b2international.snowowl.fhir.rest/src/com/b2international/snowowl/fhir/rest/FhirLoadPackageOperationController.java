@@ -36,10 +36,13 @@ import static com.b2international.snowowl.fhir.rest.FhirMediaType.TEXT_XML_VALUE
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -156,6 +159,34 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		})
 		final InputStream requestBody,
 		
+		@Parameter(description = """
+			The effective date to use if a version identifier is present in any package resource without 
+			a corresponding effective date value""")
+		@RequestHeader(value = X_EFFECTIVE_DATE, required = false)
+		@DateTimeFormat(iso = ISO.DATE)
+		final LocalDate defaultEffectiveDate,
+		
+		@Parameter(description = """
+			The user identifier used for committing the change""")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+		
+		@Parameter(description = """
+			The resource owner (if not set it will fall back to the X-Author header then to the 
+			current authenticated user id)""")
+		@RequestHeader(value = X_OWNER, required = false)
+		final String owner,
+		
+		@Parameter(description = """
+			The user profile name to add to resource settings for client purposes""")
+		@RequestHeader(value = X_OWNER_PROFILE_NAME, required = false)
+		final String ownerProfileName,
+		
+		@Parameter(description = """
+			The parent bundle's identifier (defaults to root if not present)""")
+		@RequestHeader(value = X_BUNDLE_ID, required = false)
+		final String bundleId,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.CONTENT_TYPE)
 		final String contentType,
@@ -191,7 +222,7 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 	) {
 		FhirLoadPackageParameters parameters = toFhirParameters(requestBody, contentType, prefer, FhirLoadPackageParametersFactory.INSTANCE);
 		
-		return loadPackage(parameters, null, accept, _format, _pretty);
+		return loadPackage(parameters, null, author, owner, ownerProfileName, defaultEffectiveDate, bundleId, accept, _format, _pretty);
 	}
 
 	/**
@@ -240,6 +271,34 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		@RequestParam(value = "resourceUrl", required = false)
 		final List<String> resourceUrls,
 		
+		@Parameter(description = """
+			The effective date to use if a version identifier is present in any package resource without 
+			a corresponding effective date value""")
+		@RequestHeader(value = X_EFFECTIVE_DATE, required = false)
+		@DateTimeFormat(iso = ISO.DATE)
+		final LocalDate defaultEffectiveDate,
+		
+		@Parameter(description = """
+			The user identifier used for committing the change""")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+		
+		@Parameter(description = """
+			The resource owner (if not set it will fall back to the X-Author header then to the 
+			current authenticated user id)""")
+		@RequestHeader(value = X_OWNER, required = false)
+		final String owner,
+		
+		@Parameter(description = """
+			The user profile name to add to resource settings for client purposes""")
+		@RequestHeader(value = X_OWNER_PROFILE_NAME, required = false)
+		final String ownerProfileName,
+		
+		@Parameter(description = """
+			The parent bundle's identifier (defaults to root if not present)""")
+		@RequestHeader(value = X_BUNDLE_ID, required = false)
+		final String bundleId,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT, required = false)
 		final String accept,
@@ -269,23 +328,33 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		FhirLoadPackageParameters params = new FhirLoadPackageParameters();
 		params.setResolveDependencies(resolveDependencies);
 		params.setResourceUrl(resourceUrls);
-		return loadPackage(params, new Attachment(fhirPackageAttachmentId, file.getOriginalFilename()), accept, _format, _pretty);
+		return loadPackage(params, new Attachment(fhirPackageAttachmentId, file.getOriginalFilename()), author, owner, ownerProfileName, defaultEffectiveDate, bundleId, accept, _format, _pretty);
 	}
 
 	private Promise<ResponseEntity<byte[]>> loadPackage(
 		final FhirLoadPackageParameters parameters,
 		final Attachment packageToLoad,
+		final String author,
+		final String owner,
+		final String ownerProfileName,
+		final LocalDate defaultEffectiveDate,
+		final String bundleId,
 		final String accept, 
 		final String _format, 
 		final Boolean _pretty
 	) {
 		return FhirRequests.loadPackage()
-			.setParameters(parameters)
-			.setPackageToLoad(packageToLoad)
-			.buildAsync()
-			.execute(getBus())
-			.then(result -> {
-				return toResponseEntity(result, accept, _format, _pretty);
-			});
+				.setParameters(parameters)
+				.setPackageToLoad(packageToLoad)
+				.setAuthor(author)
+				.setOwner(owner)
+				.setOwnerProfileName(ownerProfileName)
+				.setDefaultEffectiveDate(defaultEffectiveDate)
+				.setBundleId(bundleId)
+				.buildAsync()
+				.execute(getBus())
+				.then(result -> {
+					return toResponseEntity(result, accept, _format, _pretty);
+				});
 	}
 }
