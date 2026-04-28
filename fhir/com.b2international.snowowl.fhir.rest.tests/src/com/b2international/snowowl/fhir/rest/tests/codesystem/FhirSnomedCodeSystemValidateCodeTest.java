@@ -108,8 +108,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.contentType("application/fhir+json;fhirVersion=4.0.1")
-			.accept("application/fhir+json;fhirVersion=4.0.1")
+			.contentType(APPLICATION_FHIR_JSON_R4_0_1)
+			.accept(APPLICATION_FHIR_JSON_R4_0_1)
 			.body(toJson(parameters.getParameters()))
 			.when().post(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()
@@ -129,8 +129,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.contentType("application/fhir+json;fhirVersion=4.3.0")
-			.accept("application/fhir+json;fhirVersion=4.3.0")
+			.contentType(APPLICATION_FHIR_JSON_R4_3_0)
+			.accept(APPLICATION_FHIR_JSON_R4_3_0)
 			.body(toJson(parameters.getParameters()))
 			.when().post(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()
@@ -150,8 +150,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.contentType("application/fhir+json;fhirVersion=5.0.0")
-			.accept("application/fhir+json;fhirVersion=5.0.0")
+			.contentType(APPLICATION_FHIR_JSON_R5_0_0)
+			.accept(APPLICATION_FHIR_JSON_R5_0_0)
 			.body(toJson(parameters.getParameters()))
 			.when().post(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()

@@ -22,6 +22,10 @@ public interface FhirApiEndpoints {
 
 	String FHIR_ROOT_CONTEXT = "/fhir"; //$NON-NLS-N$
 	String APPLICATION_FHIR_JSON = "application/fhir+json"; //$NON-NLS-N$
+	String APPLICATION_FHIR_JSON_R4 = "application/fhir+json; fhirVersion=4.0"; //$NON-NLS-N$
+	String APPLICATION_FHIR_JSON_R4_0_1 = "application/fhir+json;fhirVersion=4.0.1"; //$NON-NLS-N$
+	String APPLICATION_FHIR_JSON_R4_3_0 = "application/fhir+json;fhirVersion=4.3.0"; //$NON-NLS-N$
+	String APPLICATION_FHIR_JSON_R5_0_0 = "application/fhir+json;fhirVersion=5.0.0"; //$NON-NLS-N$
 	
 	String CODESYSTEM = "/CodeSystem";
 	String CODESYSTEM_ID = "/CodeSystem/{id}";

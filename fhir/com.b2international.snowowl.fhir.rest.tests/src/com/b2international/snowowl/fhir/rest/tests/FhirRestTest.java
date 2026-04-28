@@ -40,10 +40,6 @@ import io.restassured.path.json.JsonPath;
  */
 public abstract class FhirRestTest extends BaseFhirRestTest {
 	
-	protected static final String APPLICATION_FHIR_JSON = "application/fhir+json";
-	
-	public static final String FHIR_ROOT_CONTEXT = "/fhir"; //$NON-NLS-N$
-	
 	public static final String SNOMEDCT_URL = SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008";
 	
 	@Rule

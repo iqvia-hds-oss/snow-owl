@@ -35,7 +35,7 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 	public void capabilityStatementTest_4_0() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when()
-			.accept("application/fhir+json;fhirVersion=4.0")
+			.accept(APPLICATION_FHIR_JSON_R4)
 			.get("metadata")
 			.then()
 			.assertThat()
