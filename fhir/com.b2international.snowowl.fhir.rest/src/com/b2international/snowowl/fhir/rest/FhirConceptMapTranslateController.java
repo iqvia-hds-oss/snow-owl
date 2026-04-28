@@ -93,7 +93,11 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		APPLICATION_XML_VALUE,
 		TEXT_XML_VALUE
 	})
-	public Promise<ResponseEntity<byte[]>> translateType(
+	public Promise<ResponseEntity<byte[]>> translateTypeGet(
+			
+		@Parameter(description = "The id or the canonical URL of the conceptMap to base the translation on")
+		@RequestParam(value = "url")
+		final String url,
 			
 		@Parameter(description = "The code that is to be translated.") 
 		@RequestParam(value = "sourceCode") 
@@ -156,8 +160,10 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		final Boolean _pretty		
 		
 	) {
-		
+
+		// XXX: "url" is required by the current translate request implementation but it is an optional parameter in the FHIR specification
 		var parameters = new ConceptMapTranslateParameters()
+			.setUrl(url)
 			.setSourceCode(sourceCode)
 			.setSystem(system);
 		
@@ -235,7 +241,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 			TEXT_XML_VALUE
 		}
 	)
-	public Promise<ResponseEntity<byte[]>> translate(
+	public Promise<ResponseEntity<byte[]>> translateTypePost(
 			
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The operation's input parameters", content = { 
 			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
@@ -305,8 +311,8 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 				
 	) {
 		
+		// XXX: "url" is required by the current translate request implementation but it is an optional parameter in the FHIR specification
 		final ConceptMapTranslateParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.ConceptMapTranslateParametersFactory.INSTANCE);
-		
 		return translate(parameters, accept, _format, _pretty);
 	}
 
@@ -354,7 +360,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		APPLICATION_XML_VALUE,
 		TEXT_XML_VALUE
 	})
-	public Promise<ResponseEntity<byte[]>> translateInstance(
+	public Promise<ResponseEntity<byte[]>> translateInstanceGet(
 			
 		@Parameter(description = "The id of the Concept Map to base the translation on") 
 		@PathVariable("id") 
@@ -504,7 +510,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 			TEXT_XML_VALUE
 		}
 	)
-	public Promise<ResponseEntity<byte[]>> translate(
+	public Promise<ResponseEntity<byte[]>> translateInstancePost(
 			
 		@Parameter(description = "The id of the conceptMap to base the translation on") 
 		@PathVariable("conceptMapId") 
