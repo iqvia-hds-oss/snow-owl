@@ -164,6 +164,14 @@ public final class ResourceDocument extends RevisionDocument implements CommitSu
 			return matchAny(Fields.URL, urls);
 		}
 		
+		public static Expression urlPrefix(String urlPrefix) {
+			return prefixMatch(Fields.URL, urlPrefix);
+		}
+		
+		public static Expression urlPrefixes(Iterable<String> urlPrefixes) {
+			return prefixMatch(Fields.URL, urlPrefixes);
+		}
+		
 		public static Expression resourceType(String resourceType) {
 			return exactMatch(Fields.RESOURCE_TYPE, resourceType);
 		}

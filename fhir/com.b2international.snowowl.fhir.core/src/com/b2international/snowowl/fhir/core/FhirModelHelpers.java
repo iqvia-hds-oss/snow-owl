@@ -48,6 +48,8 @@ public class FhirModelHelpers {
 	
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
 
+	public static final String VERSION_SEGMENT = "/version/";
+
 	public static ResourceURI resourceUriFrom(final Resource resource) {
 		final ResourceURI resourceUri = (ResourceURI) resource.getUserData(TerminologyResource.Fields.RESOURCE_URI);
 		if (resourceUri != null) {
@@ -94,7 +96,44 @@ public class FhirModelHelpers {
 	}
 	
 	public static boolean isSnomedUri(String uri) {
-		return uri != null && (uri.equals(SNOMED_BASE_URI_STRING) || uri.startsWith(SNOMED_BASE_URI_STRING + "/"));
+		return isBaseSnomedUri(uri) || isEditionSnomedUri(uri);
+	}
+	
+	public static boolean isBaseSnomedUri(String uri) {
+		return SNOMED_BASE_URI_STRING.equals(uri);
+	}
+	
+	public static boolean isEditionSnomedUri(String uri) {
+		return uri != null && uri.startsWith(SNOMED_BASE_URI_STRING + "/");
+	}
+	
+	public static boolean isRegularVersionedUri(String uri) {
+		return uri != null && !uri.startsWith(VERSION_SEGMENT) && uri.contains(VERSION_SEGMENT);
+	}
+	
+	public static String addRegularVersionSuffix(String uri) {
+		// If the URI already contains a version segment, don't add it again
+		if (isRegularVersionedUri(uri)) {
+			return uri;
+		}
+
+		// Remove trailing slash if already present
+		if (uri.endsWith("/")) { 
+			uri = uri.substring(0, uri.length() - 1); 
+		}
+		
+		// Append version segment to the URI
+		return uri + VERSION_SEGMENT;
+	}
+	
+	public static String getRegularUrlBase(String uri) {
+		// If the URI does not contain a version segment, return it as is
+		if (!isRegularVersionedUri(uri)) {
+			return uri;
+		}
+
+		// Otherwise return the portion of the URI before the "/version/" segment
+		return uri.substring(0, uri.indexOf(VERSION_SEGMENT));
 	}
 
 	public static String getSystemWithoutOidPrefix(CanonicalType system) {
