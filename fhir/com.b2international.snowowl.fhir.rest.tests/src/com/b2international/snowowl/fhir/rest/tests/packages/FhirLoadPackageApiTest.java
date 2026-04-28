@@ -16,6 +16,7 @@
 package com.b2international.snowowl.fhir.rest.tests.packages;
 
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
