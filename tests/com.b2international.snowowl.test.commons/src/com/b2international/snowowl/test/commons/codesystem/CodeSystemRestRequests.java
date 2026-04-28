@@ -159,7 +159,7 @@ public abstract class CodeSystemRestRequests {
 		if (Strings.isNullOrEmpty(additionalParts)) {
 			return String.join("/", SnomedTerminologyComponentConstants.SNOMED_URI_SCT, Concepts.MODULE_SCT_CORE);
 		} else {
-			return String.join("/", SnomedTerminologyComponentConstants.SNOMED_URI_SCT, Concepts.MODULE_SCT_CORE, additionalParts);
+			return String.join("/", SnomedTerminologyComponentConstants.SNOMED_URI_SCT, Concepts.MODULE_SCT_CORE, "test-case", additionalParts);
 		}
 	}
 

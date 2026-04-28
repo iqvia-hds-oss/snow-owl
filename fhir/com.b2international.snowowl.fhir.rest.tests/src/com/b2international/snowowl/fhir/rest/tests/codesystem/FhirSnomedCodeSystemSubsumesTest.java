@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.junit.Test;
 
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 
 /**
@@ -40,7 +41,8 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", ORGANISM_TOP_LEVEL)
 			.queryParam("codeB", BACTERIA)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
 			.statusCode(200)
@@ -53,7 +55,8 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", BACTERIA)
 			.queryParam("codeB", ORGANISM_TOP_LEVEL)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
 			.statusCode(200)
@@ -66,7 +69,8 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", BACTERIA)
 			.queryParam("codeB", PROCEDURE)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
 			.statusCode(200)
@@ -79,7 +83,8 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", BACTERIA)
 			.queryParam("codeB", BACTERIA)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
 			.statusCode(200)
@@ -93,7 +98,8 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", BACTERIA) //Bacteria
 			.queryParam("codeB", MICROORGANISM) //Microorganism (parent)
-			.queryParam("system", "http://snomed.info/sct/900000000000207008/version/20180131")
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", "http://snomed.info/sct/900000000000207008/version/20180131")
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
 			.statusCode(200)
@@ -102,20 +108,17 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void GET_CodeSystem_$subsumes_SubsumedBy_WithAmbiguousVersions() throws Exception {
-		
+	public void GET_CodeSystem_$subsumes_Subsumes_BaseURI() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("codeA", BACTERIA) //Bacteria
-			.queryParam("codeB", MICROORGANISM) //Microorganism (parent)
-			.queryParam("system", "http://snomed.info/sct/900000000000207008/version/20170131")
-			.queryParam("version", "2018-01-31")
+			.queryParam("codeA", ORGANISM_TOP_LEVEL)
+			.queryParam("codeB", BACTERIA)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			// .queryParam("version", ...) is omitted to test whether the base URI alone can be used
 			.when().get(CODESYSTEM_SUBSUMES)
-			.then()
-			.body("resourceType", equalTo("OperationOutcome"))
-			.body("issue[0].severity", equalTo("error"))
-			.body("issue[0].code", equalTo("invalid"))
-			.body("issue[0].diagnostics", equalTo("Version specified in the URI 'http://snomed.info/sct/900000000000207008/version/20170131' "
-					+ "does not match the version set in the version parameter '2018-01-31'"))
-			.statusCode(400);
+			.then().assertThat()
+			.statusCode(200)
+			.body("parameter[0].name", equalTo("outcome"))
+			.body("parameter[0].valueCode", equalTo("subsumes"));
 	}
+	
 }

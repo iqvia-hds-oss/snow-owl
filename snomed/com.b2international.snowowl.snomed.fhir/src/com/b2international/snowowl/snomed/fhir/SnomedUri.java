@@ -23,12 +23,12 @@ import org.hl7.fhir.r5.model.UriType;
 import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
-import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 
 /**
- * Snomed CT URI representation
+ * SNOMED CT URI representation
  * 
  * @see <a href="https://confluence.ihtsdotools.org/display/DOCURI">SNOMED CT URI specification</a>
  * 
@@ -40,9 +40,8 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 public class SnomedUri {
 	
 	public static final String VERSION_PATH_SEGMENT = "version"; //$NON-NLS-N$
-	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct"; //$NON-NLS-N$
-	public static final UriType SNOMED_BASE_URI = new UriType(SNOMED_BASE_URI_STRING);
-	public static final UriType SNOMED_INT_CORE_MODULE_URI = new UriType(SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE );
+	
+	public static final UriType SNOMED_BASE_URI = new UriType(FhirModelHelpers.SNOMED_BASE_URI_STRING);
 	
 	public enum QueryPartDefinition {
 		
@@ -214,11 +213,11 @@ public class SnomedUri {
 		
 		Builder builder = builder();
 		
-		if (!uriString.startsWith(SNOMED_BASE_URI_STRING)) {
-			throw new BadRequestException(String.format("URI '%s' is not a valid SNOMED CT URI. It should start as '%s'.", uriString, SNOMED_BASE_URI_STRING), parameterName);
+		if (!uriString.startsWith(FhirModelHelpers.SNOMED_BASE_URI_STRING)) {
+			throw new BadRequestException(String.format("URI '%s' is not a valid SNOMED CT URI. It should start as '%s'.", uriString, FhirModelHelpers.SNOMED_BASE_URI_STRING), parameterName);
 		}
 		
-		String extensionString = uriString.replaceFirst(SNOMED_BASE_URI_STRING, "");
+		String extensionString = uriString.replaceFirst(FhirModelHelpers.SNOMED_BASE_URI_STRING, "");
 		
 		String[] splitUri = extensionString.split("\\?");
 		if (splitUri.length > 2) {
@@ -345,7 +344,7 @@ public class SnomedUri {
 	 * @return
 	 */
 	public String toString() {
-		StringBuilder sb = new StringBuilder(SNOMED_BASE_URI_STRING);
+		StringBuilder sb = new StringBuilder(FhirModelHelpers.SNOMED_BASE_URI_STRING);
 		if (extensionModuleId !=null) {
 			sb.append("/");
 			sb.append(extensionModuleId);

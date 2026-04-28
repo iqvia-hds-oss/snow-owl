@@ -24,6 +24,7 @@ import org.hl7.fhir.r5.model.Coding;
 import org.junit.Test;
 
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
@@ -38,7 +39,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_$validate_code_NonExisting() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("url", SNOMEDCT_URL)
+			.queryParam("url", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", "12345")
 			.when().get(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()
@@ -53,7 +55,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_$validate_code_InvalidDisplay() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("url", SNOMEDCT_URL)
+			.queryParam("url", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.queryParam("display", RestExtensions.encodeQueryParameter("Unknown display"))
 			.when().get(CODESYSTEM_VALIDATE_CODE)
@@ -70,7 +73,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_$validate_code_Existing() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("url", SNOMEDCT_URL)
+			.queryParam("url", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.when().get(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()
@@ -80,11 +84,29 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.body("parameter[1]", nullValue());
 	}
 	
+	
+	@Test
+	public void GET_CodeSystem_$validate_code_BaseURI() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+		.queryParam("url", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+		// .queryParam("version", ...) is omitted to test whether the base URI alone can be used
+		.queryParam("code", Concepts.ROOT_CONCEPT)
+		.when().get(CODESYSTEM_VALIDATE_CODE)
+		.then().assertThat()
+		.statusCode(200)
+		.body("parameter[0].name", equalTo("result"))
+		.body("parameter[0].valueBoolean", equalTo(true))
+		.body("parameter[1]", nullValue());
+	}
+	
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R4() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()
-				.setUrl(SNOMEDCT_URL)
-				.setCoding(new Coding().setSystem(SNOMEDCT_URL).setCode(Concepts.ROOT_CONCEPT));
+			.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.setCoding(new Coding()
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(SNOMEDCT_URL)
+				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.contentType("application/fhir+json;fhirVersion=4.0.1")
@@ -101,8 +123,11 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R4B() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()
-				.setUrl(SNOMEDCT_URL)
-				.setCoding(new Coding().setSystem(SNOMEDCT_URL).setCode(Concepts.ROOT_CONCEPT));
+			.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.setCoding(new Coding()
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)					
+				.setVersion(SNOMEDCT_URL)
+				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.contentType("application/fhir+json;fhirVersion=4.3.0")
@@ -119,8 +144,11 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R5() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()
-				.setUrl(SNOMEDCT_URL)
-				.setCoding(new Coding().setSystem(SNOMEDCT_URL).setCode(Concepts.ROOT_CONCEPT));
+			.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.setCoding(new Coding()
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(SNOMEDCT_URL)
+				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.contentType("application/fhir+json;fhirVersion=5.0.0")

@@ -18,7 +18,7 @@ package com.b2international.snowowl.fhir.rest.tests.codesystem;
 import static com.b2international.snowowl.fhir.rest.tests.FhirRestTest.Endpoints.CODESYSTEM;
 import static com.b2international.snowowl.fhir.rest.tests.FhirRestTest.Endpoints.CODESYSTEM_ID;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.*;
 
 import java.util.UUID;
 
@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import com.b2international.commons.json.Json;
 import com.b2international.fhir.FhirCodeSystems;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.fhir.SnomedUri;
@@ -39,6 +40,8 @@ import com.b2international.snowowl.test.commons.rest.RestExtensions;
  */
 public class FhirCodeSystemApiTest extends FhirRestTest {
 	
+	private static final int NUM_CONCEPTS = 1943;
+
 	@Test
 	public void GET_CodeSystem() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
@@ -48,11 +51,12 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("resourceType", equalTo("Bundle"))
 			.body("type", equalTo("searchset"))
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-			.body("total", notNullValue()) // actual number depends on test data, just verify existence
+			.body("total", greaterThanOrEqualTo(1)) // actual number depends on test data, just verify existence
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
-			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()))
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()))
 			.body("entry[0].resource.valueSet", equalTo(String.join("?", getTestCodeSystemUrl(), SnomedUri.QueryPart.PREFIX_VS)))
-			.body("entry[0].resource.count", equalTo(1943)); // base RF2 package count
+			.body("entry[0].resource.count", equalTo(NUM_CONCEPTS)); // concept count should be updated if the imported RF2 file is changed
 	}
 	
 	@Test
@@ -92,7 +96,8 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(1))
-			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()));
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()));
 	}
 	
 	@Test
@@ -108,8 +113,11 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(2))
-			.body("entry.resource.id", hasItems(getTestCodeSystemId(), anotherCodeSystemId))
-			.body("entry.resource.url", hasItem(getTestCodeSystemUrl()));
+			.body("entry.resource.id", allOf(
+				hasItems(getTestCodeSystemId(), anotherCodeSystemId), 
+				not(hasItem(thirdCodeSystemId))))
+			.body("entry.resource.url", hasItem(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry.resource.version", hasItem(getTestCodeSystemUrl()));
 	}
 	
 	@Test
@@ -137,7 +145,8 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(1))
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
-			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()));
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()));
 	}
 	
 	@Test
@@ -153,8 +162,10 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(2))
-			.body("entry.resource.id", hasItems(getTestCodeSystemId(), anotherCodeSystemId))
-			.body("entry.resource.url", hasItem(getTestCodeSystemUrl()));
+			.body("entry.resource.id", allOf(
+				hasItems(getTestCodeSystemId(), anotherCodeSystemId),
+				not(hasItem(thirdCodeSystemId))))
+			.body("entry.resource.version", hasItem(getTestCodeSystemUrl()));
 	}
 	
 	@Test
@@ -193,10 +204,10 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			// only text, id, meta and mandatory
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
 			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("not-present"))
+			.body("entry[0].resource.content", equalTo("complete"))
 			.body("entry[0].resource.meta", notNullValue())
 			.body("entry[0].resource.text", notNullValue())
-			.body("entry[0].resource.count", nullValue())
+			.body("entry[0].resource.count", notNullValue())
 			.body("entry[0].resource.name", nullValue())
 			.body("entry[0].resource.concept", nullValue()) 
 			.body("entry[0].resource.copyright", nullValue()) 
@@ -218,14 +229,14 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			// only id, meta and mandatory
 			.body("entry[0].resource.id", notNullValue())
 			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("not-present"))
+			.body("entry[0].resource.content", equalTo("complete"))
 			// other fields should be null
 			.body("entry[0].resource.text", nullValue())
 			.body("entry[0].resource.url", nullValue())
 			.body("entry[0].resource.name", nullValue())
 			.body("entry[0].resource.copyright", nullValue())
+			.body("entry[0].resource.count", notNullValue())
 			.body("entry[0].resource.caseSignificance", nullValue())
-			.body("entry[0].resource.count", nullValue())
 			.body("entry[0].resource.text", nullValue());
 	}
 	
@@ -257,7 +268,8 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
-			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()));
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()));
 	}
 	
 	@Test
@@ -274,16 +286,17 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			// mandatory fields
 			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("not-present"))
+			.body("entry[0].resource.content", equalTo("complete"))
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			// returned because we need to calculate the concept count for the content property
+			.body("entry[0].resource.count", equalTo(NUM_CONCEPTS))
 			// summary and optional fields
 			.body("entry[0].resource.text", nullValue())
-			.body("entry[0].resource.count", nullValue())
 			.body("entry[0].resource.concept", nullValue()) 
 			.body("entry[0].resource.copyright", nullValue()) 
 			// requested fields
 			.body("entry[0].resource.name", equalTo(getTestCodeSystemId()))
-			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()));
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING));
 	}
 	
 	@Test
@@ -302,11 +315,12 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("type", equalTo("searchset"))
 			// mandatory fields
 			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("not-present"))
+			.body("entry[0].resource.content", equalTo("complete"))
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			// returned because we need to calculate the concept count for the content property
+			.body("entry[0].resource.count", equalTo(NUM_CONCEPTS))
 			// summary and optional fields
 			.body("entry[0].resource.text", nullValue())
-			.body("entry[0].resource.count", nullValue())
 			.body("entry[0].resource.concept", nullValue()) 
 			.body("entry[0].resource.copyright", nullValue()) 
 			// requested fields
@@ -318,7 +332,15 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	public void GET_CodeSystem_ElementsMixedWithSummaryFields() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("_id", getTestCodeSystemId())
-			.queryParam("_elements", R5ObjectFields.CodeSystem.ID, R5ObjectFields.CodeSystem.META, R5ObjectFields.CodeSystem.URL, R5ObjectFields.CodeSystem.VERSION, R5ObjectFields.CodeSystem.NAME, R5ObjectFields.CodeSystem.TITLE, R5ObjectFields.CodeSystem.DATE, R5ObjectFields.CodeSystem.PUBLISHER)
+			.queryParam("_elements", 
+				R5ObjectFields.CodeSystem.ID, 
+				R5ObjectFields.CodeSystem.META, 
+				R5ObjectFields.CodeSystem.URL, 
+				R5ObjectFields.CodeSystem.VERSION, 
+				R5ObjectFields.CodeSystem.NAME, 
+				R5ObjectFields.CodeSystem.TITLE, 
+				R5ObjectFields.CodeSystem.DATE, 
+				R5ObjectFields.CodeSystem.PUBLISHER)
 			.when().get(CODESYSTEM)
 			.then().assertThat()
 			.statusCode(200)
@@ -329,10 +351,10 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			// mandatory fields
 			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
 			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("not-present"))
+			.body("entry[0].resource.content", equalTo("complete"))
 			// requested fields
-			.body("entry[0].resource.url", equalTo(getTestCodeSystemUrl()))
-			.body("entry[0].resource.version", nullValue())
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()))
 			.body("entry[0].resource.name", equalTo(getTestCodeSystemId()))
 			.body("entry[0].resource.title", equalTo("Title of " + getTestCodeSystemId()))
 			.body("entry[0].resource.date", nullValue())
@@ -363,36 +385,6 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(0))
 			.body("type", equalTo("searchset"));
 	}
-	
-	@Test
-	public void GET_CodeSystem_Url_Match_Single() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("url", SNOMEDCT_URL)
-			.when().get(CODESYSTEM)
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("Bundle"))
-			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-			.body("total", equalTo(1))
-			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo("SNOMEDCT"))
-			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL));
-	}
-	
-	@Test
-	public void GET_CodeSystem_Url_Match_Multiple() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("url", SNOMEDCT_URL, getTestCodeSystemUrl())
-			.when().get(CODESYSTEM)
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("Bundle"))
-			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-			.body("total", equalTo(2))
-			.body("type", equalTo("searchset"))
-			.body("entry.resource.id", hasItems("SNOMEDCT", getTestCodeSystemId()))
-			.body("entry.resource.url", hasItems(SNOMEDCT_URL, getTestCodeSystemUrl()));
-	}
 
 	@Test
 	public void GET_CodeSystem_System_NoMatch() throws Exception {
@@ -405,52 +397,6 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(0))
 			.body("type", equalTo("searchset"));
-	}
-	
-	@Test
-	public void GET_CodeSystem_System_Match_Single() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
-			.when().get(CODESYSTEM)
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("Bundle"))
-			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-			.body("total", equalTo(1))
-			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo("SNOMEDCT"))
-			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL));
-	}
-	
-	@Test
-	public void GET_CodeSystem_System_Match_Multiple() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL, getTestCodeSystemUrl())
-			.when().get(CODESYSTEM)
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("Bundle"))
-			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-			.body("total", equalTo(2))
-			.body("type", equalTo("searchset"))
-			.body("entry.resource.id", hasItems("SNOMEDCT", getTestCodeSystemId()))
-			.body("entry.resource.url", hasItems(SNOMEDCT_URL, getTestCodeSystemUrl()));
-	}
-	
-	@Test
-	public void GET_CodeSystem_System_And_Url_Intersection_Match() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("url", SNOMEDCT_URL, getTestCodeSystemUrl())
-			.queryParam("system", SNOMEDCT_URL)
-			.when().get(CODESYSTEM)
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("Bundle"))
-			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
-			.body("total", equalTo(1))
-			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo("SNOMEDCT"))
-			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL));
 	}
 	
 	@Test
@@ -469,7 +415,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_Version_Match_Single() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("version", "2002-01-31")
+			.queryParam("version", SNOMEDCT_URL + "/version/20020131")
 			.when().get(CODESYSTEM)
 			.then().assertThat()
 			.statusCode(200)
@@ -478,16 +424,16 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
-			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/version/20020131"))
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
-			.body("entry[0].resource.version", equalTo("2002-01-31"))
+			.body("entry[0].resource.version", equalTo(SNOMEDCT_URL + "/version/20020131"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"));
 	}
 	
 	@Test
 	public void GET_CodeSystem_Version_Match_Multiple() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("version", "2002-01-31", "2020-01-31")
+			.queryParam("version", SNOMEDCT_URL + "/version/20020131", SNOMEDCT_URL + "/version/20200131")
 			.when().get(CODESYSTEM)
 			.then().assertThat()
 			.statusCode(200)
@@ -496,14 +442,14 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(2))
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
-			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/version/20020131"))
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
-			.body("entry[0].resource.version", equalTo("2002-01-31"))
+			.body("entry[0].resource.version", equalTo(SNOMEDCT_URL + "/version/20020131"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"))
 			.body("entry[1].resource.id", equalTo("SNOMEDCT/2020-01-31"))
-			.body("entry[1].resource.url", equalTo(SNOMEDCT_URL + "/version/20200131"))
+			.body("entry[1].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[1].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20200131?fhir_vs"))
-			.body("entry[1].resource.version", equalTo("2020-01-31"))
+			.body("entry[1].resource.version", equalTo(SNOMEDCT_URL + "/version/20200131"))
 			.body("entry[1].resource.date", equalTo("2020-01-31T00:00:00Z"));
 	}
 	
@@ -536,7 +482,8 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("GET_CodeSystem_Status_Match_Single"))
-			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/GET_CodeSystem_Status_Match_Single"))
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()))
 			// This is the PublicationStatus code "mysterious" maps to
 			.body("entry[0].resource.status", equalTo("unknown"));
 	}
@@ -557,11 +504,13 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(39))
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("GET_CodeSystem_Status_Match_Multiple"))
-			.body("entry[0].resource.url", equalTo(SNOMEDCT_URL + "/GET_CodeSystem_Status_Match_Multiple"))
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()))
 			// This is the PublicationStatus code "mysterious" maps to
 			.body("entry[0].resource.status", equalTo("unknown"))
 			.body("entry[1].resource.id", equalTo("SNOMEDCT"))
-			.body("entry[1].resource.url", equalTo(SNOMEDCT_URL))
+			.body("entry[1].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[1].resource.version", equalTo(SNOMEDCT_URL))
 			.body("entry[1].resource.status", equalTo("active"));
 	}
 	
@@ -573,7 +522,8 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("CodeSystem"))
 			.body("id", equalTo(getTestCodeSystemId()))
-			.body("url", equalTo(getTestCodeSystemUrl()))
+			.body("url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("version", equalTo(getTestCodeSystemUrl()))
 			.body("status", equalTo("draft"));
 	}
 	
@@ -585,9 +535,9 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("CodeSystem"))
 			.body("id", equalTo("SNOMEDCT/2002-01-31"))
-			.body("url", equalTo(SNOMEDCT_URL + "/version/20020131"))
+			.body("url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("status", equalTo("active"))
-			.body("version", equalTo("2002-01-31"))
+			.body("version", equalTo(SNOMEDCT_URL + "/version/20020131"))
 			.body("language", equalTo("ENG"))
 			.body("publisher", equalTo("SNOMED International"))
 			.body("contact[0].telecom[0].system", equalTo("url"))

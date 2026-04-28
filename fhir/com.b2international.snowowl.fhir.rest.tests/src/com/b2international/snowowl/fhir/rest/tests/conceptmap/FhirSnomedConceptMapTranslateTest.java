@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,14 @@ import org.junit.Test;
 
 import com.b2international.fhir.r5.operations.ConceptMapTranslateResultParameters;
 import com.b2international.snowowl.core.api.IBranchPath;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.fhir.rest.tests.FhirTestConcepts;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.fhir.SnomedUri;
 
 /**
  * Concept Map $translate REST tests for SNOMED Map type reference sets
+ * 
  * @since 6.7
  */
 public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
@@ -62,8 +63,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		
 		String response = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.param("code", FhirTestConcepts.MICROORGANISM) 
-			.param("system", SnomedUri.SNOMED_BASE_URI_STRING)
-			.param("targetsystem", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
 			.get("/ConceptMap/$translate")
 			.asString();
@@ -87,8 +88,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		
 		String response = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.param("code", "MO") 
-			.param("system", SnomedUri.SNOMED_BASE_URI_STRING)
-			.param("targetsystem", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("reverse", true)
 			.when()
 			.get("/ConceptMap/$translate")
@@ -119,8 +120,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.pathParam("id", mapTypeRefsetUri)
 			.param("code", FhirTestConcepts.MICROORGANISM) 
-			.param("system", SnomedUri.SNOMED_BASE_URI_STRING)
-			.param("targetsystem", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
 			.get("/ConceptMap/{id}/$translate")
 			.then()
@@ -142,7 +143,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.pathParam("id", mapTypeRefsetUri)
 			.param("code", FhirTestConcepts.MICROORGANISM) 
 			.param("system", "some_other_than_snomed_system") //invalid
-			.param("targetsystem", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
 			.get("/ConceptMap/{id}/$translate")
 			.then()
@@ -163,7 +164,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.pathParam("id", mapTypeRefsetUri)
 			.param("code", FhirTestConcepts.MICROORGANISM) 
-			.param("system", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("targetsystem", "Invalid_target_codesystem") //invalid
 			.when()
 			.get("/ConceptMap/{id}/$translate")
@@ -185,8 +186,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.pathParam("id", mapTypeRefsetUri)
 			.param("code", Concepts.ROOT_CONCEPT)  //ROOT has no mapping
-			.param("system", SnomedUri.SNOMED_BASE_URI_STRING)
-			.param("targetsystem", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
 			.get("/ConceptMap/{id}/$translate")
 			.then()
@@ -206,8 +207,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		String response = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.pathParam("id", mapTypeRefsetUri)
 			.param("code", FhirTestConcepts.MICROORGANISM) 
-			.param("system", SnomedUri.SNOMED_BASE_URI_STRING)
-			.param("targetsystem", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
 			.get("/ConceptMap/{id}/$translate")
 			.asString();
@@ -241,8 +242,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		String response = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.pathParam("id", mapTypeRefsetUri)
 			.param("code", "MO") 
-			.param("system", SnomedUri.SNOMED_BASE_URI_STRING)
-			.param("targetsystem", SnomedUri.SNOMED_BASE_URI_STRING)
+			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("reverse", true)
 			.when()
 			.get("/ConceptMap/{id}/$translate")

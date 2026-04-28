@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.exceptions.FhirException;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -29,7 +30,6 @@ import com.b2international.snowowl.snomed.fhir.SnomedUri;
 import com.b2international.snowowl.snomed.fhir.SnomedUri.QueryPartDefinition;
 
 /**
- * 
  * @since 6.7
  */
 public class SnomedUriParsingTest extends FhirTest {
@@ -51,7 +51,7 @@ public class SnomedUriParsingTest extends FhirTest {
 	@Test
 	public void testInvalidModule() {
 		
-		String uriString = SnomedUri.SNOMED_BASE_URI_STRING + "/a";
+		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/a";
 		
 		exception.expect(FhirException.class);
 		exception.expectMessage("Invalid SNOMED CT extension module ID [a] defined.");
@@ -62,7 +62,7 @@ public class SnomedUriParsingTest extends FhirTest {
 	@Test
 	public void testInvalidVersionTag() {
 		
-		String uriString = SnomedUri.SNOMED_BASE_URI_STRING + "/900000000000207008/invalidTag";
+		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008/invalidTag";
 		
 		exception.expect(FhirException.class);
 		exception.expectMessage("Invalid path segment [invalidTag], 'version' expected.");
@@ -73,7 +73,7 @@ public class SnomedUriParsingTest extends FhirTest {
 	@Test
 	public void testMissingVersionTag() {
 		
-		String uriString = SnomedUri.SNOMED_BASE_URI_STRING + "/900000000000207008/version";
+		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008/version";
 		
 		exception.expect(FhirException.class);
 		exception.expectMessage("No version tag is specified after the 'version' parameter.");
@@ -85,7 +85,7 @@ public class SnomedUriParsingTest extends FhirTest {
 	@Test
 	public void testIntEditionUri() {
 		
-		String uriString = SnomedUri.SNOMED_BASE_URI_STRING;
+		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING;
 		
 		SnomedUri snomedUri = SnomedUri.fromUriString(uriString, "uri");
 		
@@ -97,7 +97,7 @@ public class SnomedUriParsingTest extends FhirTest {
 	@Test
 	public void testIntEditionWithModuleUri() {
 		
-		String uriString = SnomedUri.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE;
+		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE;
 		
 		SnomedUri snomedUri = SnomedUri.fromUriString(uriString, "uri");
 		
@@ -108,7 +108,7 @@ public class SnomedUriParsingTest extends FhirTest {
 	@Test
 	public void testIntEditionWithVersionUri() {
 		
-		String uriString = SnomedUri.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE + "/version/20170131";
+		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE + "/version/20170131";
 		
 		SnomedUri snomedUri = SnomedUri.fromUriString(uriString, "uri");
 		
@@ -168,7 +168,7 @@ public class SnomedUriParsingTest extends FhirTest {
 	@Test
 	public void testComplexUriWithQueryPart() {
 		
-		String uriString = SnomedUri.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE + "/version/20170131?fhir_vs=isa/50697003";
+		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE + "/version/20170131?fhir_vs=isa/50697003";
 		
 		SnomedUri snomedUri = SnomedUri.fromUriString(uriString, "uri");
 		
@@ -183,45 +183,45 @@ public class SnomedUriParsingTest extends FhirTest {
 	public void testToUri() {
 		
 		SnomedUri baseUri = SnomedUri.builder().build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING, baseUri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING, baseUri.toString());
 		
 		SnomedUri uri = SnomedUri.builder().version("20180131").build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING + "/version/20180131", uri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/version/20180131", uri.toString());
 		
 		uri = SnomedUri.builder()
 				.extensionModuleId(Concepts.MODULE_SCT_CORE)
 				.version("20180131").build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE + "/version/20180131", uri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/" + Concepts.MODULE_SCT_CORE + "/version/20180131", uri.toString());
 	}
 	
 	@Test
 	public void testToUriWithQuery_fhir_cm() {
 		SnomedUri uri = SnomedUri.builder().conceptMapQuery(Concepts.ROOT_CONCEPT).build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING + "?fhir_cm=" + Concepts.ROOT_CONCEPT, uri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_cm=" + Concepts.ROOT_CONCEPT, uri.toString());
 	}
 
 	@Test
 	public void testToUriWithQuery_fhir_vs() {
 		SnomedUri uri = SnomedUri.builder().valueSetsQuery().build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING + "?fhir_vs", uri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs", uri.toString());
 	}
 
 	@Test
 	public void testToUriWithQuery_fhir_vs_isa() {
 		SnomedUri uri = SnomedUri.builder().isAQuery(Concepts.ROOT_CONCEPT).build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING + "?fhir_vs=isa/" + Concepts.ROOT_CONCEPT, uri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs=isa/" + Concepts.ROOT_CONCEPT, uri.toString());
 	}
 
 	@Test
 	public void testToUriWithQuery_fhir_vs_refset() {
 		SnomedUri uri = SnomedUri.builder().refsetsQuery().build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING + "?fhir_vs=refset", uri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs=refset", uri.toString());
 	}
 	
 	@Test
 	public void testToUriWithQuery_fhir_vs_refset_slash() {
 		SnomedUri uri = SnomedUri.builder().refsetQuery(Concepts.ROOT_CONCEPT).build();
-		assertEquals(SnomedUri.SNOMED_BASE_URI_STRING + "?fhir_vs=refset/" + Concepts.ROOT_CONCEPT, uri.toString());
+		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs=refset/" + Concepts.ROOT_CONCEPT, uri.toString());
 	}
 	
 }

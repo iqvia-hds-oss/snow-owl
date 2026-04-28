@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,16 @@ import static org.hamcrest.CoreMatchers.hasItem;
 
 import java.util.List;
 
-import org.hl7.fhir.r5.model.Coding;
 import org.junit.Test;
 
 import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
-import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
+import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.b2international.snowowl.snomed.fhir.SnomedFhirConstants;
+import com.b2international.snowowl.test.commons.Services;
+import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 
 import io.restassured.path.json.JsonPath;
@@ -63,7 +65,8 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_$lookup_NonExistentCode() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", "12345")
 			.queryParam("_format", "json")
 			.when().get(CODESYSTEM_LOOKUP)
@@ -78,39 +81,48 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_$lookup_Existing_R4() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.queryParam("_format", RestExtensions.encodeQueryParameter("application/fhir+json;fhirVersion=4.0.1"))
 			.when().get(CODESYSTEM_LOOKUP)
 			.then().assertThat()
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
+			// Parameter order depends on OperationConvertor_40_50 since we are starting out with an R5 result and converting to R4
 			.body("parameter[0].name", equalTo("name"))
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
-			.body("parameter[1].name", equalTo("display"))
-			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"));
+			.body("parameter[1].name", equalTo("version"))
+			.body("parameter[1].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[2].name", equalTo("display"))
+			.body("parameter[2].valueString", equalTo("SNOMED CT Concept"));
 	}
 	
 	@Test
 	public void GET_CodeSystem_$lookup_Existing_R4B() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.queryParam("_format", RestExtensions.encodeQueryParameter("application/fhir+json;fhirVersion=4.3.0"))
 			.when().get(CODESYSTEM_LOOKUP)
 			.then().assertThat()
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
+			// Parameter order depends on OperationConvertor_40_50 since we are starting out with an R5 result and converting to R4B
 			.body("parameter[0].name", equalTo("name"))
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
-			.body("parameter[1].name", equalTo("display"))
-			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"));
+			.body("parameter[1].name", equalTo("version"))
+			.body("parameter[1].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[2].name", equalTo("display"))
+			.body("parameter[2].valueString", equalTo("SNOMED CT Concept"));
 	}
 	
 	@Test
 	public void GET_CodeSystem_$lookup_Existing_R5() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.queryParam("_format", RestExtensions.encodeQueryParameter("application/fhir+json;fhirVersion=5.0.0"))
 			.when().get(CODESYSTEM_LOOKUP)
@@ -120,13 +132,16 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[0].name", equalTo("name"))
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
 			.body("parameter[1].name", equalTo("display"))
-			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"));
+			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 	@Test
 	public void GET_CodeSystem_$lookup_Existing_Versioned() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", CodeSystemRestRequests.getSnomedIntUrl("version/20020131"))
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL + "/version/20020131")
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.queryParam("_format", "json")
 			.when().get(CODESYSTEM_LOOKUP)
@@ -138,32 +153,45 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[1].name", equalTo("display"))
 			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
 			.body("parameter[2].name", equalTo("version"))
-			.body("parameter[2].valueString", equalTo("2002-01-31"));
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL + "/version/20020131"));
 	}
 	
 	@Test
-	public void GET_CodeSystem_$lookup_Existing_Versioned_ViaVersionField() throws Exception {
+	public void GET_CodeSystem_$lookup_Existing_BaseURI() throws Exception {
+		
+		SnomedRequests.prepareUpdateConcept(Concepts.ROOT_CONCEPT)
+			.setEffectiveTime("20260427")
+			.force(true)
+			.build(SnomedContentRule.SNOMEDCT, RestExtensions.USER, "Set effective time to a future value")
+			.execute(Services.bus())
+			.getSync();
+		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", String.join("/", SnomedTerminologyComponentConstants.SNOMED_URI_SCT, Concepts.MODULE_SCT_CORE))
-			.queryParam("version", "20020131")
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			// .queryParam("version", ...) is omitted to test that whether the base URI alone can be used
 			.queryParam("code", Concepts.ROOT_CONCEPT)
+			.queryParam("property", SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())
 			.queryParam("_format", "json")
 			.when().get(CODESYSTEM_LOOKUP)
 			.then().assertThat()
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("name"))
-			.body("parameter[0].valueString", equalTo("SNOMEDCT/2002-01-31"))
+			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
 			.body("parameter[1].name", equalTo("display"))
 			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
 			.body("parameter[2].name", equalTo("version"))
-			.body("parameter[2].valueString", equalTo("2002-01-31"));
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[3].name", equalTo("property"))
+			.body("parameter[3].part[0].valueCode", equalTo(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode()))
+			.body("parameter[3].part[1].valueDateTime", equalTo("2026-04-27"));
 	}
 	
 	@Test
 	public void GET_CodeSystem_$lookup_Existing_WithProperty() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", CLINICAL_FINDING)
 			.queryParam("property", "parent")
 			.queryParam("_format", "json")
@@ -175,16 +203,19 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
 			.body("parameter[1].name", equalTo("display"))
 			.body("parameter[1].valueString", equalTo("Clinical finding"))
-			.body("parameter[2].name", equalTo("property"))
-			.body("parameter[2].part[0].valueCode", equalTo("parent"))
-			.body("parameter[2].part[1].valueCode", equalTo(Concepts.ROOT_CONCEPT))
-			.body("parameter[2].part[2].valueString", equalTo("SNOMED CT Concept"));
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[3].name", equalTo("property"))
+			.body("parameter[3].part[0].valueCode", equalTo("parent"))
+			.body("parameter[3].part[1].valueCode", equalTo(Concepts.ROOT_CONCEPT))
+			.body("parameter[3].part[2].valueString", equalTo("SNOMED CT Concept"));
 	}
 	
 	@Test
 	public void GET_CodeSystem_$lookup_Existing_WithInvalidProperty() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
 			.queryParam("property", "name")
 			.queryParam("property", "http://snomed.info/id/12345")
@@ -201,7 +232,8 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 	@Test
 	public void GET_CodeSystem_$lookup_Designations() throws Exception {
 		JsonPath jsonPath = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("system", SNOMEDCT_URL)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", CLINICAL_FINDING)
 			.queryParam("property", "designation")
 			.queryParam("_format", "json")
@@ -213,10 +245,12 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
 			.body("parameter[1].name", equalTo("display"))
 			.body("parameter[1].valueString", equalTo("Clinical finding"))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
 			.extract()
 			.jsonPath();
 		
-		jsonPath.setRootPath("parameter[2]");
+		jsonPath.setRootPath("parameter[3]");
 		assertThat(jsonPath.getString("name")).isEqualTo("designation");
 
 		assertThat(jsonPath.getString("part[0].name")).isEqualTo("language");
@@ -226,7 +260,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 		assertThat(jsonPath.getString("part[2].name")).isEqualTo("value");
 		assertThat(jsonPath.getString("part[2].valueString")).isEqualTo("Clinical finding (finding)");
 
-		jsonPath.setRootPath("parameter[3]");
+		jsonPath.setRootPath("parameter[4]");
 		assertThat(jsonPath.getString("name")).isEqualTo("designation");
 
 		assertThat(jsonPath.getString("part[0].name")).isEqualTo("language");
@@ -236,17 +270,18 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 		assertThat(jsonPath.getString("part[2].name")).isEqualTo("value");
 		assertThat(jsonPath.getString("part[2].valueString")).isEqualTo("Clinical finding");
 		
-		checkDesignationUseContext(jsonPath, "parameter[2].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.FULLY_SPECIFIED_NAME);
-		checkDesignationUseContext(jsonPath, "parameter[2].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.FULLY_SPECIFIED_NAME);
-		checkDesignationUseContext(jsonPath, "parameter[3].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.SYNONYM);
-		checkDesignationUseContext(jsonPath, "parameter[3].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.SYNONYM);
+		checkDesignationUseContext(jsonPath, "parameter[3].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.FULLY_SPECIFIED_NAME);
+		checkDesignationUseContext(jsonPath, "parameter[3].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.FULLY_SPECIFIED_NAME);
+		checkDesignationUseContext(jsonPath, "parameter[4].extension[0]", Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.SYNONYM);
+		checkDesignationUseContext(jsonPath, "parameter[4].extension[1]", Concepts.REFSET_LANGUAGE_TYPE_US, Concepts.SYNONYM);
 	}
 	
 	@Test
 	public void POST_CodeSystem_$lookup_Existing() throws Exception {
-		
 		var parameters = new CodeSystemLookupParameters()
-				.setCoding(new Coding().setSystem(SNOMEDCT_URL).setCode(Concepts.ROOT_CONCEPT));
+			.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.setVersion(SNOMEDCT_URL)
+			.setCode(Concepts.ROOT_CONCEPT);
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.contentType(APPLICATION_FHIR_JSON)
@@ -258,14 +293,18 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[0].name", equalTo("name"))
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
 			.body("parameter[1].name", equalTo("display"))
-			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"));
+			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 	@Test
 	public void POST_CodeSystem_$lookup_Existing_Property() throws Exception {
 		var parameters = new CodeSystemLookupParameters()
-				.setCoding(new Coding().setSystem(SNOMEDCT_URL).setCode(CLINICAL_FINDING))
-				.setProperty(List.of("parent"));
+			.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.setVersion(SNOMEDCT_URL)
+			.setCode(CLINICAL_FINDING)
+			.setProperty(List.of("parent"));
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.contentType(APPLICATION_FHIR_JSON)
@@ -278,17 +317,21 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
 			.body("parameter[1].name", equalTo("display"))
 			.body("parameter[1].valueString", equalTo("Clinical finding"))
-			.body("parameter[2].name", equalTo("property"))
-			.body("parameter[2].part[0].valueCode", equalTo("parent"))
-			.body("parameter[2].part[1].valueCode", equalTo(Concepts.ROOT_CONCEPT))
-			.body("parameter[2].part[2].valueString", equalTo("SNOMED CT Concept"));
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[3].name", equalTo("property"))
+			.body("parameter[3].part[0].valueCode", equalTo("parent"))
+			.body("parameter[3].part[1].valueCode", equalTo(Concepts.ROOT_CONCEPT))
+			.body("parameter[3].part[2].valueString", equalTo("SNOMED CT Concept"));
 	}
 	
 	@Test
 	public void POST_CodeSystem_$lookup_Existing_WithInvalidProperty() throws Exception {
 		var parameters = new CodeSystemLookupParameters()
-				.setCoding(new Coding().setSystem(SNOMEDCT_URL).setCode(Concepts.ROOT_CONCEPT))
-				.setProperty(List.of("http://snomed.info/id/12345"));
+			.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.setVersion(SNOMEDCT_URL)
+			.setCode(Concepts.ROOT_CONCEPT)
+			.setProperty(List.of("http://snomed.info/id/12345"));
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.contentType(APPLICATION_FHIR_JSON)
@@ -301,5 +344,5 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("issue.code", hasItem("invalid"))
 			.body("issue.diagnostics[0]", containsString("Unrecognized property [http://snomed.info/id/12345]."));
 	}
-	
+
 }

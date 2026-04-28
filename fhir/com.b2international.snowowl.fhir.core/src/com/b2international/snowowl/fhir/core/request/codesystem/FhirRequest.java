@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.b2international.snowowl.fhir.core.request.codesystem;
 import java.util.IllformedLocaleException;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.Bundle;
@@ -27,19 +28,22 @@ import org.hl7.fhir.r5.model.CodeType;
 import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
-import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
-import com.b2international.snowowl.core.uri.ResourceURLSchemaSupport;
 import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 
 /**
+ * Abstract base class for FHIR CodeSystem operations that require fetching a CodeSystem resource first.
+ * 
+ * @see FhirCodeSystemLookupRequest
+ * @see FhirCodeSystemSubsumesRequest
+ * @see FhirCodeSystemValidateCodeRequest
+ * 
  * @since 8.0
- * @param <R>
+ * @param <R> the response type of the request
  */
 public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 
@@ -49,78 +53,65 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 	
 	private final String version;
 
-	public FhirRequest(String system, String version) {
+	public FhirRequest(final String system, final String version) {
 		this.system = system;
 		this.version = version;
 	}
 	
+	private Optional<CodeSystem> fetchCodeSystem(
+		final ServiceProvider context, 
+		final Consumer<FhirCodeSystemSearchRequestBuilder> searchConfigurer
+	) {
+		final FhirCodeSystemSearchRequestBuilder requestBuilder = FhirRequests.codeSystems()
+			.prepareSearch()
+			.one()
+			.setSummary(configureSummary());
+		
+		searchConfigurer.accept(requestBuilder);
+		
+		return requestBuilder.buildAsync()
+			.getRequest()
+			.execute(context)
+			.getEntry()
+			.stream()
+			.findFirst()
+			.map(Bundle.BundleEntryComponent::getResource)
+			.map(CodeSystem.class::cast);
+	}
+	
+	private Optional<CodeSystem> fetchByUrlAndVersion(final ServiceProvider context) {
+		// Clean mapping from "system" to "url" and "version" to "version"
+		return fetchCodeSystem(context, rb -> rb
+			.filterByUrl(system)
+			.filterByVersion(version));
+	}
+
+	private Optional<? extends CodeSystem> fetchByIdAndVersion(final ServiceProvider context) {
+		// Using "name" as the "id" filter matches native resource IDs and URLs, see FhirResourceSearchRequest#addFhirIdFilter
+		return fetchCodeSystem(context, rb -> rb
+			.filterByName(system)
+			.filterByVersion(version));
+	}
+	
 	@Override
-	public final R execute(ServiceProvider context) {
-		// try as is via the URL + version (optional) config
-		CodeSystem codeSystem = fetchCodeSystemByUrlAndVersion(context)
-				.or(() -> fetchCodeSystemByIdAndVersion(context))
-				.or(() -> {
-					// perform the third step only if there is a version specified
-					if (Strings.isNullOrEmpty(version)) {
-						return Optional.empty();
-					} else {
-						return fetchCodeSystemByUrl(context, system)
-								// if there is a codesystem with the specified URL then construct a versioned form using its official URL schema from its tooling
-								.flatMap((cs) -> fetchCodeSystemByUrl(context, context.service(RepositoryManager.class).get((String) cs.getUserData("toolingId")).service(ResourceURLSchemaSupport.class).withVersion(system, version, null)));
-					}
-				})
-				.orElseThrow(() -> new NotFoundException("CodeSystem", system));
+	public final R execute(final ServiceProvider context) {
+		/*
+		 * Attempt multiple ways of resolving the CodeSystem resource, in the following order:
+		 * 
+		 * 1. Search for a CodeSystem with the specified URL and version
+		 * 2. Search for a CodeSystem with the specified ID and version
+		 * 3. If a version is specified, search for a CodeSystem with the specified URL, and if found, 
+		 *    attempt to construct a versioned URL using the tooling's ResourceURLSchema (removed for now)
+		 */
+		final CodeSystem codeSystem = Optional.<CodeSystem>empty() 
+			.or(() -> fetchByUrlAndVersion(context))
+			.or(() -> fetchByIdAndVersion(context))
+//			.or(() -> fetchByVersionedUrl(context))
+			.orElseThrow(() -> new NotFoundException("CodeSystem", system));
 		
 		return doExecute(context, codeSystem);
 	}
 
-	private Optional<? extends CodeSystem> fetchCodeSystemByIdAndVersion(ServiceProvider context) {
-		return FhirRequests
-			.codeSystems().prepareSearch()
-			.one()
-			.filterById(system)
-			.filterByVersion(version)
-			.setSummary(configureSummary())
-			.buildAsync()
-			.getRequest()
-			.execute(context)
-			.getEntry().stream().findFirst()
-			.map(Bundle.BundleEntryComponent.class::cast)
-			.map(Bundle.BundleEntryComponent::getResource)
-			.map(CodeSystem.class::cast);
-	}
-
-	private Optional<CodeSystem> fetchCodeSystemByUrlAndVersion(ServiceProvider context) {
-		return FhirRequests
-				.codeSystems().prepareSearch()
-				.one()
-				.filterByUrl(system)
-				.filterByVersion(version)
-				.setSummary(configureSummary())
-				.buildAsync()
-				.getRequest()
-				.execute(context)
-				.getEntry().stream().findFirst()
-				.map(Bundle.BundleEntryComponent.class::cast)
-				.map(Bundle.BundleEntryComponent::getResource)
-				.map(CodeSystem.class::cast);
-	}
-	
-	private Optional<CodeSystem> fetchCodeSystemByUrl(ServiceProvider context, String url) {
-		return FhirRequests
-				.codeSystems().prepareSearch()
-				.one()
-				.filterByUrl(url)
-				.setSummary(configureSummary())
-				.buildAsync()
-				.getRequest()
-				.execute(context)
-				.getEntry().stream().findFirst()
-				.map(Bundle.BundleEntryComponent.class::cast)
-				.map(Bundle.BundleEntryComponent::getResource)
-				.map(CodeSystem.class::cast);
-	}
-	
 	protected String configureSummary() {
 		return Summary.TRUE;
 	}
@@ -133,7 +124,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 	 * @param localeAsCode
 	 * @return
 	 */
-	public static final String compactLocale(final CodeType localeAsCode) {
+	public static String compactLocale(final CodeType localeAsCode) {
 		final String locale = (localeAsCode != null) ? localeAsCode.getCode() : null;
 		if (StringUtils.isEmpty(locale)) {
 			return AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER;
@@ -147,7 +138,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 		final Locale.Builder builder = new Locale.Builder();
 		try {
 			builder.setLanguageTag(locale);
-		} catch (IllformedLocaleException ex) {
+		} catch (final IllformedLocaleException ex) {
 			throw new BadRequestException(ex.getMessage());
 		}
 		
@@ -175,7 +166,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 	 * @param locale
 	 * @return
 	 */
-	public static final String expandLocale(String locale) {
+	public static String expandLocale(final String locale) {
 		if (StringUtils.isEmpty(locale)) {
 			return null;
 		}
