@@ -53,6 +53,17 @@ final class FhirConceptMapSearchRequest extends FhirResourceSearchRequest<Concep
 				.optionalService(FhirConceptMapResourceConverter.class)
 				.orElse(FhirConceptMapResourceConverter.DEFAULT);
 		
+		/*
+		 * TODO: Implement the following logic to expand "sourceScope" and "targetScope" fields if selected:
+		 * 
+		 * - Collect native resource URIs (with query) from the native resource's dependencies list with "source" and "target" scope
+		 * - Convert native resource URIs into their corresponding FHIR URL representation using the rules below
+		 *   - Code systems should be converted to an "all concepts" implicit VS URL
+		 *   - ECL-constrained code systems should be converted into a constraint-based implicit VS URL
+		 *   - Value set-based domains do not require modification  
+		 */
+		// includeIfFieldSelected(R5ObjectFields.ConceptMap.SOURCE_SCOPE, () -> expandScope(context, Dependency.find(resource.getDependencies, "source")), entry::setSourceScope);
+		// includeIfFieldSelected(R5ObjectFields.ConceptMap.TARGET_SCOPE, () -> expandScope(context, Dependency.find(resource.getDependencies, "target")), entry::setTargetScope);
 		includeIfFieldSelected(R5ObjectFields.ConceptMap.GROUP, () -> converter.expandMembers(context, resource.getResourceURI()), entry::setGroup);
 	}
 	
