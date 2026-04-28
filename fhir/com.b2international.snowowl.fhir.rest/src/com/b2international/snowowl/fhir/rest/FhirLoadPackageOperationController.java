@@ -36,6 +36,7 @@ import static com.b2international.snowowl.fhir.rest.FhirMediaType.TEXT_XML_VALUE
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -235,6 +236,10 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		@RequestParam(value = "resolveDependencies", defaultValue = "true")
 		final Boolean resolveDependencies,
 		
+		@Parameter(description = "Resource URLs to load (if not specified the server will load all resources)")
+		@RequestParam(value = "resourceUrl", required = false)
+		final List<String> resourceUrls,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT, required = false)
 		final String accept,
@@ -263,6 +268,7 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		
 		FhirLoadPackageParameters params = new FhirLoadPackageParameters();
 		params.setResolveDependencies(resolveDependencies);
+		params.setResourceUrl(resourceUrls);
 		return loadPackage(params, new Attachment(fhirPackageAttachmentId, file.getOriginalFilename()), accept, _format, _pretty);
 	}
 
