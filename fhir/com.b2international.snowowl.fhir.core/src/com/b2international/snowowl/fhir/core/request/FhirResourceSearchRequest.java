@@ -172,7 +172,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			query.filter(urlRegularExpression);
 		} else {
 			// An explicit URL filter was provided but all values got eliminated, impossible to match anything
-			query.filter(Expressions.matchNone());
+			throw new NoResultException();
 		}
 	}
 		
@@ -214,7 +214,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			query.filter(versionRegularExpression);
 		} else {
 			// An explicit version filter was provided but all values got eliminated, impossible to match anything
-			query.filter(Expressions.matchNone());
+			throw new NoResultException();
 		}
 	}
 
