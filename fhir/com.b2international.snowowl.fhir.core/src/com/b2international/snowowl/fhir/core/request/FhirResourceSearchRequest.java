@@ -123,133 +123,98 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			.build());
 	}
 
-	private void addUrlAndVersionFilter(final ExpressionBuilder query) {
-
-		final boolean hasUrlFilter = containsKey(OptionKey.URL);
-		Expression urlSnomedFilter = null;
-		Expression urlRegularFilter = null;
-		
-		if (hasUrlFilter) {
-			final Set<String> urls = newHashSet(getCollection(OptionKey.URL, String.class));
-			
-			/*
-			 * Remove all user-supplied SNOMED CT URIs and versioned FHIR URLs from the URL
-			 * values. From the FHIR API's perspective these resources have different URLs
-			 * so they should be hidden.  
-			 */
-			urls.removeIf(FhirModelHelpers::isEditionSnomedUri);
-			urls.removeIf(FhirModelHelpers::isRegularVersionedUri);
-			
-			// Also remove the base SNOMED CT URI temporarily as it needs special handling
-			final boolean hadBaseSnomedUri = urls.remove(FhirModelHelpers.SNOMED_BASE_URI_STRING);
-
-			if (hadBaseSnomedUri) {
-				// Convert this fact into a filter that matches any "qualified" version of the SNOMED CT URI (module and/or effective time appended)
-				urlSnomedFilter = ResourceDocument.Expressions.urlPrefix(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/");
-			}
-			
-			if (!urls.isEmpty()) {
-
-				// Each non-versioned URL should also match any versioned URL with the same base
-				final Set<String> urlVersionPrefixes = urls.stream()
-					.map(FhirModelHelpers::addRegularVersionSuffix)
-					.collect(Collectors.toSet());
-				
-				urlRegularFilter = Expressions.bool()
-						.should(ResourceDocument.Expressions.urls(urls))
-						.should(ResourceDocument.Expressions.urlPrefixes(urlVersionPrefixes))
-						.build();
-
-			} else if (!hadBaseSnomedUri) {
-				
-				// An explicit URL filter was provided but all values got eliminated, impossible to match anything
-				query.filter(Expressions.matchNone());
-				return;
-			}
+	private void addUrlFilter(final ExpressionBuilder query) {
+		if (!containsKey(OptionKey.URL)) {
+			return;
 		}
 		
-		final boolean hasVersionFilter = containsKey(OptionKey.VERSION);
-		Expression versionSnomedFilter = null;
-		Expression versionRegularFilter = null;
+		final Set<String> urls = newHashSet(getCollection(OptionKey.URL, String.class));
 		
-		if (hasVersionFilter) {
-			// Separate SNOMED CT version IDs (which are actually URLs) from regular version IDs
-			final Map<Boolean, List<String>> versionsByKind = getCollection(OptionKey.VERSION, String.class)
+		/*
+		 * Remove all user-supplied SNOMED CT URIs and versioned FHIR URLs from the URL
+		 * values. From the FHIR API's perspective these resources have different URLs
+		 * so they should not be returned when a user requests them under the versioned alias.  
+		 */
+		urls.removeIf(FhirModelHelpers::isEditionSnomedUri);
+		urls.removeIf(FhirModelHelpers::isRegularVersionedUri);
+		
+		// Also remove the base SNOMED CT URI temporarily as it needs special handling
+		final boolean hadBaseSnomedUri = urls.remove(FhirModelHelpers.SNOMED_BASE_URI_STRING);
+
+		Expression urlSnomedExpression = null;
+		if (hadBaseSnomedUri) {
+			// Convert this fact into a filter that matches any "qualified" version of the SNOMED CT URI (module and/or effective time appended)
+			urlSnomedExpression = ResourceDocument.Expressions.urlPrefix(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/");
+		}
+		
+		Expression urlRegularExpression = null;
+		if (!urls.isEmpty()) {
+			// Each non-versioned URL should also match any versioned URL with the same base
+			final Set<String> urlVersionPrefixes = urls.stream()
+				.map(FhirModelHelpers::addRegularVersionSuffix)
+				.collect(Collectors.toSet());
+			
+			urlRegularExpression = Expressions.bool()
+					.should(ResourceDocument.Expressions.urls(urls))
+					.should(ResourceDocument.Expressions.urlPrefixes(urlVersionPrefixes))
+					.build();
+		}
+		
+		if (urlSnomedExpression != null && urlRegularExpression != null) {
+			// Both SNOMED and regular URL filters are present, combine them with OR
+			query.filter(Expressions.bool()
+				.should(urlSnomedExpression)
+				.should(urlRegularExpression)
+				.build());
+		} else if (urlSnomedExpression != null) {
+			query.filter(urlSnomedExpression);
+		} else if (urlRegularExpression != null) {
+			query.filter(urlRegularExpression);
+		} else {
+			// An explicit URL filter was provided but all values got eliminated, impossible to match anything
+			query.filter(Expressions.matchNone());
+		}
+	}
+		
+	private void addVersionFilter(final ExpressionBuilder query) {
+		if (!containsKey(OptionKey.VERSION)) {
+			return;
+		}
+		
+		// Separate SNOMED CT version IDs (which are actually URLs) from regular version IDs
+		final Map<Boolean, List<String>> versionsByKind = getCollection(OptionKey.VERSION, String.class)
 				.stream()
 				.collect(Collectors.partitioningBy(FhirModelHelpers::isEditionSnomedUri));
+		
+		final List<String> snomedVersions = versionsByKind.get(true);
+		final List<String> nonSnomedVersions = versionsByKind.get(false);
+
+		
+		Expression versionSnomedExpression = null;
+		if (!snomedVersions.isEmpty()) {
+			// SNOMED CT version IDs are actually URLs, so they should be matched against the URL field
+			versionSnomedExpression = ResourceDocument.Expressions.urls(snomedVersions);
+		}
 			
-			final List<String> snomedVersions = versionsByKind.get(true);
-			final List<String> nonSnomedVersions = versionsByKind.get(false);
-
-			if (!snomedVersions.isEmpty()) {
-				// SNOMED CT version IDs are actually URLs, so they should be matched against the URL field
-				versionSnomedFilter = ResourceDocument.Expressions.urls(snomedVersions);
-			}
-			
-			if (!nonSnomedVersions.isEmpty()) {
-				// Regular version IDs should be matched against the version field
-				versionRegularFilter = VersionDocument.Expressions.versions(nonSnomedVersions);
-			}
+		Expression versionRegularExpression = null;
+		if (!nonSnomedVersions.isEmpty()) {
+			// Regular version IDs should be matched against the version field
+			versionRegularExpression = VersionDocument.Expressions.versions(nonSnomedVersions);
 		}
 
-		// "SNOMED side" of the filter
-		final Expression snomedSide;
-
-		if (urlSnomedFilter != null && versionSnomedFilter != null) {
-			/*
-			 * XXX: As "urlSnomedFilter" is a prefix match on http://snomed.info/sct/* and
-			 * "versionSnomedFilter" is an exact match on specific URLs like
-			 * http://snomed.info/sct/900000000000207008/version/20230131, the version
-			 * filter's matches are always a subset of the prefix filter's matches. We only
-			 * need to use the latter.
-			 */
-		    snomedSide = versionSnomedFilter;
-		} else if (urlSnomedFilter != null && !hasVersionFilter) {
-			/*
-			 * XXX: We replace the prefix filter with an exact match filter for the
-			 * "definitive" SNOMED CT URI, as we don't want to return more than one
-			 * resource. See SO-6575 for how to control this behavior using resource
-			 * metadata in the future.
-			 */
-			snomedSide = ResourceDocument.Expressions.url(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008");
-		} else if (versionSnomedFilter != null && !hasUrlFilter) {
-			snomedSide = versionSnomedFilter;
+		if (versionSnomedExpression != null && versionRegularExpression != null) {
+			// Both SNOMED and regular version filters are present, combine them with OR
+			query.filter(Expressions.bool()
+				.should(versionSnomedExpression)
+				.should(versionRegularExpression)
+				.build());
+		} else if (versionSnomedExpression != null) {
+			query.filter(versionSnomedExpression);
+		} else if (versionRegularExpression != null) {
+			query.filter(versionRegularExpression);
 		} else {
-			// No contribution to this side
-			snomedSide = null;
-		}
-
-		// "Regular side" of the filter
-		final Expression regularSide;
-
-		if (urlRegularFilter != null && versionRegularFilter != null) {
-			regularSide = Expressions.bool()
-				.filter(urlRegularFilter)
-				.filter(versionRegularFilter)
-				.build();
-		} else if (urlRegularFilter != null && !hasVersionFilter) {
-			regularSide = urlRegularFilter;
-		} else if (versionRegularFilter != null && !hasUrlFilter) {
-			regularSide = versionRegularFilter;
-		} else {
-			regularSide = null;
-		}
-
-		// Final filter is an OR-combination of the SNOMED and regular sides
-		if (snomedSide != null && regularSide != null) {
-		    query.filter(Expressions.bool()
-		        .should(snomedSide)
-		        .should(regularSide)
-		        .build());
-		} else if (snomedSide != null) {
-		    query.filter(snomedSide);
-		} else if (regularSide != null) {
-		    query.filter(regularSide);
-		} else if (hasUrlFilter || hasVersionFilter) {
-		    // All user-supplied values got eliminated, impossible to match anything
-		    query.filter(Expressions.matchNone());
-		} else {
-			// Nothing to do
+			// An explicit version filter was provided but all values got eliminated, impossible to match anything
+			query.filter(Expressions.matchNone());
 		}
 	}
 
@@ -523,7 +488,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		
 		// TODO: Support filtering by the FHIR resource ID which needs to be transformed to the internal ID first
 		addFhirIdFilter(query);
-		addUrlAndVersionFilter(query);
+		addUrlFilter(query);
+		addVersionFilter(query);
 		
 		/*
 		 * The "name" property can be used to query the native resource ID. Values do
