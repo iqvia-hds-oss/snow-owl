@@ -30,6 +30,8 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.request.SearchResourceRequest;
+import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
@@ -87,26 +89,28 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 		
 		/*
 		 * TODO: See SO-6575: we should not hardcode the core module ID here, but
-		 * instead determine it dynamically. Also it should point to the latest released
-		 * version of the code system.
+		 * instead determine it dynamically.
 		 */
 		return fetchCodeSystem(context, rb -> rb
 			.filterByUrl(system)
-			.filterByVersion(system + "/900000000000207008"));
+			.filterByVersion(system + "/900000000000207008")
+			.sortBy(SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME)));
 	}
 	
 	private Optional<CodeSystem> fetchByUrlAndVersion(final ServiceProvider context) {
-		// Clean mapping from "system" to "url" and "version" to "version"
+		// Clean mapping from "system" to "url" and "version" to "version" (get the most recent version if multiple match)
 		return fetchCodeSystem(context, rb -> rb
 			.filterByUrl(system)
-			.filterByVersion(version));
+			.filterByVersion(version)
+			.sortBy(SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME)));
 	}
 
 	private Optional<CodeSystem> fetchByIdAndVersion(final ServiceProvider context) {
 		// Using "name" as the "id" filter matches native resource IDs and URLs, see FhirResourceSearchRequest#addFhirIdFilter
 		return fetchCodeSystem(context, rb -> rb
 			.filterByName(system)
-			.filterByVersion(version));
+			.filterByVersion(version)
+			.sortBy(SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME)));
 	}
 
 	@Override
