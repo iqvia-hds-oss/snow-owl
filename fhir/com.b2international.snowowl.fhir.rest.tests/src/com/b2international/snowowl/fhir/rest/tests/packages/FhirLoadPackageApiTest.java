@@ -68,7 +68,13 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("success"))
-			.body("parameter[0].valueBoolean", equalTo(true));
+			.body("parameter[0].valueBoolean", equalTo(true))
+			.body("parameter[1].name", equalTo("numberOfLoadedCodeSystems"))
+			.body("parameter[1].valueInteger", equalTo(1062))
+			.body("parameter[2].name", equalTo("numberOfLoadedValueSets"))
+			.body("parameter[2].valueInteger", equalTo(0))
+			.body("parameter[3].name", equalTo("numberOfLoadedConceptMaps"))
+			.body("parameter[3].valueInteger", equalTo(0));
 		
 		assertThat(visitedResources).contains("abstract-types");
 	}
@@ -82,7 +88,13 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("success"))
-			.body("parameter[0].valueBoolean", equalTo(true));
+			.body("parameter[0].valueBoolean", equalTo(true))
+			.body("parameter[1].name", equalTo("numberOfLoadedCodeSystems"))
+			.body("parameter[1].valueInteger", equalTo(1062))
+			.body("parameter[2].name", equalTo("numberOfLoadedValueSets"))
+			.body("parameter[2].valueInteger", equalTo(0))
+			.body("parameter[3].name", equalTo("numberOfLoadedConceptMaps"))
+			.body("parameter[3].valueInteger", equalTo(0));
 		
 		assertThat(visitedResources).contains("abstract-types");
 	}
@@ -103,7 +115,13 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("success"))
-			.body("parameter[0].valueBoolean", equalTo(true));
+			.body("parameter[0].valueBoolean", equalTo(true))
+			.body("parameter[1].name", equalTo("numberOfLoadedCodeSystems"))
+			.body("parameter[1].valueInteger", equalTo(1))
+			.body("parameter[2].name", equalTo("numberOfLoadedValueSets"))
+			.body("parameter[2].valueInteger", equalTo(0))
+			.body("parameter[3].name", equalTo("numberOfLoadedConceptMaps"))
+			.body("parameter[3].valueInteger", equalTo(0));
 		
 		assertThat(visitedResources).containsOnly("abstract-types");
 	}

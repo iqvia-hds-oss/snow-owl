@@ -95,9 +95,9 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 	@JsonProperty
 	private FhirLoadPackageParameters parameters;
 	
-	private transient int importedCodeSystems;
-	private transient int importedValueSets;
-	private transient int importedConceptMaps;
+	private transient int numberOfLoadedCodeSystems = 0;
+	private transient int numberOfLoadedValueSets = 0;
+	private transient int numberOfLoadedConceptMaps = 0;
 	
 	FhirLoadPackageRequest(final String author, final String owner, final String ownerProfileName, final LocalDate defaultEffectiveDate, final String bundleId) {
 		this.author = author;
@@ -171,6 +171,9 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		
 		final FhirLoadPackageResultParameters result = new FhirLoadPackageResultParameters();
 		result.setSuccess(true);
+		result.setNumberOfLoadedCodeSystems(numberOfLoadedCodeSystems);
+		result.setNumberOfLoadedValueSets(numberOfLoadedValueSets);
+		result.setNumberOfLoadedConceptMaps(numberOfLoadedConceptMaps);
 		return result;
 	}
 	
@@ -200,7 +203,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				case CodeSystem:
 					if (codeSystemWriteSupport != null) {
 						codeSystemWriteSupport.update(context, (CodeSystem) resource, author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-						importedCodeSystems++;
+						numberOfLoadedCodeSystems++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement
 					}					
@@ -208,7 +211,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				case ValueSet:
 					if (valueSetOps != null) {
 						valueSetOps.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-						importedValueSets++;
+						numberOfLoadedValueSets++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement
 					}
@@ -216,7 +219,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				case ConceptMap:
 					if (conceptMapOps != null) {
 						conceptMapOps.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-						importedConceptMaps++;
+						numberOfLoadedConceptMaps++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement
 					}

@@ -16,6 +16,7 @@
 package com.b2international.snowowl.fhir.core.request.packages;
 
 import org.hl7.fhir.r5.model.BooleanType;
+import org.hl7.fhir.r5.model.IntegerType;
 import org.hl7.fhir.r5.model.Parameters;
 
 import com.b2international.fhir.r5.operations.BaseParameters;
@@ -26,6 +27,10 @@ import com.b2international.fhir.r5.operations.BaseParameters;
 public final class FhirLoadPackageResultParameters extends BaseParameters {
 
 	private static final String PARAM_SUCCESS = "success";
+	private static final String PARAM_NUMBER_OF_LOADED_CODESYSTEMS = "numberOfLoadedCodeSystems";
+	private static final String PARAM_NUMBER_OF_LOADED_VALUESETS = "numberOfLoadedValueSets";
+	private static final String PARAM_NUMBER_OF_LOADED_CONCEPTMAPS = "numberOfLoadedConceptMaps";
+	
 
 	public FhirLoadPackageResultParameters() {
 		this(new Parameters());
@@ -45,6 +50,45 @@ public final class FhirLoadPackageResultParameters extends BaseParameters {
 	
 	public FhirLoadPackageResultParameters setSuccess(BooleanType success) {
 		addParameter(PARAM_SUCCESS, success);
+		return this;
+	}
+	
+	public IntegerType getNumberOfLoadedCodeSystems() {
+		return getParameterValue(PARAM_NUMBER_OF_LOADED_CODESYSTEMS, Parameters.ParametersParameterComponent::getValueIntegerType);
+	}
+	
+	public FhirLoadPackageResultParameters setNumberOfLoadedCodeSystems(Integer numberOfLoadedCodeSystems) {
+		return setNumberOfLoadedCodeSystems(new IntegerType(numberOfLoadedCodeSystems));
+	}
+
+	public FhirLoadPackageResultParameters setNumberOfLoadedCodeSystems(IntegerType numberOfLoadedCodeSystems) {
+		addParameter(PARAM_NUMBER_OF_LOADED_CODESYSTEMS, numberOfLoadedCodeSystems);
+		return this;
+	}
+	
+	public IntegerType getNumberOfLoadedValueSets() {
+		return getParameterValue(PARAM_NUMBER_OF_LOADED_VALUESETS, Parameters.ParametersParameterComponent::getValueIntegerType);
+	}
+	
+	public FhirLoadPackageResultParameters setNumberOfLoadedValueSets(Integer numberOfLoadedValueSets) {
+		return setNumberOfLoadedValueSets(new IntegerType(numberOfLoadedValueSets));
+	}
+
+	public FhirLoadPackageResultParameters setNumberOfLoadedValueSets(IntegerType numberOfLoadedValueSets) {
+		addParameter(PARAM_NUMBER_OF_LOADED_VALUESETS, numberOfLoadedValueSets);
+		return this;
+	}
+	
+	public IntegerType getNumberOfLoadedConceptMaps() {
+		return getParameterValue(PARAM_NUMBER_OF_LOADED_CONCEPTMAPS, Parameters.ParametersParameterComponent::getValueIntegerType);
+	}
+
+	public FhirLoadPackageResultParameters setNumberOfLoadedConceptMaps(Integer numberOfLoadedConceptMaps) {
+		return setNumberOfLoadedConceptMaps(new IntegerType(numberOfLoadedConceptMaps));
+	}
+
+	public FhirLoadPackageResultParameters setNumberOfLoadedConceptMaps(IntegerType numberOfLoadedConceptMaps) {
+		addParameter(PARAM_NUMBER_OF_LOADED_CONCEPTMAPS, numberOfLoadedConceptMaps);
 		return this;
 	}
 	
