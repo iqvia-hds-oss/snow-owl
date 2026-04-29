@@ -45,6 +45,7 @@ import com.b2international.snowowl.fhir.core.FhirResourceParser;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemWriteSupport;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapWriteSupport;
+import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetWriteSupport;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -25,17 +25,17 @@ public enum FhirLoadPackageParametersFactory implements OperationParametersFacto
 
 	@Override
 	public com.b2international.fhir.r4.operations.BaseParameters create(org.hl7.fhir.r4.model.Parameters parameters) {
-		return null;
+		return new com.b2international.snowowl.fhir.core.request.packages.r4.FhirLoadPackageParameters(parameters);
 	}
 
 	@Override
 	public com.b2international.fhir.r4b.operations.BaseParameters create(org.hl7.fhir.r4b.model.Parameters parameters) {
-		return null;
+		return new com.b2international.snowowl.fhir.core.request.packages.r4b.FhirLoadPackageParameters(parameters);
 	}
 
 	@Override
 	public com.b2international.fhir.r5.operations.BaseParameters create(org.hl7.fhir.r5.model.Parameters parameters) {
-		return new FhirLoadPackageParameters(parameters);
+		return new com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters(parameters);
 	}
 
 }

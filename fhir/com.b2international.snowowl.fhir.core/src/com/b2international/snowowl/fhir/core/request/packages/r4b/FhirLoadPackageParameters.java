@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.b2international.snowowl.fhir.core.request.packages;
+package com.b2international.snowowl.fhir.core.request.packages.r4b;
 
 import java.util.List;
 import java.util.SortedSet;
 import java.util.stream.StreamSupport;
 
-import org.hl7.fhir.r5.model.BooleanType;
-import org.hl7.fhir.r5.model.Parameters;
-import org.hl7.fhir.r5.model.StringType;
-import org.hl7.fhir.r5.model.UriType;
+import org.hl7.fhir.r4b.model.BooleanType;
+import org.hl7.fhir.r4b.model.Parameters;
+import org.hl7.fhir.r4b.model.StringType;
+import org.hl7.fhir.r4b.model.UriType;
 
-import com.b2international.fhir.r5.operations.BaseParameters;
+import com.b2international.fhir.r4b.operations.BaseParameters;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSortedSet;
 
 /**
- * Parameters class for the $load-package operation.
+ * Parameters class for the $load-package operation in the FHIR R4B format.
  * 
  * @since 10.1.0
  */

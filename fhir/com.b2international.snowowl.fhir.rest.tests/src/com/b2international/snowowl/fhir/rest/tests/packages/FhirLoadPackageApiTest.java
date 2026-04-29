@@ -33,7 +33,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemWriteSupport;
-import com.b2international.snowowl.fhir.core.request.packages.FhirLoadPackageParameters;
+import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 
 /**

@@ -58,8 +58,8 @@ import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
-import com.b2international.snowowl.fhir.core.request.packages.FhirLoadPackageParameters;
 import com.b2international.snowowl.fhir.core.request.packages.FhirLoadPackageParametersFactory;
+import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

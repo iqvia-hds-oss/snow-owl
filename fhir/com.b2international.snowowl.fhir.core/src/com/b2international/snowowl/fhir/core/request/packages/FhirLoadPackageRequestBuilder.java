@@ -24,6 +24,7 @@ import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.events.BaseRequestBuilder;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SystemRequestBuilder;
+import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 
 /**
  * Builder for FHIR package loading requests.
