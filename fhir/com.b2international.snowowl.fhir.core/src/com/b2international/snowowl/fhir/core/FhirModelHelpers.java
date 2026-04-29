@@ -108,7 +108,11 @@ public class FhirModelHelpers {
 	}
 	
 	public static boolean isRegularVersionedUri(String uri) {
-		return uri != null && !uri.startsWith(VERSION_SEGMENT) && uri.contains(VERSION_SEGMENT);
+		// Check that the version segment is present and not at the start or end of the URI
+		return uri != null 
+			&& !uri.startsWith(VERSION_SEGMENT) 
+			&& !uri.endsWith(VERSION_SEGMENT)
+			&& uri.contains(VERSION_SEGMENT);
 	}
 	
 	public static String addRegularVersionSuffix(String uri) {
