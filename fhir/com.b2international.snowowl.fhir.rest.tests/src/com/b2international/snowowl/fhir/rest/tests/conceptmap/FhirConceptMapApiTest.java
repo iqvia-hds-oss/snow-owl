@@ -58,7 +58,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 	//@Test
 	public void printConceptMap() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-		.when().get("/ConceptMap")
+		.when().get(CONCEPTMAP)
 		.prettyPrint();
 	}
 	
@@ -69,7 +69,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		String simpleMapTypeRefsetId = mapTypeRefSetIds.get(0);
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.when().get("/ConceptMap")
+			.when().get(CONCEPTMAP)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("Bundle"))
@@ -108,7 +108,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("unsupportedParam", "value")
 			.header("Prefer", "handling=strict")
-			.when().get("/ConceptMap")
+			.when().get(CONCEPTMAP)
 			.then().assertThat()
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
@@ -124,7 +124,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 		 	.pathParam("id", "snomedStore:MAIN/" + FHIR_MAP_TYPE_REFSET_VERSION + ":" + simpleMapTypeRefsetId)
-			.when().get("/ConceptMap/{id}")
+			.when().get(CONCEPTMAP_ID)
 			.then()
 			.body("resourceType", equalTo("ConceptMap"))
 			.body("id", equalTo("snomedStore:MAIN/" + FHIR_MAP_TYPE_REFSET_VERSION + ":" + simpleMapTypeRefsetId))
@@ -162,7 +162,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 		 	.pathParam("id", "snomedStore:MAIN/" + FHIR_MAP_TYPE_REFSET_VERSION + ":" + complexMapRefsetId)
-			.when().get("/ConceptMap/{id}")
+			.when().get(CONCEPTMAP_ID)
 			.then()
 			.body("resourceType", equalTo("ConceptMap"))
 			.body("id", equalTo("snomedStore:MAIN/" + FHIR_MAP_TYPE_REFSET_VERSION + ":" + complexMapRefsetId))
@@ -200,7 +200,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 		 	.pathParam("id", "snomedStore:MAIN/" + FHIR_MAP_TYPE_REFSET_VERSION + ":" + complexMapRefsetId)
-			.when().get("/ConceptMap/{id}")
+			.when().get(CONCEPTMAP_ID)
 			.then()
 			.body("resourceType", equalTo("ConceptMap"))
 			.body("id", equalTo("snomedStore:MAIN/" + FHIR_MAP_TYPE_REFSET_VERSION + ":" + complexMapRefsetId))
@@ -238,7 +238,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.pathParam("id",mapTypeRefsetUri)
 			.param("_summary", true)
-			.when().get("/ConceptMap/{id}")
+			.when().get(CONCEPTMAP_ID)
 			.then()
 			.body("resourceType", equalTo("ConceptMap"))
 			.body("meta.tag[0].code", equalTo("SUBSETTED"))
@@ -264,7 +264,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 		 	.param("_id", simpleMapTypeRefsetURI) 
-			.when().get("/ConceptMap")
+			.when().get(CONCEPTMAP)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("Bundle"))
@@ -300,7 +300,7 @@ public class FhirConceptMapApiTest extends FhirRestTest {
 		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 		 	.param("_id", simpleMapTypeRefsetURI, "SNOMEDCT/" + FHIR_MAP_TYPE_REFSET_VERSION + "/" + complexMapRefsetId) 
-			.when().get("/ConceptMap")
+			.when().get(CONCEPTMAP)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("Bundle"))

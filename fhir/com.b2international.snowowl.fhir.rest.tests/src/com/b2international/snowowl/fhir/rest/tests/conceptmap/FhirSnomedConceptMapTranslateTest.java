@@ -67,7 +67,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
-			.get("/ConceptMap/$translate")
+			.get(CONCEPTMAP_TRANSLATE)
 			.asString();
 		
 		var result = new ConceptMapTranslateResultParameters(fromJson(response));
@@ -93,7 +93,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("reverse", true)
 			.when()
-			.get("/ConceptMap/$translate")
+			.get(CONCEPTMAP_TRANSLATE)
 			.then()
 			.extract()
 			.asString();
@@ -124,7 +124,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
-			.get("/ConceptMap/{id}/$translate")
+			.get(CONCEPTMAP_ID_TRANSLATE)
 			.then()
 			.body("resourceType", equalTo("OperationOutcome"))
 			.root("issue[0]")
@@ -146,7 +146,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("system", "some_other_than_snomed_system") //invalid
 			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
-			.get("/ConceptMap/{id}/$translate")
+			.get(CONCEPTMAP_ID_TRANSLATE)
 			.then()
 			.body("resourceType", equalTo("OperationOutcome"))
 			.root("issue[0]")
@@ -168,7 +168,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("targetsystem", "Invalid_target_codesystem") //invalid
 			.when()
-			.get("/ConceptMap/{id}/$translate")
+			.get(CONCEPTMAP_ID_TRANSLATE)
 			.then()
 			.body("resourceType", equalTo("OperationOutcome"))
 			.root("issue[0]")
@@ -190,7 +190,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
-			.get("/ConceptMap/{id}/$translate")
+			.get(CONCEPTMAP_ID_TRANSLATE)
 			.then()
 			.body("resourceType", equalTo("Parameters"))
 			.root("parameter[0]")
@@ -211,7 +211,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.when()
-			.get("/ConceptMap/{id}/$translate")
+			.get(CONCEPTMAP_ID_TRANSLATE)
 			.asString();
 		
 		var result = new ConceptMapTranslateResultParameters(fromJson(response));
@@ -247,7 +247,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.param("targetsystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.param("reverse", true)
 			.when()
-			.get("/ConceptMap/{id}/$translate")
+			.get(CONCEPTMAP_ID_TRANSLATE)
 			.asString();
 		
 		var result = new ConceptMapTranslateResultParameters(fromJson(response));
