@@ -30,6 +30,7 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
@@ -79,6 +80,21 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 			.map(CodeSystem.class::cast);
 	}
 	
+	private Optional<CodeSystem> fetchDefaultSctCodeSystem(final ServiceProvider context) {
+		if (!FhirModelHelpers.isBaseSnomedUri(system) || !StringUtils.isEmpty(version)) {
+			return Optional.empty();
+		}
+		
+		/*
+		 * TODO: See SO-6575: we should not hardcode the core module ID here, but
+		 * instead determine it dynamically. Also it should point to the latest released
+		 * version of the code system.
+		 */
+		return fetchCodeSystem(context, rb -> rb
+			.filterByUrl(system)
+			.filterByVersion(system + "/900000000000207008"));
+	}
+	
 	private Optional<CodeSystem> fetchByUrlAndVersion(final ServiceProvider context) {
 		// Clean mapping from "system" to "url" and "version" to "version"
 		return fetchCodeSystem(context, rb -> rb
@@ -86,27 +102,26 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 			.filterByVersion(version));
 	}
 
-	private Optional<? extends CodeSystem> fetchByIdAndVersion(final ServiceProvider context) {
+	private Optional<CodeSystem> fetchByIdAndVersion(final ServiceProvider context) {
 		// Using "name" as the "id" filter matches native resource IDs and URLs, see FhirResourceSearchRequest#addFhirIdFilter
 		return fetchCodeSystem(context, rb -> rb
 			.filterByName(system)
 			.filterByVersion(version));
 	}
-	
+
 	@Override
 	public final R execute(final ServiceProvider context) {
 		/*
 		 * Attempt multiple ways of resolving the CodeSystem resource, in the following order:
 		 * 
-		 * 1. Search for a CodeSystem with the specified URL and version
-		 * 2. Search for a CodeSystem with the specified ID and version
-		 * 3. If a version is specified, search for a CodeSystem with the specified URL, and if found, 
-		 *    attempt to construct a versioned URL using the tooling's ResourceURLSchema (removed for now)
+		 * 1. If the system URI is a base SNOMED CT URI and no version is specified, attempt to fetch the default SNOMED CT edition
+		 * 2. Search for a CodeSystem with the specified URL and version
+		 * 3. Search for a CodeSystem with the specified ID and version
 		 */
-		final CodeSystem codeSystem = Optional.<CodeSystem>empty() 
+		final CodeSystem codeSystem = Optional.<CodeSystem>empty()
+			.or(() -> fetchDefaultSctCodeSystem(context))
 			.or(() -> fetchByUrlAndVersion(context))
 			.or(() -> fetchByIdAndVersion(context))
-//			.or(() -> fetchByVersionedUrl(context))
 			.orElseThrow(() -> new NotFoundException("CodeSystem", system));
 		
 		return doExecute(context, codeSystem);

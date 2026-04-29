@@ -117,7 +117,7 @@ public class FhirModelHelpers {
 			return uri;
 		}
 
-		// Remove trailing slash if already present
+		// Remove trailing slash if present
 		if (uri.endsWith("/")) { 
 			uri = uri.substring(0, uri.length() - 1); 
 		}
