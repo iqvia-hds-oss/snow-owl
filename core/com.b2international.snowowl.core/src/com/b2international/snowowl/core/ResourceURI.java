@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,6 +156,10 @@ public final class ResourceURI implements Serializable, Comparable<ResourceURI> 
 		return hasPath(NEXT) || NEXT.equals(getSpecialIdPart());
 	}
 	
+	public boolean hasTimestampPart() {
+		return !Strings.isNullOrEmpty(timestampPart);
+	}
+	
 	public boolean hasPath(String path) {
 		Preconditions.checkArgument(!Strings.isNullOrEmpty(path), "Path must not be empty or null");
 		return path.equals(getPath());
@@ -197,7 +201,11 @@ public final class ResourceURI implements Serializable, Comparable<ResourceURI> 
 	
 	@JsonIgnore
 	public String withoutResourceType() {
-		return isHead() ? resourceId : Branch.BRANCH_PATH_JOINER.join(resourceId, path);
+		if (hasTimestampPart()) {
+			return isHead() ? resourceId.concat(timestampPart) : Branch.BRANCH_PATH_JOINER.join(resourceId, path.concat(timestampPart));
+		} else {
+			return isHead() ? resourceId : Branch.BRANCH_PATH_JOINER.join(resourceId, path);
+		}
 	}
 	
 	// SPECIAL TILDE ID handling
