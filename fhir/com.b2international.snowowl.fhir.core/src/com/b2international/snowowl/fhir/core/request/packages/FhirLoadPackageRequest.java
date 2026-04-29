@@ -23,13 +23,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
-import org.elasticsearch.core.Map;
 import org.hl7.fhir.r5.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,6 +50,7 @@ import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetWriteS
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+import com.google.common.primitives.Ints;
 
 import jakarta.validation.constraints.NotEmpty;
 
@@ -71,10 +72,10 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 	private static final String CONCEPT_MAP = "ConceptMap";
 	
 	private static final Predicate<String> RECOGNIZED_PACKAGE_FILE_FILTER = 
-			packageName -> false 
-				|| packageName.startsWith(CODE_SYSTEM)
-				|| packageName.startsWith(VALUE_SET)
-				|| packageName.startsWith(CONCEPT_MAP);
+			packageEntryName -> false 
+				|| packageEntryName.startsWith(CODE_SYSTEM)
+				|| packageEntryName.startsWith(VALUE_SET)
+				|| packageEntryName.startsWith(CONCEPT_MAP);
 
 	
 	@JsonProperty
@@ -188,7 +189,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		}
 		
 		try {
-			Iterable<Path> filesToImport = Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER))::iterator;
+			Iterable<Path> filesToImport = Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER)).sorted(this::byResourceTypeImportOrder)::iterator;
 			for (var pathToImport : filesToImport) {
 				// TODO parse into raw JSON, read fhirVersion parameter then based on that parse the content into proper model?
 				Resource resource = readResource(resourceParser, pathToImport);
@@ -234,21 +235,30 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 			throw new SnowowlRuntimeException("Failed to list FHIR package directory", e);
 		}
 	}
+	
+	private int byResourceTypeImportOrder(Path a, Path b) {
+		int rankA = getResourceImportOrder(a);
+		int rankB = getResourceImportOrder(a);
+		return Ints.compare(rankA, rankB);
+	}
+	
+	private int getResourceImportOrder(Path path) {
+		return switch (path.getFileName().toString()) {
+			case String s when s.startsWith(CODE_SYSTEM) -> 1;
+			// valueset depends on codesystems
+			case String s when s.startsWith(VALUE_SET) -> 2;
+			// concept maps can depend on codesystems and valuesets
+			case String s when s.startsWith(CONCEPT_MAP) -> 3;
+			default -> throw new NotImplementedException("Missing import order ranking implementation for " + path);
+		};
+	}
 
 	private Resource readResource(FhirResourceParser resourceParser, Path pathToImport) {
 		try (var reader = Files.newInputStream(pathToImport)) {
-			if (pathToImport.getFileName().toString().startsWith(CODE_SYSTEM) 
-					|| pathToImport.getFileName().toString().startsWith(VALUE_SET)
-					|| pathToImport.getFileName().toString().startsWith(CONCEPT_MAP)) {
-				return resourceParser.parseResource(reader);
-			} else {
-				// raise error about extracted but not handled file
-				throw new NotImplementedException("Resource type should be handled by the implementation but not implemented: " + pathToImport.getFileName());
-			}
+			return resourceParser.parseResource(reader);
 		} catch (IOException e) {
-			// unable to convert JSON to resource
-			// TODO register the error in an error response and 
-			throw new SnowowlRuntimeException(e.getMessage(), e);
+			// TODO register the error in an error response and keep going? dependents?
+			throw new SnowowlRuntimeException("Unable to convert FHIR JSON to resource", e);
 		}
 	}
 
