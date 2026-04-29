@@ -196,7 +196,8 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				var resourceUrlsToImport = parameters.getResourceUrl().stream().map(UriType::getValue).collect(Collectors.toSet());
 				// check if resource is selected to be imported through resourceUrl filter
 				if (resource instanceof CanonicalResource canonicalResource && !resourceUrlsToImport.isEmpty() && !resourceUrlsToImport.contains(canonicalResource.getUrl())) {
-					break;
+					// skip resource if not
+					continue;
 				}
 				
 				switch (resource.getResourceType()) {
