@@ -229,11 +229,16 @@ public class FhirModelHelpers {
 			versionConsumer.accept(fhirUrl);
 			return;
 		}
-			
-		// In other cases we can use the resulting URL as the system...
-		systemConsumer.accept(fhirUrl);
 		
-		// ...and extract the path portion as the version
+		if (isRegularVersionedUri(fhirUrl)) {
+			// For regular versioned URIs we can use the portion before the "/version/" segment as the system
+			systemConsumer.accept(getRegularUrlBase(fhirUrl));
+		} else {
+			// For other URIs we can use the resulting URL as the system
+			systemConsumer.accept(fhirUrl);
+		}
+			
+		// Instead of checking the resulting URL for version information, use the original ResourceURI's path as the version
 		if (!resourceUri.isHead() && !resourceUri.isNext()) {
 			versionConsumer.accept(resourceUri.getPath());
 		}
