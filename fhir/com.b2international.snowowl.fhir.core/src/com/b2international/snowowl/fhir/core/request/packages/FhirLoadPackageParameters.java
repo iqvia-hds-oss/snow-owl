@@ -45,7 +45,8 @@ public final class FhirLoadPackageParameters extends BaseParameters {
 		PARAM_NAME,
 		PARAM_VERSION,
 		PARAM_REGISTRY,
-		PARAM_RESOLVE_DEPENDENCIES
+		PARAM_RESOLVE_DEPENDENCIES,
+		PARAM_RESOURCE_URL
 	);
 
 	public FhirLoadPackageParameters() {
