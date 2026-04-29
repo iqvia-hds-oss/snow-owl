@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.fhir.core.request;
 
+import static com.google.common.collect.Sets.newHashSet;
+
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
@@ -113,7 +115,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	 */
 	protected abstract String getResourceType();
 
-	private final void addFhirIdFilter(final ExpressionBuilder query) {
+	private void addFhirIdFilter(final ExpressionBuilder query) {
 		// Both documents have an "id" and a "url" field; we will use the expression from ResourceDocument purely by choice
 		addIdFilter(query, ids -> Expressions.bool()
 			.should(ResourceDocument.Expressions.ids(ids))
@@ -121,26 +123,99 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			.build());
 	}
 
-	/**
-	 * Subclasses may override this method to add special handling for the URL
-	 * filter. The default implementation uses the provided values to match the
-	 * "url" field on both ResourceDocument and VersionDocument instances.
-	 * 
-	 * @param query
-	 */
-	protected void addUrlFilter(final ExpressionBuilder query) {
-		addFilter(query, OptionKey.URL, String.class, ResourceDocument.Expressions::urls);
-	}
+	private void addUrlFilter(final ExpressionBuilder query) {
+		if (!containsKey(OptionKey.URL)) {
+			return;
+		}
+		
+		final Set<String> urls = newHashSet(getCollection(OptionKey.URL, String.class));
+		
+		/*
+		 * Remove all user-supplied SNOMED CT URIs and versioned FHIR URLs from the URL
+		 * values. From the FHIR API's perspective these resources have different URLs
+		 * so they should not be returned when a user requests them under the versioned alias.  
+		 */
+		urls.removeIf(FhirModelHelpers::isEditionSnomedUri);
+		urls.removeIf(FhirModelHelpers::isRegularVersionedUri);
+		
+		// Also remove the base SNOMED CT URI temporarily as it needs special handling
+		final boolean hadBaseSnomedUri = urls.remove(FhirModelHelpers.SNOMED_BASE_URI_STRING);
 
-	/**
-	 * Subclasses may override this method to add special handling for the version
-	 * filter. The default implementation uses the provided values to match the
-	 * "version" field on VersionDocument instances.
-	 * 
-	 * @param query
-	 */
-	protected void addVersionFilter(final ExpressionBuilder query) {
-		addFilter(query, OptionKey.VERSION, String.class, VersionDocument.Expressions::versions);
+		Expression urlSnomedExpression = null;
+		if (hadBaseSnomedUri) {
+			// Convert this fact into a filter that matches any "qualified" version of the SNOMED CT URI (module and/or effective time appended)
+			urlSnomedExpression = ResourceDocument.Expressions.urlPrefix(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/");
+		}
+		
+		Expression urlRegularExpression = null;
+		if (!urls.isEmpty()) {
+			// Each non-versioned URL should also match any versioned URL with the same base
+			final Set<String> urlVersionPrefixes = urls.stream()
+				.map(FhirModelHelpers::addRegularVersionSuffix)
+				.collect(Collectors.toSet());
+			
+			urlRegularExpression = Expressions.bool()
+					.should(ResourceDocument.Expressions.urls(urls))
+					.should(ResourceDocument.Expressions.urlPrefixes(urlVersionPrefixes))
+					.build();
+		}
+		
+		if (urlSnomedExpression != null && urlRegularExpression != null) {
+			// Both SNOMED and regular URL filters are present, combine them with OR
+			query.filter(Expressions.bool()
+				.should(urlSnomedExpression)
+				.should(urlRegularExpression)
+				.build());
+		} else if (urlSnomedExpression != null) {
+			query.filter(urlSnomedExpression);
+		} else if (urlRegularExpression != null) {
+			query.filter(urlRegularExpression);
+		} else {
+			// An explicit URL filter was provided but all values got eliminated, impossible to match anything
+			throw new NoResultException();
+		}
+	}
+		
+	private void addVersionFilter(final ExpressionBuilder query) {
+		if (!containsKey(OptionKey.VERSION)) {
+			return;
+		}
+		
+		// Separate SNOMED CT version IDs (which are actually URLs) from regular version IDs
+		final Map<Boolean, List<String>> versionsByKind = getCollection(OptionKey.VERSION, String.class)
+				.stream()
+				.collect(Collectors.partitioningBy(FhirModelHelpers::isEditionSnomedUri));
+		
+		final List<String> snomedVersions = versionsByKind.get(true);
+		final List<String> nonSnomedVersions = versionsByKind.get(false);
+
+		
+		Expression versionSnomedExpression = null;
+		if (!snomedVersions.isEmpty()) {
+			// SNOMED CT version IDs are actually URLs, so they should be matched against the URL field
+			versionSnomedExpression = ResourceDocument.Expressions.urls(snomedVersions);
+		}
+			
+		Expression versionRegularExpression = null;
+		if (!nonSnomedVersions.isEmpty()) {
+			// Regular version IDs should be matched against the version field
+			versionRegularExpression = VersionDocument.Expressions.versions(nonSnomedVersions);
+		}
+
+		if (versionSnomedExpression != null && versionRegularExpression != null) {
+			// Both SNOMED and regular version filters are present, combine them with OR
+			query.filter(Expressions.bool()
+				.should(versionSnomedExpression)
+				.should(versionRegularExpression)
+				.build());
+		} else if (versionSnomedExpression != null) {
+			query.filter(versionSnomedExpression);
+		} else if (versionRegularExpression != null) {
+			query.filter(versionRegularExpression);
+		} else {
+			// An explicit version filter was provided but all values got eliminated, impossible to match anything
+			throw new NoResultException();
+		}
 	}
 
 	/**
@@ -332,6 +407,24 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		return contactDetail;
 	}
 
+	private String getUrl(final String url) {
+		if (FhirModelHelpers.isEditionSnomedUri(url)) {
+			return FhirModelHelpers.SNOMED_BASE_URI_STRING;
+		} else if (FhirModelHelpers.isRegularVersionedUri(url)) {
+			return FhirModelHelpers.getRegularUrlBase(url);
+		} else {
+			return url;
+		}
+	}
+	
+	private String getVersion(final String url, final String version) {
+		if (FhirModelHelpers.isEditionSnomedUri(url)) {
+			return url;
+		} else {
+			return version;
+		}
+	}
+
 	/**
 	 * Subclasses may override this method to set additional properties on the
 	 * resulting FHIR resource based on the provided ResourceFragment and field
@@ -373,14 +466,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> toDateTimeType(resource.getEffectiveTime()), entry::setDateElement);
 		// addContact(contact) is a no-op if contact is null so we can safely call it here
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.CONTACT, () -> toContactDetail(resource.getContact()), entry::addContact);
-		
-		/*
-		 * XXX: Subclasses usually don't modify properties that are already set here in the superclass, however
-		 * "url" and "version" may require special handling for some resource types. In case of CodeSystems, 
-		 * this happens in FhirCodeSystemSearchRequest#expandResourceSpecificFields.
-		 */
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.URL, resource::getUrl, entry::setUrl);
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.VERSION, resource::getVersion, entry::setVersion);
+
+		includeIfFieldSelected(R5ObjectFields.CodeSystem.URL, () -> getUrl(resource.getUrl()), entry::setUrl);
+		includeIfFieldSelected(R5ObjectFields.CodeSystem.VERSION, () -> getVersion(resource.getUrl(), resource.getVersion()), entry::setVersion);
 		
 		expandResourceSpecificFields(context, entry, resource);
 
@@ -398,8 +486,10 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		final ExpressionBuilder query = Expressions.bool()
 			.filter(ResourceDocument.Expressions.resourceType(getResourceType())); 
 		
-		// Support filtering by the FHIR resource ID which needs to be transformed to the internal ID first
+		// TODO: Support filtering by the FHIR resource ID which needs to be transformed to the internal ID first
 		addFhirIdFilter(query);
+		addUrlFilter(query);
+		addVersionFilter(query);
 		
 		/*
 		 * The "name" property can be used to query the native resource ID. Values do
@@ -407,10 +497,6 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		 * "name" but failing that test should only result in a validation warning.
 		 */
 		addFilter(query, OptionKey.NAME, String.class, ResourceDocument.Expressions::ids);
-		
-		// Let subclasses decide whether special handling is needed for URL and version filters
-		addUrlFilter(query);
-		addVersionFilter(query);
 		
 		// Smart search for titles
 		if (containsKey(OptionKey.TITLE)) {

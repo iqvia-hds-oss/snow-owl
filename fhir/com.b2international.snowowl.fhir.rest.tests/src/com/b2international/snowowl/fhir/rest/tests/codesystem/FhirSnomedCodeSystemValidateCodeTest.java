@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
-import static com.b2international.snowowl.fhir.rest.tests.FhirRestTest.Endpoints.CODESYSTEM_VALIDATE_CODE;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import org.hl7.fhir.r5.model.Coding;
 import org.junit.Test;
@@ -109,8 +109,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.contentType("application/fhir+json;fhirVersion=4.0.1")
-			.accept("application/fhir+json;fhirVersion=4.0.1")
+			.contentType(APPLICATION_FHIR_JSON_R4_0_1)
+			.accept(APPLICATION_FHIR_JSON_R4_0_1)
 			.body(toJson(parameters.getParameters()))
 			.when().post(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()
@@ -130,8 +130,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.contentType("application/fhir+json;fhirVersion=4.3.0")
-			.accept("application/fhir+json;fhirVersion=4.3.0")
+			.contentType(APPLICATION_FHIR_JSON_R4_3_0)
+			.accept(APPLICATION_FHIR_JSON_R4_3_0)
 			.body(toJson(parameters.getParameters()))
 			.when().post(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()
@@ -151,8 +151,8 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 				.setCode(Concepts.ROOT_CONCEPT));
 
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.contentType("application/fhir+json;fhirVersion=5.0.0")
-			.accept("application/fhir+json;fhirVersion=5.0.0")
+			.contentType(APPLICATION_FHIR_JSON_R5_0_0)
+			.accept(APPLICATION_FHIR_JSON_R5_0_0)
 			.body(toJson(parameters.getParameters()))
 			.when().post(CODESYSTEM_VALIDATE_CODE)
 			.then().assertThat()

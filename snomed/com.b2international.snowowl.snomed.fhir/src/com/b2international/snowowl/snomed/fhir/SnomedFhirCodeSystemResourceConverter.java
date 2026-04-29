@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.CodeSystem.PropertyType;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemResourceConverter;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
@@ -38,8 +39,12 @@ public class SnomedFhirCodeSystemResourceConverter implements FhirCodeSystemReso
 
 	@Override
 	public String computeValueSet(CodeSystem codeSystem) {
-		// make sure the ValueSet always points to fhir_vs using the complete URI of the CodeSystem system + version
-		return String.join("?", codeSystem.getUrl(), SnomedUri.QueryPart.PREFIX_VS);
+		if (FhirModelHelpers.isBaseSnomedUri(codeSystem.getUrl())) {
+			return String.join("?", codeSystem.getVersion(), SnomedUri.QueryPart.PREFIX_VS);
+		} else {
+			// TODO: a canonical URI in the form of "http://example.com/codesystem1?fhir_vs|version1" would be accepted here but parsing becomes more complex
+			return String.join("?", codeSystem.getUrl(), SnomedUri.QueryPart.PREFIX_VS);
+		}
 	}
 	
 	@Override

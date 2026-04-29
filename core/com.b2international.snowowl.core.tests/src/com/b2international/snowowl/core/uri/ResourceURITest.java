@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,9 @@ public class ResourceURITest {
 		assertEquals("SNOMEDCT-EXT", uri.getResourceId());
 		assertEquals("a/b", uri.getPath());
 		assertEquals("@1234567890", uri.getTimestampPart());
+		assertEquals("SNOMEDCT-EXT/a/b@1234567890", uri.withoutResourceType());
+		// withoutPath by contract removes the timestamp part as well, since that is in this case attached to the path
+		assertEquals("SNOMEDCT-EXT", uri.withoutPath().withoutResourceType());
 	}
 	
 	@Test(expected = BadRequestException.class)

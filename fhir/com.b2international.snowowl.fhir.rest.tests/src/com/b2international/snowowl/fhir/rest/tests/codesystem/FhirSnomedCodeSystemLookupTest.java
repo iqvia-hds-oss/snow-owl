@@ -15,12 +15,12 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
-import static com.b2international.snowowl.fhir.rest.tests.FhirRestTest.Endpoints.CODESYSTEM_LOOKUP;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import java.util.List;
 
@@ -84,7 +84,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
-			.queryParam("_format", RestExtensions.encodeQueryParameter("application/fhir+json;fhirVersion=4.0.1"))
+			.queryParam("_format", RestExtensions.encodeQueryParameter(APPLICATION_FHIR_JSON_R4_0_1))
 			.when().get(CODESYSTEM_LOOKUP)
 			.then().assertThat()
 			.statusCode(200)
@@ -104,7 +104,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
-			.queryParam("_format", RestExtensions.encodeQueryParameter("application/fhir+json;fhirVersion=4.3.0"))
+			.queryParam("_format", RestExtensions.encodeQueryParameter(APPLICATION_FHIR_JSON_R4_3_0))
 			.when().get(CODESYSTEM_LOOKUP)
 			.then().assertThat()
 			.statusCode(200)
@@ -124,7 +124,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.queryParam("version", SNOMEDCT_URL)
 			.queryParam("code", Concepts.ROOT_CONCEPT)
-			.queryParam("_format", RestExtensions.encodeQueryParameter("application/fhir+json;fhirVersion=5.0.0"))
+			.queryParam("_format", RestExtensions.encodeQueryParameter(APPLICATION_FHIR_JSON_R5_0_0))
 			.when().get(CODESYSTEM_LOOKUP)
 			.then().assertThat()
 			.statusCode(200)

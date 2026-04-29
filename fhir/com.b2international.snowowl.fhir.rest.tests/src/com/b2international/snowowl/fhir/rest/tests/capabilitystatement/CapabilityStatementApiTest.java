@@ -18,6 +18,7 @@ package com.b2international.snowowl.fhir.rest.tests.capabilitystatement;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.*;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
 import org.junit.Test;
@@ -35,7 +36,7 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 	public void capabilityStatementTest_4_0() {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when()
-			.accept("application/fhir+json;fhirVersion=4.0")
+			.accept(APPLICATION_FHIR_JSON_R4)
 			.get("metadata")
 			.then()
 			.assertThat()

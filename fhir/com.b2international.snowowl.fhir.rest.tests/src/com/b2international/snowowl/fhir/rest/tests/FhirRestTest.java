@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,28 +38,12 @@ import io.restassured.path.json.JsonPath;
  * 
  * @since 6.9
  */
-public abstract class FhirRestTest extends FhirTest {
-	
-	protected static final String APPLICATION_FHIR_JSON = "application/fhir+json";
-	
-	public static final String FHIR_ROOT_CONTEXT = "/fhir"; //$NON-NLS-N$
+public abstract class FhirRestTest {
 	
 	public static final String SNOMEDCT_URL = SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008";
 	
 	@Rule
 	public TestMethodNameRule methodNameRule = new TestMethodNameRule();
-	
-	public static final class Endpoints {
-		public static final String CODESYSTEM = "/CodeSystem";
-		public static final String CODESYSTEM_ID = "/CodeSystem/{id}";
-		public static final String CODESYSTEM_LOOKUP = "/CodeSystem/$lookup";
-		public static final String CODESYSTEM_SUBSUMES = "/CodeSystem/$subsumes";
-		public static final String CODESYSTEM_VALIDATE_CODE = "/CodeSystem/$validate-code";
-
-		public static final String VALUESET = "/ValueSet";
-		public static final String VALUESET_ID = "/ValueSet/{id}";
-
-	}
 	
 	protected final String getTestCodeSystemId() {
 		return methodNameRule.get().replaceAll("\\$", "");

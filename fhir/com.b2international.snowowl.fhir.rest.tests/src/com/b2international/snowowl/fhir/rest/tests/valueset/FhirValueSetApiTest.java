@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2024-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.valueset;
 
-import static com.b2international.snowowl.fhir.rest.tests.FhirRestTest.Endpoints.VALUESET;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.not;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import org.junit.Test;
 
