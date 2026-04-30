@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Objects;
@@ -31,8 +29,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.hl7.fhir.r5.model.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -65,8 +61,6 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Logger LOG = LoggerFactory.getLogger(FhirLoadPackageRequest.class);
-	
 	private static final String CODE_SYSTEM = "CodeSystem";
 	private static final String VALUE_SET = "ValueSet";
 	private static final String CONCEPT_MAP = "ConceptMap";
@@ -120,7 +114,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 	public FhirLoadPackageResultParameters execute(ServiceProvider context) {
 		final Path packageFile = fetchFhirPackage(context);
 
-		LOG.info("Parsing FHIR package contents '{}'", packageFile.getFileName());
+		context.log().info("Parsing FHIR package contents '{}'", packageFile.getFileName());
 		final FhirPackage fhirPackage = FhirPackage.parse(packageFile, context.service(ObjectMapper.class), RECOGNIZED_PACKAGE_FILE_FILTER);
 
 		if (!fhirPackage.hasRecognizedEntries()) {
@@ -145,7 +139,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		}
 		
 		// package.json is valid and there are entries to import, extract all recognized files
-		LOG.info("Extracting FHIR package '{}'", packageFile.getFileName());
+		context.log().info("Extracting FHIR package '{}'", packageFile.getFileName());
 		Path packageFolder;
 		try {
 			packageFolder = Files.createTempDirectory(packageFile.getFileName().toString());
@@ -276,7 +270,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				try {
 					Files.createDirectories(packagesDirectory);
 				} catch (IOException e) {
-					e.printStackTrace();
+					throw new SnowowlRuntimeException("Unable to create fhir-packages directory", e);
 				}
 				
 				final Path packageFile = packagesDirectory.resolve(packageToLoad.getFileName());
@@ -302,7 +296,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				String packageUrl = String.join("/", registry, packageInfo.replaceFirst("@", "/"));
 					
 				try {
-					LOG.info("Downloading FHIR package '{}' from registry '{}'", packageInfo, registry);
+					context.log().info("Downloading FHIR package '{}' from registry '{}'", packageInfo, registry);
 					// TODO [caching][syndication] allow caching of packages in the Snow Owl data folder to avoid redownloading the same package, also offer them via our own package registry URL for downstream servers?
 					final Path packageFile = packagesDirectory.resolve(packageInfo + ".tgz");
 					// TODO configurable download timeouts
