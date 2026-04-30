@@ -31,6 +31,7 @@ import org.apache.commons.io.file.PathUtils;
 import org.hl7.fhir.r5.model.*;
 
 import com.b2international.commons.exceptions.NotImplementedException;
+import com.b2international.fhir.r5.operations.LoadPackageParameters;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.attachments.Attachment;
@@ -41,7 +42,6 @@ import com.b2international.snowowl.fhir.core.FhirResourceParser;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemWriteSupport;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapWriteSupport;
-import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetWriteSupport;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -88,7 +88,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 	private Attachment packageToLoad;
 	
 	@JsonProperty
-	private FhirLoadPackageParameters parameters;
+	private LoadPackageParameters parameters;
 	
 	private transient int numberOfLoadedCodeSystems = 0;
 	private transient int numberOfLoadedValueSets = 0;
@@ -106,7 +106,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		this.packageToLoad = packageToLoad;
 	}
 	
-	void setParameters(FhirLoadPackageParameters parameters) {
+	void setParameters(LoadPackageParameters parameters) {
 		this.parameters = parameters;
 	}
 	

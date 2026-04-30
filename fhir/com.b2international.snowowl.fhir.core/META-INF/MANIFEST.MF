@@ -12,9 +12,6 @@ Export-Package: com.b2international.snowowl.fhir.core,
  com.b2international.snowowl.fhir.core.request.codesystem,
  com.b2international.snowowl.fhir.core.request.conceptmap,
  com.b2international.snowowl.fhir.core.request.packages,
- com.b2international.snowowl.fhir.core.request.packages.r4,
- com.b2international.snowowl.fhir.core.request.packages.r4b,
- com.b2international.snowowl.fhir.core.request.packages.r5,
  com.b2international.snowowl.fhir.core.request.valueset
 Import-Package: jakarta.validation;version="3.0.2",
  jakarta.validation.constraints;version="3.0.2",
@@ -24,6 +21,6 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  io.swagger.core.v3.swagger-annotations.jakarta;bundle-version="2.2.20",
  org.apache.commons.commons-compress;bundle-version="1.26.0",
  org.apache.commons.commons-io;bundle-version="2.21.0",
- com.b2international.fhir.core;bundle-version="0.5.0"
+ com.b2international.fhir.core;bundle-version="0.6.0"
 Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy

@@ -15,8 +15,8 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.packages;
 
-import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
@@ -28,12 +28,12 @@ import org.elasticsearch.core.List;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.junit.Test;
 
+import com.b2international.fhir.r5.operations.LoadPackageParameters;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemWriteSupport;
-import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 
 /**
@@ -56,7 +56,7 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 	
 	@Test
 	public void downloadFromRegistry() throws Exception {
-		var parameters = new FhirLoadPackageParameters()
+		var parameters = new LoadPackageParameters()
 				.setName("hl7.fhir.r4.core")
 				.setVersion("4.0.1");
 		
@@ -101,7 +101,7 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 	
 	@Test
 	public void filterByUrl() throws Exception {
-		var parameters = new FhirLoadPackageParameters()
+		var parameters = new LoadPackageParameters()
 				.setName("hl7.fhir.r4.core")
 				.setVersion("4.0.1")
 				// import only a single resource from this package

@@ -18,13 +18,13 @@ package com.b2international.snowowl.fhir.core.request.packages;
 import java.time.LocalDate;
 
 import com.b2international.commons.StringUtils;
+import com.b2international.fhir.r5.operations.LoadPackageParameters;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.events.BaseRequestBuilder;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SystemRequestBuilder;
-import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 
 /**
  * Builder for FHIR package loading requests.
@@ -45,7 +45,7 @@ public final class FhirLoadPackageRequestBuilder
 	private LocalDate defaultEffectiveDate;
 	private String bundleId = IComponent.ROOT_ID;
 	
-	private FhirLoadPackageParameters parameters;
+	private LoadPackageParameters parameters;
 	
 	public FhirLoadPackageRequestBuilder setPackageToLoad(Attachment packageToLoad) {
 		this.packageToLoad = packageToLoad;
@@ -81,7 +81,7 @@ public final class FhirLoadPackageRequestBuilder
 		return this;
 	}
 	
-	public FhirLoadPackageRequestBuilder setParameters(FhirLoadPackageParameters parameters) {
+	public FhirLoadPackageRequestBuilder setParameters(LoadPackageParameters parameters) {
 		this.parameters = parameters;
 		return getSelf();
 	}

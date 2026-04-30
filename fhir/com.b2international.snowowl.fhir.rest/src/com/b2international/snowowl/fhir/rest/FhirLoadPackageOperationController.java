@@ -15,24 +15,7 @@
  */
 package com.b2international.snowowl.fhir.rest;
 
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_JSON_4_0_1_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_JSON_4_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_JSON_4_3_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_JSON_4_3_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_JSON_5_0_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_JSON_5_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_JSON_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_XML_4_0_1_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_XML_4_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_XML_4_3_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_XML_4_3_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_XML_5_0_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_XML_5_0_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_FHIR_XML_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_JSON_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.APPLICATION_XML_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.TEXT_JSON_VALUE;
-import static com.b2international.snowowl.fhir.rest.FhirMediaType.TEXT_XML_VALUE;
+import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,21 +28,16 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.b2international.fhir.operations.OperationParametersFactory;
+import com.b2international.fhir.r5.operations.LoadPackageParameters;
 import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
-import com.b2international.snowowl.fhir.core.request.packages.FhirLoadPackageParametersFactory;
-import com.b2international.snowowl.fhir.core.request.packages.r5.FhirLoadPackageParameters;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -220,7 +198,7 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		@RequestParam(value = "_pretty", required = false)
 		final Boolean _pretty
 	) {
-		FhirLoadPackageParameters parameters = toFhirParameters(requestBody, contentType, prefer, FhirLoadPackageParametersFactory.INSTANCE);
+		LoadPackageParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.LoadPackageParametersFactory.INSTANCE);
 		
 		return loadPackage(parameters, null, author, owner, ownerProfileName, defaultEffectiveDate, bundleId, accept, _format, _pretty);
 	}
@@ -325,14 +303,14 @@ public class FhirLoadPackageOperationController extends AbstractFhirController {
 		final UUID fhirPackageAttachmentId = UUID.randomUUID();
 		attachments.upload(fhirPackageAttachmentId, file.getInputStream());
 		
-		FhirLoadPackageParameters params = new FhirLoadPackageParameters();
+		LoadPackageParameters params = new LoadPackageParameters();
 		params.setResolveDependencies(resolveDependencies);
 		params.setResourceUrl(resourceUrls);
 		return loadPackage(params, new Attachment(fhirPackageAttachmentId, file.getOriginalFilename()), author, owner, ownerProfileName, defaultEffectiveDate, bundleId, accept, _format, _pretty);
 	}
 
 	private Promise<ResponseEntity<byte[]>> loadPackage(
-		final FhirLoadPackageParameters parameters,
+		final LoadPackageParameters parameters,
 		final Attachment packageToLoad,
 		final String author,
 		final String owner,
