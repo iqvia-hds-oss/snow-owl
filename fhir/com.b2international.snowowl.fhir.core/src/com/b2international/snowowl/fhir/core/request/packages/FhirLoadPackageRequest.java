@@ -184,11 +184,12 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		
 		try {
 			Iterable<Path> filesToImport = Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER)).sorted(this::byResourceTypeImportOrder)::iterator;
+			var resourceUrlsToImport = parameters.getResourceUrl().stream().map(UriType::getValue).collect(Collectors.toSet());
+			
 			for (var pathToImport : filesToImport) {
 				// TODO parse into raw JSON, read fhirVersion parameter then based on that parse the content into proper model?
 				Resource resource = readResource(resourceParser, pathToImport);
 				
-				var resourceUrlsToImport = parameters.getResourceUrl().stream().map(UriType::getValue).collect(Collectors.toSet());
 				// check if resource is selected to be imported through resourceUrl filter
 				if (resource instanceof CanonicalResource canonicalResource && !resourceUrlsToImport.isEmpty() && !resourceUrlsToImport.contains(canonicalResource.getUrl())) {
 					// skip resource if not
