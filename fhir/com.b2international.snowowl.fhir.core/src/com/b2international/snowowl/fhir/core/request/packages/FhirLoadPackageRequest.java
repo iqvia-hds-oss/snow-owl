@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Objects;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
 import org.hl7.fhir.r5.model.*;
+import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 
 import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.fhir.r5.operations.LoadPackageParameters;
@@ -155,7 +158,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		
 		final FhirResourceParser resourceParser = new FhirResourceParser(FhirResourceParser.FORMAT_JSON, Iterables.getOnlyElement(fhirPackage.getPackageJson().fhirVersions()));
 		try {
-			importFiles(context, packageFolder, resourceParser);
+			importFiles(context, fhirPackage.getPackageJson().version(), packageFolder, resourceParser);
 		} finally {
 			try {
 				PathUtils.deleteDirectory(packageFolder);
@@ -172,7 +175,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		return result;
 	}
 	
-	private void importFiles(ServiceProvider context, Path packageFolder, final FhirResourceParser resourceParser) {
+	private void importFiles(final ServiceProvider context, final String fhirPackageVersion, Path packageFolder, final FhirResourceParser resourceParser) {
 		FhirCodeSystemWriteSupport codeSystemWriteSupport = context.optionalService(FhirCodeSystemWriteSupport.class).orElse(null);
 		FhirValueSetWriteSupport valueSetWriteSupport = context.optionalService(FhirValueSetWriteSupport.class).orElse(null);
 		FhirConceptMapWriteSupport conceptMapWriteSupport = context.optionalService(FhirConceptMapWriteSupport.class).orElse(null);
@@ -196,33 +199,59 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 					continue;
 				}
 				
-				switch (resource.getResourceType()) {
-				case CodeSystem:
-					if (codeSystemWriteSupport != null) {
-						codeSystemWriteSupport.update(context, (CodeSystem) resource, author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-						numberOfLoadedCodeSystems++;
-					} else {
-						// TODO register that resource cannot be imported via this server due to missing entitlement
-					}					
-					break;
-				case ValueSet:
-					if (valueSetWriteSupport != null) {
-						valueSetWriteSupport.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-						numberOfLoadedValueSets++;
-					} else {
-						// TODO register that resource cannot be imported via this server due to missing entitlement
+				// set resource version to package.json version if version not present (TODO control through parameter?)
+				if (resource instanceof CanonicalResource canonicalResource && !canonicalResource.hasVersion()) {
+					canonicalResource.setVersion(fhirPackageVersion);
+				}
+				
+				
+				try {
+					switch (resource.getResourceType()) {
+					case CodeSystem:
+						if (codeSystemWriteSupport != null) {
+							// for CodeSystem's ignore content mode inconsistencies, complete vs no concept defined (TODO report them)
+							var codeSystem = (CodeSystem) resource;
+							
+							if (codeSystem.hasContent() && CodeSystemContentMode.COMPLETE == codeSystem.getContent() && !codeSystem.hasConcept()) {
+								// set the content mode to not_present, as there are no concepts defined
+								codeSystem.setContent(CodeSystemContentMode.NOTPRESENT);
+							}
+							
+							var result = codeSystemWriteSupport.update(context, codeSystem, author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+							if (!result.isSkipped()) {
+								numberOfLoadedCodeSystems++;
+							}
+						} else {
+							// TODO register that resource cannot be imported via this server due to missing entitlement
+						}					
+						break;
+					case ValueSet:
+						if (valueSetWriteSupport != null) {
+							var result = valueSetWriteSupport.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+							if (!result.isSkipped()) {
+								numberOfLoadedValueSets++;
+							}
+						} else {
+							// TODO register that resource cannot be imported via this server due to missing entitlement
+						}
+						break;
+					case ConceptMap:
+						if (conceptMapWriteSupport != null) {
+							var result = conceptMapWriteSupport.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+							if (!result.isSkipped()) { 
+								numberOfLoadedConceptMaps++;
+							}
+						} else {
+							// TODO register that resource cannot be imported via this server due to missing entitlement
+						}
+						break;
+					default:
+						throw new NotImplementedException("Missing implementation for resource type import " + resource.getResourceType());
 					}
-					break;
-				case ConceptMap:
-					if (conceptMapWriteSupport != null) {
-						conceptMapWriteSupport.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-						numberOfLoadedConceptMaps++;
-					} else {
-						// TODO register that resource cannot be imported via this server due to missing entitlement
-					}
-					break;
-				default:
-					throw new NotImplementedException("Missing implementation for resource type import " + resource.getResourceType());
+				} catch (BadRequestException e) {
+					context.log().error("Failed to import file {}", pathToImport, e);
+					throw e;
+					// for any other FHIR related error, inject the file path into the outcome
 				}
 					
 			}
