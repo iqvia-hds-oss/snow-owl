@@ -45,6 +45,7 @@ public final class FhirPackage {
 
 	static final String PACKAGE_FOLDER = "package/";
 	static final String PACKAGE_JSON = "package.json";
+	static final String PACKAGE_JSON_PATH = PACKAGE_FOLDER + PACKAGE_JSON;
 	
 	private final Path packageFile;
 	private final FhirPackageJson packageJson;
@@ -86,6 +87,7 @@ public final class FhirPackage {
 				}
 			}
 		} catch (IOException e) {
+			// XXX FhirException does not allow cause to be specified, so we print out here if we ever fail to extract a package
 			e.printStackTrace();
 			throw new FhirException(String.format("Failed to extract package '%s'", packageFile.getFileName().toString()), OperationOutcome.MSGERRORPARSING);
 		}
@@ -113,9 +115,9 @@ public final class FhirPackage {
 
 				var packageEntryName = packageEntryPath.replace(PACKAGE_FOLDER, "");
 				
-				// always recognized the package.json file
+				// always recognize the package.json file
 				
-				if (PACKAGE_JSON.equals(packageEntryName)) {
+				if (PACKAGE_JSON_PATH.equals(packageEntryPath)) {
 					try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 						tarIn.transferTo(baos);
 						packageJson = mapper.readValue(baos.toString(StandardCharsets.UTF_8), FhirPackageJson.class);
@@ -136,7 +138,7 @@ public final class FhirPackage {
 			return new FhirPackage(packageFile, packageJson, recognizedEntries);
 			
 		} catch (IOException e) {
-			// TODO fix FhirException to be able to reference a cause
+			// XXX FhirException does not allow cause to be specified, so we print out here if we ever fail to parse a package
 			e.printStackTrace();
 			throw new FhirException(String.format("Failed to parse FHIR package contents '%s'", packageFile.getFileName().toString()),
 					OperationOutcome.MSGERRORPARSING);
