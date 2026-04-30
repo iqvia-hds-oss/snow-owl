@@ -23,6 +23,7 @@ public class FhirResourceUpdateResult {
 	public enum Action {
 		CREATED, 
 		UPDATED,
+		SKIPPED
 	}
 	
 	private Action action;
@@ -40,6 +41,17 @@ public class FhirResourceUpdateResult {
 	public String getId() {
 		return id;
 	}
+	
+	public boolean isCreated() {
+		return Action.CREATED == action;
+	}
+	
+	public boolean isUpdated() {
+		return Action.UPDATED == action;
+	}
+	public boolean isSkipped() {
+		return Action.SKIPPED == action;
+	}
 
 	public static FhirResourceUpdateResult created(String resourceId) {
 		return new FhirResourceUpdateResult(Action.CREATED, resourceId);
@@ -47,5 +59,9 @@ public class FhirResourceUpdateResult {
 	
 	public static FhirResourceUpdateResult updated(String resourceId) {
 		return new FhirResourceUpdateResult(Action.UPDATED, resourceId);
+	}
+	
+	public static FhirResourceUpdateResult skipped(String resourceId) {
+		return new FhirResourceUpdateResult(Action.SKIPPED, resourceId);
 	}
 }
