@@ -174,11 +174,11 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 	
 	private void importFiles(ServiceProvider context, Path packageFolder, final FhirResourceParser resourceParser) {
 		FhirCodeSystemWriteSupport codeSystemWriteSupport = context.optionalService(FhirCodeSystemWriteSupport.class).orElse(null);
-		FhirValueSetWriteSupport valueSetOps = context.optionalService(FhirValueSetWriteSupport.class).orElse(null);
-		FhirConceptMapWriteSupport conceptMapOps = context.optionalService(FhirConceptMapWriteSupport.class).orElse(null);
+		FhirValueSetWriteSupport valueSetWriteSupport = context.optionalService(FhirValueSetWriteSupport.class).orElse(null);
+		FhirConceptMapWriteSupport conceptMapWriteSupport = context.optionalService(FhirConceptMapWriteSupport.class).orElse(null);
 		
 		// current server entitlements does not allow importing any FHIR resource
-		if (codeSystemWriteSupport == null && valueSetOps == null && conceptMapOps == null) {
+		if (codeSystemWriteSupport == null && valueSetWriteSupport == null && conceptMapWriteSupport == null) {
 			return;
 		}
 		
@@ -205,16 +205,16 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 					}					
 					break;
 				case ValueSet:
-					if (valueSetOps != null) {
-						valueSetOps.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+					if (valueSetWriteSupport != null) {
+						valueSetWriteSupport.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
 						numberOfLoadedValueSets++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement
 					}
 					break;
 				case ConceptMap:
-					if (conceptMapOps != null) {
-						conceptMapOps.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+					if (conceptMapWriteSupport != null) {
+						conceptMapWriteSupport.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
 						numberOfLoadedConceptMaps++;
 					} else {
 						// TODO register that resource cannot be imported via this server due to missing entitlement
