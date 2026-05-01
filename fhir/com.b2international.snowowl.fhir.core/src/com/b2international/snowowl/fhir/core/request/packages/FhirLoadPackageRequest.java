@@ -41,6 +41,7 @@ import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.setup.Environment;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.FhirResourceParser;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemWriteSupport;
@@ -73,6 +74,12 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				|| packageEntryName.startsWith(CODE_SYSTEM)
 				|| packageEntryName.startsWith(VALUE_SET)
 				|| packageEntryName.startsWith(CONCEPT_MAP);
+			
+	private static final Predicate<String> CODESYSTEMS_TO_IGNORE_IN_LCS_TOOLING = 
+			url -> false
+				|| FhirModelHelpers.SNOMED_BASE_URI_STRING.equals(url)
+				|| "http://loinc.org".equals(url)
+				|| url.startsWith("http://hl7.org/fhir/sid/icd-10"); // ICD-10 and all its flavors should be ignored
 
 	
 	@JsonProperty
@@ -196,6 +203,11 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				// check if resource is selected to be imported through resourceUrl filter
 				if (resource instanceof CanonicalResource canonicalResource && !resourceUrlsToImport.isEmpty() && !resourceUrlsToImport.contains(canonicalResource.getUrl())) {
 					// skip resource if not
+					continue;
+				}
+				
+				// if resource should be imported into another tooling we automatically skip it (e.g. SNOMEDCT, LOINC. ICD-10, etc.)
+				if (resource instanceof CanonicalResource canonicalResource && CODESYSTEMS_TO_IGNORE_IN_LCS_TOOLING.test(canonicalResource.getUrl())) {
 					continue;
 				}
 				
