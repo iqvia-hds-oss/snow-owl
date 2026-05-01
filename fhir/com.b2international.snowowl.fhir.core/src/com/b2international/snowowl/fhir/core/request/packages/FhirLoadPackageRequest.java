@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.file.PathUtils;
+import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.model.*;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 
@@ -81,7 +82,6 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 				|| "http://loinc.org".equals(url)
 				|| url.startsWith("http://hl7.org/fhir/sid/icd-10"); // ICD-10 and all its flavors should be ignored
 
-	
 	@JsonProperty
 	private final String author;
 	@JsonProperty
@@ -165,7 +165,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		
 		final FhirResourceParser resourceParser = new FhirResourceParser(FhirResourceParser.FORMAT_JSON, Iterables.getOnlyElement(fhirPackage.getPackageJson().fhirVersions()));
 		try {
-			importFiles(context, fhirPackage.getPackageJson().version(), packageFolder, resourceParser);
+			importFiles(context, fhirPackage, packageFolder, resourceParser);
 		} finally {
 			try {
 				PathUtils.deleteDirectory(packageFolder);
@@ -182,7 +182,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		return result;
 	}
 	
-	private void importFiles(final ServiceProvider context, final String fhirPackageVersion, Path packageFolder, final FhirResourceParser resourceParser) {
+	private void importFiles(final ServiceProvider context, final FhirPackage fhirPackage, final Path packageFolder, final FhirResourceParser resourceParser) {
 		FhirCodeSystemWriteSupport codeSystemWriteSupport = context.optionalService(FhirCodeSystemWriteSupport.class).orElse(null);
 		FhirValueSetWriteSupport valueSetWriteSupport = context.optionalService(FhirValueSetWriteSupport.class).orElse(null);
 		FhirConceptMapWriteSupport conceptMapWriteSupport = context.optionalService(FhirConceptMapWriteSupport.class).orElse(null);
@@ -192,89 +192,120 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 			return;
 		}
 		
+		// extract user specified URLs to import
+		var resourceUrlsToImport = parameters.getResourceUrl().stream().map(UriType::getValue).collect(Collectors.toSet());
+		
+		// list files with type ordering
+		Iterable<Path> filesToImport;
 		try {
-			Iterable<Path> filesToImport = Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER)).sorted(this::byResourceTypeImportOrder)::iterator;
-			var resourceUrlsToImport = parameters.getResourceUrl().stream().map(UriType::getValue).collect(Collectors.toSet());
-			
-			for (var pathToImport : filesToImport) {
-				// TODO parse into raw JSON, read fhirVersion parameter then based on that parse the content into proper model?
-				Resource resource = readResource(resourceParser, pathToImport);
-				
-				// check if resource is selected to be imported through resourceUrl filter
-				if (resource instanceof CanonicalResource canonicalResource && !resourceUrlsToImport.isEmpty() && !resourceUrlsToImport.contains(canonicalResource.getUrl())) {
-					// skip resource if not
-					continue;
-				}
-				
-				// if resource should be imported into another tooling we automatically skip it (e.g. SNOMEDCT, LOINC. ICD-10, etc.)
-				if (resource instanceof CanonicalResource canonicalResource && CODESYSTEMS_TO_IGNORE_IN_LCS_TOOLING.test(canonicalResource.getUrl())) {
-					continue;
-				}
-				
-				// set resource version to package.json version if version not present (TODO control through parameter?)
-				if (resource instanceof CanonicalResource canonicalResource && !canonicalResource.hasVersion()) {
-					canonicalResource.setVersion(fhirPackageVersion);
-				}
-				
-				
-				try {
-					switch (resource.getResourceType()) {
-					case CodeSystem:
-						if (codeSystemWriteSupport != null) {
-							// for CodeSystem's ignore content mode inconsistencies, complete vs no concept defined (TODO report them)
-							var codeSystem = (CodeSystem) resource;
-							
-							if (codeSystem.hasContent() && CodeSystemContentMode.COMPLETE == codeSystem.getContent() && !codeSystem.hasConcept()) {
-								// set the content mode to not_present, as there are no concepts defined
-								codeSystem.setContent(CodeSystemContentMode.NOTPRESENT);
-							}
-							
-							var result = codeSystemWriteSupport.update(context, codeSystem, author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-							if (!result.isSkipped()) {
-								numberOfLoadedCodeSystems++;
-							}
-						} else {
-							// TODO register that resource cannot be imported via this server due to missing entitlement
-						}					
-						break;
-					case ValueSet:
-						if (valueSetWriteSupport != null) {
-							var result = valueSetWriteSupport.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-							if (!result.isSkipped()) {
-								numberOfLoadedValueSets++;
-							}
-						} else {
-							// TODO register that resource cannot be imported via this server due to missing entitlement
-						}
-						break;
-					case ConceptMap:
-						if (conceptMapWriteSupport != null) {
-							var result = conceptMapWriteSupport.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
-							if (!result.isSkipped()) { 
-								numberOfLoadedConceptMaps++;
-							}
-						} else {
-							// TODO register that resource cannot be imported via this server due to missing entitlement
-						}
-						break;
-					default:
-						throw new NotImplementedException("Missing implementation for resource type import " + resource.getResourceType());
-					}
-				} catch (BadRequestException e) {
-					context.log().error("Failed to import file {}", pathToImport, e);
-					throw e;
-					// for any other FHIR related error, inject the file path into the outcome
-				}
-					
-			}
+			filesToImport = Files.list(packageFolder.resolve(FhirPackage.PACKAGE_FOLDER)).sorted(this::byResourceTypeImportOrder)::iterator;
 		} catch (IOException e) {
 			throw new SnowowlRuntimeException("Failed to list FHIR package directory", e);
+		}
+		
+		// process files one-by-one
+		// TODO support parallel execution? requires splitting metadata and content import into two processor threads
+		for (var pathToImport : filesToImport) {
+			var fileName = pathToImport.getFileName().toString();
+			// TODO parse into raw JSON, read fhirVersion parameter then based on that parse the content into proper model?
+			Resource resource = readResource(resourceParser, pathToImport);
+
+			if (!(resource instanceof CanonicalResource canonicalResource)) {
+				// skip if resource is not a canonical resource type, URL is required to import the resource
+				continue;
+			}
+			
+			// check if resource can be imported at all (either we disallow importing it for any reason, or the user did not select it via resourceUrl)
+			var url = canonicalResource.getUrl();
+			
+			// skip if the resource is a known codesystem for another tooling than lcs
+			if (CODESYSTEMS_TO_IGNORE_IN_LCS_TOOLING.test(url)) {
+				context.log().warn("Skipping official standard codesystem with dedicated support in other tooling '{}'.", url);
+				continue;
+			}
+			
+			// skip importing if not selected via resourceUrl
+			if (!resourceUrlsToImport.isEmpty() && !resourceUrlsToImport.contains(url)) {
+				continue;
+			}
+			
+			// set resource version to package.json version if version not present (TODO control through parameter?)
+			if (!canonicalResource.hasVersion()) {
+				canonicalResource.setVersion(fhirPackage.getPackageJson().version());
+			}
+			
+			try {
+				context.log().trace("Importing resource '{}' from FHIR package '{}'", url, fhirPackage);
+				switch (resource.getResourceType()) {
+				case CodeSystem:
+					if (codeSystemWriteSupport != null) {
+						// for CodeSystem's ignore content mode inconsistencies, complete vs no concept defined (TODO report them)
+						var codeSystem = (CodeSystem) resource;
+						
+						if (codeSystem.hasContent() && CodeSystemContentMode.COMPLETE == codeSystem.getContent() && !codeSystem.hasConcept()) {
+							// set the content mode to not_present, as there are no concepts defined
+							codeSystem.setContent(CodeSystemContentMode.NOTPRESENT);
+						}
+						
+						var result = codeSystemWriteSupport.update(context, codeSystem, author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+						if (!result.isSkipped()) {
+							numberOfLoadedCodeSystems++;
+						}
+					} else {
+						// TODO register that resource cannot be imported via this server due to missing entitlement
+					}					
+					break;
+				case ValueSet:
+					if (valueSetWriteSupport != null) {
+						var result = valueSetWriteSupport.update(context, (ValueSet) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+						if (!result.isSkipped()) {
+							numberOfLoadedValueSets++;
+						}
+					} else {
+						// TODO register that resource cannot be imported via this server due to missing entitlement
+					}
+					break;
+				case ConceptMap:
+					if (conceptMapWriteSupport != null) {
+						var result = conceptMapWriteSupport.update(context, (ConceptMap) resource, Map.of(), author, owner, ownerProfileName, defaultEffectiveDate, bundleId);
+						if (!result.isSkipped()) { 
+							numberOfLoadedConceptMaps++;
+						}
+					} else {
+						// TODO register that resource cannot be imported via this server due to missing entitlement
+					}
+					break;
+				default:
+					throw new NotImplementedException("Missing implementation for resource type import " + resource.getResourceType());
+				}
+				context.log().trace("Imported resource '{}' from FHIR package '{}'", url, fhirPackage);
+			} catch (FHIRException e) {
+				// internal FHIR model exceptios, just report them to the console (TODO as operation result outcome parameter list)
+				context.log().error("Failed to import resource '{}' from file '{}' due to erro: {}", url, fileName, e.getMessage());
+			} catch (BadRequestException e) {
+				if (e.getMessage().startsWith("Couldn't resolve URI") 
+						|| e.getMessage().startsWith("Couldn't resolve OID")
+						|| e.getMessage().startsWith("Source code system with URL")
+						|| e.getMessage().startsWith("Target code system with URL")
+						|| e.getMessage().equals("Couldn't convert all clauses of the value set.")) {
+					// report missing codesystem/valueset ref or clause conversion errors and skip this resource
+					context.log().error("Couldn't import resource '{}' due to error: {}", url, e.getMessage());
+				} else if (e.getMessage().equals("Value set should reference exactly one code system in include and exclude elements.")) {
+					// ignore multi-domain value sets for now
+					context.log().warn("Unable to import multi-domain Value Set '{}' from file ''", url, fileName);
+				} else {
+					// anything else, log the error in the log and propagate
+					context.log().error("Failed to import resource '{}' from file '{}'", url, fileName, e);
+					throw e;
+				}
+			}
+				
 		}
 	}
 	
 	private int byResourceTypeImportOrder(Path a, Path b) {
 		int rankA = getResourceImportOrder(a);
-		int rankB = getResourceImportOrder(a);
+		int rankB = getResourceImportOrder(b);
 		return Ints.compare(rankA, rankB);
 	}
 	

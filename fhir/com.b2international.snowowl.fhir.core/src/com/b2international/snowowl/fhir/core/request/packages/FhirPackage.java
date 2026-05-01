@@ -145,4 +145,9 @@ public final class FhirPackage {
 		}
 	}
 	
+	@Override
+	public String toString() {
+		return packageFile.getFileName().toString();
+	}
+	
 }
