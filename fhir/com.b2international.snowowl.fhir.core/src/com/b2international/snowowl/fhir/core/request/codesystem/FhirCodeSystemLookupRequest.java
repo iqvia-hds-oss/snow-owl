@@ -31,8 +31,10 @@ import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.core.request.ExpandParser;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 /**
@@ -65,15 +67,17 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 		validateRequestedProperties(codeSystem);
 		
 		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
+		
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
 
-		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID));
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
 		final FhirCodeSystemLookupConverter converter = codeSystemToolingRepository
 				.optionalService(FhirCodeSystemLookupConverter.class)
 				.orElse(FhirCodeSystemLookupConverter.DEFAULT);
 		
 		final String conceptExpand = converter.configureConceptExpand(parameters);
 		
-		final ResourceURI codeSystemUri = FhirModelHelpers.resourceUriFrom(codeSystem);
+		final ResourceURI codeSystemUri = resource.getResourceURI();
 		
 		// XXX for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
 		Options conceptSearchOptions = Options.builder()
@@ -98,7 +102,33 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 		return result;
 	}
 	
+	@Override
+	protected Set<String> configureFieldsToLoad() {
+		if (!parameters.getPropertyValues().isEmpty()) {
+			// if an non-official property is requested, then we need to load the property part 
+			final Set<String> requestedProperties = Set.copyOf(parameters.getPropertyValues());
+			// first check if any of the properties are lookup request properties
+			final Set<String> nonLookupRequestProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);
+			
+			if (!nonLookupRequestProperties.isEmpty()) {
+				return ImmutableSet.<String>builder()
+						// ensure we always extend the superclass default set of required fields
+						.addAll(super.configureFieldsToLoad())
+						// expand the properties of the CodeSystem, so that we can properly expand it on the concept
+						.add(R5ObjectFields.CodeSystem.PROPERTY)
+						.build();
+			}
+		}
+		// super defines the ultra minimal set
+		return super.configureFieldsToLoad();
+	}
+	
 	private void validateRequestedProperties(CodeSystem codeSystem) {
+		// no property requested, nothing to validate
+		if (parameters.getPropertyValues().isEmpty()) {
+			return;
+		}
+		
 		final Set<String> requestedProperties = Set.copyOf(parameters.getPropertyValues());
 		// first check if any of the properties are lookup request properties
 		final Set<String> nonLookupProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);
