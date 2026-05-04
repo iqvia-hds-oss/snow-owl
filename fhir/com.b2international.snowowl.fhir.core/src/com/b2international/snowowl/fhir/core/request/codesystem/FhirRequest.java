@@ -18,6 +18,7 @@ package com.b2international.snowowl.fhir.core.request.codesystem;
 import java.util.IllformedLocaleException;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -33,7 +34,7 @@ import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.Summary;
+import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.google.common.base.Splitter;
@@ -68,7 +69,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 		final FhirCodeSystemSearchRequestBuilder requestBuilder = FhirRequests.codeSystems()
 			.prepareSearch()
 			.one()
-			.setSummary(configureSummary());
+			.setElements(configureFieldsToLoad());
 		
 		searchConfigurer.accept(requestBuilder);
 		
@@ -131,8 +132,16 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 		return doExecute(context, codeSystem);
 	}
 
-	protected String configureSummary() {
-		return Summary.TRUE;
+	/**
+	 * Subclasses may override which fields are needed to load when loading a CodeSystem resource in FHIR format. Since 10.1.0, instead of relying on
+	 * Summary and how FHIR specifies it, we configure the necessary fields via custom field selection (via _elements), which is more reliable and
+	 * agnostic than the summary definition, also this can provide a minimal set of fields that do not fetch unnecessary data, such as count for
+	 * example.
+	 * 
+	 * @return a set of fields to load
+	 */
+	protected Set<String> configureFieldsToLoad() {
+		return R5ObjectFields.CodeSystem.MINIMAL;
 	}
 
 	/**

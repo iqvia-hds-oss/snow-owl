@@ -94,6 +94,14 @@ public final class R5ObjectFields {
 		public static final String PROPERTY = "property";
 		public static final String CONCEPT = "concept";
 		
+		/**
+		 * Minimal set of fields to load when the actual FHIR resource data is not required, but we need critical internal resource model information,
+		 * such as toolingId and such to fulfill a request (e.g. an operation).
+		 * 
+		 * NOTE: not exposed as an accepted FHIR parameter.
+		 */
+		public static final Set<String> MINIMAL = MetadataResource.MANDATORY;
+		
 		public static final Set<String> MANDATORY = ImmutableSet.<String>builder()
 				.addAll(MetadataResource.MANDATORY)
 				.add(CONTENT)

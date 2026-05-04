@@ -30,6 +30,7 @@ import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirResourceSearchRequest.OptionKey;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 /**
@@ -108,13 +109,11 @@ public abstract class FhirResourceSearchRequestBuilder<B extends FhirResourceSea
 	}
 	
 	public final B setElements(Iterable<String> elements) {
-		if (elements == null) {
+		if (elements == null || Iterables.isEmpty(elements)) {
 			return getSelf();
 		} else {
-			final Set<String> fields = new LinkedHashSet<>(fields()); // always get the already configured field values 
-			// when called with a non-null value, make sure mandatory fields are implicitly included
-			fields.addAll(getMandatoryFields());
-			// add all other fields
+			// register the newly added fields only, throw away the previous set
+			final Set<String> fields = new LinkedHashSet<>();
 			elements.forEach(fields::add);
 			
 			Set<String> unrecognizedElements = Sets.difference(fields, getKnownResourceFields());
@@ -127,7 +126,7 @@ public abstract class FhirResourceSearchRequestBuilder<B extends FhirResourceSea
 				));
 			}
 			
-			return setFields(ImmutableList.copyOf(fields));
+			return setFields(ImmutableList.copyOf(elements));
 		}
 	}
 
