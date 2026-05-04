@@ -16,8 +16,12 @@
 package com.b2international.snowowl.core;
 
 import java.util.Map;
+import java.util.SortedSet;
 
 import com.b2international.index.revision.RevisionBranchPoint;
+import com.b2international.snowowl.core.branch.BranchPathUtils;
+import com.b2international.snowowl.core.internal.DependencyDocument;
+import com.google.common.base.Strings;
 
 /**
  * Common representation for both resource and version documents to simplify search and mapping logic.
@@ -46,6 +50,7 @@ public final class ResourceFragment {
 	private String purpose;
 	private String oid;
 	private Map<String, Object> settings;
+	private SortedSet<DependencyDocument> dependencies;
 	
 	private RevisionBranchPoint created;
 	
@@ -133,6 +138,10 @@ public final class ResourceFragment {
 		return created;
 	}
 	
+	public SortedSet<DependencyDocument> getDependencies() {
+		return dependencies;
+	}
+	
 	public void setId(final String id) {
 		this.id = id;
 	}
@@ -208,4 +217,27 @@ public final class ResourceFragment {
 	public void setCreated(final RevisionBranchPoint created) {
 		this.created = created;
 	}
+	
+	public void setDependencies(SortedSet<DependencyDocument> dependencies) {
+		this.dependencies = dependencies;
+	}
+	
+	public void setEffectiveTime(Long effectiveTime) {
+		this.effectiveTime = effectiveTime;
+	}
+
+	// Helpers
+	
+	public String extractResourceId() {
+		return getResourceURI().getResourceId();
+	}
+	
+	public String extractResourceBranchPath() {
+		if (Strings.isNullOrEmpty(getVersion())) {
+			return branchPath;
+		} else {
+			return BranchPathUtils.createPath(branchPath).getParentPath();
+		}
+	}
+	
 }

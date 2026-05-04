@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,12 @@ public interface ResourceTypeConverter {
 					doc.getResourceType());
 			return resourceTypeConverters.get(doc.getResourceType()).toResource(doc);
 		}
+		
+		public Resource toResource(ResourceFragment entry) {
+			checkArgument(resourceTypeConverters.containsKey(entry.getResourceType()), "ResourceTypeConverter implementation is missing for type: %s",
+					entry.getResourceType());
+			return resourceTypeConverters.get(entry.getResourceType()).toResource(entry);
+		}
 
 		public Map<String, ResourceTypeConverter> getResourceTypeConverters() {
 			return ImmutableMap.copyOf(resourceTypeConverters);
@@ -72,6 +78,16 @@ public interface ResourceTypeConverter {
 	Integer getRank();
 
 	Resource toResource(ResourceDocument doc);
+	
+	/**
+	 * Optional method to help certain business logic turn a {@link ResourceFragment} instance into a dedicated internal metadata model {@link Resource} subclass.
+	 * 
+	 * @param entry
+	 * @return
+	 */
+	default Resource toResource(ResourceFragment entry) {
+		throw new UnsupportedOperationException("Not implemented for: " + getClass().getName());
+	}
 
 	default <T extends Resource> void expand(RepositoryContext context, Options expand, List<ExtendedLocale> locales, Collection<T> results) {
 	}
