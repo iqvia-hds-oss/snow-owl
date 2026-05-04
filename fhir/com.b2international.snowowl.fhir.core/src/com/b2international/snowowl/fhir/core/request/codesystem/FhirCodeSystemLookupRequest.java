@@ -79,15 +79,19 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 		
 		final ResourceURI codeSystemUri = resource.getResourceURI();
 		
-		// XXX for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
 		Options conceptSearchOptions = Options.builder()
 				.put(ConceptSearchRequestEvaluator.OptionKey.ID, parameters.extractCode())
 				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, 1)
 				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
 				.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, ExpandParser.parse(conceptExpand))
 				.build();
+		
+		// seed already fetched resource information to prevent refetching the metadata
+		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		
 		Concept concept = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(codeSystemUri, context, conceptSearchOptions)
+				.evaluate(codeSystemUri, searchContext, conceptSearchOptions)
 				.first()
 				.orElseThrow(() -> new NotFoundException("Concept", parameters.getCode().getCode()));
 		

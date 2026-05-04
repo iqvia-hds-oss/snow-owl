@@ -72,15 +72,19 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
 		}
 		
-		// XXX for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
 		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
 		Options conceptSearchOptions = Options.builder()
 				.put(ConceptSearchRequestEvaluator.OptionKey.ID, codingsById.keySet())
 				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, codingsById.keySet().size())
 				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
 				.build();
+		
+		// seed already fetched resource information to prevent refetching the metadata
+		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		
 		final Map<String, Concept> conceptsById = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(codeSystemUri, context, conceptSearchOptions)
+				.evaluate(codeSystemUri, searchContext, conceptSearchOptions)
 				.stream()
 				.collect(Collectors.toMap(
 					c -> c.getId(), 
