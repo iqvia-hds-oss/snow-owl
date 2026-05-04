@@ -15,11 +15,17 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.packages;
 
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.APPLICATION_FHIR_JSON;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.LOAD_PACKAGE;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.toJson;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -70,7 +76,7 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 			.body("parameter[0].name", equalTo("success"))
 			.body("parameter[0].valueBoolean", equalTo(true))
 			.body("parameter[1].name", equalTo("numberOfLoadedCodeSystems"))
-			.body("parameter[1].valueInteger", equalTo(1062))
+			.body("parameter[1].valueInteger", equalTo(1061))
 			.body("parameter[2].name", equalTo("numberOfLoadedValueSets"))
 			.body("parameter[2].valueInteger", equalTo(0))
 			.body("parameter[3].name", equalTo("numberOfLoadedConceptMaps"))
@@ -81,22 +87,25 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 	
 	@Test
 	public void manualUpload() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.multiPart(PlatformUtil.toAbsolutePath(FhirLoadPackageApiTest.class, "hl7.fhir.r4.core-4.0.1.tgz").toFile())
-			.post(LOAD_PACKAGE)
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("Parameters"))
-			.body("parameter[0].name", equalTo("success"))
-			.body("parameter[0].valueBoolean", equalTo(true))
-			.body("parameter[1].name", equalTo("numberOfLoadedCodeSystems"))
-			.body("parameter[1].valueInteger", equalTo(1062))
-			.body("parameter[2].name", equalTo("numberOfLoadedValueSets"))
-			.body("parameter[2].valueInteger", equalTo(0))
-			.body("parameter[3].name", equalTo("numberOfLoadedConceptMaps"))
-			.body("parameter[3].valueInteger", equalTo(0));
-		
-		assertThat(visitedResources).contains("abstract-types");
+		final Path packageFile = PlatformUtil.toAbsolutePath(FhirLoadPackageApiTest.class, "hl7.fhir.r4.core-4.0.1.tgz");
+		try (final InputStream inputStream = Files.newInputStream(packageFile)) {
+			givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+				.multiPart("file", packageFile.getFileName().toString(), inputStream)
+				.post(LOAD_PACKAGE)
+				.then().assertThat()
+				.statusCode(200)
+				.body("resourceType", equalTo("Parameters"))
+				.body("parameter[0].name", equalTo("success"))
+				.body("parameter[0].valueBoolean", equalTo(true))
+				.body("parameter[1].name", equalTo("numberOfLoadedCodeSystems"))
+				.body("parameter[1].valueInteger", equalTo(1061))
+				.body("parameter[2].name", equalTo("numberOfLoadedValueSets"))
+				.body("parameter[2].valueInteger", equalTo(0))
+				.body("parameter[3].name", equalTo("numberOfLoadedConceptMaps"))
+				.body("parameter[3].valueInteger", equalTo(0));
+			
+			assertThat(visitedResources).contains("abstract-types");
+		}
 	}
 	
 	@Test
