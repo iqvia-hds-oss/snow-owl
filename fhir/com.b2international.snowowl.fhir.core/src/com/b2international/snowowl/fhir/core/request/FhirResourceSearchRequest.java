@@ -257,6 +257,10 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				internalFields.add(ResourceDocument.Fields.TOOLING_ID);
 			}
 			
+			if (!internalFields.contains(ResourceDocument.Fields.BRANCH_PATH)) {
+				internalFields.add(ResourceDocument.Fields.BRANCH_PATH);
+			}
+			
 			if (!internalFields.contains(ResourceDocument.Fields.CREATED_AT)) {
 				internalFields.add(ResourceDocument.Fields.CREATED_AT);
 			}
@@ -265,6 +269,11 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				internalFields.add(ResourceDocument.Fields.UPDATED_AT);
 			}
 			
+			if (!internalFields.contains(ResourceDocument.Fields.DEPENDENCIES)) {
+				internalFields.add(ResourceDocument.Fields.DEPENDENCIES);
+			}
+			
+			// version doc only fields go here, anything that is shared go above using resource field constants
 			if (!internalFields.contains(VersionDocument.Fields.VERSION)) {
 				internalFields.add(VersionDocument.Fields.VERSION);
 			}
