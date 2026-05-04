@@ -25,10 +25,12 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeSystem.PropertyType;
 
 import com.b2international.commons.http.ExtendedLocale;
+import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
+import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 
 /**
  * @since 8.0
@@ -41,16 +43,19 @@ public interface FhirCodeSystemResourceConverter {
 	/**
 	 * Implementers may count the number of concepts in the given resource. This method by default uses the generic concept search API to provide the count value.
 	 *  
-	 * @param resourceUri
+	 * @param codeSystemUri
 	 * @return
 	 */
-	default int count(ServiceProvider context, ResourceURI resourceUri) {
-		return CodeSystemRequests.prepareSearchConcepts()
-				.setLimit(0)
-				.filterByCodeSystemUri(resourceUri)
-				.buildAsync()
-				.execute(context)
-				.getTotal();
+	default int count(ServiceProvider context, String toolingId, ResourceURI codeSystemUri) {
+		// XXX for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		Options conceptSearchOptions = Options.builder()
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, 0)
+				.build();
+		return context.service(RepositoryManager.class)
+			.get(toolingId)
+			.service(ConceptSearchRequestEvaluator.class)
+			.evaluate(codeSystemUri, context, conceptSearchOptions)
+			.getTotal();
 	}
 	
 	/**

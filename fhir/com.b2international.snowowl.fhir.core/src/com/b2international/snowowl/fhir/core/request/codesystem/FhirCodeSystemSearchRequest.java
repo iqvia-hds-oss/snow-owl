@@ -112,7 +112,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 			 * this information to determine content mode in the first place. Servers are allowed
 			 * to return more information than requested according to the specification.
 			 */
-			final int count = converter.count(context, resourceURI);
+			final int count = converter.count(context, resource.getToolingId(), resourceURI);
 			entry.setCount(count);
 
 			/*
@@ -128,7 +128,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 			}
 			
 		} else {
-			includeIfFieldSelected(R5ObjectFields.CodeSystem.COUNT, () -> converter.count(context, resourceURI), entry::setCount);
+			includeIfFieldSelected(R5ObjectFields.CodeSystem.COUNT, () -> converter.count(context, resource.getToolingId(), resourceURI), entry::setCount);
 		}
 		
 		includeIfFieldSelected(R5ObjectFields.CodeSystem.CONCEPT, () -> converter.expandConcepts(context, resourceURI, locales()), entry::setConcept);
