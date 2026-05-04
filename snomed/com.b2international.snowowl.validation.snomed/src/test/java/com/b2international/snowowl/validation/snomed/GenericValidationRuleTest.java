@@ -362,34 +362,32 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 	public void rule80() throws Exception {
 		final String ruleId = "80";
 		indexRule(ruleId);
+		long extensionParentId = 999003121000000100l;
+		long coreParentId = 138875005;
 		
 		SnomedConceptDocument invalidConcept = concept(generateConceptId())
 				.active(true)
+				.parents(extensionParentId)
+				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedConceptDocument validConcept1 = concept(generateConceptId())
 				.active(true)
+				.parents(coreParentId)
+				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
 		SnomedConceptDocument validConcept2 = concept(generateConceptId())
 				.active(true)
+				.parents(extensionParentId, coreParentId)
+				.moduleId(Concepts.MODULE_SCT_CORE)
 				.build();
 		
-		SnomedRelationshipIndexEntry relationshipOnValidConcept = relationship(validConcept1.getId(), Concepts.IS_A, invalidConcept.getId()).build();
-		
-		SnomedRefSetMemberIndexEntry owlAxiomMemberOnValidConcpet = member(validConcept2.getId(), Concepts.REFSET_OWL_AXIOM)
-				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.IS_A, validConcept1.getId(), 0)))
-				.referenceSetType(SnomedRefSetType.OWL_AXIOM)
-				.build();
-		
-		indexRevision(MAIN, invalidConcept, validConcept1, validConcept2, relationshipOnValidConcept, owlAxiomMemberOnValidConcpet);
+		indexRevision(MAIN, invalidConcept, validConcept1, validConcept2);
 		
 		ValidationIssues issues = validate(ruleId);
 		
-		assertThat(issues.stream().map(ValidationIssue::getAffectedComponent).collect(Collectors.toSet()))
-			.contains(ComponentIdentifier.of(SnomedConcept.TYPE, invalidConcept.getId()))
-			.doesNotContainAnyElementsOf(List.of(ComponentIdentifier.of(SnomedConcept.TYPE, validConcept1.getId()),
-					ComponentIdentifier.of(SnomedConcept.TYPE, validConcept2.getId())));
+		assertAffectedComponents(issues, ComponentIdentifier.of(SnomedConcept.TYPE, invalidConcept.getId()));
 	}
 	
 	@Test
