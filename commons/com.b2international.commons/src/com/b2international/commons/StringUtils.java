@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.stream.Collectors;
 
 import com.google.common.base.CharMatcher;
+import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Iterables;
 
@@ -37,6 +38,11 @@ public class StringUtils {
 	public static final String EMPTY_STRING = "";
 	
 	private static final String ELLIPSIS = "...";
+
+	/**
+	 * Common shared comma character ',' based joiner that skips null values.
+	 */
+	public static final Joiner COMMA_JOINER = Joiner.on(',').skipNulls();
 
 	/**
 	 * Truncates the input description to maximum 100 character length.
