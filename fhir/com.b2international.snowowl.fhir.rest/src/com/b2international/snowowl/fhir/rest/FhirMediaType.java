@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2024-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,7 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
 
-import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
-import org.hl7.fhir.convertors.factory.VersionConvertorFactory_43_50;
 import org.hl7.fhir.exceptions.FHIRFormatError;
-import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Resource;
@@ -32,12 +29,9 @@ import org.springframework.http.MediaType;
 import org.springframework.web.server.NotAcceptableStatusException;
 
 import com.b2international.commons.StringUtils;
-import com.b2international.commons.exceptions.NotImplementedException;
-import com.b2international.fhir.conv.OperationConvertor_40_50;
-import com.b2international.fhir.conv.OperationConvertor_43_50;
-import com.b2international.fhir.formats.XmlParser;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.BaseParameters;
+import com.b2international.snowowl.fhir.core.FhirResourceParser;
 import com.google.common.collect.Maps;
 
 /**
@@ -68,8 +62,8 @@ public final class FhirMediaType {
 	public static final String APPLICATION_FHIR_XML_5_0_VALUE = "application/fhir+xml;fhirVersion=5.0";
 
 	// Short values are only admitted as _format parameters
-	public static final String FORMAT_JSON = "json";
-	public static final String FORMAT_XML = "xml";
+	public static final String FORMAT_JSON = FhirResourceParser.FORMAT_JSON;
+	public static final String FORMAT_XML = FhirResourceParser.FORMAT_XML;
 
 	// More general media types are allowed both as a _format parameter as well as an "accept" header
 	public static final String TEXT_JSON_VALUE = "text/json";
@@ -174,37 +168,15 @@ public final class FhirMediaType {
 	protected static final MediaType CURRENT_XML_MEDIA_TYPE = APPLICATION_FHIR_XML_5_0_0;
 	
 	private final MediaType mediaType;
-	private final FhirFormat fhirFormat;
-	private final FHIRVersion fhirVersion;
+	private final FhirResourceParser fhirResourceParser;
 	
 	private FhirMediaType(MediaType mediaType) {
 		this.mediaType = Objects.requireNonNull(mediaType);
-		if (mediaType.getSubtype().contains(FORMAT_JSON)) {
-			this.fhirFormat = Manager.FhirFormat.JSON;
-		} else if (mediaType.getSubtype().contains(FORMAT_XML)) {
-			this.fhirFormat = Manager.FhirFormat.XML;
-		} else {
-			throw new IllegalStateException("Unsupported FHIR mime-type: " + mediaType);
-		}
-		
-		// parse the FHIR version from the media type parameter
+		// parse the FHIR format from the media type subtype
+		final String fhirFormat = mediaType.getSubtype();
+		// parse the FHIR version from the media type version parameter
 		final String fhirVersionValue = mediaType.getParameter(MIME_TYPE_FHIR_VERSION_PARAMETER);
-		var fhirVersion = FHIRVersion.fromCode(fhirVersionValue);
-		// ensure we always use the full three digit version variant (this should be handled during parsing so this is just a safety net here)
-		switch (fhirVersion) {
-		case _4_0:
-			fhirVersion = FHIRVersion._4_0_1;
-			break;
-		case _4_3:
-			fhirVersion = FHIRVersion._4_3_0;
-			break;
-		case _5_0:
-			fhirVersion = FHIRVersion._5_0_0;
-			break;
-		default:
-			break;
-		}
-		this.fhirVersion = fhirVersion;
+		this.fhirResourceParser = new FhirResourceParser(fhirFormat, fhirVersionValue);
 	}
 
 	public MediaType getMediaType() {
@@ -212,195 +184,27 @@ public final class FhirMediaType {
 	}
 	
 	public FhirFormat getFhirFormat() {
-		return fhirFormat;
+		return fhirResourceParser.getFhirFormat();
 	}
 	
 	public FHIRVersion getFhirVersion() {
-		return fhirVersion;
+		return fhirResourceParser.getFhirVersion();
 	}
-
+	
 	public Resource parseResource(InputStream in) throws FHIRFormatError, IOException {
-		switch (fhirFormat) {
-		case JSON:
-			return parseResourceJson(in);
-		case XML:
-			return parseResourceXml(in); 
-		default: 
-			throw new NotImplementedException("No parser implementation found for format: " + fhirFormat);
-		}
+		return fhirResourceParser.parseResource(in);
 	}
 	
-	private Resource parseResourceJson(InputStream in) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Resource r4 = new org.hl7.fhir.r4.formats.JsonParser().parse(in);
-			return VersionConvertorFactory_40_50.convertResource(r4);
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Resource r4b = new org.hl7.fhir.r4b.formats.JsonParser().parse(in);
-			return VersionConvertorFactory_43_50.convertResource(r4b);
-		case _5_0_0:
-			org.hl7.fhir.r5.model.Resource r5 = new org.hl7.fhir.r5.formats.JsonParser().parse(in);
-			return r5;
-		default: 
-			throw new NotImplementedException("No JSON parser implementation found for version: " + fhirVersion);
-		}
-	}
-	
-	private Resource parseResourceXml(InputStream in) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Resource r4 = XmlParser.parseR4(in);
-			return VersionConvertorFactory_40_50.convertResource(r4);
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Resource r4b = XmlParser.parseR4B(in);
-			return VersionConvertorFactory_43_50.convertResource(r4b);
-		case _5_0_0:
-			org.hl7.fhir.r5.model.Resource r5 = XmlParser.parseR5(in);
-			return r5;
-		default: 
-			throw new NotImplementedException("No XML parser implementation found for version: " + fhirVersion);
-		}
-	}
-
 	public void writeResource(ByteArrayOutputStream baos, Resource resource, boolean pretty) throws FHIRFormatError, IOException {
-		switch (fhirFormat) {
-		case JSON:
-			writeResourceJson(baos, resource, pretty);
-			break;
-		case XML:
-			writeResourceXml(baos, resource, pretty);
-			break;
-		default: 
-			throw new NotImplementedException("No serializer implementation found for format: " + fhirFormat);
-		}
-	}
-	
-	private void writeResourceJson(ByteArrayOutputStream baos, Resource resource, boolean pretty) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Resource r4 = VersionConvertorFactory_40_50.convertResource(resource);
-			new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r4.formats.IParser.OutputStyle.NORMAL).compose(baos, r4);
-			break;
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Resource r4b = VersionConvertorFactory_43_50.convertResource(resource);
-			new org.hl7.fhir.r4b.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r4b.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r4b.formats.IParser.OutputStyle.NORMAL).compose(baos, r4b);
-			break;
-		case _5_0_0:
-			new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r5.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r5.formats.IParser.OutputStyle.NORMAL).compose(baos, resource);
-			break;
-		default: 
-			throw new NotImplementedException("No JSON serializer implementation found for version: " + fhirVersion);
-		}
-	}
-	
-	private void writeResourceXml(ByteArrayOutputStream baos, Resource resource, boolean pretty) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Resource r4 = VersionConvertorFactory_40_50.convertResource(resource);
-			XmlParser.composeR4(baos, r4, pretty);
-			break;
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Resource r4b = VersionConvertorFactory_43_50.convertResource(resource);
-			XmlParser.composeR4B(baos, r4b, pretty);
-			break;
-		case _5_0_0:
-			XmlParser.composeR5(baos, resource, pretty);
-			break;
-		default: 
-			throw new NotImplementedException("No XML serializer implementation found for version: " + fhirVersion);
-		}
-	}
-	
-	public void writeParameters(ByteArrayOutputStream baos, BaseParameters parameters, boolean pretty) throws FHIRFormatError, IOException {
-		switch (fhirFormat) {
-		case JSON:
-			writeParametersJson(baos, parameters, pretty);
-			break;
-		case XML:
-			writeParametersXml(baos, parameters, pretty);
-			break;
-		default: 
-			throw new NotImplementedException("No serializer implementation found for format: " + fhirFormat);
-		}
-	}
-	
-	private void writeParametersJson(ByteArrayOutputStream baos, BaseParameters parameters, boolean pretty) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Resource r4 = OperationConvertor_40_50.convert(parameters).getParameters();
-			new org.hl7.fhir.r4.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r4.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r4.formats.IParser.OutputStyle.NORMAL).compose(baos, r4);
-			break;
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Resource r4b = OperationConvertor_43_50.convert(parameters).getParameters();
-			new org.hl7.fhir.r4b.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r4b.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r4b.formats.IParser.OutputStyle.NORMAL).compose(baos, r4b);
-			break;
-		case _5_0_0:
-			new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r5.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r5.formats.IParser.OutputStyle.NORMAL).compose(baos, parameters.getParameters());
-			break;
-		default: 
-			throw new NotImplementedException("No JSON serializer implementation found for version: " + fhirVersion);
-		}
-	}
-	
-	private void writeParametersXml(ByteArrayOutputStream baos, BaseParameters parameters, boolean pretty) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Resource r4 = OperationConvertor_40_50.convert(parameters).getParameters();
-			XmlParser.composeR4(baos, r4, pretty);
-			break;
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Resource r4b = OperationConvertor_43_50.convert(parameters).getParameters();
-			XmlParser.composeR4B(baos, r4b, pretty);
-			break;
-		case _5_0_0:
-			XmlParser.composeR5(baos, parameters.getParameters(), pretty);
-			break;
-		default: 
-			throw new NotImplementedException("No XML serializer implementation found for version: " + fhirVersion);
-		}
+		fhirResourceParser.writeResource(baos, resource, pretty);
 	}
 	
 	public BaseParameters parseParameters(InputStream in, OperationParametersFactory factory, boolean strict) throws FHIRFormatError, IOException {
-		switch (fhirFormat) {
-		case JSON:
-			return parseParametersJson(in, factory, strict);
-		case XML:
-			return parseParametersXml(in, factory, strict); 
-		default: 
-			throw new NotImplementedException("No parser implementation found for format: " + fhirFormat);
-		}
+		return fhirResourceParser.parseParameters(in, factory, strict);
 	}
 	
-	private BaseParameters parseParametersJson(InputStream in, OperationParametersFactory factory, boolean strict) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Parameters r4 = (org.hl7.fhir.r4.model.Parameters) new org.hl7.fhir.r4.formats.JsonParser().parse(in);
-			return OperationConvertor_40_50.convert(factory.create(r4, strict));
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Parameters r4b = (org.hl7.fhir.r4b.model.Parameters) new org.hl7.fhir.r4b.formats.JsonParser().parse(in);
-			return OperationConvertor_43_50.convert(factory.create(r4b, strict));
-		case _5_0_0:
-			org.hl7.fhir.r5.model.Parameters r5 = (org.hl7.fhir.r5.model.Parameters) new org.hl7.fhir.r5.formats.JsonParser().parse(in);
-			return factory.create(r5, strict);
-		default: 
-			throw new NotImplementedException("No JSON parser implementation found for version: " + fhirVersion);
-		}
-	}
-	
-	private BaseParameters parseParametersXml(InputStream in, OperationParametersFactory factory, boolean strict) throws FHIRFormatError, IOException {
-		switch (fhirVersion) {
-		case _4_0_1:
-			org.hl7.fhir.r4.model.Parameters r4 = (org.hl7.fhir.r4.model.Parameters) XmlParser.parseR4(in);
-			return OperationConvertor_40_50.convert(factory.create(r4, strict));
-		case _4_3_0:
-			org.hl7.fhir.r4b.model.Parameters r4b = (org.hl7.fhir.r4b.model.Parameters) XmlParser.parseR4B(in);
-			return OperationConvertor_43_50.convert(factory.create(r4b, strict));
-		case _5_0_0:
-			org.hl7.fhir.r5.model.Parameters r5 = (org.hl7.fhir.r5.model.Parameters) XmlParser.parseR5(in);
-			return factory.create(r5, strict);
-		default: 
-			throw new NotImplementedException("No XML parser implementation found for version: " + fhirVersion);
-		}
+	public void writeParameters(ByteArrayOutputStream baos, BaseParameters parameters, boolean pretty) throws FHIRFormatError, IOException {
+		fhirResourceParser.writeParameters(baos, parameters, pretty);
 	}
 
 	public static FhirMediaType parse(String header, String _format) {

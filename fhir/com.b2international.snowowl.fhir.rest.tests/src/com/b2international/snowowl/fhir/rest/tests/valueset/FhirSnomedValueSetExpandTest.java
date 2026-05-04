@@ -43,7 +43,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	public void expandSnomedCodeSystemURL() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL)
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -59,7 +59,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	public void expandSnomedCodeSystemURL_NoModuleFallbackToInt() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT)
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -75,7 +75,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	public void expandSnomedCodeSystemURL_FhirVsEmpty() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs")
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -91,7 +91,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	public void expandSnomedCodeSystemURL_FhirVsIsaSubstance() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=isa/105590001")
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -107,7 +107,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	public void expandSnomedCodeSystemURL_FhirVsEclChildOfRoot() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", RestExtensions.encodeQueryParameter(SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=ecl/<!138875005"))
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -124,7 +124,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 		JsonPath jsonPath = givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", RestExtensions.encodeQueryParameter(SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=ecl/<!138875005"))
 			.queryParam("includeDesignations", true)
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -152,7 +152,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("activeOnly", true)
 			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=refset/900000000000489007") // testing concept inactivation indicator here to return only active concepts with active indicator
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -166,7 +166,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", RestExtensions.encodeQueryParameter(SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=ecl/<!138875005"))
 			.queryParam("count", 5)
-			.when().get("/ValueSet/$expand")
+			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
@@ -178,7 +178,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
 			.body("expansion.contains[0].display", equalTo("Substance (substance)"))
 			.body("expansion.next", endsWith(FHIR_ROOT_CONTEXT 
-				+ "/ValueSet/$expand"
+				+ VALUESET_EXPAND
 				+ "?url=http://snomed.info/sct/900000000000207008?fhir_vs=ecl/<!138875005"
 				+ "&count=5"
 				+ "&after=AoIpMjU0MjkxMDAwKTI1NDI5MTAwMA=="));
@@ -203,7 +203,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 				)
 				
 			))
-			.when().post("/ValueSet/$expand")
+			.when().post(VALUESET_EXPAND)
 			.then()
 			.assertThat()
 			.statusCode(404);
@@ -229,7 +229,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 				)
 				
 			))
-			.when().post("/ValueSet/$expand")
+			.when().post(VALUESET_EXPAND)
 			.then()
 			.assertThat()
 			.log().ifValidationFails()

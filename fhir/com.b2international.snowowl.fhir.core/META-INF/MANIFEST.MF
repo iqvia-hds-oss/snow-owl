@@ -11,19 +11,16 @@ Export-Package: com.b2international.snowowl.fhir.core,
  com.b2international.snowowl.fhir.core.request.bundle,
  com.b2international.snowowl.fhir.core.request.codesystem,
  com.b2international.snowowl.fhir.core.request.conceptmap,
+ com.b2international.snowowl.fhir.core.request.packages,
  com.b2international.snowowl.fhir.core.request.valueset
-Import-Package: com.b2international.fhir;version="[0.4.1,1.0.0)",
- com.b2international.fhir.r5.formats;version="[0.5.0,1.0.0)",
- com.b2international.fhir.r5.operations;version="[0.4.1,1.0.0)",
- jakarta.validation;version="3.0.2",
+Import-Package: jakarta.validation;version="3.0.2",
  jakarta.validation.constraints;version="3.0.2",
- org.hl7.fhir.exceptions;version="6.3.25",
- org.hl7.fhir.r4.model.codesystems;version="6.3.25",
- org.hl7.fhir.r5.model;version="6.3.25",
- org.hl7.fhir.utilities.xhtml;version="6.3.25",
  org.slf4j;version="2.0.0"
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  com.b2international.snowowl.core;visibility:=reexport,
- io.swagger.core.v3.swagger-annotations.jakarta;bundle-version="2.2.20"
+ io.swagger.core.v3.swagger-annotations.jakarta;bundle-version="2.2.20",
+ org.apache.commons.commons-compress;bundle-version="1.26.0",
+ org.apache.commons.commons-io;bundle-version="2.21.0",
+ com.b2international.fhir.core;bundle-version="0.6.0"
 Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy

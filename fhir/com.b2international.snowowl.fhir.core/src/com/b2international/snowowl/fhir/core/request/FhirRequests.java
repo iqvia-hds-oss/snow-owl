@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.core.request;
 
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemRequests;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapRequests;
+import com.b2international.snowowl.fhir.core.request.packages.FhirLoadPackageRequestBuilder;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetRequests;
 
 /**
@@ -40,5 +41,9 @@ public class FhirRequests {
 
 	public static FhirBundleRequests bundles() {
 		return new FhirBundleRequests();
+	}
+
+	public static FhirLoadPackageRequestBuilder loadPackage() {
+		return new FhirLoadPackageRequestBuilder();
 	}
 }

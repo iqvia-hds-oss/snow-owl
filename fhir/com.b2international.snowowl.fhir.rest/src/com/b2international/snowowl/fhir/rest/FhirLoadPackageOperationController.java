@@ -1,0 +1,338 @@
+/*
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.b2international.snowowl.fhir.rest;
+
+import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.b2international.fhir.operations.OperationParametersFactory;
+import com.b2international.fhir.r5.operations.LoadPackageParameters;
+import com.b2international.snowowl.core.attachments.Attachment;
+import com.b2international.snowowl.core.attachments.AttachmentRegistry;
+import com.b2international.snowowl.core.events.util.Promise;
+import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
+import com.b2international.snowowl.fhir.core.request.FhirRequests;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
+/**
+ * Controller for the FHIR $load-package operation.
+ * 
+ * @since 10.1.0
+ */
+@Tag(description = "Packages", name = "Packages")
+@RestController
+@RequestMapping(value = "/$load-package")
+public class FhirLoadPackageOperationController extends AbstractFhirController {
+
+	@Autowired
+	private AttachmentRegistry attachments;
+	
+	/**
+	 * <code><b>POST /$load-package</b></code> - Registry download mode
+	 * <p>
+	 * Downloads a FHIR package from the specified NPM registry and imports
+	 * the terminology resources (CodeSystem, ValueSet, ConceptMap).
+	 * 
+	 * @param requestBody - FHIR Parameters resource containing package details
+	 * @param contentType - Content-Type header
+	 * @param accept - Accept header
+	 * @param prefer - Prefer header for handling mode
+	 * @param _format - Alternative response format
+	 * @param _pretty - Pretty print flag
+	 * @return Job ID in Location header with 201 Created
+	 */
+	@Operation(
+		summary = "Load FHIR Package from registry",
+		description = "Downloads a FHIR package from the specified registry and imports terminology resources."
+	)
+	@ApiResponse(responseCode = "201", description = "Package loading job created")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@PostMapping(
+		consumes = {
+			APPLICATION_FHIR_JSON_5_0_VALUE,
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_VALUE,
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		},
+		produces = {
+			APPLICATION_FHIR_JSON_5_0_VALUE,
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_VALUE,
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}
+	)
+	public Promise<ResponseEntity<byte[]>> loadPackageFromRegistry(
+		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The operation's input parameters", content = {
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object"))
+		})
+		final InputStream requestBody,
+		
+		@Parameter(description = """
+			The effective date to use if a version identifier is present in any package resource without 
+			a corresponding effective date value""")
+		@RequestHeader(value = X_EFFECTIVE_DATE, required = false)
+		@DateTimeFormat(iso = ISO.DATE)
+		final LocalDate defaultEffectiveDate,
+		
+		@Parameter(description = """
+			The user identifier used for committing the change""")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+		
+		@Parameter(description = """
+			The resource owner (if not set it will fall back to the X-Author header then to the 
+			current authenticated user id)""")
+		@RequestHeader(value = X_OWNER, required = false)
+		final String owner,
+		
+		@Parameter(description = """
+			The user profile name to add to resource settings for client purposes""")
+		@RequestHeader(value = X_OWNER_PROFILE_NAME, required = false)
+		final String ownerProfileName,
+		
+		@Parameter(description = """
+			The parent bundle's identifier (defaults to root if not present)""")
+		@RequestHeader(value = X_BUNDLE_ID, required = false)
+		final String bundleId,
+		
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.CONTENT_TYPE)
+		final String contentType,
+		
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+		
+		@Parameter(description = "Prefer header", schema = @Schema(
+			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
+			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
+		))
+		@RequestHeader(value = PreferHandlingInterceptor.PREFER_HEADER, required = false)
+		final String prefer,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_VALUE,
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+		
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
+	) {
+		LoadPackageParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.LoadPackageParametersFactory.INSTANCE);
+		
+		return loadPackage(parameters, null, author, owner, ownerProfileName, defaultEffectiveDate, bundleId, accept, _format, _pretty);
+	}
+
+	/**
+	 * <code><b>POST /$load-package</b></code> - Local upload mode
+	 * <p>
+	 * Uploads a local FHIR package (.tgz file) and imports the terminology
+	 * resources (CodeSystem, ValueSet, ConceptMap).
+	 * 
+	 * @param file - The FHIR package tarball file
+	 * @param resolveDependencies - Whether to load dependencies (default: true)
+	 * @param accept - Accept header
+	 * @param _format - Alternative response format
+	 * @param _pretty - Pretty print flag
+	 * @return Job ID in Location header with 201 Created
+	 */
+	@Operation(
+		summary = "Load FHIR Package from local file",
+		description = "Uploads a local FHIR package (.tgz file) and imports terminology resources."
+	)
+	@ApiResponse(responseCode = "201", description = "Package loading job created")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@PostMapping(
+		consumes = { MULTIPART_MEDIA_TYPE },
+		produces = {
+			APPLICATION_FHIR_JSON_5_0_VALUE,
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE
+		}
+	)
+	public Promise<ResponseEntity<byte[]>> loadPackageFromUpload(
+		@Parameter(description = "FHIR package file (.tgz)", required = true)
+		@RequestPart("file")
+		final MultipartFile file,
+		
+		@Parameter(description = "Resolve and load dependencies (default: true)")
+		@RequestParam(value = "resolveDependencies", defaultValue = "true")
+		final Boolean resolveDependencies,
+		
+		@Parameter(description = "Resource URLs to load (if not specified the server will load all resources)")
+		@RequestParam(value = "resourceUrl", required = false)
+		final List<String> resourceUrls,
+		
+		@Parameter(description = """
+			The effective date to use if a version identifier is present in any package resource without 
+			a corresponding effective date value""")
+		@RequestHeader(value = X_EFFECTIVE_DATE, required = false)
+		@DateTimeFormat(iso = ISO.DATE)
+		final LocalDate defaultEffectiveDate,
+		
+		@Parameter(description = """
+			The user identifier used for committing the change""")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+		
+		@Parameter(description = """
+			The resource owner (if not set it will fall back to the X-Author header then to the 
+			current authenticated user id)""")
+		@RequestHeader(value = X_OWNER, required = false)
+		final String owner,
+		
+		@Parameter(description = """
+			The user profile name to add to resource settings for client purposes""")
+		@RequestHeader(value = X_OWNER_PROFILE_NAME, required = false)
+		final String ownerProfileName,
+		
+		@Parameter(description = """
+			The parent bundle's identifier (defaults to root if not present)""")
+		@RequestHeader(value = X_BUNDLE_ID, required = false)
+		final String bundleId,
+		
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT, required = false)
+		final String accept,
+		
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_VALUE,
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+		
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
+	) throws IOException {
+		
+		final UUID fhirPackageAttachmentId = UUID.randomUUID();
+		attachments.upload(fhirPackageAttachmentId, file.getInputStream());
+		
+		LoadPackageParameters params = new LoadPackageParameters();
+		params.setResolveDependencies(resolveDependencies);
+		params.setResourceUrl(resourceUrls);
+		return loadPackage(params, new Attachment(fhirPackageAttachmentId, file.getOriginalFilename()), author, owner, ownerProfileName, defaultEffectiveDate, bundleId, accept, _format, _pretty);
+	}
+
+	private Promise<ResponseEntity<byte[]>> loadPackage(
+		final LoadPackageParameters parameters,
+		final Attachment packageToLoad,
+		final String author,
+		final String owner,
+		final String ownerProfileName,
+		final LocalDate defaultEffectiveDate,
+		final String bundleId,
+		final String accept, 
+		final String _format, 
+		final Boolean _pretty
+	) {
+		return FhirRequests.loadPackage()
+				.setParameters(parameters)
+				.setPackageToLoad(packageToLoad)
+				.setAuthor(author)
+				.setOwner(owner)
+				.setOwnerProfileName(ownerProfileName)
+				.setDefaultEffectiveDate(defaultEffectiveDate)
+				.setBundleId(bundleId)
+				.buildAsync()
+				.execute(getBus())
+				.then(result -> {
+					return toResponseEntity(result, accept, _format, _pretty);
+				});
+	}
+}

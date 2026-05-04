@@ -38,6 +38,15 @@ public final class FhirApiHelpers {
 
 	public static final String VALUESET = "/ValueSet";
 	public static final String VALUESET_ID = "/ValueSet/{id}";
+	public static final String VALUESET_EXPAND = "/ValueSet/$expand";
+	public static final String VALUESET_ID_EXPAND = "/ValueSet/{id}/$expand";
+	public static final String VALUESET_VALIDATE_CODE = "/ValueSet/$validate-code";
+	public static final String VALUESET_ID_VALIDATE_CODE = "/ValueSet/{id}/$validate-code";
+	
+	public static final String CONCEPTMAP = "/ConceptMap";
+	public static final String CONCEPTMAP_ID = "/ConceptMap/{id}";
+	public static final String CONCEPTMAP_TRANSLATE = "/ConceptMap/$translate";
+	public static final String CONCEPTMAP_ID_TRANSLATE = "/ConceptMap/{id}/$translate";
 
 	public static final String LOAD_PACKAGE = "/$load-package";
 	
