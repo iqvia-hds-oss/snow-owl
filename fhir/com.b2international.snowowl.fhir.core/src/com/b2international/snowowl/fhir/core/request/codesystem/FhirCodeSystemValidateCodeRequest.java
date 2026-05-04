@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,13 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.Coding;
 
+import com.b2international.commons.http.AcceptLanguageHeader;
+import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeResultParameters;
-import com.b2international.snowowl.core.ResourceURI;
-import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.domain.Concept;
+import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSortedSet;
@@ -69,17 +70,19 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 				c -> c.getCode(), 
 				c -> c));
 
-		final Map<String, Concept> conceptsById = CodeSystemRequests.prepareSearchConcepts()
-			.setLimit(codingsById.keySet().size())
-			.filterByCodeSystemUri(codeSystemUri)
-			.filterByIds(codingsById.keySet())
-			.setLocales(displayLanguage)
-			.buildAsync()
-			.execute(context)
-			.stream()
-			.collect(Collectors.toMap(
-				c -> c.getId(), 
-				c -> c));
+		// XXX for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID));
+		Options conceptSearchOptions = Options.builder()
+				.put(ConceptSearchRequestEvaluator.OptionKey.ID, codingsById.keySet())
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, codingsById.keySet().size())
+				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
+				.build();
+		final Map<String, Concept> conceptsById = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+				.evaluate(codeSystemUri, context, conceptSearchOptions)
+				.stream()
+				.collect(Collectors.toMap(
+					c -> c.getId(), 
+					c -> c));
 		
 		// Check if both Maps have the same keys and report if not
 		Set<String> missingConceptIds = Sets.difference(codingsById.keySet(), conceptsById.keySet());
