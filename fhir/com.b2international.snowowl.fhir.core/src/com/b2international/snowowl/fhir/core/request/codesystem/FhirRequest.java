@@ -58,7 +58,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 	 * such as toolingId and such to fulfill a request (e.g. an operation). Using the MetadataResource.SUMMARY field set now, as that does not need
 	 * any extra fetches and can provide the necessary info for subsequent request execution and responses.
 	 */
-	protected static final Set<String> MINIMAL_CODESYSTEM_FIELD_SELECTION = R5ObjectFields.MetadataResource.SUMMARY;
+	public static final Set<String> MINIMAL_CODESYSTEM_FIELD_SELECTION = R5ObjectFields.MetadataResource.SUMMARY;
 	
 	private final String system;
 	

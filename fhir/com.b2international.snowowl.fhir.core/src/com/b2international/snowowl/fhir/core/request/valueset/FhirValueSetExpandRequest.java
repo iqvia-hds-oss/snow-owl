@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
+import com.b2international.snowowl.fhir.core.request.codesystem.FhirRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -61,6 +62,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 		
 		try {
 			
+			// TODO consider skipping this for implicit VS URLs, should we even allow materializing them with an implicit URL?
 			valueSet = FhirRequests.valueSets().prepareGet(uri)
 					.setElements(ImmutableList.<String>builder()
 							.addAll(R5ObjectFields.ValueSet.SUMMARY)
@@ -120,6 +122,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 			.one()
 			.filterByUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.filterByVersion(version)
+			.setElements(FhirRequest.MINIMAL_CODESYSTEM_FIELD_SELECTION, false)
 			.buildAsync()
 			.execute(context)
 			.getEntry().stream().findFirst()
