@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 
 import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.internal.ResourceDocument;
