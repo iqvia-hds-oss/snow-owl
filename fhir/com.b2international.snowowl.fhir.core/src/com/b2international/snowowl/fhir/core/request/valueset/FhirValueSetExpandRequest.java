@@ -29,7 +29,6 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
@@ -86,7 +85,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 
 		// ...otherwise we should have a VS composition that can be evaluated 
 		return context.service(RepositoryManager.class)
-			.get(valueSet.getUserString(TerminologyResource.Fields.TOOLING_ID))
+			.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
 			.optionalService(FhirValueSetExpander.class)
 			.orElse(FhirValueSetExpander.NOOP)
 			.expand(context, valueSet, parameters);
@@ -116,7 +115,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 			version = version.concat("/900000000000207008");
 		}
 		
-		// try to lookup the CodeSystem using the baseUrl
+		// try to lookup the CodeSystem using the baseUrl and version (to get the proper edition)
 		CodeSystem codeSystem = FhirRequests.codeSystems().prepareSearch()
 			.one()
 			.filterByUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
@@ -142,14 +141,14 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 			.setStatus(PublicationStatus.ACTIVE)
 			.setId(id);
 		
-		// XXX: Use the code system's tooling ID as the expand service selector
-		valueSet.setUserData(TerminologyResource.Fields.TOOLING_ID, codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID));
-		valueSet.setUserData(FhirValueSetExpander.USERDATA_CODE_SYSTEM_URI, FhirModelHelpers.resourceUriFrom(codeSystem));
-		valueSet.setUserData(FhirValueSetExpander.USERDATA_CODE_SYSTEM_VERSION, version);
+		// since an implicit ValueSet does not have an internal resource representation, use the CodeSystem's fragment instead
+		valueSet.setUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE, FhirModelHelpers.getResourceFragment(codeSystem));
+		// also store the explicit version requested
+		valueSet.setUserData(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION, version);
 		
 		ValueSet.ValueSetComposeComponent compose = null;
 		
-		// configure query based on fhir_vs query parameter and also build the compose declaration for this implicit Value Set
+		// configure query based on fhir_vs query parameter and also build the composFhirValueSetExpandere declaration for this implicit Value Set
 		if (Strings.isNullOrEmpty(query) || "fhir_vs".equals(query)) {
 			// do nothing, search all concepts
 		} else if (query.startsWith("fhir_vs=")) {

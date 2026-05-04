@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.core;
 
 import java.util.Set;
 
+import com.b2international.snowowl.core.ResourceFragment;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -72,6 +73,18 @@ public final class R5ObjectFields {
 				.addAll(Resource.SUMMARY)
 				.add(URL, VERSION, NAME, TITLE, DATE, PUBLISHER, CONTACT)
 				.build();
+		
+		/**
+		 * @since 10.1.0
+		 */
+		public static abstract class UserData {
+			
+			/**
+			 * userData key to store a {@link ResourceFragment} instance next to a FHIR R5 resource representation.
+			 */
+			public static final String INTERNAL_RESOURCE = "internalResource";
+			
+		}
 
 	}
 	
@@ -93,14 +106,6 @@ public final class R5ObjectFields {
 		public static final String FILTER = "filter";
 		public static final String PROPERTY = "property";
 		public static final String CONCEPT = "concept";
-		
-		/**
-		 * Minimal set of fields to load when the actual FHIR resource data is not required, but we need critical internal resource model information,
-		 * such as toolingId and such to fulfill a request (e.g. an operation).
-		 * 
-		 * NOTE: not exposed as an accepted FHIR parameter.
-		 */
-		public static final Set<String> MINIMAL = MetadataResource.MANDATORY;
 		
 		public static final Set<String> MANDATORY = ImmutableSet.<String>builder()
 				.addAll(MetadataResource.MANDATORY)
@@ -185,6 +190,18 @@ public final class R5ObjectFields {
 				.add(COMPOSE)
 				.add(EXPANSION)
 				.build();
+		
+		/**
+		 * @since 10.1.0
+		 */
+		public static final class UserData extends MetadataResource.UserData {
+			
+			/**
+			 * userData key to access the code system (as domain) associated with the current Value Set. The value is expected to be a {@link org.hl7.fhir.r5.model.CodeSystem}.
+			 */
+			public static final String CODE_SYSTEM_VERSION = "codeSystemVersion";
+			
+		}
 			
 	}
 	

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2024-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,9 +29,9 @@ import org.hl7.fhir.r5.model.Resource;
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.NotFoundException;
+import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
@@ -50,10 +50,18 @@ public class FhirModelHelpers {
 
 	public static final String VERSION_SEGMENT = "/version/";
 
+	/**
+	 * @param resource
+	 * @return the {@link ResourceFragment} associated with the given FHIR R5 resource in its user data under the key R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE.
+	 */
+	public static ResourceFragment getResourceFragment(Resource resource) {
+		return (ResourceFragment) resource.getUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE);
+	}
+	
 	public static ResourceURI resourceUriFrom(final Resource resource) {
-		final ResourceURI resourceUri = (ResourceURI) resource.getUserData(TerminologyResource.Fields.RESOURCE_URI);
-		if (resourceUri != null) {
-			return resourceUri;
+		final ResourceFragment res = getResourceFragment(resource);
+		if (res != null) {
+			return res.getResourceURI();
 		} else {
 			return ResourceURI.of(resource.getResourceType().name().toLowerCase() + "s", resource.getId());
 		}
@@ -256,4 +264,5 @@ public class FhirModelHelpers {
 		setSystemAndVersion(resourceUri, mapperFunction, canonicalType::setValue, canonicalType::addVersion);
 		return canonicalType;
 	}
+
 }

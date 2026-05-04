@@ -52,6 +52,13 @@ import com.google.common.base.Splitter;
 public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * Minimal set of fields to load when the actual FHIR resource data is not required, but we need critical internal resource model information,
+	 * such as toolingId and such to fulfill a request (e.g. an operation). Using the MetadataResource.SUMMARY field set now, as that does not need
+	 * any extra fetches and can provide the necessary info for subsequent request execution and responses.
+	 */
+	protected static final Set<String> MINIMAL_CODESYSTEM_FIELD_SELECTION = R5ObjectFields.MetadataResource.SUMMARY;
 	
 	private final String system;
 	
@@ -69,7 +76,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 		final FhirCodeSystemSearchRequestBuilder requestBuilder = FhirRequests.codeSystems()
 			.prepareSearch()
 			.one()
-			.setElements(configureFieldsToLoad());
+			.setElements(configureFieldsToLoad(), false /*all mandatory fields are not required here, explicitly control via configureFieldsToLoad*/);
 		
 		searchConfigurer.accept(requestBuilder);
 		
@@ -141,7 +148,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 	 * @return a set of fields to load
 	 */
 	protected Set<String> configureFieldsToLoad() {
-		return R5ObjectFields.CodeSystem.MINIMAL;
+		return MINIMAL_CODESYSTEM_FIELD_SELECTION;
 	}
 
 	/**

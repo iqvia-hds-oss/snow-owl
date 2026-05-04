@@ -59,19 +59,21 @@ final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemVali
 		final Set<Coding> codings = collectCodingsToValidate(parameters);
 		
 		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
-		ResourceURI codeSystemUri = FhirModelHelpers.resourceUriFrom(codeSystem);
-		
-		if (parameters.getDate() != null) {
-			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
-		}
 		
 		final Map<String, Coding> codingsById = codings.stream()
 			.collect(Collectors.toMap(
 				c -> c.getCode(), 
 				c -> c));
 
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
+		ResourceURI codeSystemUri = resource.getResourceURI();
+		
+		if (parameters.getDate() != null) {
+			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
+		}
+		
 		// XXX for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
-		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID));
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
 		Options conceptSearchOptions = Options.builder()
 				.put(ConceptSearchRequestEvaluator.OptionKey.ID, codingsById.keySet())
 				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, codingsById.keySet().size())

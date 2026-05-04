@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2024-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import com.b2international.snowowl.core.request.ConceptSearchRequestBuilder;
 import com.b2international.snowowl.core.request.SearchIndexResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirRequest;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
@@ -56,8 +57,11 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 		
 		final String termFilter = parameters.getFilter() == null ? null : parameters.getFilter().getValue();
 		
+		// XXX since this is an implicit VS, and resource stored in the VS here is a CodeSystem referring to the proper SNOMED CT Edition
+		final ResourceURI resourceUri = FhirModelHelpers.resourceUriFrom(valueSet);
+		
 		ConceptSearchRequestBuilder req = CodeSystemRequests.prepareSearchConcepts()
-			.filterByCodeSystemUri((ResourceURI) valueSet.getUserData(FhirValueSetExpander.USERDATA_CODE_SYSTEM_URI))
+			.filterByCodeSystemUri(resourceUri)
 			.filterByActive(parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue())
 			.filterByTerm(termFilter)
 			.setLimit(parameters.getCount() == null ? 10 : parameters.getCount().getValue())
@@ -100,7 +104,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 
 		expansion.addExtension(FhirValueSetExpander.EXTENSION_AFTER_PROPERTY_URL, new StringType(concepts.getSearchAfter()));
 		
-		final String version = valueSet.getUserString(FhirValueSetExpander.USERDATA_CODE_SYSTEM_VERSION);
+		final String version = valueSet.getUserString(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION);
 		
 		for (Concept concept : concepts) {
 			var contains = new ValueSet.ValueSetExpansionContainsComponent()

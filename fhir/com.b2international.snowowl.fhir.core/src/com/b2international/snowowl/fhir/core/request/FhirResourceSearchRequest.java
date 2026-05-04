@@ -45,7 +45,6 @@ import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.index.query.Query;
 import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.snowowl.core.ResourceFragment;
-import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.internal.ResourceDocument;
@@ -447,9 +446,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		entry.setStatus(toPublicationStatus(resource.getStatus()));
 		entry.setMeta(toMeta(resource.getUpdatedAt(), resource.getCreatedAt()));
 		
-		// Add tooling ID and "native" resource URI as user data to be used for later processing if needed
-		entry.setUserData(TerminologyResource.Fields.TOOLING_ID, resource.getToolingId());
-		entry.setUserData(TerminologyResource.Fields.RESOURCE_URI, resource.getResourceURI());
+		// store the entire resource fragment to reuse any loaded data in subsequent requests when needed
+		// see FhirModelHelpers for easy accessors for specific fields, such as tooling ID and "native" resource URI
+		entry.setUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE, resource);
 		
 		// We are using the raw ID of the resource as machine readable name
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, resource::getId, entry::setName);

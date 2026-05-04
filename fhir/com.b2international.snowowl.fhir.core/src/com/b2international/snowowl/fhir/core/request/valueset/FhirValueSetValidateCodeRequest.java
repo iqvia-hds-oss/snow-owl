@@ -21,8 +21,8 @@ import com.b2international.fhir.r5.operations.ValueSetValidateCodeParameters;
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeResultParameters;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -44,7 +44,7 @@ final class FhirValueSetValidateCodeRequest implements Request<ServiceProvider, 
 	public ValueSetValidateCodeResultParameters execute(ServiceProvider context) {
 		final ValueSet valueSet = FhirRequests.valueSets().prepareGet(parameters.getUrl().asStringValue()).buildAsync().execute(context);
 		return context.service(RepositoryManager.class)
-				.get(valueSet.getUserString(TerminologyResource.Fields.TOOLING_ID))
+				.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
 				.optionalService(FhirValueSetCodeValidator.class)
 				.orElse(FhirValueSetCodeValidator.NOOP)
 				.validateCode(context, valueSet, parameters);
