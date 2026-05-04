@@ -49,7 +49,7 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 
 	@Override
 	public String configureConceptExpand(CodeSystemLookupParameters parameters) {
-		String expandDescriptions = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION) ? "descriptions(expand(type(expand(pt()))),sort:\\\"typeId,term\\\")" : null;
+		String expandDescriptions = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION) ? "descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")" : null;
 		String expandDescendants = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD) ? "descendants(direct:true,expand(pt()))" : null;
 		String expandAncestors = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT) ? "ancestors(direct:true,expand(pt()))" : null;
 		return StringUtils.COMMA_JOINER.join("pt()", expandDescriptions, expandDescendants, expandAncestors);
