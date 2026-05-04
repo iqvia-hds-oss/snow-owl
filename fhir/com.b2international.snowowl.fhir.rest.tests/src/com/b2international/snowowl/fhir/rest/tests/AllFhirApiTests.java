@@ -64,11 +64,11 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 	FhirLoadPackageApiTest.class
 	
 })
-public class AllFhirRestTests {
+public class AllFhirApiTests {
 	
 	@ClassRule
 	public static final RuleChain APPRULE = RuleChain
-		.outerRule(SnowOwlAppRule.snowOwl(AllFhirRestTests.class).bootRestApi())
+		.outerRule(SnowOwlAppRule.snowOwl(AllFhirApiTests.class).bootRestApi())
 		.around(new SnomedContentRule(SnomedContentRule.SNOMEDCT, Resources.Snomed.MINI_RF2_INT_20210731, Rf2ReleaseType.FULL).importUntil("20200131"));
 	
 }
