@@ -30,13 +30,18 @@ import org.hl7.fhir.r5.model.ValueSet;
 import org.hl7.fhir.r5.model.ValueSet.*;
 
 import com.b2international.commons.CompareUtils;
+import com.b2international.commons.http.AcceptLanguageHeader;
+import com.b2international.commons.options.Options;
+import com.b2international.commons.options.OptionsBuilder;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
-import com.b2international.snowowl.core.ResourceURI;
+import com.b2international.snowowl.core.Repository;
+import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
-import com.b2international.snowowl.core.request.ConceptSearchRequestBuilder;
+import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.core.request.ExpandParser;
 import com.b2international.snowowl.core.request.SearchIndexResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
@@ -54,26 +59,28 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 
 	@Override
 	public ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters) {
+		// XXX since this is an implicit VS, and resource stored in the VS here is a CodeSystem referring to the proper SNOMED CT Edition
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(valueSet);
 		
 		final String termFilter = parameters.getFilter() == null ? null : parameters.getFilter().getValue();
-		
-		// XXX since this is an implicit VS, and resource stored in the VS here is a CodeSystem referring to the proper SNOMED CT Edition
-		final ResourceURI resourceUri = FhirModelHelpers.resourceUriFrom(valueSet);
-		
-		ConceptSearchRequestBuilder req = CodeSystemRequests.prepareSearchConcepts()
-			.filterByCodeSystemUri(resourceUri)
-			.filterByActive(parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue())
-			.filterByTerm(termFilter)
-			.setLimit(parameters.getCount() == null ? 10 : parameters.getCount().getValue())
-			.setSearchAfter(parameters.getAfter() == null ? null : parameters.getAfter().getValue())
-			// SNOMED only preferred display support (VS should always use FSN)
-			.setPreferredDisplay("FSN")
-			// Expand descriptions so that type information can be extracted later
-			.setExpand("descriptions(expand(type(expand(pt()))))")
-			.setLocales(FhirRequest.compactLocale(parameters.getDisplayLanguage()))
-			// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
-			.sortBy(!CompareUtils.isEmpty(termFilter) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
 
+		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		OptionsBuilder conceptSearchOptions = Options.builder()
+				.put(ConceptSearchRequestEvaluator.OptionKey.ACTIVE, parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue())
+				.put(ConceptSearchRequestEvaluator.OptionKey.TERM, termFilter)
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, parameters.getCount() == null ? 10 : parameters.getCount().getValue())
+				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, parameters.getAfter() == null ? null : parameters.getAfter().getValue())
+				// SNOMED only preferred display support (VS should always use FSN)
+				.put(ConceptSearchRequestEvaluator.OptionKey.DISPLAY, "FSN")
+				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirRequest.compactLocale(parameters.getDisplayLanguage())))
+				// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
+				.put(SearchResourceRequest.OptionKey.SORT_BY, !CompareUtils.isEmpty(termFilter) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
+		
+		final boolean includeDesignations = parameters.getIncludeDesignations() != null && parameters.getIncludeDesignations().getValue();
+		if (includeDesignations) {
+			// Expand descriptions when requested via includeDesignations
+			conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, ExpandParser.parse("descriptions(expand(type(expand(pt()))))"));
+		}
 		
 		if (!valueSet.hasCompose()) {
 			// do nothing, search all concepts
@@ -84,18 +91,24 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 			
 			if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.EQUAL.equals(firstFilter.getOp())) {
 				// Filter concepts by ECL
-				req.filterByQuery(firstFilter.getValue());
+				conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, firstFilter.getValue());
 			} else if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.ISA.equals(firstFilter.getOp())) {
 				// Filter concepts by ancestor
-				req.filterByAncestor(firstFilter.getValue());
+				conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.ANCESTOR, firstFilter.getValue());
 			} else if ("concept".equals(firstFilter.getProperty()) && FilterOperator.IN.equals(firstFilter.getOp())) {
-				req.filterByQuery("^" + firstFilter.getValue());
+				// filter concepts by memberOf ECL
+				conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, "^" + firstFilter.getValue());
 			} else {
 				throw new IllegalStateException("Unsupported implicit value set compose definition: " + compose);
 			}
 		}
 		
-		final Concepts concepts = req.buildAsync().execute(context);
+		// seed already fetched resource information to prevent refetching the metadata
+		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+		final Concepts concepts = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+				.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions.build());
 		
 		final ValueSet.ValueSetExpansionComponent expansion = new ValueSet.ValueSetExpansionComponent()
 				.setIdentifier(valueSet.getId())
@@ -113,7 +126,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 				.setVersion(version)
 				.setDisplay(concept.getTerm());
 			
-			if (parameters.getIncludeDesignations() != null && parameters.getIncludeDesignations().getValue()) {
+			if (includeDesignations) {
 				includeDesignations(version, concept, contains);
 			}
 			
