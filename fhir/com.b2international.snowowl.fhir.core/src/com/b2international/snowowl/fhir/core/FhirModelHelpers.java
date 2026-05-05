@@ -35,6 +35,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -50,6 +51,8 @@ public class FhirModelHelpers {
 
 	public static final String VERSION_SEGMENT = "/version/";
 
+	private static final String GENERIC_IMPLICIT_VALUESET_SUFFIX = "/vs";
+	
 	/**
 	 * @param resource
 	 * @return the {@link ResourceFragment} associated with the given FHIR R5 resource in its user data under the key R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE.
@@ -263,6 +266,30 @@ public class FhirModelHelpers {
 		final CanonicalType canonicalType = new CanonicalType();
 		setSystemAndVersion(resourceUri, mapperFunction, canonicalType::setValue, canonicalType::addVersion);
 		return canonicalType;
+	}
+
+	/**
+	 * Returns <code>true</code> if the current URL is an implicit Value Set URL. The URL must start with http:// and contain either a '?fhir_vs' query part  for SNOMED or a /vs path segment for any other terminology
+	 * @param url
+	 * @return
+	 */
+	public static boolean isImplicitValueSetURL(String url) {
+		return isSnomedImplicitValueSetUrl(url) || isGenericImplicitValueSetUrl(url);
+	}
+	
+	// for snomed we need a proper SNOMED URI + fhir_vs after the ? query start 
+	public static boolean isSnomedImplicitValueSetUrl(String url) {
+		return url != null && url.startsWith(SNOMED_BASE_URI_STRING) && url.substring(url.indexOf("?") + 1, url.indexOf("?") + "fhir_vs".length() + 1).equals("fhir_vs");
+	}
+	
+	// generic means the original CodeSystem URL + an ending /vs suffix to get the implicit ValueSet working
+	public static boolean isGenericImplicitValueSetUrl(String url) {
+		return url != null && url.startsWith("http://") && url.endsWith(GENERIC_IMPLICIT_VALUESET_SUFFIX);
+	}
+	
+	public static String toGenericCodeSystemUrl(String genericImplicitValueSetUrl) {
+		Preconditions.checkArgument(isGenericImplicitValueSetUrl(genericImplicitValueSetUrl), "'url' is not a generic implicit Value Set URL");
+		return genericImplicitValueSetUrl.replace(GENERIC_IMPLICIT_VALUESET_SUFFIX, ""); 
 	}
 
 }

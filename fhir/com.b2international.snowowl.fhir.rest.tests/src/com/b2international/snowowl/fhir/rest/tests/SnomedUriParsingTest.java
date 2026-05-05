@@ -204,24 +204,28 @@ public class SnomedUriParsingTest {
 	public void testToUriWithQuery_fhir_vs() {
 		SnomedUri uri = SnomedUri.builder().valueSetsQuery().build();
 		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs", uri.toString());
+		assertEquals(true, FhirModelHelpers.isSnomedImplicitValueSetUrl(uri.toString()));
 	}
 
 	@Test
 	public void testToUriWithQuery_fhir_vs_isa() {
 		SnomedUri uri = SnomedUri.builder().isAQuery(Concepts.ROOT_CONCEPT).build();
 		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs=isa/" + Concepts.ROOT_CONCEPT, uri.toString());
+		assertEquals(true, FhirModelHelpers.isSnomedImplicitValueSetUrl(uri.toString()));
 	}
 
 	@Test
 	public void testToUriWithQuery_fhir_vs_refset() {
 		SnomedUri uri = SnomedUri.builder().refsetsQuery().build();
 		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs=refset", uri.toString());
+		assertEquals(true, FhirModelHelpers.isSnomedImplicitValueSetUrl(uri.toString()));
 	}
 	
 	@Test
 	public void testToUriWithQuery_fhir_vs_refset_slash() {
 		SnomedUri uri = SnomedUri.builder().refsetQuery(Concepts.ROOT_CONCEPT).build();
 		assertEquals(FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_vs=refset/" + Concepts.ROOT_CONCEPT, uri.toString());
+		assertEquals(true, FhirModelHelpers.isSnomedImplicitValueSetUrl(uri.toString()));
 	}
 	
 }

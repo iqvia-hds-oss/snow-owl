@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.ValueSet;
 
 import com.b2international.commons.exceptions.NotFoundException;
+import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -57,13 +58,20 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 	@Override
 	public ValueSet execute(ServiceProvider context) {
 		
-		final String uri = parameters.getUrl().asStringValue();
+		final String url = parameters.getUrl() == null ? null : parameters.getUrl().asStringValue();
+		
+		// for now we need an URL to be defined
+		if (Strings.isNullOrEmpty(url)) {
+			throw new BadRequestException("URL must be defined to expand a value set. 'valueSet' parameter is not available yet.", "url");
+		}
+		
 		ValueSet valueSet = null;
 		
-		try {
-			
-			// TODO consider skipping this for implicit VS URLs, should we even allow materializing them with an implicit URL?
-			valueSet = FhirRequests.valueSets().prepareGet(uri)
+		// check if url is an implicit URL
+		if (FhirModelHelpers.isImplicitValueSetURL(url)) {
+			valueSet = expandImplicitValueSet(context, url);
+		} else {
+			valueSet = FhirRequests.valueSets().prepareGet(url)
 					.setElements(ImmutableList.<String>builder()
 							.addAll(R5ObjectFields.ValueSet.SUMMARY)
 							.add(R5ObjectFields.ValueSet.STATUS)
@@ -71,20 +79,8 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 							.build())
 					.buildAsync()
 					.execute(context);
-			
-		} catch (NotFoundException e) {
-			
-			// If there is no Value Set present for the given URL, then try to parse the URL to a meaningful value if possible and evaluate it
-			if (uri.startsWith("http://")) {
-				valueSet = expandImplicitValueSet(context, uri);
-			}
-
-			// If we couldn't come up with an implicit value set definition, fail using the original exception...
-			if (valueSet == null) {
-				throw e;
-			}
 		}
-
+		
 		// ...otherwise we should have a VS composition that can be evaluated 
 		return context.service(RepositoryManager.class)
 			.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
@@ -97,30 +93,36 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 	private ValueSet expandImplicitValueSet(ServiceProvider context, String urlValue) {
 		// only URLs with query parts are supported, every other case is rejected for now
 		if (urlValue.contains("#")) {
-			return null;
+			throw new BadRequestException("Unsupported implicit Value Set URL with fragment '#' character: " + urlValue, urlValue);
 		}
 		
-		// restrict to only SNOMED CT for now, re-enable if clients relied on implicit value set expansion for other code systems
-		if (!FhirModelHelpers.isSnomedUri(urlValue)) {
-			return null;
-		}
-		
-		// extract the non-query part from the URL value
-		String version = urlValue.split("\\?")[0];
+		String codeSystemUrl = null;
+		String version = null;
 		String query = "";
-		if (urlValue.contains("?")) {
-			query = urlValue.split("\\?")[1];
+		if (FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
+			codeSystemUrl = FhirModelHelpers.SNOMED_BASE_URI_STRING;
+			// extract the non-query part from the URL value
+			version = urlValue.split("\\?")[0];
+			if (urlValue.contains("?")) {
+				query = urlValue.split("\\?")[1];
+			}
+			
+			// if this is the SNOMED CT base URI string then append the core module to represent the International Edition
+			if (FhirModelHelpers.SNOMED_BASE_URI_STRING.equals(version)) {
+				version = version.concat("/900000000000207008");
+			}
+		} else if (FhirModelHelpers.isGenericImplicitValueSetUrl(urlValue)) {
+			codeSystemUrl = FhirModelHelpers.toGenericCodeSystemUrl(urlValue);
+			// version cannot be extracted from the URL (TODO use another parameter, force-system-version or something else)
+		} else {
+			throw new BadRequestException("Unsupported implicit Value Set URL " + urlValue, urlValue);
 		}
 		
-		// if this is the SNOMED CT base URI string then append the core module to represent the International Edition
-		if (FhirModelHelpers.SNOMED_BASE_URI_STRING.equals(version)) {
-			version = version.concat("/900000000000207008");
-		}
 		
 		// try to lookup the CodeSystem using the baseUrl and version (to get the proper edition)
 		CodeSystem codeSystem = FhirRequests.codeSystems().prepareSearch()
 			.one()
-			.filterByUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.filterByUrl(codeSystemUrl)
 			.filterByVersion(version)
 			.setElements(FhirRequest.MINIMAL_CODESYSTEM_FIELD_SELECTION, false)
 			.buildAsync()
@@ -133,7 +135,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 		
 		// if no CodeSystem stored to use as Value Set source, return NotFound response
 		if (codeSystem == null) {
-			return null;
+			throw new BadRequestException("Supported implicit Value Set URL but no underlying CodeSystem is available at " + codeSystemUrl, urlValue);
 		}
 		
 		// return the content of the CodeSystem as Value Set
@@ -149,82 +151,87 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 		// also store the explicit version requested
 		valueSet.setUserData(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION, version);
 		
-		ValueSet.ValueSetComposeComponent compose = null;
 		
 		// configure query based on fhir_vs query parameter and also build the composFhirValueSetExpandere declaration for this implicit Value Set
-		if (Strings.isNullOrEmpty(query) || "fhir_vs".equals(query)) {
-			// do nothing, search all concepts
-		} else if (query.startsWith("fhir_vs=")) {
-			String fhirVsValue = query.replace("fhir_vs=", "");
-			if (fhirVsValue.startsWith("ecl/")) {
-				String ecl = fhirVsValue.replace("ecl/", "");
-				
-				// make sure we decode the ECL before using it
-				try {
-					ecl = URLDecoder.decode(ecl, StandardCharsets.UTF_8.toString());
-				} catch (UnsupportedEncodingException e) {
-					throw new BadRequestException("Failed to decode ECL expression: " + e.getMessage());
-				}
-				
-				// configure Value Set for ECL
-				valueSet
+		if (FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
+			ValueSet.ValueSetComposeComponent compose = null;
+			if (Strings.isNullOrEmpty(query) || "fhir_vs".equals(query)) {
+				// do nothing, search all concepts
+			} else if (query.startsWith("fhir_vs=")) {
+				String fhirVsValue = query.replace("fhir_vs=", "");
+				if (fhirVsValue.startsWith("ecl/")) {
+					String ecl = fhirVsValue.replace("ecl/", "");
+					
+					// make sure we decode the ECL before using it
+					try {
+						ecl = URLDecoder.decode(ecl, StandardCharsets.UTF_8.toString());
+					} catch (UnsupportedEncodingException e) {
+						throw new BadRequestException("Failed to decode ECL expression: " + e.getMessage());
+					}
+					
+					// configure Value Set for ECL
+					valueSet
 					.setName(String.format("%s Concepts matching %s", codeSystem.getName(), ecl))
 					.setDescription(String.format("All SNOMED CT concepts that match the expression constraint %s", ecl));
-				
-				// configure compose for ECL
-				compose = new ValueSet.ValueSetComposeComponent();
-				compose.addInclude()
-					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
-					.addFilter()
+					
+					// configure compose for ECL
+					compose = new ValueSet.ValueSetComposeComponent();
+					compose.addInclude()
+						.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+						.addFilter()
 						.setProperty("constraint")
 						.setOp(FilterOperator.EQUAL)
 						.setValue(ecl);
-
-			} else if (fhirVsValue.startsWith("isa/")) {
-				String parent = fhirVsValue.replace("isa/", "");
-				
-				// configure Value Set for IS A
-				valueSet
+					
+				} else if (fhirVsValue.startsWith("isa/")) {
+					String parent = fhirVsValue.replace("isa/", "");
+					
+					// configure Value Set for IS A
+					valueSet
 					.setName(String.format("%s Concept %s and descendants", codeSystem.getName(), parent))
 					.setDescription(String.format("All SNOMED CT concepts for %s", parent));
-			
-				// configure compose for IS A
-				compose = new ValueSet.ValueSetComposeComponent();
-				compose.addInclude()
-					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
-					.addFilter()
-						.setProperty("constraint")
-						.setOp(FilterOperator.ISA)
-						.setValue(parent);
-
-			} else if (fhirVsValue.startsWith("refset/")) {
-				String refsetId = fhirVsValue.replace("refset/", "");
-				if (Strings.isNullOrEmpty(refsetId)) {
-					// TODO support refset identifier concept search
-					return null;
-				} else {
-					// configure Value Set for REFSET
-					valueSet
-						.setName(String.format("%s Reference Set %s", codeSystem.getName(), refsetId))
-						.setDescription(String.format("All SNOMED CT concepts in the reference set %s", refsetId));
 					
-					// configure compose for REFSET
+					// configure compose for IS A
 					compose = new ValueSet.ValueSetComposeComponent();
 					compose.addInclude()
+					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+					.addFilter()
+					.setProperty("constraint")
+					.setOp(FilterOperator.ISA)
+					.setValue(parent);
+					
+				} else if (fhirVsValue.startsWith("refset/")) {
+					String refsetId = fhirVsValue.replace("refset/", "");
+					if (Strings.isNullOrEmpty(refsetId)) {
+						// TODO support refset identifier concept search
+						return null;
+					} else {
+						// configure Value Set for REFSET
+						valueSet
+						.setName(String.format("%s Reference Set %s", codeSystem.getName(), refsetId))
+						.setDescription(String.format("All SNOMED CT concepts in the reference set %s", refsetId));
+						
+						// configure compose for REFSET
+						compose = new ValueSet.ValueSetComposeComponent();
+						compose.addInclude()
 						.setSystem(version)
 						.addFilter()
-							.setProperty("concept")
-							.setOp(FilterOperator.IN)
-							.setValue(refsetId);
+						.setProperty("concept")
+						.setOp(FilterOperator.IN)
+						.setValue(refsetId);
+					}
+				} else {
+					// no support for this unknown filter, return 404
+					// TODO check against declared filter values in CodeSystem
+					throw new BadRequestException("Unsupported implicit SNOMED CT Value Set URL type: " + urlValue, urlValue);
 				}
-			} else {
-				// no support for this unknown filter, return 404
-				// TODO return unsupported maybe?
-				// TODO check against declared filter values in CodeSystem
-				return null;
 			}
+			return valueSet.setCompose(compose);
+		} else {
+			// TODO do we need compose definition for other implicit Value Sets?
+			
+			return valueSet;
 		}
 
-		return valueSet.setCompose(compose);
 	}
 }
