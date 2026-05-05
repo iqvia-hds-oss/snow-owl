@@ -14,7 +14,7 @@
     "rapidoc": "^9.3.8",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-	  "axios": "1.15.0"
+	  "axios": "1.16.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
