@@ -23,11 +23,11 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.hl7.fhir.r5.model.Coding;
-import org.hl7.fhir.r5.model.Enumerations.FilterOperator;
 import org.hl7.fhir.r5.model.Extension;
 import org.hl7.fhir.r5.model.StringType;
 import org.hl7.fhir.r5.model.ValueSet;
-import org.hl7.fhir.r5.model.ValueSet.*;
+import org.hl7.fhir.r5.model.ValueSet.ConceptReferenceDesignationComponent;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.http.AcceptLanguageHeader;
@@ -52,7 +52,7 @@ import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 /**
  * @since 9.5.0
  */
-public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
+public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSupport implements FhirValueSetExpander {
 
 	@Override
 	public ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters) {
@@ -78,40 +78,12 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 				// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
 				.put(SearchResourceRequest.OptionKey.SORT_BY, !CompareUtils.isEmpty(termFilter) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
 		
+		configureValueSetQuery(valueSet, conceptSearchOptions);
+		
 		final boolean includeDesignations = parameters.getIncludeDesignations() != null && parameters.getIncludeDesignations().getValue();
 		if (includeDesignations) {
 			// Expand descriptions when requested via includeDesignations
 			conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, ExpandParser.parse("descriptions(expand(type(expand(pt()))))"));
-		}
-		
-		if (!valueSet.hasCompose()) {
-			// do nothing, search all concepts
-		} else {
-			final ValueSetComposeComponent compose = valueSet.getCompose();
-			final ConceptSetComponent firstInclude = compose.getIncludeFirstRep();
-			
-			if (!firstInclude.hasFilter() && !firstInclude.hasConcept() && !firstInclude.hasValueSet()) {
-				/*
-				 * do nothing, search all concepts (theoretically we should be retrieving system
-				 * and version information from compose.include.system and compose.include.version, 
-				 * but we have already received the CodeSystem resource URI to resolve concepts)
-				 */
-			} else {
-				final ConceptSetFilterComponent firstFilter = firstInclude.getFilterFirstRep();
-				
-				if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.EQUAL.equals(firstFilter.getOp())) {
-					// Filter concepts by ECL
-					conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, firstFilter.getValue());
-				} else if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.ISA.equals(firstFilter.getOp())) {
-					// Filter concepts by ancestor
-					conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.ANCESTOR, firstFilter.getValue());
-				} else if ("concept".equals(firstFilter.getProperty()) && FilterOperator.IN.equals(firstFilter.getOp())) {
-					// filter concepts by memberOf ECL
-					conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, "^" + firstFilter.getValue());
-				} else {
-					throw new IllegalStateException("Unsupported implicit value set compose definition: " + compose);
-				}
-			}
 		}
 		
 		// seed already fetched resource information to prevent refetching the metadata
@@ -129,6 +101,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 		expansion.addExtension(FhirValueSetExpander.EXTENSION_AFTER_PROPERTY_URL, new StringType(concepts.getSearchAfter()));
 		
 		final String version = valueSet.getUserString(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION);
+		
 		
 		for (Concept concept : concepts) {
 			var contains = new ValueSet.ValueSetExpansionContainsComponent()
