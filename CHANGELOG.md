@@ -1,6 +1,59 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 10.1.0
+
+### Java Runtime
+Starting from 10.1.0, Snow Owl requires Java 25 both compile and runtime. (#1483)
+
+### FHIR
+- Support loading FHIR npm packages from official registries or through custom upload (#1503)
+  * This is a Preview feature that will reach its final state in future releases
+  * NOTE: this is a Pro feature that requires a license to test out
+- SNOMED CT URI handling improvements to allow the generic base http://snomed.info/sct URI to be used in system and url arguments (#1497)
+  * Response CodeSystems now properly set the url and version fields to their respective SNOMED URI values
+- Support `date` parameter in CodeSystem and ValueSet validate-code and expand operations (#1500)
+- Add back support for implicit SNOMED CT URLs in ValueSet$validate-code operations (#1505)
+- Eliminate unnecessary calls to optimize FHIR operation performance by ~400% (#1505)
+
+### Security
+- Mitigate security vulnerabilities CVE-2026-22732, CVE-2026-2950, CVE-2026-4800, CVE-2026-39363, CVE-2026-39364, CVE-2026-39365, CVE-2026-40175, CVE-2025-62718, GHSA-r4q5-vmmm-2653, CVE-2026-3505, CVE-2026-2332
+
+### Bugs/Improvements
+- [config] rename emailClaimProperty to userIdClaimProperty in snowowl.yml configuration
+- [config] remove old concrete domain model configuration options from snowowl.yml (#1488)
+- [config] move MRCM configuration to resource settings to allow for per SNOMED CT Edition customization (#1495)
+- [core] fail job scheduling if parameters cannot be serialized (#1481)
+- [validation] simplify and fix validation rule80 implementation (#1504)
+- [fhir] prevent deadlock when trying to fetch FHIR CapabilityStatement and serialize FHIR models in logs (#1492)
+- [fhir] support storing and retrieving the caseSensitive property of FHIR CodeSystem (#1499)
+- [ci] update mvn wrapper to 3.3.4
+- [packaging] remove support for deb and rpm packaging (#1484)
+
+### Dependencies
+- Bump Eclipse Platform to 2026-03 (e4.39)
+- Bump EMF to 2.45.0
+- Bump Xtext/Xtend to 2.42.0
+- Bump Jetty to 12.1.8
+- Bump SLF4J to 2.0.17 and Logback to 1.5.32
+- Bump Groovy to 5.0.5
+- Bump fhir-core to 0.6.0
+- Bump bouncycastle to 1.83.0
+- Bump swagger to 2.2.43
+- Bump Spring to 6.2.17
+- Bump Spring Security to 6.5.10
+- Bump bucket4j to 8.17.0
+- Bump Netty to 4.1.132.Final
+- Bump commons-lang3 to 3.20.0
+- Bump testcontainers to 2.0.4
+- Bump rest-assured to 6.0.0
+- Bump ASM to 9.9.1
+- Bump assertj-core to 3.27.7
+- Bump mockito to 5.21.0
+- Bump bytebuddy to 1.18.5
+- Bump Tycho to 5.0.2
+- Bump Jacoco to 0.8.14
+
 ## 10.0.0
 
 ### Breaking changes
