@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.google.common.base.Strings;
 /**
  * Common representation for both resource and version documents to simplify search and mapping logic.
  * 
- * @since 8.0
+ * @since 10.1.0
  */
 public final class ResourceFragment {
 

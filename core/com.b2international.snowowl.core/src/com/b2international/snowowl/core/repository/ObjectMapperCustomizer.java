@@ -18,7 +18,7 @@ package com.b2international.snowowl.core.repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * @since 10.0.1
+ * @since 10.1.0
  */
 @FunctionalInterface
 public interface ObjectMapperCustomizer {
