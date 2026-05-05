@@ -19,7 +19,7 @@ Features include:
     * Independent work branches offer work-in-process isolation, external business workflow integration and team collaboration
 * SNOMED CT and others
     * SNOMED CT terminology support
-        * RF2 Release File Specification as of 2026-03-01
+        * RF2 Release File Specification as of 2026-05-01
         * Support for Relationships with concrete values
         * Official and Custom Reference Sets
         * Expression Constraint Language v2.2.0 [spec](https://confluence.ihtsdotools.org/download/attachments/33493263/doc_ExpressionConstraintLanguage_v2.2-en-US_INT_20231122.pdf?api=v2), [implementation](https://github.com/b2ihealthcare/snomed-ecl)
@@ -34,8 +34,10 @@ Features include:
 * Highly extensible and configurable
     * Simple to use plug-in system makes it easy to develop and add new terminology tooling/API or any other functionality
 * Built on top of [Elasticsearch](https://www.elastic.co/elasticsearch) (highly scalable, distributed, open source search engine)
-    * Supports up to the latest Elasticsearch 8 with compatibility mode enabled for Elasticsearch 7 clusters (Elasticsearch 9 is not supported yet)
-    * All the power of Elasticsearch is available (full-text search features, monitoring, machine-learning, analytics and many more)
+    * All the power of Elasticsearch is available (monitoring, analytics, and many more)
+    * Connect to a local or remote cluster
+        * Elasticsearch 8 clusters are recommended and supported
+        * ⚠️ Elasticsearch 9 support is not yet available
 
 # Download
 
@@ -60,7 +62,7 @@ Not the version you're looking for? View [past releases](https://github.com/b2ih
 
 ### Install and Run
 
-NOTE: You need to have at least version 21 of the JDK installed for local builds and running the development environment. Official releases include the [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=21) runtime.
+NOTE: You need to have at least version 25 of the JDK installed for local builds and running the development environment. Official releases include the [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=25) runtime.
 
 The recommended install option is via the [official OSS](https://hub.docker.com/r/b2ihealthcare/snow-owl-oss) (or the Pro version registries if you have access to those) Docker image. 
 
@@ -91,19 +93,19 @@ These instructions will get Snow Owl up and running on your local machine for de
 ## Prerequisites
 
 Snow Owl is an Equinox-OSGi based server. To develop plug-ins for Snow Owl you need to use Eclipse as IDE: 
-* Download Eclipse IDE for Eclipse Committers 2025-03 package from here: https://www.eclipse.org/downloads/packages/release/2025-03/r/eclipse-ide-eclipse-committers
+* Download Eclipse IDE for Eclipse Committers 2026-03 package from here: https://www.eclipse.org/downloads/packages/release/2025-03/r/eclipse-ide-eclipse-committers
 
 Required Eclipse plug-ins in order (install the listed features via `Help` &rarr; `Install New Software...`):
 
 *Note: you may have to untick the `Show only the latest versions of the available software` checkbox to get older versions of a feature. Please use the exact version specified below, not the latest point release.*
 
-* Groovy Development Tools (https://groovy.jfrog.io/ui/native/plugins-release/e4.35 or https://groovy.jfrog.io/artifactory/plugins-release-local/org/codehaus/groovy/groovy-eclipse-integration/5.7.0/e4.35)
-  * Eclipse Groovy Development Tools - 5.7.0 (in category "Main Package")
+* Groovy Development Tools (https://groovy.jfrog.io/ui/native/plugins-release/e4.39 or https://groovy.jfrog.io/artifactory/plugins-release-local/org/codehaus/groovy/groovy-eclipse-integration/6.1.0/e4.39)
+  * Eclipse Groovy Development Tools - 6.1.0 (in category "Main Package")
 * MWE2 (https://download.eclipse.org/modeling/emft/mwe/updates/releases/2.24.0/)
   * MWE SDK 1.18.0 (MWE)
 * Xtext/Xtend (https://download.eclipse.org/modeling/tmf/xtext/updates/releases/2.38.0/)
-  * Xtend IDE 2.38.0 (Xtext)
-  * Xtext Complete SDK 2.38.0 (Xtext)
+  * Xtend IDE 2.42.0 (Xtext)
+  * Xtext Complete SDK 2.42.0 (Xtext)
  
 ### Eclipse Preferences
 
