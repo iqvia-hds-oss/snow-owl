@@ -12,7 +12,7 @@ services:
         soft: 65536
         hard: 65536
     volumes:
-      - es-data:/usr/share/elasticsearch/data
+      - ./data:/usr/share/elasticsearch/data
       - ./config/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
       - ./config/elasticsearch/synonym.txt:/usr/share/elasticsearch/config/analysis/synonym.txt
     healthcheck:
@@ -39,7 +39,3 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
-
-volumes:
-  es-data:
-    driver: local
