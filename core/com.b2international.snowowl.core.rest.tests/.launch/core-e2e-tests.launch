@@ -45,6 +45,7 @@
         <setEntry value="bcutil@default:default"/>
         <setEntry value="ch.qos.logback.classic@2:true"/>
         <setEntry value="ch.qos.logback.core@2:true"/>
+        <setEntry value="com.b2international.fhir.core@default:default"/>
         <setEntry value="com.b2international.snomed.ecl@default:default"/>
         <setEntry value="com.bucket4j.core@default:default"/>
         <setEntry value="com.fasterxml.classmate@default:default"/>
