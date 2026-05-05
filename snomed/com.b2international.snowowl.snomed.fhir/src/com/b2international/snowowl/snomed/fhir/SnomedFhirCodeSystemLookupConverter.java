@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.*;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
 import com.b2international.fhir.r5.operations.CodeSystemLookupResultParameters;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -47,12 +48,11 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 	private static final String SNOMED_SYSTEM_URL = "http://snomed.info/sct";
 
 	@Override
-	public String configureConceptExpand(CodeSystemLookupParameters request) {
-		boolean requestedChild = request.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD);
-		boolean requestedParent = request.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT);
-		String expandDescendants = requestedChild ? ",descendants(direct:true,expand(pt()))" : "";
-		String expandAncestors = requestedParent ? ",ancestors(direct:true,expand(pt()))" : "";
-		return String.format("descriptions(expand(type(expand(pt()))),sort:\"typeId,term\"),pt()%s%s", expandDescendants, expandAncestors);
+	public String configureConceptExpand(CodeSystemLookupParameters parameters) {
+		String expandDescriptions = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION) ? "descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")" : null;
+		String expandDescendants = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD) ? "descendants(direct:true,expand(pt()))" : null;
+		String expandAncestors = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT) ? "ancestors(direct:true,expand(pt()))" : null;
+		return StringUtils.COMMA_JOINER.join("pt()", expandDescriptions, expandDescendants, expandAncestors);
 	}
 	
 	@Override
@@ -207,6 +207,7 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 			.collect(Collectors.toSet());
 		
 		if (!relationshipTypeIds.isEmpty()) {
+			// TODO use expand logic instead of custom fetch?
 			SnomedRequests.prepareSearchRelationship()
 				.all()
 				.filterByActive(true)

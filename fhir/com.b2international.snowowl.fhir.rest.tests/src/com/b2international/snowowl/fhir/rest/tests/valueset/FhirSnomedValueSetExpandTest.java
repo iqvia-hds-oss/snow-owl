@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.valueset;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.APPLICATION_FHIR_JSON;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.VALUESET_EXPAND;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import org.junit.Test;
 
@@ -42,7 +44,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	@Test
 	public void expandSnomedCodeSystemURL() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.queryParam("url", SNOMEDCT_URL)
+			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
 			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
@@ -56,9 +58,18 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void expandSnomedCodeSystemURL_NoModuleFallbackToInt() throws Exception {
+	public void expandSnomedCodeSystemURL_WithoutFhirVs() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT)
+			.when().get(VALUESET_EXPAND)
+			.then()
+			.statusCode(404);
+	}
+	
+	@Test
+	public void expandSnomedCodeSystemURL_NoModuleFallbackToInt() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "?fhir_vs")
 			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
@@ -206,7 +217,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.when().post(VALUESET_EXPAND)
 			.then()
 			.assertThat()
-			.statusCode(404);
+			.statusCode(400);
 	}
 	
 	@Test

@@ -55,6 +55,11 @@ public final class CodeSystemResourceTypeConverter implements ResourceTypeConver
 	}
 	
 	@Override
+	public Resource toResource(ResourceFragment entry) {
+		return CodeSystem.from(entry);
+	}
+	
+	@Override
 	public Integer getRank() {
 		return 3;
 	}

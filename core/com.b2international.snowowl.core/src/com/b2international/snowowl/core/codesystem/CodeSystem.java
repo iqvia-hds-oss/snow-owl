@@ -15,10 +15,7 @@
  */
 package com.b2international.snowowl.core.codesystem;
 
-import com.b2international.snowowl.core.Dependency;
-import com.b2international.snowowl.core.ResourceURI;
-import com.b2international.snowowl.core.ResourceURIWithQuery;
-import com.b2international.snowowl.core.TerminologyResource;
+import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.internal.ResourceDocument;
 
@@ -83,6 +80,27 @@ public final class CodeSystem extends TerminologyResource {
 		codeSystem.setToolingId(doc.getToolingId());
 		codeSystem.setSettings(doc.getSettings());
 		codeSystem.setDependencies(doc.getDependencies() == null ? null : doc.getDependencies().stream().map(Dependency::from).toList());
+		return codeSystem;
+	}
+	
+	public static CodeSystem from(ResourceFragment entry) {
+		CodeSystem codeSystem = new CodeSystem();
+		codeSystem.setId(entry.extractResourceId());
+		codeSystem.setBranchPath(entry.extractResourceBranchPath());
+		codeSystem.setUrl(entry.getUrl());
+		codeSystem.setTitle(entry.getTitle());
+		codeSystem.setLanguage(entry.getLanguage());
+		codeSystem.setDescription(entry.getDescription());
+		codeSystem.setStatus(entry.getStatus());
+		codeSystem.setCopyright(entry.getCopyright());
+		codeSystem.setContact(entry.getContact());
+		codeSystem.setPurpose(entry.getPurpose());
+		codeSystem.setCreatedAt(entry.getCreatedAt());
+		codeSystem.setUpdatedAt(entry.getUpdatedAt());
+		codeSystem.setOid(entry.getOid());
+		codeSystem.setToolingId(entry.getToolingId());
+		codeSystem.setSettings(entry.getSettings());
+		codeSystem.setDependencies(entry.getDependencies() == null ? null : entry.getDependencies().stream().map(Dependency::from).toList());
 		return codeSystem;
 	}
 

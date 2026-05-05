@@ -43,10 +43,8 @@ import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.index.query.Query;
-import com.b2international.index.revision.RevisionBranchPoint;
 import com.b2international.index.revision.RevisionSearcher;
-import com.b2international.snowowl.core.ResourceURI;
-import com.b2international.snowowl.core.TerminologyResource;
+import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.internal.ResourceDocument;
@@ -259,6 +257,10 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				internalFields.add(ResourceDocument.Fields.TOOLING_ID);
 			}
 			
+			if (!internalFields.contains(ResourceDocument.Fields.BRANCH_PATH)) {
+				internalFields.add(ResourceDocument.Fields.BRANCH_PATH);
+			}
+			
 			if (!internalFields.contains(ResourceDocument.Fields.CREATED_AT)) {
 				internalFields.add(ResourceDocument.Fields.CREATED_AT);
 			}
@@ -267,6 +269,11 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				internalFields.add(ResourceDocument.Fields.UPDATED_AT);
 			}
 			
+			if (!internalFields.contains(ResourceDocument.Fields.DEPENDENCIES)) {
+				internalFields.add(ResourceDocument.Fields.DEPENDENCIES);
+			}
+			
+			// version doc only fields go here, anything that is shared go above using resource field constants
 			if (!internalFields.contains(VersionDocument.Fields.VERSION)) {
 				internalFields.add(VersionDocument.Fields.VERSION);
 			}
@@ -448,9 +455,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		entry.setStatus(toPublicationStatus(resource.getStatus()));
 		entry.setMeta(toMeta(resource.getUpdatedAt(), resource.getCreatedAt()));
 		
-		// Add tooling ID and "native" resource URI as user data to be used for later processing if needed
-		entry.setUserData(TerminologyResource.Fields.TOOLING_ID, resource.getToolingId());
-		entry.setUserData(TerminologyResource.Fields.RESOURCE_URI, resource.getResourceURI());
+		// store the entire resource fragment to reuse any loaded data in subsequent requests when needed
+		// see FhirModelHelpers for easy accessors for specific fields, such as tooling ID and "native" resource URI
+		entry.setUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE, resource);
 		
 		// We are using the raw ID of the resource as machine readable name
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, resource::getId, entry::setName);
@@ -562,193 +569,4 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		return searchResults;
 	}
 
-	/**
-	 * Common representation for both resource and version documents to simplify search and mapping logic.
-	 * 
-	 * @since 8.0
-	 */
-	protected static class ResourceFragment {
-		private String id;
-		private String version;
-		private String description;
-		private String resourceType;
-		private Long createdAt;
-		private Long updatedAt;
-		private String toolingId;
-		private String url;
-		private String branchPath;
-		private Long effectiveTime;
-		
-		private String resourceDescription;
-		private String title;
-		private String status;
-		private String contact;
-		private String copyright;
-		private String language;
-		private String purpose;
-		private String oid;
-		private Map<String, Object> settings;
-		
-		private RevisionBranchPoint created;
-		
-		public final ResourceURI getResourceURI() {
-			return ResourceURI.of(resourceType, id);
-		}
-		
-		public String getId() {
-			return id;
-		}
-		
-		public String getVersion() {
-			return version;
-		}
-		
-		public Long getEffectiveTime() {
-			return effectiveTime;
-		}
-		
-		public String getDescription() {
-			return description;
-		}
-		
-		public String getResourceType() {
-			return resourceType;
-		}
-		
-		public Long getCreatedAt() {
-			return createdAt;
-		}
-		
-		public Long getUpdatedAt() {
-			return updatedAt;
-		}
-		
-		public String getToolingId() {
-			return toolingId;
-		}
-		
-		public String getUrl() {
-			return url;
-		}
-		
-		public String getBranchPath() {
-			return branchPath;
-		}
-		
-		public String getResourceDescription() {
-			return resourceDescription;
-		}
-		
-		public String getTitle() {
-			return title;
-		}
-		
-		public String getStatus() {
-			return status;
-		}
-		
-		public String getContact() {
-			return contact;
-		}
-		
-		public String getCopyright() {
-			return copyright;
-		}
-		
-		public String getLanguage() {
-			return language;
-		}
-		
-		public String getPurpose() {
-			return purpose;
-		}
-		
-		public String getOid() {
-			return oid;
-		}
-		
-		public Map<String, Object> getSettings() {
-			return settings;
-		}
-		
-		public RevisionBranchPoint getCreated() {
-			return created;
-		}
-		
-		public void setId(final String id) {
-			this.id = id;
-		}
-		
-		public void setVersion(final String version) {
-			this.version = version;
-		}
-		
-		public void setDescription(final String description) {
-			this.description = description;
-		}
-		
-		public void setResourceType(final String resourceType) {
-			this.resourceType = resourceType;
-		}
-		
-		public void setCreatedAt(final Long createdAt) {
-			this.createdAt = createdAt;
-		}
-		
-		public void setUpdatedAt(final Long updatedAt) {
-			this.updatedAt = updatedAt;
-		}
-		
-		public void setToolingId(final String toolingId) {
-			this.toolingId = toolingId;
-		}
-		
-		public void setUrl(final String url) {
-			this.url = url;
-		}
-		
-		public void setBranchPath(final String branchPath) {
-			this.branchPath = branchPath;
-		}
-		
-		public void setResourceDescription(final String resourceDescription) {
-			this.resourceDescription = resourceDescription;
-		}
-		
-		public void setTitle(final String title) {
-			this.title = title;
-		}
-		
-		public void setStatus(final String status) {
-			this.status = status;
-		}
-		
-		public void setContact(final String contact) {
-			this.contact = contact;
-		}
-		
-		public void setCopyright(final String copyright) {
-			this.copyright = copyright;
-		}
-		
-		public void setLanguage(final String language) {
-			this.language = language;
-		}
-		
-		public void setPurpose(final String purpose) {
-			this.purpose = purpose;
-		}
-		
-		public void setOid(final String oid) {
-			this.oid = oid;
-		}
-		
-		public void setSettings(final Map<String, Object> settings) {
-			this.settings = settings;
-		}
-		
-		public void setCreated(final RevisionBranchPoint created) {
-			this.created = created;
-		}
-	}
 }

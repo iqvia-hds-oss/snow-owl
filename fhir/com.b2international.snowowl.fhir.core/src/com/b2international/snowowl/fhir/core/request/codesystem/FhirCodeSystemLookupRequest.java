@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,19 @@ import java.util.stream.Collectors;
 import org.hl7.fhir.r5.model.CodeSystem;
 
 import com.b2international.commons.exceptions.NotFoundException;
+import com.b2international.commons.http.AcceptLanguageHeader;
+import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
 import com.b2international.fhir.r5.operations.CodeSystemLookupResultParameters;
-import com.b2international.snowowl.core.RepositoryManager;
-import com.b2international.snowowl.core.ResourceURI;
-import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.TerminologyResource;
-import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.domain.Concept;
+import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.core.request.ExpandParser;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
 /**
@@ -65,24 +67,33 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 		validateRequestedProperties(codeSystem);
 		
 		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
+		
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
 
-		FhirCodeSystemLookupConverter converter = context.service(RepositoryManager.class).get(codeSystem.getUserString(TerminologyResource.Fields.TOOLING_ID))
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+		final FhirCodeSystemLookupConverter converter = codeSystemToolingRepository
 				.optionalService(FhirCodeSystemLookupConverter.class)
 				.orElse(FhirCodeSystemLookupConverter.DEFAULT);
 		
 		final String conceptExpand = converter.configureConceptExpand(parameters);
 		
-		final ResourceURI resourceUri = FhirModelHelpers.resourceUriFrom(codeSystem);
-		Concept concept = CodeSystemRequests.prepareSearchConcepts()
-			.one()
-			.filterByCodeSystemUri(resourceUri)
-			.filterById(parameters.extractCode())
-			.setLocales(displayLanguage)
-			.setExpand(conceptExpand)
-			.buildAsync()
-			.execute(context)
-			.first()
-			.orElseThrow(() -> new NotFoundException("Concept", parameters.getCode().getCode()));
+		final ResourceURI codeSystemUri = resource.getResourceURI();
+		
+		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		Options conceptSearchOptions = Options.builder()
+				.put(ConceptSearchRequestEvaluator.OptionKey.ID, parameters.extractCode())
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, 1)
+				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
+				.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, ExpandParser.parse(conceptExpand))
+				.build();
+		
+		// seed already fetched resource information to prevent refetching the metadata
+		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		
+		Concept concept = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+				.evaluate(codeSystemUri, searchContext, conceptSearchOptions)
+				.first()
+				.orElseThrow(() -> new NotFoundException("Concept", parameters.getCode().getCode()));
 		
 		CodeSystemLookupResultParameters result = new CodeSystemLookupResultParameters();
 		
@@ -95,7 +106,33 @@ final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResu
 		return result;
 	}
 	
+	@Override
+	protected Set<String> configureFieldsToLoad() {
+		if (!parameters.getPropertyValues().isEmpty()) {
+			// if an non-official property is requested, then we need to load the property part 
+			final Set<String> requestedProperties = Set.copyOf(parameters.getPropertyValues());
+			// first check if any of the properties are lookup request properties
+			final Set<String> nonLookupRequestProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);
+			
+			if (!nonLookupRequestProperties.isEmpty()) {
+				return ImmutableSet.<String>builder()
+						// ensure we always extend the superclass default set of required fields
+						.addAll(super.configureFieldsToLoad())
+						// expand the properties of the CodeSystem, so that we can properly expand it on the concept
+						.add(R5ObjectFields.CodeSystem.PROPERTY)
+						.build();
+			}
+		}
+		// super defines the ultra minimal set
+		return super.configureFieldsToLoad();
+	}
+	
 	private void validateRequestedProperties(CodeSystem codeSystem) {
+		// no property requested, nothing to validate
+		if (parameters.getPropertyValues().isEmpty()) {
+			return;
+		}
+		
 		final Set<String> requestedProperties = Set.copyOf(parameters.getPropertyValues());
 		// first check if any of the properties are lookup request properties
 		final Set<String> nonLookupProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);

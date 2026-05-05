@@ -140,23 +140,7 @@ public class CodeSystemApiDependencyTest extends BaseResourceApiTest {
 		assertCodeSystemCreate(
 			prepareCodeSystemCreateRequestBody("duplicateDependencies_SameScope")
 				.with("dependencies", List.of(Dependency.of(CodeSystem.uri(parentCodeSystemId, "v1"), "extensionOf"), Dependency.of(CodeSystem.uri(parentCodeSystemId, "v1"), "extensionOf")))
-		).statusCode(400).body("message", equalTo("Some of the requested dependencies ('["+parentCodeSystemId+"]') are listed more than once. Correct the dependencies array and try again."));
-	}
-	
-	@Test
-	public void create_DuplicateReference_DifferentScope() {
-		final String parentCodeSystemId = IDs.base62UUID();
-		final Json parentRequestBody = prepareCodeSystemCreateRequestBody(parentCodeSystemId);
-		createCodeSystem(parentRequestBody);
-		assertCodeSystemGet(parentCodeSystemId).statusCode(200);
-		
-		final Json versionRequestBody = prepareVersionCreateRequestBody(CodeSystem.uri(parentCodeSystemId), "v1", "2020-04-16");
-		assertVersionCreated(versionRequestBody).statusCode(201);
-		
-		assertCodeSystemCreate(
-			prepareCodeSystemCreateRequestBody("duplicateDependencies_DiffScope")
-			.with("dependencies", List.of(Dependency.of(CodeSystem.uri(parentCodeSystemId, "v1"), "extensionOf"), Dependency.of(CodeSystem.uri(parentCodeSystemId, "v1"), "someOtherScope")))
-		).statusCode(400).body("message", equalTo("Some of the requested dependencies ('["+parentCodeSystemId+"]') are listed more than once. Correct the dependencies array and try again."));
+		).statusCode(400).body("message", equalTo("Some of the requested dependencies ('[extensionOf:"+parentCodeSystemId+"]') are listed more than once. Correct the dependencies array and try again."));
 	}
 	
 	@Test
@@ -172,7 +156,7 @@ public class CodeSystemApiDependencyTest extends BaseResourceApiTest {
 		assertCodeSystemCreate(
 			prepareCodeSystemCreateRequestBody("duplicateDependencies_DiffScope")
 			.with("dependencies", List.of(Dependency.of(CodeSystem.uri(parentCodeSystemId, "v1"), "extensionOf"), Dependency.of(CodeSystem.uri(parentCodeSystemId, "v2"), "extensionOf")))
-		).statusCode(400).body("message", equalTo("Some of the requested dependencies ('["+parentCodeSystemId+"]') are listed more than once. Correct the dependencies array and try again."));
+		).statusCode(400).body("message", equalTo("Some of the requested dependencies ('[extensionOf:"+parentCodeSystemId+"]') are listed more than once. Correct the dependencies array and try again."));
 	}
 	
 	@Test

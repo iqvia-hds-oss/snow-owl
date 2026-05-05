@@ -20,6 +20,7 @@ import java.util.List;
 import org.hl7.fhir.r5.model.ConceptMap;
 
 import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.FhirResourceSearchRequest;

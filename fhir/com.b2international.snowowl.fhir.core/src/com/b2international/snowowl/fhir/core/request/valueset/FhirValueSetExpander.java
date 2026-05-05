@@ -18,7 +18,6 @@ package com.b2international.snowowl.fhir.core.request.valueset;
 import org.hl7.fhir.r5.model.ValueSet;
 
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
-import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 
 /**
@@ -27,19 +26,6 @@ import com.b2international.snowowl.core.ServiceProvider;
 @FunctionalInterface
 public interface FhirValueSetExpander {
 
-	/**
-	 * userData key to access the code system URI that is associated with the
-	 * ValueSet being expanded. The value is expected to be a {@link ResourceURI}.
-	 */
-	String USERDATA_CODE_SYSTEM_URI = "codeSystemUri";
-
-	/**
-	 * userData key to access the code system version that is associated with the
-	 * ValueSet being expanded (can be included with every expanded concept in the
-	 * resulting ValueSet). The value is expected to be a String.
-	 */
-	String USERDATA_CODE_SYSTEM_VERSION = "codeSystemVersion";
-	
 	FhirValueSetExpander NOOP = (_, valueSet, _) -> valueSet;
 	
 	/**

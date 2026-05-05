@@ -290,8 +290,8 @@ public abstract class BaseTerminologyResourceCreateRequest extends BaseResourceC
 			return;
 		}
 		
-		final Set<String> duplicateResourceIdReferences = dependenciesToCheck.stream()
-				.map(dep -> dep.getUri().getResourceUri().getResourceId())
+		final Set<String> duplicateResourceIdReferencesByScope = dependenciesToCheck.stream()
+				.map(dep -> String.join(":", dep.getScope(), dep.getUri().getResourceUri().getResourceId()))
 				.collect(Collectors.toCollection(HashMultiset::create))
 				.entrySet()
 				.stream()
@@ -299,8 +299,8 @@ public abstract class BaseTerminologyResourceCreateRequest extends BaseResourceC
 				.map(entry -> entry.getElement())
 				.collect(Collectors.toSet());
 		
-		if (!duplicateResourceIdReferences.isEmpty()) {
-			throw new BadRequestException("Some of the requested dependencies ('%s') are listed more than once. Correct the dependencies array and try again.", ImmutableSortedSet.copyOf(duplicateResourceIdReferences));
+		if (!duplicateResourceIdReferencesByScope.isEmpty()) {
+			throw new BadRequestException("Some of the requested dependencies ('%s') are listed more than once. Correct the dependencies array and try again.", ImmutableSortedSet.copyOf(duplicateResourceIdReferencesByScope));
 		}
 	}
 	

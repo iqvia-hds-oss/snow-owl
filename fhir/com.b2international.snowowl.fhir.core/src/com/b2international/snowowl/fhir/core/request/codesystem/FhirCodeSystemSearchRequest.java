@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 
 import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.internal.ResourceDocument;
@@ -112,7 +113,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 			 * this information to determine content mode in the first place. Servers are allowed
 			 * to return more information than requested according to the specification.
 			 */
-			final int count = converter.count(context, resourceURI);
+			final int count = converter.count(context, resource.getToolingId(), resourceURI);
 			entry.setCount(count);
 
 			/*
@@ -128,7 +129,7 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 			}
 			
 		} else {
-			includeIfFieldSelected(R5ObjectFields.CodeSystem.COUNT, () -> converter.count(context, resourceURI), entry::setCount);
+			includeIfFieldSelected(R5ObjectFields.CodeSystem.COUNT, () -> converter.count(context, resource.getToolingId(), resourceURI), entry::setCount);
 		}
 		
 		includeIfFieldSelected(R5ObjectFields.CodeSystem.CONCEPT, () -> converter.expandConcepts(context, resourceURI, locales()), entry::setConcept);

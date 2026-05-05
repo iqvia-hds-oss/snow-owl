@@ -30,6 +30,7 @@ import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirResourceSearchRequest.OptionKey;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 /**
@@ -108,15 +109,25 @@ public abstract class FhirResourceSearchRequestBuilder<B extends FhirResourceSea
 	}
 	
 	public final B setElements(Iterable<String> elements) {
+		return setElements(elements, true);
+	}
+	
+	public final B setElements(Iterable<String> elements, boolean appendMandatoryFields) {
 		if (elements == null) {
 			return getSelf();
 		} else {
-			final Set<String> fields = new LinkedHashSet<>(fields()); // always get the already configured field values 
-			// when called with a non-null value, make sure mandatory fields are implicitly included
-			fields.addAll(getMandatoryFields());
-			// add all other fields
+			// register the newly added fields only, throw away the previous set
+			final Set<String> fields = new LinkedHashSet<>();
+			
+			// first, append mandatory if requested
+			if (appendMandatoryFields) {
+				fields.addAll(getMandatoryFields());
+			}
+			
+			// then, append all explicitly requested fields
 			elements.forEach(fields::add);
 			
+			// check for anything not supported by this search request (per resource type)
 			Set<String> unrecognizedElements = Sets.difference(fields, getKnownResourceFields());
 			if (!unrecognizedElements.isEmpty()) {
 				throw new BadRequestException(String.format(

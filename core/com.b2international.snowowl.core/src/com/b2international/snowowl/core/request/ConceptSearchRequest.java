@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,26 +60,14 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 
 	@Override
 	protected Concepts doExecute(ServiceProvider context) throws IOException {
-		final int limit = limit();
-		
-		Options conceptSearchOptions = Options.builder()
-				.putAll(options())
-				.put(ConceptSearchRequestEvaluator.OptionKey.ID, componentIds())
-				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, searchAfter())
-				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, limit)
-				.put(ConceptSearchRequestEvaluator.OptionKey.MIN_SCORE, minScore())
-				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, locales())
-				.put(ConceptSearchRequestEvaluator.OptionKey.FIELDS, fields())
-				.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, expand())
-				.put(SearchResourceRequest.OptionKey.SORT_BY, sortBy())
-				.build();
-		
 		final CodeSystemSearchRequestBuilder codeSystemSearchReq = CodeSystemRequests.prepareSearchCodeSystem()
 				.all();
 		
 		final Map<ResourceURI, ResourceURI> codeSystemResourceFiltersByResource;
 		if (containsKey(OptionKey.CODESYSTEM)) {
-			// remove path so we can use the code resource URI as key
+			// remove path so we can use the resource URI core part as key
+			// this also ensure we only perform a search per codesystem 
+			// TODO this will throw an error if a List is registered with multiple URIs pointing to the same CodeSystem
 			codeSystemResourceFiltersByResource = Maps.uniqueIndex(getCollection(OptionKey.CODESYSTEM, ResourceURI.class), uri -> uri.withoutPath()); 
 			// for filtering use the keys
 			codeSystemSearchReq.filterByIds(codeSystemResourceFiltersByResource.keySet().stream().map(ResourceURI::getResourceId).collect(Collectors.toSet())); 
@@ -95,7 +83,7 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 			.stream()
 			.map(codeSystem -> {
 				final ResourceURI uriToEvaluateOn = codeSystemResourceFiltersByResource.getOrDefault(codeSystem.getResourceURI(), codeSystem.getResourceURI());
-				return context.service(RepositoryManager.class).get(codeSystem.getToolingId()).service(ConceptSearchRequestEvaluator.class).evaluate(uriToEvaluateOn, context, conceptSearchOptions);
+				return runConceptSearch(context, codeSystem.getToolingId(), uriToEvaluateOn);
 			})
 //			.sorted(comparator) // TODO perform Java SORT on Concept fields
 //			.limit(limit)
@@ -118,11 +106,26 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 		}
 		
 		return new Concepts(
-			concepts.stream().flatMap(Concepts::stream).limit(limit).collect(Collectors.toList()), // TODO add manual sorting here if multiple resources have been fetched 
+			concepts.stream().flatMap(Concepts::stream).limit(limit()).collect(Collectors.toList()), // TODO add manual sorting here if multiple resources have been fetched 
 			null, /* not supported across codesystems */
-			limit, 
+			limit(), 
 			total
 		);
+	}
+
+	private Concepts runConceptSearch(ServiceProvider context, final String toolingId, final ResourceURI codeSystemUri) {
+		Options conceptSearchOptions = Options.builder()
+				.putAll(options())
+				.put(ConceptSearchRequestEvaluator.OptionKey.ID, componentIds())
+				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, searchAfter())
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, limit())
+				.put(ConceptSearchRequestEvaluator.OptionKey.MIN_SCORE, minScore())
+				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, locales())
+				.put(ConceptSearchRequestEvaluator.OptionKey.FIELDS, fields())
+				.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, expand())
+				.put(SearchResourceRequest.OptionKey.SORT_BY, sortBy())
+				.build();
+		return context.service(RepositoryManager.class).get(toolingId).service(ConceptSearchRequestEvaluator.class).evaluate(codeSystemUri, context, conceptSearchOptions);
 	}
 
 }
