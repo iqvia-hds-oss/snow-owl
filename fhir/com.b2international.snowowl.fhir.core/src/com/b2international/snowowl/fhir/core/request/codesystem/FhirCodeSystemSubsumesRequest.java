@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,14 @@ import java.util.Objects;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 
+import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionResultParameters;
+import com.b2international.snowowl.core.Repository;
+import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -62,14 +66,24 @@ final class FhirCodeSystemSubsumesRequest extends FhirRequest<CodeSystemSubsumpt
 	}
 
 	private boolean isSubsumedBy(ServiceProvider context, CodeSystem codeSystem, final String subType, final String superType) {
-		return CodeSystemRequests.prepareSearchConcepts()
-			.setLimit(0)
-			.filterByCodeSystemUri(FhirModelHelpers.resourceUriFrom(codeSystem))
-			.filterById(subType)
-			.filterByAncestor(superType)
-			.buildAsync()
-			.execute(context)
-			.getTotal() > 0;
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
+
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+		
+		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		Options conceptSearchOptions = Options.builder()
+				.put(ConceptSearchRequestEvaluator.OptionKey.ID, subType)
+				.put(ConceptSearchRequestEvaluator.OptionKey.ANCESTOR, superType)
+				// we only need hit count to answer the subsumes question
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, 0) 
+				.build();
+		
+		// seed already fetched resource information to prevent refetching the metadata
+		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		
+		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+				.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions)
+				.getTotal() > 0;
 	}
 
 }
