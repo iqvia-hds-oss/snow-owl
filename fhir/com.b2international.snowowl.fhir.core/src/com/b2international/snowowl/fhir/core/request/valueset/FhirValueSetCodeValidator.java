@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.b2international.snowowl.fhir.core.request.valueset;
 
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.ValueSet.ValueSetExpansionContainsComponent;
 
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeParameters;
-import com.b2international.fhir.r5.operations.ValueSetValidateCodeResultParameters;
 import com.b2international.snowowl.core.ServiceProvider;
 
 /**
@@ -27,16 +27,15 @@ import com.b2international.snowowl.core.ServiceProvider;
 @FunctionalInterface
 public interface FhirValueSetCodeValidator {
 
-	FhirValueSetCodeValidator NOOP = (context, valueSet, request) -> new ValueSetValidateCodeResultParameters().setMessage("N/A");
-	
 	/**
-	 * Validates whether the code described in the given {@link ValueSetValidateCodeParameters} conforms to the {@link ValueSet} or not.
+	 * Validates whether the given code conforms to the {@link ValueSet} definition or not.
 	 * 
-	 * @param context
-	 * @param valueSet
-	 * @param parameters
-	 * @return the code validation result, never <code>null</code>.
+	 * @param context - context to run the validation on
+	 * @param valueSet - the value set to validate the code aginst
+	 * @param code - the code to validate against the value set composition
+	 * @param parameters - extra validate-code operation parameters if needed for the evaluation
+	 * @return a {@link ValueSetExpansionContainsComponent} if the value set contains the code, or <code>null</code> if not
 	 */
-	ValueSetValidateCodeResultParameters validateCode(ServiceProvider context, ValueSet valueSet, ValueSetValidateCodeParameters request);
+	ValueSet.ValueSetExpansionContainsComponent validateCode(ServiceProvider context, ValueSet valueSet, String code, ValueSetValidateCodeParameters parameters);
 	
 }

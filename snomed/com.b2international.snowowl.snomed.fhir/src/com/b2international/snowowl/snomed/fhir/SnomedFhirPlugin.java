@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemLookupConverter;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemResourceConverter;
+import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetCodeValidator;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 
@@ -40,9 +41,13 @@ public class SnomedFhirPlugin extends Plugin implements TerminologyRepositoryCon
 	@Override
 	public Map<Class<?>, Object> bindAdditionalServices(Environment env) {
 		return Map.of(
+			// CodeSystem resource converter/customizer for SNOMED CT
 			FhirCodeSystemResourceConverter.class, new SnomedFhirCodeSystemResourceConverter(),
+			// lookup response customizer for SNOMED CT
 			FhirCodeSystemLookupConverter.class, new SnomedFhirCodeSystemLookupConverter(),
-			FhirValueSetExpander.class, new SnomedFhirValueSetExpander()
+			// handle SNOMED implicit Value Set via dedicated expander and validator implementation 
+			FhirValueSetExpander.class, new SnomedFhirValueSetExpander(),
+			FhirValueSetCodeValidator.class, new SnomedFhirValueSetCodeValidator()
 		);
 	}
 
