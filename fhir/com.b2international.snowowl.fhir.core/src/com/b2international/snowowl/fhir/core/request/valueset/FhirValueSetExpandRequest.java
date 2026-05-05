@@ -25,8 +25,6 @@ import org.hl7.fhir.r5.model.Enumerations.FilterOperator;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.ValueSet;
 
-import com.b2international.commons.exceptions.NotFoundException;
-import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -133,7 +131,7 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 			.map(CodeSystem.class::cast)
 			.orElse(null);
 		
-		// if no CodeSystem stored to use as Value Set source, return NotFound response
+		// if no CodeSystem stored to use as Value Set source, return bad request response
 		if (codeSystem == null) {
 			throw new BadRequestException("Supported implicit Value Set URL but no underlying CodeSystem is available at " + codeSystemUrl, urlValue);
 		}
@@ -151,87 +149,150 @@ final class FhirValueSetExpandRequest implements Request<ServiceProvider, ValueS
 		// also store the explicit version requested
 		valueSet.setUserData(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION, version);
 		
-		
-		// configure query based on fhir_vs query parameter and also build the composFhirValueSetExpandere declaration for this implicit Value Set
-		if (FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
-			ValueSet.ValueSetComposeComponent compose = null;
-			if (Strings.isNullOrEmpty(query) || "fhir_vs".equals(query)) {
-				// do nothing, search all concepts
-			} else if (query.startsWith("fhir_vs=")) {
-				String fhirVsValue = query.replace("fhir_vs=", "");
-				if (fhirVsValue.startsWith("ecl/")) {
-					String ecl = fhirVsValue.replace("ecl/", "");
-					
-					// make sure we decode the ECL before using it
-					try {
-						ecl = URLDecoder.decode(ecl, StandardCharsets.UTF_8.toString());
-					} catch (UnsupportedEncodingException e) {
-						throw new BadRequestException("Failed to decode ECL expression: " + e.getMessage());
-					}
-					
-					// configure Value Set for ECL
-					valueSet
-					.setName(String.format("%s Concepts matching %s", codeSystem.getName(), ecl))
-					.setDescription(String.format("All SNOMED CT concepts that match the expression constraint %s", ecl));
-					
-					// configure compose for ECL
-					compose = new ValueSet.ValueSetComposeComponent();
-					compose.addInclude()
-						.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
-						.addFilter()
-						.setProperty("constraint")
-						.setOp(FilterOperator.EQUAL)
-						.setValue(ecl);
-					
-				} else if (fhirVsValue.startsWith("isa/")) {
-					String parent = fhirVsValue.replace("isa/", "");
-					
-					// configure Value Set for IS A
-					valueSet
-					.setName(String.format("%s Concept %s and descendants", codeSystem.getName(), parent))
-					.setDescription(String.format("All SNOMED CT concepts for %s", parent));
-					
-					// configure compose for IS A
-					compose = new ValueSet.ValueSetComposeComponent();
-					compose.addInclude()
-					.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
-					.addFilter()
-					.setProperty("constraint")
-					.setOp(FilterOperator.ISA)
-					.setValue(parent);
-					
-				} else if (fhirVsValue.startsWith("refset/")) {
-					String refsetId = fhirVsValue.replace("refset/", "");
-					if (Strings.isNullOrEmpty(refsetId)) {
-						// TODO support refset identifier concept search
-						return null;
-					} else {
-						// configure Value Set for REFSET
-						valueSet
-						.setName(String.format("%s Reference Set %s", codeSystem.getName(), refsetId))
-						.setDescription(String.format("All SNOMED CT concepts in the reference set %s", refsetId));
-						
-						// configure compose for REFSET
-						compose = new ValueSet.ValueSetComposeComponent();
-						compose.addInclude()
-						.setSystem(version)
-						.addFilter()
-						.setProperty("concept")
-						.setOp(FilterOperator.IN)
-						.setValue(refsetId);
-					}
-				} else {
-					// no support for this unknown filter, return 404
-					// TODO check against declared filter values in CodeSystem
-					throw new BadRequestException("Unsupported implicit SNOMED CT Value Set URL type: " + urlValue, urlValue);
-				}
-			}
-			return valueSet.setCompose(compose);
-		} else {
-			// TODO do we need compose definition for other implicit Value Sets?
-			
-			return valueSet;
-		}
-
+		// configure query based on fhir_vs query parameter and also build the compose declaration for this implicit Value Set
+		return configureImplicitValueSet(valueSet, codeSystem, urlValue, codeSystemUrl, version, query);
 	}
+	
+	private ValueSet configureImplicitValueSet(
+		ValueSet valueSet, 
+		CodeSystem codeSystem, 
+		String urlValue,
+		String codeSystemUrl,
+		String version, 
+		String query
+	) {
+		if (!FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
+			// This is a generic implicit Value Set URL which only supports the "fhir_vs" query type for now
+			if (!"fhir_vs".equals(query)) {
+				throw new BadRequestException("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
+			}
+			
+			return genericAllConcepts(valueSet, codeSystem, codeSystemUrl);
+		}
+		
+		// This is a SNOMED CT implicit Value Set URL which supports multiple query types based on the "fhir_vs" query parameter
+		if (Strings.isNullOrEmpty(query) || "fhir_vs".equals(query)) {
+			return sctAllConcepts(valueSet, codeSystem, version);
+		} 
+		
+		if (!query.startsWith("fhir_vs=")) {
+			// No support for other query parameters, return bad request response
+			throw new BadRequestException("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
+		}
+			
+		// Get the value of the "fhir_vs" query parameter and check which type of filter is requested
+		final String fhirVsValue = query.replace("fhir_vs=", "");
+		
+		if (fhirVsValue.startsWith("ecl/")) {
+			// This contains an ECL expression, use it to configure the Value Set and its compose statement
+			String ecl = fhirVsValue.replace("ecl/", "");
+					
+			// Make sure we decode the ECL before using it
+			try {
+				ecl = URLDecoder.decode(ecl, StandardCharsets.UTF_8.toString());
+			} catch (UnsupportedEncodingException e) {
+				throw new BadRequestException("Failed to decode ECL expression: " + e.getMessage());
+			}
+					
+			return sctEclExpression(valueSet, codeSystem, version, ecl);
+		} 
+		
+		if (fhirVsValue.startsWith("isa/")) {
+			// Configure the Value Set for IS A filter, extract the parent concept from the query parameter value
+			final String parentId = fhirVsValue.replace("isa/", "");
+			return sctDescendantsOf(valueSet, codeSystem, version, parentId);
+		} 
+		
+		if (fhirVsValue.startsWith("refset/")) {
+			// Configure the Value Set for reference set membership filter, extract the refSetId from the query parameter value
+			final String refsetId = fhirVsValue.replace("refset/", "");
+			
+			if (Strings.isNullOrEmpty(refsetId)) {
+				// TODO: support refset identifier concept search
+				throw new BadRequestException("Reference set identifier is missing in the query parameter value: " + urlValue, urlValue);
+			}
+			
+			return sctMembersOfRefSet(valueSet, codeSystem, version, refsetId);
+		}
+					
+		// We have ran out of supported query types, return bad request response for unsupported query parameter value
+		// TODO: check against declared filter values in CodeSystem
+		throw new BadRequestException("Unsupported implicit SNOMED CT Value Set URL type: " + urlValue, urlValue);
+	}
+
+	private ValueSet genericAllConcepts(ValueSet valueSet, CodeSystem codeSystem, String codeSystemUrl) {
+		valueSet
+			.setName(String.format("%s concepts", codeSystem.getName()))
+			.setDescription(String.format("All concepts from %s code system", codeSystem.getName()));
+			
+		valueSet.getCompose()
+			.addInclude()
+				.setSystem(codeSystemUrl);
+		
+		return valueSet;
+	}
+
+	private ValueSet sctAllConcepts(ValueSet valueSet, CodeSystem codeSystem, String version) {
+		valueSet
+			.setName(String.format("%s concepts", codeSystem.getName()))
+			.setDescription("All SNOMED CT concepts");
+		
+		valueSet.getCompose()
+			.addInclude()
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(version);
+			
+		return valueSet;
+	}
+
+	private ValueSet sctEclExpression(ValueSet valueSet, CodeSystem codeSystem, String version, String ecl) {
+		valueSet
+			.setName(String.format("%s concepts matching %s", codeSystem.getName(), ecl))
+			.setDescription(String.format("All SNOMED CT concepts that match the expression constraint %s", ecl));
+				
+		valueSet.getCompose()
+			.addInclude()
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(version)
+				.addFilter()
+				.setProperty("constraint")
+				.setOp(FilterOperator.EQUAL)
+				.setValue(ecl);
+
+		return valueSet;
+	}
+
+	private ValueSet sctDescendantsOf(ValueSet valueSet, CodeSystem codeSystem, String version, String parentId) {
+		valueSet
+			.setName(String.format("%s descendants of concept %s", codeSystem.getName(), parentId))
+			.setDescription(String.format("Descendants of SNOMED CT concept %s", parentId));
+		
+		valueSet.getCompose()
+			.addInclude()
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(version)
+				.addFilter()
+				.setProperty("constraint")
+				.setOp(FilterOperator.ISA)
+				.setValue(parentId);
+		
+		return valueSet;
+	}
+	
+	private ValueSet sctMembersOfRefSet(ValueSet valueSet, CodeSystem codeSystem, String version, String refsetId) {
+		valueSet
+			.setName(String.format("%s members of reference set %s", codeSystem.getName(), refsetId))
+			.setDescription(String.format("All SNOMED CT concepts in the reference set %s", refsetId));
+		
+		valueSet.getCompose()
+			.addInclude()
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+				.setVersion(version)
+				.addFilter()
+				.setProperty("concept")
+				.setOp(FilterOperator.IN)
+				.setValue(refsetId);
+		
+		return valueSet;
+	}	
 }

@@ -89,19 +89,28 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 		} else {
 			final ValueSetComposeComponent compose = valueSet.getCompose();
 			final ConceptSetComponent firstInclude = compose.getIncludeFirstRep();
-			final ConceptSetFilterComponent firstFilter = firstInclude.getFilterFirstRep();
 			
-			if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.EQUAL.equals(firstFilter.getOp())) {
-				// Filter concepts by ECL
-				conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, firstFilter.getValue());
-			} else if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.ISA.equals(firstFilter.getOp())) {
-				// Filter concepts by ancestor
-				conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.ANCESTOR, firstFilter.getValue());
-			} else if ("concept".equals(firstFilter.getProperty()) && FilterOperator.IN.equals(firstFilter.getOp())) {
-				// filter concepts by memberOf ECL
-				conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, "^" + firstFilter.getValue());
+			if (!firstInclude.hasFilter() && !firstInclude.hasConcept() && !firstInclude.hasValueSet()) {
+				/*
+				 * do nothing, search all concepts (theoretically we should be retrieving system
+				 * and version information from compose.include.system and compose.include.version, 
+				 * but we have already received the CodeSystem resource URI to resolve concepts)
+				 */
 			} else {
-				throw new IllegalStateException("Unsupported implicit value set compose definition: " + compose);
+				final ConceptSetFilterComponent firstFilter = firstInclude.getFilterFirstRep();
+				
+				if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.EQUAL.equals(firstFilter.getOp())) {
+					// Filter concepts by ECL
+					conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, firstFilter.getValue());
+				} else if ("constraint".equals(firstFilter.getProperty()) && FilterOperator.ISA.equals(firstFilter.getOp())) {
+					// Filter concepts by ancestor
+					conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.ANCESTOR, firstFilter.getValue());
+				} else if ("concept".equals(firstFilter.getProperty()) && FilterOperator.IN.equals(firstFilter.getOp())) {
+					// filter concepts by memberOf ECL
+					conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.QUERY, "^" + firstFilter.getValue());
+				} else {
+					throw new IllegalStateException("Unsupported implicit value set compose definition: " + compose);
+				}
 			}
 		}
 		
