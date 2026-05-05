@@ -34,10 +34,7 @@ import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.commons.options.Options;
 import com.b2international.commons.options.OptionsBuilder;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
-import com.b2international.snowowl.core.Repository;
-import com.b2international.snowowl.core.RepositoryManager;
-import com.b2international.snowowl.core.ResourceFragment;
-import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
@@ -61,6 +58,11 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 	public ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters) {
 		// XXX since this is an implicit VS, and resource stored in the VS here is a CodeSystem referring to the proper SNOMED CT Edition
 		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(valueSet);
+		ResourceURI codeSystemUri = resource.getResourceURI();
+		
+		if (parameters.getDate() != null) {
+			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
+		}
 		
 		final String termFilter = parameters.getFilter() == null ? null : parameters.getFilter().getValue();
 
@@ -108,7 +110,7 @@ public class SnomedFhirValueSetExpander implements FhirValueSetExpander {
 		
 		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
 		final Concepts concepts = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions.build());
+				.evaluate(codeSystemUri, searchContext, conceptSearchOptions.build());
 		
 		final ValueSet.ValueSetExpansionComponent expansion = new ValueSet.ValueSetExpansionComponent()
 				.setIdentifier(valueSet.getId())
