@@ -33,8 +33,8 @@ public abstract class PluggableServiceRegistry<T> {
 	
 	public PluggableServiceRegistry(ClassPathScanner scanner) {
 		final Class<?>[] types = TypeResolver.resolveRawArguments(PluggableServiceRegistry.class, getClass());
-		checkState(TypeResolver.Unknown.class != types[1], "Couldn't resolve type for class %s", getClass().getSimpleName());
-		var pluggableClass = (Class<T>) types[1];
+		checkState(TypeResolver.Unknown.class != types[0], "Couldn't resolve type for class %s", getClass().getSimpleName());
+		var pluggableClass = (Class<T>) types[0];
 		if (pluggableClass.isInterface()) {
 			this.classes = scanner.getComponentsClassesByInterface(pluggableClass);
 		} else {
@@ -43,14 +43,13 @@ public abstract class PluggableServiceRegistry<T> {
 	}
 	
 	public Collection<T> get() {
-		return classes.stream().map(commandClass -> {
+		return classes.stream().map(klass -> {
 			try {
-				return (T) commandClass.getConstructor().newInstance();
+				return (T) klass.getConstructor().newInstance();
 			} catch (Throwable e) {
-				throw new SnowowlRuntimeException("Unable to instantiate command class: " + commandClass, e);
+				throw new SnowowlRuntimeException("Unable to instantiate registry class: " + klass, e);
 			}
 		}).toList();
 	}
 	
 }
-
