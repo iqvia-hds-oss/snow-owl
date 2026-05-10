@@ -61,7 +61,7 @@ public final class DefaultNamespaceAndModuleAssigner implements SnomedNamespaceA
 
 	@Override
 	public String toString() {
-		return String.format("[defaultNamespace: '%s', defaultModule: '%s']", getClass().getSimpleName(), defaultNamespace, defaultModule);
+		return String.format("default[defaultNamespace: '%s', defaultModule: '%s']", defaultNamespace, defaultModule);
 	}
 	
 }

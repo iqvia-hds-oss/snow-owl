@@ -135,6 +135,6 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 
 	@Override
 	public String toString() {
-		return String.format("%s[defaultNamespace: '%s', defaultModule: '%s']", getClass().getSimpleName(), defaultNamespace, defaultModule);
+		return String.format("extension[defaultNamespace: '%s', defaultModule: '%s']", defaultNamespace, defaultModule);
 	}
 }
