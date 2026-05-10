@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import org.eclipse.osgi.framework.console.CommandProvider;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.identity.User;
-import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.eventbus.IEventBus;
@@ -109,7 +108,7 @@ public final class SnowOwlCommandProvider implements CommandProvider {
 		final CommandLine cli = new CommandLine(new SnowOwlCommand());
 		cli.setUsageHelpWidth(USAGE_WIDTH);
 		cli.addSubcommand("help", new CommandLine.HelpCommand());
-		context.service(ClassPathScanner.class).getComponentsBySuperclass(Command.class)
+		context.service(PluginCommandProvider.class).getCommands()
 			.stream()
 			.sorted(Ordering.natural().onResultOf(Command::getCommand))
 			.forEach(cmd -> {

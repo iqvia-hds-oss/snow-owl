@@ -39,6 +39,7 @@ import com.b2international.snowowl.core.collection.TerminologyResourceCollection
 import com.b2international.snowowl.core.config.IndexSettings;
 import com.b2international.snowowl.core.config.RepositoryConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.console.PluginCommandProvider;
 import com.b2international.snowowl.core.monitoring.MonitoringConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
@@ -100,6 +101,7 @@ public final class SnowOwlPlugin extends Plugin {
 		env.services().registerService(ResourceTypeConverter.Registry.class, new ResourceTypeConverter.Registry(scanner));
 		env.services().registerService(ConceptSuggester.Registry.class, new ConceptSuggester.Registry(scanner, mapper));
 		env.services().registerService(TerminologyResourceCollectionToolingSupport.Registry.class, new TerminologyResourceCollectionToolingSupport.Registry(scanner));
+		env.services().registerService(PluginCommandProvider.class, new PluginCommandProvider(scanner));
 		
 		// configure global branch name validator
 		env.services().registerService(BranchNameValidator.class, new BranchNameValidator.Default(
