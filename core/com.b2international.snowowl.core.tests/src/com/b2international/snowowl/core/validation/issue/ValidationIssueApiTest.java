@@ -64,7 +64,6 @@ public class ValidationIssueApiTest extends BaseElasticsearchAwareTest {
 		final ValidationRepository repository = new ValidationRepository(index);
 		final ClassPathScanner scanner = new ClassPathScanner("com.b2international");
 		context = ServiceProvider.EMPTY.inject()
-				.bind(ClassPathScanner.class, scanner)
 				.bind(ValidationRepository.class, repository)
 				.bind(ValidationIssueDetailExtensionProvider.class, new ValidationIssueDetailExtensionProvider(scanner))
 				.bind(ResourceURIPathResolver.class, ResourceURIPathResolver.fromMap(Map.of("SNOMEDCT", Branch.MAIN_PATH)))

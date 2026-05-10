@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import com.b2international.snowowl.core.config.IndexConfiguration;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.internal.validation.ValidationRepository;
 import com.b2international.snowowl.core.internal.validation.ValidationThreadPool;
-import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.request.BranchSnapshotContentRequest;
 import com.b2international.snowowl.core.scripts.ScriptEngine;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
@@ -93,7 +92,6 @@ public abstract class BaseValidationTest extends BaseRevisionIndexTest {
 		
 		Builder context = TestBranchContext.on(MAIN)
 				.with(ClassLoader.class, getClass().getClassLoader())
-				.with(ClassPathScanner.class, scanner)
 				.with(Index.class, rawIndex())
 				.with(RevisionIndex.class, index()).with(ObjectMapper.class, getMapper())
 				.with(ValidationRepository.class, new ValidationRepository(rawIndex()))

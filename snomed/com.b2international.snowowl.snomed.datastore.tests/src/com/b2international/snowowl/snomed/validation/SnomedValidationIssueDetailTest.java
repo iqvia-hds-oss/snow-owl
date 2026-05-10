@@ -117,7 +117,6 @@ public class SnomedValidationIssueDetailTest extends BaseRevisionIndexTest {
 				.with(RevisionIndex.class, index())
 				.with(ValidationThreadPool.class, new ValidationThreadPool(1, 1, 1))
 				.with(ValidationRepository.class, repository)
-				.with(ClassPathScanner.class, scanner)
 				.with(ValidationIssueDetailExtensionProvider.class, new ValidationIssueDetailExtensionProvider(scanner))
 				.with(ResourceURIPathResolver.class, ResourceURIPathResolver.fromMap(Map.of("SNOMEDCT", Branch.MAIN_PATH)))
 				.build();
