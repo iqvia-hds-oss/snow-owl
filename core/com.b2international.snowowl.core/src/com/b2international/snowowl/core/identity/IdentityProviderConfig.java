@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public interface IdentityProviderConfig {
 
 		public IdentityProviderTypeIdResolver() throws IOException {
 			this.subTypeCache = Suppliers.memoize(() -> {
+				// XXX this is used very early in the app before any plugin gets recognized even, classpath scanner should be available globally at this time
 				return IdentityPlugin.getAvailableConfigClasses(ApplicationContext.getInstance().getServiceChecked(ClassPathScanner.class)).stream() 
 					.filter(this::isValid)
 					.collect(Collectors.toMap(this::getType, Function.identity()));	
