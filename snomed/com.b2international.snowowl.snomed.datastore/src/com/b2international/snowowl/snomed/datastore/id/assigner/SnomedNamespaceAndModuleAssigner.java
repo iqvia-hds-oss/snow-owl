@@ -15,9 +15,12 @@
  */
 package com.b2international.snowowl.snomed.datastore.id.assigner;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.b2international.commons.exceptions.FormattedRuntimeException;
+import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 
@@ -26,15 +29,11 @@ import com.b2international.snowowl.core.plugin.ClassPathScanner;
  * <ul>
  * <li>For each inferred relationship, returns the expected namespace and module ID, given the source concept ID;
  * </ul>
+ * Subclasses must be annotated with {@link AssignerType} annotation to get an identifiable name for the registry.
  * 
  * @since 5.11.5
  */
 public interface SnomedNamespaceAndModuleAssigner {
-
-	/**
-	 * Returns the configuration key of the assigner
-	 */
-	String getName();
 
 	/**
 	 * Initialize the assigner with default module and namespace values.
@@ -73,25 +72,46 @@ public interface SnomedNamespaceAndModuleAssigner {
 	 */
 	void clear();
 
-	/**
-	 * Instantiate a namespace and module assigner instance based on the given type.
-	 * 
-	 * @param context
-	 * @param assignerType
-	 * @param moduleId
-	 * @param namespace
-	 * @return
-	 */
-	static SnomedNamespaceAndModuleAssigner create(BranchContext context, String assignerType, String moduleId, String namespace) {
-		final SnomedNamespaceAndModuleAssigner assigner = context.service(ClassPathScanner.class)
-			.getComponentsByInterface(SnomedNamespaceAndModuleAssigner.class)
-			.stream()
-			.filter(a -> assignerType.equals(a.getName()))
-			.findFirst()
-			.orElseThrow(() -> new FormattedRuntimeException("Couldn't find namespace and module assigner '%s'.", assignerType));
+	class Registry {
 		
-		assigner.init(namespace, moduleId, context);
-		return assigner;
+		private final Map<String, Class<?>> registry;
+
+		public Registry(ClassPathScanner scanner) {
+			this.registry = scanner.getComponentsClassesByInterface(SnomedNamespaceAndModuleAssigner.class)
+				.stream()
+				.collect(Collectors.toMap(this::getAssignerType, a -> a));
+		}
+		
+		private String getAssignerType(Class<?> assignerClass) {
+			return assignerClass.getAnnotation(AssignerType.class).name();
+		}
+		
+		/**
+		 * Instantiate a namespace and module assigner instance based on the given type.
+		 * 
+		 * @param context
+		 * @param assignerType
+		 * @param moduleId
+		 * @param namespace
+		 * @return
+		 */
+		public SnomedNamespaceAndModuleAssigner getAssigner(BranchContext context, String assignerType, String moduleId, String namespace) {
+			final Class<?> assignerClass = this.registry.get(assignerType);
+			
+			if (assignerClass == null) {
+				throw new FormattedRuntimeException("Couldn't find namespace and module assigner '%s'.", assignerType);
+			}
+			
+			try {
+				// the default constructor should exist and should be public, otherwise fail
+				SnomedNamespaceAndModuleAssigner assigner = (SnomedNamespaceAndModuleAssigner) assignerClass.getConstructor().newInstance();
+				assigner.init(namespace, moduleId, context);
+				return assigner;
+			} catch (Exception e) {
+				throw new SnowowlRuntimeException("Unable to instantiate module and namespace assigner of type: " + assignerType, e);
+			}
+		}
 	}
+	
 
 }

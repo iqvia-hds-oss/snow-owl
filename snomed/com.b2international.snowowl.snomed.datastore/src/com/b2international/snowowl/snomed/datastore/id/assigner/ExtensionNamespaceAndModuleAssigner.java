@@ -17,9 +17,7 @@ package com.b2international.snowowl.snomed.datastore.id.assigner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 import com.b2international.collections.PrimitiveMaps;
@@ -48,6 +46,7 @@ import com.google.common.collect.Sets;
  * @since 5.11.5
  */
 @Component
+@AssignerType(name = "extension")
 public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespaceAndModuleAssigner {
 	
 	private final LongKeyLongMap relationshipModuleMap = PrimitiveMaps.newLongKeyLongOpenHashMap();
@@ -135,12 +134,7 @@ public final class ExtensionNamespaceAndModuleAssigner implements SnomedNamespac
 	}
 
 	@Override
-	public String getName() {
-		return "extension";
-	}
-	
-	@Override
 	public String toString() {
-		return String.format("%s[defaultNamespace: '%s', defaultModule: '%s']", getName(), defaultNamespace, defaultModule);
+		return String.format("%s[defaultNamespace: '%s', defaultModule: '%s']", getClass().getSimpleName(), defaultNamespace, defaultModule);
 	}
 }

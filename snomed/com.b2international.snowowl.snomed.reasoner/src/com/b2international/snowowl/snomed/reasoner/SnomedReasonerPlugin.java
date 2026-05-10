@@ -29,6 +29,7 @@ import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
+import com.b2international.snowowl.snomed.datastore.id.assigner.SnomedNamespaceAndModuleAssigner;
 import com.b2international.snowowl.snomed.reasoner.classification.ClassificationTracker;
 import com.b2international.snowowl.snomed.reasoner.equivalence.IEquivalentConceptMerger;
 import com.b2international.snowowl.snomed.reasoner.index.*;
@@ -51,6 +52,7 @@ public final class SnomedReasonerPlugin extends Plugin implements TerminologyRep
 			
 			final ClassPathScanner scanner = env.service(ClassPathScanner.class);
 			env.services().registerService(IEquivalentConceptMerger.Registry.class, new IEquivalentConceptMerger.Registry(scanner));
+			env.services().registerService(SnomedNamespaceAndModuleAssigner.Registry.class, new SnomedNamespaceAndModuleAssigner.Registry(scanner));
 		}
 	}
 	
