@@ -15,23 +15,17 @@
  */
 package com.b2international.snowowl.core.setup;
 
-import static com.google.common.collect.Maps.newHashMap;
-
-import java.util.Collection;
-import java.util.Map;
-
-import org.eclipse.core.runtime.IProgressMonitor;
+import java.util.*;
 
 import com.b2international.commons.CompositeClassLoader;
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
-import com.google.common.collect.ImmutableList;
 
 /**
  * @since 7.0
  */
-public final class Plugins {
+public final class Plugins implements Iterable<Plugin> {
 
 	private final Collection<Plugin> plugins;
 	private final CompositeClassLoader compositeClassLoader;
@@ -42,7 +36,7 @@ public final class Plugins {
 	 * @param plugins
 	 */
 	public Plugins(Collection<Plugin> plugins) {
-		this.plugins = ImmutableList.copyOf(plugins);
+		this.plugins = List.copyOf(plugins);
 		final CompositeClassLoader classLoader = new CompositeClassLoader();
 		plugins.stream().map(Plugin::getClass).map(Class::getClassLoader).forEach(classLoader::add);
 		this.compositeClassLoader = classLoader;
@@ -65,7 +59,7 @@ public final class Plugins {
 	}
 
 	/**
-	 * Executes {@link Plugin#run(SnowOwlConfiguration, Environment, IProgressMonitor)} methods.
+	 * Executes {@link Plugin#run(SnowOwlConfiguration, Environment, ClassPathScanner)} methods.
 	 * 
 	 * @param configuration
 	 * @param environment
@@ -119,6 +113,11 @@ public final class Plugins {
 		return plugins;
 	}
 
+	@Override
+	public Iterator<Plugin> iterator() {
+		return plugins.iterator();
+	}
+
 	/**
 	 * Collects all plugin configuration contributions and returns them in a {@link Map} where the key is the desired property name of the
 	 * configuration node and the value is the {@link Class} of the actual configuration node.
@@ -127,7 +126,7 @@ public final class Plugins {
 	 * @since 3.4
 	 */
 	public Map<String, Class<?>> getPluginConfigurations() {
-		final Map<String, Class<?>> moduleConfigMap = newHashMap();
+		final Map<String, Class<?>> moduleConfigMap = new HashMap<>();
 		for (Plugin plugin : getPlugins()) {
 			plugin.addConfigurations(new ConfigurationRegistry() {
 				@Override

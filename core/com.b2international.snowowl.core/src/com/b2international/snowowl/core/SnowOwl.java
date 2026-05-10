@@ -122,6 +122,9 @@ public final class SnowOwl {
 		// do NOT register the scanner into the injection context, we will destroy the scan result to gain back memory
 		this.scanner = new ClassPathScanner(packagesToScan.toArray(String[]::new));
 		
+		// temporarily register the scanner into the app context, so that various config deserialization classes work as expected
+		ApplicationContext.getInstance().registerService(ClassPathScanner.class, this.scanner);
+		
 		List<Plugin> plugins = ImmutableList.<Plugin>builder()
 			.addAll(this.scanner.getComponentsBySuperclass(Plugin.class))
 			.add(additionalPlugins != null ? additionalPlugins : new Plugin[]{})
@@ -137,6 +140,9 @@ public final class SnowOwl {
 		// log environment and setting info
 		logEnvironment();
 		this.plugins.getPlugins().forEach(plugin -> log.info("loaded plugin [{}]", plugin));
+		
+		// once all plugins are parsed, remove the scanner from the global context
+		ApplicationContext.getInstance().unregisterService(ClassPathScanner.class);
 	}
 	
 	private Path getHomePath() {
