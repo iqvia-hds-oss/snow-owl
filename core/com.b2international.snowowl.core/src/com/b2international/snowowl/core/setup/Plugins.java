@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.b2international.commons.CompositeClassLoader;
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -52,12 +53,14 @@ public final class Plugins {
 	 * 
 	 * @param configuration
 	 * @param environment
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception
 	 * @see Plugin#init(Environment)
 	 */
-	public void init(SnowOwlConfiguration configuration, Environment environment) throws Exception {
+	public void init(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
 		for (Plugin plugin : plugins) {
-			plugin.init(configuration, environment);
+			plugin.init(configuration, environment, scanner);
 		}
 	}
 
@@ -66,12 +69,14 @@ public final class Plugins {
 	 * 
 	 * @param configuration
 	 * @param environment
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception
 	 * @see Plugin#run(Environment)
 	 */
-	public void run(SnowOwlConfiguration configuration, Environment environment) throws Exception {
+	public void run(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
 		for (Plugin plugin : plugins) {
-			plugin.run(configuration, environment);
+			plugin.run(configuration, environment, scanner);
 		}
 	}
 
@@ -81,11 +86,13 @@ public final class Plugins {
 	 * 
 	 * @param configuration
 	 * @param environment
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception 
 	 */
-	public void preRun(SnowOwlConfiguration configuration, Environment environment) throws Exception {
+	public void preRun(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
 		for (Plugin plugin : plugins) {
-			plugin.preRun(configuration, environment);
+			plugin.preRun(configuration, environment, scanner);
 		}
 	}
 	
@@ -95,11 +102,13 @@ public final class Plugins {
 	 * 
 	 * @param configuration
 	 * @param environment
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception 
 	 */
-	public void postRun(SnowOwlConfiguration configuration, Environment environment) throws Exception {
+	public void postRun(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
 		for (Plugin fragment : plugins) {
-			fragment.postRun(configuration, environment);
+			fragment.postRun(configuration, environment, scanner);
 		}
 	}
 
