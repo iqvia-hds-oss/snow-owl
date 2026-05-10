@@ -19,6 +19,7 @@ import java.nio.file.Path;
 
 import com.b2international.snowowl.core.client.TransportConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
@@ -33,7 +34,7 @@ public final class AttachmentPlugin extends Plugin {
 	private static final String ATTACHMENTS_FOLDER = "attachments";
 
 	@Override
-	public void preRun(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		final IEventBus bus = env.service(IEventBus.class);
 		
 		if (env.isServer()) {

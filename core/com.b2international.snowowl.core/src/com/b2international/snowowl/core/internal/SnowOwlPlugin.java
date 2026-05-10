@@ -17,9 +17,7 @@ package com.b2international.snowowl.core.internal;
 
 import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.b2international.collections.PrimitiveCollectionModule;
@@ -27,47 +25,29 @@ import com.b2international.commons.metric.Metrics;
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
-import com.b2international.index.revision.DefaultRevisionIndex;
-import com.b2international.index.revision.RevisionBranch;
+import com.b2international.index.revision.*;
 import com.b2international.index.revision.RevisionBranch.BranchNameValidator;
-import com.b2international.index.revision.RevisionIndex;
-import com.b2international.index.revision.TimestampProvider;
-import com.b2international.snowowl.core.DeprecationLogger;
-import com.b2international.snowowl.core.ResourceTypeConverter;
-import com.b2international.snowowl.core.ResourceURI;
+import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.collection.TerminologyResourceCollectionToolingSupport;
-import com.b2international.snowowl.core.config.IndexSettings;
-import com.b2international.snowowl.core.config.RepositoryConfiguration;
-import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.config.*;
 import com.b2international.snowowl.core.console.PluginCommandProvider;
 import com.b2international.snowowl.core.monitoring.MonitoringConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
-import com.b2international.snowowl.core.repository.JsonSupport;
-import com.b2international.snowowl.core.repository.ObjectMapperCustomizer;
-import com.b2international.snowowl.core.repository.PathTerminologyResourceResolver;
+import com.b2international.snowowl.core.repository.*;
 import com.b2international.snowowl.core.request.suggest.ConceptSuggester;
-import com.b2international.snowowl.core.setup.ConfigurationRegistry;
-import com.b2international.snowowl.core.setup.Environment;
-import com.b2international.snowowl.core.setup.Plugin;
+import com.b2international.snowowl.core.setup.*;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
-import com.b2international.snowowl.core.uri.DefaultResourceURIPathResolver;
-import com.b2international.snowowl.core.uri.ResourceURIPathResolver;
-import com.b2international.snowowl.core.uri.TerminologyResourceURIPathResolver;
+import com.b2international.snowowl.core.uri.*;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.jvm.*;
 import io.micrometer.core.instrument.binder.logging.LogbackMetrics;
-import io.micrometer.core.instrument.binder.system.FileDescriptorMetrics;
-import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
-import io.micrometer.core.instrument.binder.system.UptimeMetrics;
+import io.micrometer.core.instrument.binder.system.*;
 import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -81,10 +61,8 @@ public final class SnowOwlPlugin extends Plugin {
 	private static final String RESOURCES_INDEX = "resources";
 
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) {
 		env.services().registerService(DeprecationLogger.class, new DeprecationLogger());
-		
-		final ClassPathScanner scanner = env.service(ClassPathScanner.class);
 		
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
 		mapper.registerModule(new PrimitiveCollectionModule());
@@ -130,7 +108,7 @@ public final class SnowOwlPlugin extends Plugin {
 	}
 	
 	@Override
-	public void preRun(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {
 			
 			final ObjectMapper mapper = env.service(ObjectMapper.class);

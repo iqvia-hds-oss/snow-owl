@@ -16,6 +16,7 @@
 package com.b2international.snowowl.core.rate;
 
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.setup.ConfigurationRegistry;
 import com.b2international.snowowl.core.setup.Environment;
@@ -34,7 +35,7 @@ public class ApiPlugin extends Plugin {
 	}
 	
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		ApiConfiguration apiConfig = configuration.getModuleConfig(ApiConfiguration.class);
 		env.services().registerService(ApiConfiguration.class, apiConfig);
 		initRateLimiter(env, apiConfig.getRateLimit());

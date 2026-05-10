@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.b2international.commons.FileUtils;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 import com.google.common.base.Strings;
@@ -62,7 +63,7 @@ public class DatasetBootstrap extends Plugin {
 	public static final String LOC_PARAM_NAME = "so.dataset.location";
 
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		final String datasetLocation = System.getProperty(LOC_PARAM_NAME);
 		if (Strings.isNullOrEmpty(datasetLocation)) {
 			throw new SnowowlRuntimeException(String.format("%s JVM argument is missing", LOC_PARAM_NAME));

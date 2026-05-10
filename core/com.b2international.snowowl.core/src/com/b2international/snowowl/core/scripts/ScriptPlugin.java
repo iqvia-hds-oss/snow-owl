@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,8 @@ import com.b2international.snowowl.core.setup.Plugin;
 public final class ScriptPlugin extends Plugin {
 
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
-		env.services().registerService(ScriptEngine.Registry.class, new ScriptEngine.Registry(env.service(ClassPathScanner.class)));
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
+		env.services().registerService(ScriptEngine.Registry.class, new ScriptEngine.Registry(scanner));
 	}
 	
 }

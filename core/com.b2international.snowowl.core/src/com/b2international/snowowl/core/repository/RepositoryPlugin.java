@@ -41,6 +41,7 @@ import com.b2international.snowowl.core.events.Notifications;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
 import com.b2international.snowowl.core.jobs.RemoteJobTracker;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.setup.ConfigurationRegistry;
 import com.b2international.snowowl.core.setup.Environment;
@@ -82,7 +83,7 @@ public final class RepositoryPlugin extends Plugin {
 	}
 	
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		RepositoryConfiguration repositoryConfiguration = configuration.getModuleConfig(RepositoryConfiguration.class);
 		env.services().registerService(RepositoryConfiguration.class, repositoryConfiguration);
 		int maxThreads = repositoryConfiguration.getMaxThreads();
@@ -135,7 +136,7 @@ public final class RepositoryPlugin extends Plugin {
 	}
 	
 	@Override
-	public void preRun(SnowOwlConfiguration configuration, Environment env) {
+	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) {
 		if (env.isServer()) {
 			LOG.debug("Initializing repository plugin.");
 			final MeterRegistry registry = env.service(MeterRegistry.class);
@@ -244,7 +245,7 @@ public final class RepositoryPlugin extends Plugin {
 	}
 	
 	@Override
-	public void run(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void run(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {
 			initializeJobSupport(env, configuration);
 		}

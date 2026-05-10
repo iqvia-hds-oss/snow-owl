@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.b2international.snowowl.core.repository;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,25 +24,21 @@ import com.b2international.index.IndexClient;
 import com.b2international.index.es.client.EsClient;
 import com.b2international.index.mapping.DocumentMapping;
 import com.b2international.index.revision.Hooks;
-import com.b2international.snowowl.core.Repository;
-import com.b2international.snowowl.core.RepositoryInfo;
+import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.RepositoryInfo.Health;
-import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.compare.DependencyComparer;
 import com.b2international.snowowl.core.compare.ResourceContentComparer;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.domain.ContextConfigurer;
 import com.b2international.snowowl.core.merge.ComponentRevisionConflictProcessor;
 import com.b2international.snowowl.core.merge.IMergeConflictRule;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.request.*;
 import com.b2international.snowowl.core.request.ecl.EclRewriter;
 import com.b2international.snowowl.core.request.version.VersioningRequestBuilder;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
-import com.b2international.snowowl.core.terminology.ComponentCategory;
-import com.b2international.snowowl.core.terminology.Terminology;
-import com.b2international.snowowl.core.terminology.TerminologyComponent;
-import com.b2international.snowowl.core.terminology.TerminologyRegistry;
+import com.b2international.snowowl.core.terminology.*;
 import com.b2international.snowowl.core.uri.ResourceURLSchemaSupport;
 
 /**
@@ -56,7 +49,7 @@ public abstract class TerminologyRepositoryPlugin extends Plugin implements Term
 	private static final Logger LOG = LoggerFactory.getLogger("repository");
 	
 	@Override
-	public final void run(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public final void run(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		// register terminology and component definitions
 		TerminologyRegistry registry = env.service(TerminologyRegistry.class);
 		registry.register(this);
@@ -84,7 +77,7 @@ public abstract class TerminologyRepositoryPlugin extends Plugin implements Term
 					.bind(EclRewriter.class, getEclRewriter())
 					.bind(DependencyComparer.class, getDependencyComparer())
 					.bind(ResourceContentComparer.class, getContentComparer())
-					.build(env);
+					.build(env, scanner);
 			
 			RepositoryInfo status = repo.status();
 			if (status.health() == Health.GREEN) {
