@@ -15,30 +15,16 @@
  */
 package com.b2international.snowowl.core.console;
 
-import java.util.Collection;
-
-import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
+import com.b2international.snowowl.core.plugin.PluggableServiceRegistry;
 
 /**
  * @since 10.2.0
  */
-public final class PluginCommandProvider {
+public final class CommandRegistry extends PluggableServiceRegistry<Command> {
 
-	private final Collection<Class<?>> commandClasses;
-
-	public PluginCommandProvider(ClassPathScanner scanner) {
-		this.commandClasses = scanner.getComponentsClassesBySuperclass(Command.class);
-	}
-	
-	public Collection<Command> getCommands() {
-		return commandClasses.stream().map(commandClass -> {
-			try {
-				return (Command) commandClass.getConstructor().newInstance();
-			} catch (Throwable e) {
-				throw new SnowowlRuntimeException("Unable to instantiate command class: " + commandClass, e);
-			}
-		}).toList();
+	public CommandRegistry(ClassPathScanner scanner) {
+		super(scanner);
 	}
 	
 }

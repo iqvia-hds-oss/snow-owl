@@ -108,7 +108,7 @@ public final class SnowOwlCommandProvider implements CommandProvider {
 		final CommandLine cli = new CommandLine(new SnowOwlCommand());
 		cli.setUsageHelpWidth(USAGE_WIDTH);
 		cli.addSubcommand("help", new CommandLine.HelpCommand());
-		context.service(PluginCommandProvider.class).getCommands()
+		context.service(CommandRegistry.class).get()
 			.stream()
 			.sorted(Ordering.natural().onResultOf(Command::getCommand))
 			.forEach(cmd -> {
