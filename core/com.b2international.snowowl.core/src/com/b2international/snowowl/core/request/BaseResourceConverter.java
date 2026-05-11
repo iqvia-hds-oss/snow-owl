@@ -104,11 +104,14 @@ public abstract class BaseResourceConverter<T, R, CR extends CollectionResource<
 	}
 
 	private final void expandViaPlugins(List<R> results) {
-		context().service(ResourceExpanderExtension.Registry.class)
-				.get()
-				.stream()
-				.filter(expanderExtension -> expanderExtension.canExpand(getType()))
-				.forEach(expanderExtension -> expanderExtension.create(context(), expand(), locales(), getType()).expand(results));
+		context().optionalService(ResourceExpanderExtension.Registry.class)
+				.ifPresent(expanderRegistry -> {
+					expanderRegistry
+						.get()
+						.stream()
+						.filter(expanderExtension -> expanderExtension.canExpand(getType()))
+						.forEach(expanderExtension -> expanderExtension.create(context(), expand(), locales(), getType()).expand(results));
+				});
 	}
 
 	protected abstract CR createCollectionResource(List<R> results, String searchAfter, int limit, int total);
