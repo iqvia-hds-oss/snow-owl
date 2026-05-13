@@ -15,9 +15,12 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM_ID;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import java.util.UUID;
 
@@ -25,10 +28,17 @@ import org.junit.Test;
 
 import com.b2international.commons.json.Json;
 import com.b2international.fhir.FhirCodeSystems;
+import com.b2international.snowowl.core.commit.CommitInfo;
+import com.b2international.snowowl.core.commit.CommitInfos;
+import com.b2international.snowowl.core.context.ResourceRepositoryRequestBuilder;
+import com.b2international.snowowl.core.domain.RepositoryContext;
+import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.fhir.SnomedUri;
+import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 
@@ -555,5 +565,60 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"));
+	}
+	
+	@Test
+	public void DELETE_CodeSystem_with_x_author() {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.header("X-Author", "user")
+			.when().delete(CODESYSTEM_ID, getTestCodeSystemId())
+			.then().assertThat()
+			.statusCode(204);
+		
+		Request<RepositoryContext, CommitInfos> req = RepositoryRequests
+			.commitInfos()
+			.prepareSearchCommitInfo()
+			.filterByComment("Deleting code system " + getTestCodeSystemId())
+			.build();
+		
+		CommitInfos commitInfos = new ResourceRepositoryRequestBuilder<CommitInfos>() {
+			@Override
+			public Request<RepositoryContext, CommitInfos> build() {
+				return req;
+			}
+		 }.buildAsync().execute(Services.bus()).getSync();
+	 
+		assertThat(commitInfos)
+		 	.hasSize(1)
+		 	.first()
+		 	.extracting(CommitInfo::getAuthor)
+		 	.isEqualTo("user");
+	}
+	
+	@Test
+	public void DELETE_CodeSystem_without_x_author() {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.when().delete(CODESYSTEM_ID, getTestCodeSystemId())
+			.then().assertThat()
+			.statusCode(204);
+		
+		Request<RepositoryContext, CommitInfos> req = RepositoryRequests
+				.commitInfos()
+				.prepareSearchCommitInfo()
+				.filterByComment("Deleting code system " + getTestCodeSystemId())
+				.build();
+			
+			CommitInfos commitInfos = new ResourceRepositoryRequestBuilder<CommitInfos>() {
+				@Override
+				public Request<RepositoryContext, CommitInfos> build() {
+					return req;
+				}
+			 }.buildAsync().execute(Services.bus()).getSync();
+		
+		assertThat(commitInfos)
+		 	.hasSize(1)
+		 	.first()
+		 	.extracting(CommitInfo::getAuthor)
+		 	.isEqualTo("snowowl");
 	}
 }
