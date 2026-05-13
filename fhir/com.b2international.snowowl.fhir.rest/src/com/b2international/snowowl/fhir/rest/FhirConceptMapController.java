@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -613,7 +613,7 @@ public class FhirConceptMapController extends AbstractFhirController {
 
 		@Parameter(description = """
 			The user identifier used for committing the change""")
-		@RequestHeader(value = X_AUTHOR, required = true)
+		@RequestHeader(value = X_AUTHOR, required = false)
 		final String author
 		
 	) {
