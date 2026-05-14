@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.b2international.snowowl.core.setup;
 
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 
 /**
  * @since 7.0
@@ -39,9 +40,11 @@ public abstract class Plugin {
 	 *            - Snow Owl Application configuration
 	 * @param env
 	 *            - the environment within this plug-in will be initialized
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception
 	 */
-	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 	}
 
 	/**
@@ -50,9 +53,11 @@ public abstract class Plugin {
 	 * 
 	 * @param configuration
 	 * @param env
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception
 	 */
-	public void preRun(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 	}
 
 	/**
@@ -63,9 +68,11 @@ public abstract class Plugin {
 	 *            - Snow Owl Application configuration
 	 * @param env
 	 *            - the environment
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception
 	 */
-	public void run(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void run(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 	}
 
 	/**
@@ -74,9 +81,11 @@ public abstract class Plugin {
 	 * 
 	 * @param configuration
 	 * @param env
+	 * @param scanner
+	 *            - the scanner that can be used to dependency inject various implementations into services through class path scanning
 	 * @throws Exception
 	 */
-	public void postRun(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void postRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 	}
 	
 	@Override

@@ -19,10 +19,7 @@ import static com.b2international.snowowl.snomed.common.SnomedTerminologyCompone
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -57,10 +54,7 @@ import com.b2international.snowowl.snomed.reasoner.domain.*;
 import com.b2international.snowowl.snomed.reasoner.equivalence.IEquivalentConceptMerger;
 import com.b2international.snowowl.snomed.reasoner.exceptions.ReasonerApiException;
 import com.google.common.base.Strings;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.*;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -444,7 +438,7 @@ final class SaveJobRequest implements Request<BranchContext, Boolean>, AccessCon
 				.getOrDefault(Settings.NAMESPACE_MODULE_ASSIGNER, DEFAULT_NAMESPACE_AND_MODULE_ASSIGNER);
 		}
 		
-		final SnomedNamespaceAndModuleAssigner assigner = SnomedNamespaceAndModuleAssigner.create(context, selectedType, moduleId, namespace);
+		final SnomedNamespaceAndModuleAssigner assigner = context.service(SnomedNamespaceAndModuleAssigner.Registry.class).getAssigner(context, selectedType, moduleId, namespace);
 		
 		LOG.info("Reasoner service will use {} for relationship namespace and module assignment.", assigner);
 		return assigner;

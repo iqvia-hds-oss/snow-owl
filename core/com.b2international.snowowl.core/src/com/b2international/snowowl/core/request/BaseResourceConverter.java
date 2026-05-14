@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,8 @@ import com.b2international.index.Hits;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.CollectionResource;
-import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.request.expand.BaseResourceExpander;
 import com.b2international.snowowl.core.request.expand.ResourceExpanderExtension;
-import com.google.common.collect.Iterables;
 
 /**
  * @since 4.0
@@ -55,7 +53,7 @@ public abstract class BaseResourceConverter<T, R, CR extends CollectionResource<
 	 * @return
 	 */
 	public final R convert(T component) {
-		return Iterables.getOnlyElement(convert(Collections.singleton(component), null, 1, 1));
+		return convert(Collections.singleton(component), null, 1, 1).first().get();
 	}
 
 	/**
@@ -106,12 +104,14 @@ public abstract class BaseResourceConverter<T, R, CR extends CollectionResource<
 	}
 
 	private final void expandViaPlugins(List<R> results) {
-		context().optionalService(ClassPathScanner.class).ifPresent(scanner -> {
-			scanner.getComponentsByInterface(ResourceExpanderExtension.class)
-				.stream()
-				.filter(expanderExtension -> expanderExtension.canExpand(getType()))
-				.forEach(expanderExtension -> expanderExtension.create(context(), expand(), locales(), getType()).expand(results));
-		});
+		context().optionalService(ResourceExpanderExtension.Registry.class)
+				.ifPresent(expanderRegistry -> {
+					expanderRegistry
+						.get()
+						.stream()
+						.filter(expanderExtension -> expanderExtension.canExpand(getType()))
+						.forEach(expanderExtension -> expanderExtension.create(context(), expand(), locales(), getType()).expand(results));
+				});
 	}
 
 	protected abstract CR createCollectionResource(List<R> results, String searchAfter, int limit, int total);

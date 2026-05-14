@@ -24,6 +24,7 @@ import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.locks.DatastoreLockIndexEntry;
 import com.b2international.snowowl.core.locks.DefaultOperationLockManager;
 import com.b2international.snowowl.core.locks.IOperationLockManager;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
@@ -39,7 +40,7 @@ public final class LockPlugin extends Plugin {
 	private static final String LOCKS_INDEX = "locks";
 
 	@Override
-	public void preRun(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {
 			final Index locksIndex = Indexes.createIndex(
 				LOCKS_INDEX, 

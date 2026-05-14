@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +84,8 @@ public final class SnowOwl {
 	private SnowOwlConfiguration configuration;
 	private Logger log;
 
+	private ClassPathScanner scanner;
+
 	private SnowOwl(Plugin...additionalPlugins) throws Exception {
 		final Path homePath = getHomePath();
 		// make sure homePath sysprop is set to the computed path
@@ -119,11 +119,14 @@ public final class SnowOwl {
 		}
 		
 		// register classpath scanner as the first item in the context so other services will be discovered properly
-		final ClassPathScanner scanner = new ClassPathScanner(packagesToScan.toArray(String[]::new));
-		ApplicationContext.getInstance().registerService(ClassPathScanner.class, scanner);
+		// do NOT register the scanner into the injection context, we will destroy the scan result to gain back memory
+		this.scanner = new ClassPathScanner(packagesToScan.toArray(String[]::new));
+		
+		// temporarily register the scanner into the app context, so that various config deserialization classes work as expected
+		ApplicationContext.getInstance().registerService(ClassPathScanner.class, this.scanner);
 		
 		List<Plugin> plugins = ImmutableList.<Plugin>builder()
-			.addAll(scanner.getComponentsBySuperclass(Plugin.class))
+			.addAll(this.scanner.getComponentsBySuperclass(Plugin.class))
 			.add(additionalPlugins != null ? additionalPlugins : new Plugin[]{})
 			.build();
 		this.plugins = new Plugins(plugins);
@@ -137,6 +140,9 @@ public final class SnowOwl {
 		// log environment and setting info
 		logEnvironment();
 		this.plugins.getPlugins().forEach(plugin -> log.info("loaded plugin [{}]", plugin));
+		
+		// once all plugins are parsed, remove the scanner from the global context
+		ApplicationContext.getInstance().unregisterService(ClassPathScanner.class);
 	}
 	
 	private Path getHomePath() {
@@ -235,7 +241,7 @@ public final class SnowOwl {
 	public SnowOwl bootstrap() throws Exception {
 		if (!isRunning()) {
 			log.info("Initializing...");
-			this.plugins.init(this.configuration, this.environment);
+			this.plugins.init(this.configuration, this.environment, this.scanner);
 			// after init set the mode to SERVER if not already set by something else
 			if (this.environment.services().getService(Mode.class) == null) {
 				this.environment.services().registerService(Mode.class, Mode.SERVER); // by default assume Snow Owl is in server mode
@@ -301,16 +307,18 @@ public final class SnowOwl {
 		if (!isRunning()) {
 			checkState(plugins != null, "Bootstrap the application first");
 			if (preRunCompleted.compareAndSet(false, true)) {
-				this.plugins.preRun(configuration, environment);
+				this.plugins.preRun(configuration, environment, scanner);
 			}
 			if (preRunRunnable != null) {
 				preRunRunnable.run();
 			}
 			log.info("Preparing to run Snow Owl...");
-			this.plugins.run(configuration, environment);
+			this.plugins.run(configuration, environment, scanner);
 			checkApplicationState();
 			running.set(true);
-			this.plugins.postRun(configuration, environment);
+			this.plugins.postRun(configuration, environment, scanner);
+			// destroy the scanner and its result to gain back memory
+			this.scanner = null;
 			log.info("Snow Owl successfully started.");
 		} else {
 			log.info("Snow Owl is already running.");

@@ -30,6 +30,7 @@ import com.b2international.index.mapping.Mappings;
 import com.b2international.snowowl.core.config.IndexSettings;
 import com.b2international.snowowl.core.config.RepositoryConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.setup.ConfigurationRegistry;
 import com.b2international.snowowl.core.setup.Environment;
@@ -61,7 +62,7 @@ public final class SnomedIdentifierPlugin extends Plugin {
 	}
 	
 	@Override
-	public void init(final SnowOwlConfiguration configuration, final Environment env) throws Exception {
+	public void init(final SnowOwlConfiguration configuration, final Environment env, ClassPathScanner scanner) throws Exception {
 		checkIdGenerationSource(configuration);
 
 		final ISnomedIdentifierReservationService reservationService = new SnomedIdentifierReservationServiceImpl();
@@ -71,7 +72,7 @@ public final class SnomedIdentifierPlugin extends Plugin {
 	}
 
 	@Override
-	public void run(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void run(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {
 			final ISnomedIdentifierReservationService reservationService = env.service(ISnomedIdentifierReservationService.class);
 			final SnomedIdentifierConfiguration conf = configuration.getModuleConfig(SnomedIdentifierConfiguration.class);

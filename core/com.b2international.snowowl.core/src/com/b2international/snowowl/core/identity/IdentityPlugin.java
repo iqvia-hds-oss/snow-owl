@@ -51,7 +51,7 @@ public final class IdentityPlugin extends Plugin {
 	}
 	
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		final IdentityConfiguration conf = configuration.getModuleConfig(IdentityConfiguration.class);
 		IdentityProvider identityProvider = initIdentityProvider(env, conf);
 		

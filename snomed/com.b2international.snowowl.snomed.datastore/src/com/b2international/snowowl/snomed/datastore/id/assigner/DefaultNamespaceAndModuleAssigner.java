@@ -26,6 +26,7 @@ import com.b2international.snowowl.core.plugin.Component;
  * @since 5.11.5
  */
 @Component
+@AssignerType(name = "default")
 public final class DefaultNamespaceAndModuleAssigner implements SnomedNamespaceAndModuleAssigner {
 
 	private String defaultNamespace;
@@ -59,13 +60,8 @@ public final class DefaultNamespaceAndModuleAssigner implements SnomedNamespaceA
 	}
 
 	@Override
-	public String getName() {
-		return "default";
-	}
-	
-	@Override
 	public String toString() {
-		return String.format("%s[defaultNamespace: '%s', defaultModule: '%s']", getName(), defaultNamespace, defaultModule);
+		return String.format("default[defaultNamespace: '%s', defaultModule: '%s']", defaultNamespace, defaultModule);
 	}
 	
 }

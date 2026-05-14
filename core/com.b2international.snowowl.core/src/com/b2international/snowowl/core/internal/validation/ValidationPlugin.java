@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public final class ValidationPlugin extends Plugin {
 	}
 	
 	@Override
-	public void preRun(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {
 			final List<Path> validationDirectories = new ArrayList<>();
 			// default directory is the server configuration dir
@@ -111,7 +111,7 @@ public final class ValidationPlugin extends Plugin {
 			
 			env.services().registerService(ValidationConfiguration.class, validationConfig);
 			env.services().registerService(ValidationThreadPool.class, new ValidationThreadPool(workerPoolSize, maxConcurrentExpensiveJobs, maxConcurrentNormalJobs));
-			env.services().registerService(ValidationIssueDetailExtensionProvider.class, new ValidationIssueDetailExtensionProvider(env.service(ClassPathScanner.class)));
+			env.services().registerService(ValidationIssueDetailExtensionProvider.class, new ValidationIssueDetailExtensionProvider(scanner));
 			
 			final List<File> listOfFiles = validationDirectories.stream().flatMap(path -> Arrays.asList(path.toFile().listFiles()).stream()).toList();
 			final Set<File> validationRuleFiles = Sets.newHashSet();

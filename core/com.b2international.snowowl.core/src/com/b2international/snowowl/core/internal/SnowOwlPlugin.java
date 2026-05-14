@@ -39,12 +39,14 @@ import com.b2international.snowowl.core.collection.TerminologyResourceCollection
 import com.b2international.snowowl.core.config.IndexSettings;
 import com.b2international.snowowl.core.config.RepositoryConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.console.CommandRegistry;
 import com.b2international.snowowl.core.monitoring.MonitoringConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.repository.JsonSupport;
 import com.b2international.snowowl.core.repository.ObjectMapperCustomizer;
 import com.b2international.snowowl.core.repository.PathTerminologyResourceResolver;
+import com.b2international.snowowl.core.request.expand.ResourceExpanderExtension;
 import com.b2international.snowowl.core.request.suggest.ConceptSuggester;
 import com.b2international.snowowl.core.setup.ConfigurationRegistry;
 import com.b2international.snowowl.core.setup.Environment;
@@ -80,10 +82,8 @@ public final class SnowOwlPlugin extends Plugin {
 	private static final String RESOURCES_INDEX = "resources";
 
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) {
 		env.services().registerService(DeprecationLogger.class, new DeprecationLogger());
-		
-		final ClassPathScanner scanner = env.service(ClassPathScanner.class);
 		
 		final ObjectMapper mapper = JsonSupport.getDefaultObjectMapper();
 		mapper.registerModule(new PrimitiveCollectionModule());
@@ -100,6 +100,8 @@ public final class SnowOwlPlugin extends Plugin {
 		env.services().registerService(ResourceTypeConverter.Registry.class, new ResourceTypeConverter.Registry(scanner));
 		env.services().registerService(ConceptSuggester.Registry.class, new ConceptSuggester.Registry(scanner, mapper));
 		env.services().registerService(TerminologyResourceCollectionToolingSupport.Registry.class, new TerminologyResourceCollectionToolingSupport.Registry(scanner));
+		env.services().registerService(CommandRegistry.class, new CommandRegistry(scanner));
+		env.services().registerService(ResourceExpanderExtension.Registry.class, new ResourceExpanderExtension.Registry(scanner));
 		
 		// configure global branch name validator
 		env.services().registerService(BranchNameValidator.class, new BranchNameValidator.Default(
@@ -128,7 +130,7 @@ public final class SnowOwlPlugin extends Plugin {
 	}
 	
 	@Override
-	public void preRun(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {
 			
 			final ObjectMapper mapper = env.service(ObjectMapper.class);

@@ -29,6 +29,7 @@ import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.snomed.datastore.config.SnomedCoreConfiguration;
+import com.b2international.snowowl.snomed.datastore.id.assigner.SnomedNamespaceAndModuleAssigner;
 import com.b2international.snowowl.snomed.reasoner.classification.ClassificationTracker;
 import com.b2international.snowowl.snomed.reasoner.equivalence.IEquivalentConceptMerger;
 import com.b2international.snowowl.snomed.reasoner.index.*;
@@ -40,7 +41,7 @@ import com.b2international.snowowl.snomed.reasoner.index.*;
 public final class SnomedReasonerPlugin extends Plugin implements TerminologyRepositoryConfigurer {
 
 	@Override
-	public void run(final SnowOwlConfiguration configuration, final Environment env) throws Exception {
+	public void run(final SnowOwlConfiguration configuration, final Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {
 			final Index repositoryIndex = env.service(RepositoryManager.class).get(getToolingId()).service(Index.class);
 			final SnomedCoreConfiguration snomedConfig = configuration.getModuleConfig(SnomedCoreConfiguration.class);
@@ -49,8 +50,8 @@ public final class SnomedReasonerPlugin extends Plugin implements TerminologyRep
 			final ClassificationTracker classificationTracker = new ClassificationTracker(repositoryIndex, maximumReasonerRuns, TimeUnit.MINUTES.toMillis(classificationCleanUpInterval));
 			env.services().registerService(ClassificationTracker.class, classificationTracker);
 			
-			final ClassPathScanner scanner = env.service(ClassPathScanner.class);
 			env.services().registerService(IEquivalentConceptMerger.Registry.class, new IEquivalentConceptMerger.Registry(scanner));
+			env.services().registerService(SnomedNamespaceAndModuleAssigner.Registry.class, new SnomedNamespaceAndModuleAssigner.Registry(scanner));
 		}
 	}
 	

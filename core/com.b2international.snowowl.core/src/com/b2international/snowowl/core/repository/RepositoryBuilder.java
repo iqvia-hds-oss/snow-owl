@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,9 +96,9 @@ public final class RepositoryBuilder {
 		return this;
 	}
 	
-	public Repository build(Environment env) {
+	public Repository build(Environment env, ClassPathScanner scanner) {
 		// get all repository configuration plugins and apply them to customize the repository
-		List<TerminologyRepositoryConfigurer> repositoryConfigurers = env.service(ClassPathScanner.class).getComponentsByInterface(TerminologyRepositoryConfigurer.class)
+		List<TerminologyRepositoryConfigurer> repositoryConfigurers = scanner.getComponentsByInterface(TerminologyRepositoryConfigurer.class)
 			.stream()
 			.filter(configurer -> repositoryId.equals(configurer.getToolingId()))
 			.collect(Collectors.toList());

@@ -28,6 +28,7 @@ import com.b2international.snowowl.core.domain.ContextConfigurer;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.internal.locks.DatastoreLockContextDescriptions;
 import com.b2international.snowowl.core.merge.ComponentRevisionConflictProcessor;
+import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.repository.ComponentDeletionPolicy;
 import com.b2international.snowowl.core.repository.CompositeComponentDeletionPolicy;
@@ -76,7 +77,7 @@ public final class SnomedPlugin extends TerminologyRepositoryPlugin {
 	}
 	
 	@Override
-	public void init(SnowOwlConfiguration configuration, Environment env) throws Exception {
+	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		final SnomedCoreConfiguration coreConfig = configuration.getModuleConfig(SnomedCoreConfiguration.class);
 		env.services().registerService(SnomedCoreConfiguration.class, coreConfig);
 		
