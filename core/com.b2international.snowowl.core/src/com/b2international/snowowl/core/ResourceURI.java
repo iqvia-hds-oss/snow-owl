@@ -62,6 +62,9 @@ public final class ResourceURI implements Serializable, Comparable<ResourceURI> 
 	 */
 	public static final String TILDE = "~";
 	
+	private static final String HEAD_PATH = "/HEAD";
+	private static final String HEAD_TILDE_PATH = "~HEAD"; 
+	
 	// the original value
 	private final String uri;
 	
@@ -92,7 +95,14 @@ public final class ResourceURI implements Serializable, Comparable<ResourceURI> 
 			throw new BadRequestException("Malformed Resource URI value: '%s' must be in format '<resourceType>/<resourceId>/<path>'.", uri);
 		}
 		// ignore HEAD in path part by automatically removing it from the uri
-		this.uri = uri.replaceFirst("/HEAD", "").replaceFirst("~HEAD", ""); 
+		// XXX since we parse a lot of URIs during runtime avoid calling replaceFirst without checking presence for the string, this avoids generating a lot of compiled pattern objects
+		var trimmedUri = uri;
+		if (uri.contains(HEAD_PATH)) {
+			trimmedUri = uri.replaceFirst(HEAD_PATH, ""); 
+		} else if (uri.contains(HEAD_TILDE_PATH)) {
+			trimmedUri = uri.replaceFirst(HEAD_TILDE_PATH, ""); 
+		}
+		this.uri = trimmedUri;
 		this.resourceType = matcher.group(1);
 		this.resourceId = matcher.group(2);
 		
