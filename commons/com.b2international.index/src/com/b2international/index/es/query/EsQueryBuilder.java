@@ -215,8 +215,12 @@ public final class EsQueryBuilder {
 	}
 	
 	private void reduceTermFilters(List<Expression> clauses) {
+		if (clauses.isEmpty()) {
+			return;
+		}
+		
 		Multimap<String, Expression> termExpressionsByField = HashMultimap.create();
-		for (Expression expression : List.copyOf(clauses)) {
+		for (Expression expression : clauses) {
 			if (shouldMergeSingleArgumentPredicate(expression)) {
 				termExpressionsByField.put(((SingleArgumentPredicate<?>) expression).getField(), expression);
 			} else if (shouldMergeSetPredicate(expression)) {
@@ -224,8 +228,8 @@ public final class EsQueryBuilder {
 			}
 		}
 		
-		for (String field : Set.copyOf(termExpressionsByField.keySet())) {
-			Collection<Expression> termExpressions = termExpressionsByField.removeAll(field);
+		for (String field : termExpressionsByField.keySet()) {
+			Collection<Expression> termExpressions = termExpressionsByField.get(field);
 			if (termExpressions.size() > 1) {
 				SortedSet<Comparable<?>> values = null;
 				for (Expression expression : termExpressions) {
@@ -233,10 +237,10 @@ public final class EsQueryBuilder {
 						break;
 					}
 					SortedSet<Comparable<?>> expressionValues;
-					if (expression instanceof SingleArgumentPredicate<?>) {
-						expressionValues = ImmutableSortedSet.copyOf(Set.of(((SingleArgumentPredicate<?>) expression).getArgument()));
-					} else if (expression instanceof SetPredicate<?>) {
-						expressionValues = ImmutableSortedSet.copyOf(((SetPredicate<?>) expression).values());
+					if (expression instanceof SingleArgumentPredicate<?> sap) {
+						expressionValues = ImmutableSortedSet.copyOf(Set.of(sap.getArgument()));
+					} else if (expression instanceof SetPredicate<?> sp) {
+						expressionValues = ImmutableSortedSet.copyOf(sp.values());
 					} else {
 						throw new IllegalStateException("Invalid clause detected when processing term/terms clauses: " + expression);
 					}
