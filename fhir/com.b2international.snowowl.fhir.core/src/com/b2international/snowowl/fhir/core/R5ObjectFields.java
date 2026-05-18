@@ -63,6 +63,7 @@ public final class R5ObjectFields {
 		// XXX do we need jurisdictions???
 		public static final String PURPOSE = "purpose";
 		public static final String COPYRIGHT = "copyright";
+		public static final String EFFECTIVE_PERIOD = "effectivePeriod";
 		
 		public static final Set<String> MANDATORY = ImmutableSet.<String>builder()
 				.addAll(Resource.MANDATORY)
@@ -71,7 +72,7 @@ public final class R5ObjectFields {
 		
 		public static final Set<String> SUMMARY = ImmutableSet.<String>builder()
 				.addAll(Resource.SUMMARY)
-				.add(URL, VERSION, NAME, TITLE, DATE, PUBLISHER, CONTACT)
+				.add(URL, VERSION, NAME, TITLE, DATE, PUBLISHER, CONTACT, EFFECTIVE_PERIOD)
 				.build();
 		
 		/**
