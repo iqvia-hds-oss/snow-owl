@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.core.request;
 
+import java.util.function.Supplier;
+
 import com.b2international.snowowl.core.ServiceProvider;
 
 /**
@@ -29,9 +31,9 @@ public interface RevisionIndexReadRequestTimestampProvider {
 	/**
 	 * Provides the actual read timestamp based on the current request configuration and the given context.
 	 * 
-	 * @param context - the context opened to read from the latest revision index snapshot
+	 * @param context - the context supplier when a request must be performed to fetch versioned timestamp information
 	 * @return
 	 */
-	Long getReadTimestamp(ServiceProvider context);
+	Long getReadTimestamp(Supplier<ServiceProvider> context);
 
 }

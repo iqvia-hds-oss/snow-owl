@@ -16,6 +16,7 @@
 package com.b2international.snowowl.core.request.resource;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -86,7 +87,7 @@ public abstract class BaseGetResourceRequest<SB extends BaseResourceSearchReques
 	}
 	
 	@Override
-	public final Long getReadTimestamp(ServiceProvider context) {
+	public final Long getReadTimestamp(Supplier<ServiceProvider> context) {
 		if (!Strings.isNullOrEmpty(resourceUri.getTimestampPart())) {
 			return Long.parseLong(resourceUri.getTimestampPart().substring(1));
 		} else if (!resourceUri.isHead() && !resourceUri.isNext()) {
@@ -110,7 +111,7 @@ public abstract class BaseGetResourceRequest<SB extends BaseResourceSearchReques
 			
 			// determine the final branch path, if based on the version search we find a version, then use that, otherwise use the defined path as relative branch of the code system working branch
 			return versionSearch.buildAsync()
-				.execute(context)
+				.execute(context.get())
 				.first()
 				.map(Version::getCreatedAt)
 				// for now fall back to fetching the HEAD version of the resource, this is okay for most of the cases, but should fail when accessing versioned content
