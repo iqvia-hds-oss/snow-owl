@@ -24,6 +24,7 @@ import java.util.List;
 import com.b2international.index.query.Expression;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Strings;
 
@@ -87,6 +88,7 @@ public abstract class SnomedComponentDocument extends SnomedDocument {
 			return activeMemberOf(refsetIds == null ? null : List.copyOf(refsetIds));
 		}
 		
+		@JsonSetter
 		public B activeMemberOf(List<String> refsetIds) {
 			this.activeMemberOf = refsetIds;
 			return getSelf();
@@ -97,6 +99,7 @@ public abstract class SnomedComponentDocument extends SnomedDocument {
 			return memberOf(refsetIds == null ? null : List.copyOf(refsetIds));
 		}
 		
+		@JsonSetter
 		public B memberOf(List<String> refsetIds) {
 			this.memberOf = refsetIds;
 			return getSelf();
