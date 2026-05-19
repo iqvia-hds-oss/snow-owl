@@ -15,9 +15,11 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM_ID;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.Matchers.*;
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import java.util.UUID;
 
@@ -540,7 +542,30 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("language", equalTo("ENG"))
 			.body("publisher", equalTo("SNOMED International"))
 			.body("contact[0].telecom[0].system", equalTo("url"))
-			.body("contact[0].telecom[0].value", equalTo("https://b2ihealthcare.com"));
+			.body("contact[0].telecom[0].value", equalTo("https://b2ihealthcare.com"))
+			.body("effectivePeriod.start", equalTo("2002-01-31T01:00:00+01:00"));
+	}
+	
+	@Test
+	public void GET_Versioned_CodeSystem_Summary_True() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("_id", "SNOMEDCT/2002-01-31")
+			.queryParam("_summary", true)
+			.when().get(CODESYSTEM)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("meta.tag.code", hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode()))
+			.body("type", equalTo("searchset"))
+			.body("total", equalTo(1))
+			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
+			.body("entry[0].resource.title", equalTo("SNOMEDCT"))
+			.body("entry[0].resource.property", notNullValue())
+			.body("entry[0].resource.filter", notNullValue())
+			.body("entry[0].resource.effectivePeriod", notNullValue())
+			.body("entry[0].resource.caseSensitive", equalTo(true))
+			//no concept definitions are part of the summary
+			.body("entry.resource", not(hasItem("concept")));
 	}
 	
 	//Summary-count should not be allowed for non-search type operations?
