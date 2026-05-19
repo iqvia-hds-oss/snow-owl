@@ -15,8 +15,7 @@
  */
 package com.b2international.snowowl.snomed.core.ecl;
 
-import static com.google.common.collect.Lists.newArrayListWithCapacity;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -159,7 +158,7 @@ public final class EclExpression {
 		final Set<String> characteristicTypes = isInferred()
 				? SnomedEclRefinementEvaluator.INFERRED_CHARACTERISTIC_TYPES
 						: SnomedEclRefinementEvaluator.STATED_CHARACTERISTIC_TYPES;
-		List<Promise<Multimap<String, Integer>>> promises = newArrayListWithCapacity(3);
+		List<Promise<Multimap<String, Integer>>> promises = new ArrayList<>(3);
 		
 		// search relationships
 		promises.add(SnomedRequests.prepareSearchRelationship()

@@ -15,15 +15,10 @@
  */
 package com.b2international.index.es.client;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -93,7 +88,7 @@ public abstract class EsClientBase implements EsClient {
 		final String clusterDiagnosis = clusterAvailable.get();
 		final boolean available = Strings.isNullOrEmpty(clusterDiagnosis);
 		if (available) {
-			final List<EsIndexStatus> indexStatuses = newArrayList();
+			final List<EsIndexStatus> indexStatuses = new ArrayList<>();
 			for (String index : indices == null || indices.length == 0 ? clusterHealth.get().getIndices().keySet() : Arrays.asList(indices)) {
 				
 				// ignore health check of system / hidden indices

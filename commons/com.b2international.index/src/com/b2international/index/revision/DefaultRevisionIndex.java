@@ -16,13 +16,9 @@
 package com.b2international.index.revision;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.b2international.index.*;
 import com.b2international.index.mapping.DocumentMapping;
@@ -45,7 +41,7 @@ public final class DefaultRevisionIndex implements InternalRevisionIndex, Hooks 
 	private final BaseRevisionBranching branching;
 	private final RevisionIndexAdmin admin;
 	private final ObjectMapper mapper;
-	private final List<Hooks.Hook> hooks = newArrayList();
+	private final List<Hooks.Hook> hooks = new ArrayList<>(3);
 
 	public DefaultRevisionIndex(Index index, TimestampProvider timestampProvider, ObjectMapper mapper) {
 		this.index = index;
@@ -315,7 +311,7 @@ public final class DefaultRevisionIndex implements InternalRevisionIndex, Hooks 
 	}
 	
 	private Set<Class<? extends Revision>> getRevisionTypes() {
-		final Set<Class<? extends Revision>> revisionTypes = newHashSet();
+		final Set<Class<? extends Revision>> revisionTypes = new HashSet<>();
 		for (DocumentMapping mapping : admin().getIndexMapping().getMappings().getDocumentMappings()) {
 			if (Revision.class.isAssignableFrom(mapping.type())) {
 				revisionTypes.add((Class<? extends Revision>) mapping.type());

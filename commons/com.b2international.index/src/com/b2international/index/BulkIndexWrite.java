@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,8 @@
 package com.b2international.index;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 /**
  * 
@@ -30,16 +28,16 @@ public final class BulkIndexWrite<T> implements IndexWrite<List<T>> {
 	
 	@SafeVarargs
 	public BulkIndexWrite(final IndexWrite<T>... writes) {
-		indexWrites = ImmutableList.<IndexWrite<T>>copyOf(writes);
+		indexWrites = List.of(writes);
 	}
 	
 	public BulkIndexWrite(final List<IndexWrite<T>> writes) {
-		indexWrites = ImmutableList.<IndexWrite<T>>copyOf(writes);
+		indexWrites = List.copyOf(writes);
 	}
 	
 	@Override
 	public List<T> execute(final Writer index) throws IOException {
-		final List<T> results = Lists.newArrayList();
+		final List<T> results = new ArrayList<>(indexWrites.size());
 		
 		for (final IndexWrite<T> write : indexWrites) {
 			results.add(write.execute(index));

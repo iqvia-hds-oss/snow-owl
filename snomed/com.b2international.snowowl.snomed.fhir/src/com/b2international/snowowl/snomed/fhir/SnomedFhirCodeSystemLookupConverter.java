@@ -15,8 +15,6 @@
  */
 package com.b2international.snowowl.snomed.fhir;
 
-import static com.google.common.collect.Lists.newArrayListWithCapacity;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +65,7 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		 */
 		final SnomedConcept snomedConcept = concept.getInternalConceptAs();
 		final SnomedDescriptions snomedDescriptions = snomedConcept.getDescriptions();
-		final List<CodeSystemLookupResultParameters.Designation> designations = newArrayListWithCapacity(snomedDescriptions.getItems().size());
+		final List<CodeSystemLookupResultParameters.Designation> designations = new ArrayList<>(snomedDescriptions.getItems().size());
 
 		for (final SnomedDescription snomedDescription : snomedDescriptions) {
 
@@ -76,7 +74,7 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 			 * https://confluence.ihtsdotools.org/display/FHIR/Designation+extension
 			 */
 			final Map<String, Acceptability> acceptabilityMap = snomedDescription.getAcceptabilityMap();
-			final List<Extension> designationExtensions = newArrayListWithCapacity(acceptabilityMap.size());
+			final List<Extension> designationExtensions = new ArrayList<>(acceptabilityMap.size());
 			final List<String> languageRefsetIds = acceptabilityMap.keySet()
 				.stream()
 				.sorted()

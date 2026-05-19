@@ -17,10 +17,6 @@ package com.b2international.index.revision;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.collect.Maps.newHashMapWithExpectedSize;
-import static com.google.common.collect.Sets.newHashSet;
 
 import java.io.IOException;
 import java.util.*;
@@ -498,7 +494,7 @@ public final class StagingArea {
 			}
 		}
 		
-		final List<CommitDetail> details = Lists.newArrayList();
+		final List<CommitDetail> details = new ArrayList<>();
 		
 		if (!isMerge() || squashMerge) {
 			
@@ -670,7 +666,7 @@ public final class StagingArea {
 			final Multimap<ObjectId, ObjectId> multimap = entry.getA();
 			if (!multimap.isEmpty()) {
 				BiFunction<String, String, CommitDetail.Builder> builderFactory = entry.getB();
-				Map<Pair<String, String>, CommitDetail.Builder> buildersByRelationship = newHashMap();
+				Map<Pair<String, String>, CommitDetail.Builder> buildersByRelationship = new HashMap<>();
 				// collect hierarchical changes and register them by container ID
 				multimap.asMap().forEach((container, components) -> {
 					Multimap<String, String> componentsByType = HashMultimap.create();
@@ -750,7 +746,7 @@ public final class StagingArea {
 	}
 	
 	private void clear() {
-		stagedObjects = newHashMap();
+		stagedObjects = new HashMap<>();
 		revisionsToReviseOnMergeSource = HashMultimap.create();
 		externalRevisionsToReviseOnMergeSource = HashMultimap.create();
 		deletedComponentsInMerge = HashMultimap.create();
@@ -986,7 +982,7 @@ public final class StagingArea {
 		RevisionBranchChangeSet fromChangeSet = new RevisionBranchChangeSet(index, fromRef, fromChangeDetails);
 		RevisionBranchChangeSet toChangeSet = new RevisionBranchChangeSet(index, toRef, toChangeDetails);
 		
-		final List<Conflict> conflictsToReport = Lists.newArrayList();
+		final List<Conflict> conflictsToReport = new ArrayList<>();
 		final Map<Class<? extends Revision>, Multimap<String, RevisionPropertyDiff>> propertyUpdatesToApply = Maps.newHashMap();
 		
 		// check conflicts and commit only the resolved conflicts
@@ -1054,7 +1050,7 @@ public final class StagingArea {
 
 	private void collectConflicts(RevisionBranchChangeSet fromChangeSet, List<RevisionCompareDetail> fromChangeDetails, RevisionBranchChangeSet toChangeSet, List<RevisionCompareDetail> toChangeDetails, List<Conflict> conflictsToReport,
 			Map<Class<? extends Revision>, Multimap<String, RevisionPropertyDiff>> propertyUpdatesToApply, RevisionConflictProcessor conflictProcessor) {
-		List<Conflict> conflicts = newArrayList();
+		List<Conflict> conflicts = new ArrayList<>();
 		
 		for (Class<? extends Revision> type : ImmutableSet.copyOf(Iterables.concat(fromChangeSet.getAddedTypes(), toChangeSet.getAddedTypes()))) {
 			final Set<String> newRevisionIdsOnSource = fromChangeSet.getAddedIds(type);
@@ -1107,14 +1103,14 @@ public final class StagingArea {
 		}
 		
 		// check property conflicts
-		Set<String> changedRevisionIdsToCheck = newHashSet(toChangeSet.getChangedIds());
-		Set<String> removedRevisionIdsToCheck = newHashSet(toChangeSet.getRemovedIds());
+		Set<String> changedRevisionIdsToCheck = new HashSet<>(toChangeSet.getChangedIds());
+		Set<String> removedRevisionIdsToCheck = new HashSet<>(toChangeSet.getRemovedIds());
 		for (Class<? extends Revision> type : fromChangeSet.getChangedTypes()) {
 			final DocumentMapping mapping = index.admin().getIndexMapping().getMapping(type);
 			final String docType = mapping.typeAsString();
-			Set<String> changedRevisionIdsToMerge = newHashSet(fromChangeSet.getChangedIds(type));
+			Set<String> changedRevisionIdsToMerge = new HashSet<>(fromChangeSet.getChangedIds(type));
 			// first handle changed vs. removed
-			Set<String> changedInSourceDetachedInTargetIds = Sets.newHashSet(Sets.intersection(changedRevisionIdsToMerge, removedRevisionIdsToCheck));
+			Set<String> changedInSourceDetachedInTargetIds = new HashSet<>(Sets.intersection(changedRevisionIdsToMerge, removedRevisionIdsToCheck));
 			if (!changedInSourceDetachedInTargetIds.isEmpty()) {
 				// report any conflicts
 				changedInSourceDetachedInTargetIds.forEach(changedInSourceDetachedInTargetId -> {
@@ -1257,12 +1253,12 @@ public final class StagingArea {
 	}
 	
 	private Map<String, Map<String, RevisionCompareDetail>> indexPropertyChangesByObject(List<RevisionCompareDetail> changeDetails) {
-		final Map<String, Map<String, RevisionCompareDetail>> propertyChangesByObject = newHashMap();
+		final Map<String, Map<String, RevisionCompareDetail>> propertyChangesByObject = new HashMap<>();
 		for (RevisionCompareDetail changeDetail : changeDetails) {
 			if (changeDetail.isPropertyChange()) {
 				final String changedObjectId = changeDetail.getObject().id();
 				if (!propertyChangesByObject.containsKey(changedObjectId)) {
-					propertyChangesByObject.put(changedObjectId, newHashMap());
+					propertyChangesByObject.put(changedObjectId, new HashMap<>());
 				}
 				propertyChangesByObject.get(changedObjectId).put(changeDetail.getProperty(), changeDetail);
 			}
@@ -1316,7 +1312,7 @@ public final class StagingArea {
 						rawChange = new RevisionPropertyDiff(property, JsonDiff.serialize(oldRevisionSource, property), JsonDiff.serialize(newRevisionSource, property))
 								.asPatch(mapper, oldRevisionSource, true /* includeFromValue */);
 						if (fieldsToSkip == null) {
-							fieldsToSkip = Sets.newHashSetWithExpectedSize(1); // expect a single array like property per type
+							fieldsToSkip = new HashSet<>(1); // expect a single array like property per type
 						}
 						fieldsToSkip.add(property);
 					}
@@ -1357,7 +1353,7 @@ public final class StagingArea {
 
 		private Map<String, RevisionPropertyDiff> getRevisionPropertyDiffs() {
 			if (propertyChanges == null) {
-				propertyChanges = newHashMapWithExpectedSize(2);
+				propertyChanges = new HashMap<>(2);
 				for (JsonChange change : diff()) {
 					String prop = change.getFieldPath();
 					final String from = change.serializeFromValue();
