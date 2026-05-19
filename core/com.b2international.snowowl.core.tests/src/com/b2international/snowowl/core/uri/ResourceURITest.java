@@ -37,6 +37,22 @@ public class ResourceURITest {
 	}
 	
 	@Test
+	public void headExplicit() throws Exception {
+		final ResourceURI uri = CodeSystem.uri("SNOMEDCT/HEAD");
+		assertEquals("SNOMEDCT", uri.getResourceId());
+		assertEquals("codesystems/SNOMEDCT", uri.getUri());
+		assertEquals(ResourceURI.HEAD, uri.getPath());
+	}
+	
+	@Test
+	public void headWithTilde() throws Exception {
+		final ResourceURI uri = CodeSystem.uri("SNOMEDCT~HEAD");
+		assertEquals("SNOMEDCT~HEAD", uri.getResourceId());
+		assertEquals("codesystems/SNOMEDCT~HEAD", uri.getUri());
+		assertEquals(null, uri.getPath());
+	}
+	
+	@Test
 	public void latestReleasedExplicit() throws Exception {
 		final ResourceURI uri = CodeSystem.uri("SNOMEDCT/LATEST");
 		assertEquals("SNOMEDCT", uri.getResourceId());
