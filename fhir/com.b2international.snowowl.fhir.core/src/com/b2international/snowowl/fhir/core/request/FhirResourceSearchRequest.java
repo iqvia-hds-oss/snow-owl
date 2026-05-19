@@ -70,7 +70,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	private static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
 		R5ObjectFields.MetadataResource.NAME,
 		R5ObjectFields.MetadataResource.META,
-		R5ObjectFields.MetadataResource.TEXT
+		R5ObjectFields.MetadataResource.TEXT,
+		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD
 	);
 	
 	/**
