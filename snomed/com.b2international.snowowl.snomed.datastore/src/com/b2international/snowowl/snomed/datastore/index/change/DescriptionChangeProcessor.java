@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,19 +27,17 @@ import java.util.stream.Collectors;
 import com.b2international.index.revision.Revision;
 import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.index.revision.StagingArea;
-import com.b2international.snowowl.core.repository.ChangeSetProcessorBase;
 import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry.Builder;
 import com.b2international.snowowl.snomed.datastore.index.refset.RefSetMemberChange;
-import com.b2international.snowowl.snomed.datastore.index.update.ReferenceSetMembershipUpdater;
 import com.google.common.collect.*;
 
 /**
  * @since 4.3
  */
-public class DescriptionChangeProcessor extends ChangeSetProcessorBase {
+public class DescriptionChangeProcessor extends SnomedChangeSetProcessorBase {
 	
 	private final ReferringMemberChangeProcessor memberChangeProcessor;
 
@@ -147,12 +145,7 @@ public class DescriptionChangeProcessor extends ChangeSetProcessorBase {
 			doc.acceptability(acceptableLanguageRefSet, Acceptability.ACCEPTABLE);
 		}
 		
-		final Collection<String> currentMemberOf = currentRevision == null ? Collections.emptySet()
-				: currentRevision.getMemberOf();
-		final Collection<String> currentActiveMemberOf = currentRevision == null ? Collections.emptySet()
-				: currentRevision.getActiveMemberOf();
-		new ReferenceSetMembershipUpdater(referringRefSets.removeAll(id), currentMemberOf, currentActiveMemberOf)
-				.update(doc);
+		updateReferenceSetMemberships(referringRefSets.removeAll(id), currentRevision, doc);
 	}
 	
 	private void collectChanges(Collection<RefSetMemberChange> changes, Collection<String> refSetIds) {

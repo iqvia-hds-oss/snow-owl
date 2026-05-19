@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.b2international.snowowl.snomed.datastore.index.change;
 import static com.google.common.collect.Sets.newHashSet;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,19 +25,17 @@ import java.util.stream.Collectors;
 import com.b2international.index.revision.Revision;
 import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.index.revision.StagingArea;
-import com.b2international.snowowl.core.repository.ChangeSetProcessorBase;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRelationshipIndexEntry.Builder;
 import com.b2international.snowowl.snomed.datastore.index.refset.RefSetMemberChange;
-import com.b2international.snowowl.snomed.datastore.index.update.ReferenceSetMembershipUpdater;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
 /**
  * @since 4.3
  */
-public class RelationshipChangeProcessor extends ChangeSetProcessorBase {
+public class RelationshipChangeProcessor extends SnomedChangeSetProcessorBase {
 	
 	private final ReferringMemberChangeProcessor memberChangeProcessor;
 
@@ -80,10 +77,7 @@ public class RelationshipChangeProcessor extends ChangeSetProcessorBase {
 				doc = SnomedRelationshipIndexEntry.builder(currentDoc);
 			}
 			
-			final Collection<String> currentMemberOf = currentDoc.getMemberOf();
-			final Collection<String> currentActiveMemberOf = currentDoc.getActiveMemberOf();
-			new ReferenceSetMembershipUpdater(referringRefSets.removeAll(id), currentMemberOf, currentActiveMemberOf)
-					.update(doc);
+			updateReferenceSetMemberships(referringRefSets.removeAll(id), currentDoc, doc);
 			
 			stageChange(currentDoc, doc.build());
 		}
