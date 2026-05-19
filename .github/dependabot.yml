@@ -6,7 +6,8 @@
 version: 2
 updates:
   - package-ecosystem: "maven"
-    directory: "/"
+    directories:
+        - "**/*"
     # Disable automated version updates for maven dependencies (security updates still happen)
     open-pull-requests-limit: 0
     schedule:
