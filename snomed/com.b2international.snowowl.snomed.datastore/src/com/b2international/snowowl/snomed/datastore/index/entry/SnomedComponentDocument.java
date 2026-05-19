@@ -82,6 +82,7 @@ public abstract class SnomedComponentDocument extends SnomedDocument {
 			return getSelf();
 		}
 		
+		@JsonIgnore
 		public B activeMemberOf(Collection<String> refsetIds) {
 			return activeMemberOf(refsetIds == null ? null : List.copyOf(refsetIds));
 		}
