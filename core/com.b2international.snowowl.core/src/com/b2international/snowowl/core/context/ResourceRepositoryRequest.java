@@ -71,7 +71,7 @@ public final class ResourceRepositoryRequest<R> extends DelegatingRequest<Servic
 		RevisionIndexRead<R> read = searcher -> next(prepareRepositoryContext(context, resourceRepository, searcher));
 
 		// read from the latest snapshot of the repository to get the actual timestamp we have to read to satisfy the request
-		Long readTimestamp = resourceRepository.read((searcher) -> getReadTimestamp(prepareRepositoryContext(context, resourceRepository, searcher)));
+		Long readTimestamp = getReadTimestamp(context, resourceRepository);
 		
 		return resourceRepository.read(readTimestamp, read);
 	}
@@ -87,13 +87,13 @@ public final class ResourceRepositoryRequest<R> extends DelegatingRequest<Servic
 		return repository;
 	}
 
-	private Long getReadTimestamp(ServiceProvider context) {
+	private Long getReadTimestamp(ServiceProvider context, ResourceRepository resourceRepository) {
 		if (timestamp != null) {
 			return timestamp;
 		} else {
 			RevisionIndexReadRequestTimestampProvider readTimestampProvider = getNestedRequest(RevisionIndexReadRequestTimestampProvider.class);
 			if (readTimestampProvider != null) {
-				return readTimestampProvider.getReadTimestamp(context);
+				return resourceRepository.read((searcher) -> readTimestampProvider.getReadTimestamp(() -> prepareRepositoryContext(context, resourceRepository, searcher)));
 			}
 		}
 		return null;

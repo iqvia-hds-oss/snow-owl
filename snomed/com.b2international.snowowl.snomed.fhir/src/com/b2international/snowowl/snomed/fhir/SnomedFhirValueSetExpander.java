@@ -15,12 +15,7 @@
  */
 package com.b2international.snowowl.snomed.fhir;
 
-import static com.google.common.collect.Lists.newArrayListWithCapacity;
-
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.Extension;
@@ -139,7 +134,7 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 			 * https://confluence.ihtsdotools.org/display/FHIR/Designation+extension
 			 */
 			final Map<String, Acceptability> acceptabilityMap = snomedDescription.getAcceptabilityMap();
-			final List<Extension> designationExtensions = newArrayListWithCapacity(acceptabilityMap.size());
+			final List<Extension> designationExtensions = new ArrayList<>(acceptabilityMap.size());
 			final List<String> languageRefsetIds = acceptabilityMap.keySet()
 				.stream()
 				.sorted()

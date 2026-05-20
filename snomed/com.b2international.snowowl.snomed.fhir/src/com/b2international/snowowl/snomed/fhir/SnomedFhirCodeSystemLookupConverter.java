@@ -15,12 +15,11 @@
  */
 package com.b2international.snowowl.snomed.fhir;
 
-import static com.google.common.collect.Lists.newArrayListWithCapacity;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.*;
@@ -49,10 +48,26 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 
 	@Override
 	public String configureConceptExpand(CodeSystemLookupParameters parameters) {
-		String expandDescriptions = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION) ? "descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")" : null;
-		String expandDescendants = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD) ? "descendants(direct:true,expand(pt()))" : null;
-		String expandAncestors = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT) ? "ancestors(direct:true,expand(pt()))" : null;
-		return StringUtils.COMMA_JOINER.join("pt()", expandDescriptions, expandDescendants, expandAncestors);
+		final StringJoiner expand = new StringJoiner(",");
+		expand.add("pt()");
+		
+		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
+			expand.add("descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")");
+		}
+		
+		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD)) {
+			expand.add("descendants(direct:true,expand(pt()))");
+		}
+		
+		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT)) {
+			expand.add("ancestors(direct:true,expand(pt()))");
+		}
+		
+		return expand.toString();
+	}
+	
+	public static void main(String[] args) {
+		
 	}
 	
 	@Override
@@ -67,7 +82,7 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		 */
 		final SnomedConcept snomedConcept = concept.getInternalConceptAs();
 		final SnomedDescriptions snomedDescriptions = snomedConcept.getDescriptions();
-		final List<CodeSystemLookupResultParameters.Designation> designations = newArrayListWithCapacity(snomedDescriptions.getItems().size());
+		final List<CodeSystemLookupResultParameters.Designation> designations = new ArrayList<>(snomedDescriptions.getItems().size());
 
 		for (final SnomedDescription snomedDescription : snomedDescriptions) {
 
@@ -76,7 +91,7 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 			 * https://confluence.ihtsdotools.org/display/FHIR/Designation+extension
 			 */
 			final Map<String, Acceptability> acceptabilityMap = snomedDescription.getAcceptabilityMap();
-			final List<Extension> designationExtensions = newArrayListWithCapacity(acceptabilityMap.size());
+			final List<Extension> designationExtensions = new ArrayList<>(acceptabilityMap.size());
 			final List<String> languageRefsetIds = acceptabilityMap.keySet()
 				.stream()
 				.sorted()

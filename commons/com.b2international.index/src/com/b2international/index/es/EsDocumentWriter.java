@@ -15,9 +15,6 @@
  */
 package com.b2international.index.es;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
-
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
@@ -63,8 +60,8 @@ public class EsDocumentWriter implements Writer {
 	private final Table<Class<?>, String, Object> indexOperations = HashBasedTable.create();
 	private final Multimap<Class<?>, String> deleteOperations = HashMultimap.create();
 	private final ObjectMapper mapper;
-	private List<BulkUpdate<?>> bulkUpdateOperations = newArrayList();
-	private List<BulkDelete<?>> bulkDeleteOperations = newArrayList();
+	private List<BulkUpdate<?>> bulkUpdateOperations = new ArrayList<>();
+	private List<BulkDelete<?>> bulkDeleteOperations = new ArrayList<>();
 	
 	// in certain cases (e.g. reindex) we don't need any automated generation of doc ids, just let the documents "fall through"
 	private boolean generateDocIds = true;
@@ -136,7 +133,7 @@ public class EsDocumentWriter implements Writer {
 			return;
 		}
 		
-		final Set<DocumentMapping> mappingsToRefresh = Collections.synchronizedSet(newHashSet());
+		final Set<DocumentMapping> mappingsToRefresh = Collections.synchronizedSet(new HashSet<>());
 		final EsClient client = admin.client();
 		
 		// apply bulk updates first
@@ -149,7 +146,7 @@ public class EsDocumentWriter implements Writer {
 		} else {
 			executor = MoreExecutors.newDirectExecutorService();
 		}
-		final List<ListenableFuture<?>> updateFutures = newArrayList();
+		final List<ListenableFuture<?>> updateFutures = new ArrayList<>();
 		for (BulkUpdate<?> update : bulkUpdateOperations) {
 			updateFutures.add(executor.submit(() -> {
 				if (admin.bulkUpdate(update)) {

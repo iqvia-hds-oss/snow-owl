@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2015 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package com.b2international.commons.reflect;
-
-import static com.google.common.collect.Lists.newArrayList;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -102,7 +100,7 @@ public class MethodInvokerUtil {
 		if (args == null) {
 			return "null";
 		}
-		return Joiner.on(", ").useForNull("null").join(newArrayList(args));
+		return Joiner.on(", ").useForNull("null").join(args);
 	}
 
 	/**

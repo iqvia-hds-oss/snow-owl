@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2023-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.b2international.snowowl.core.domain;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +29,6 @@ import com.b2international.snowowl.core.request.SearchIndexResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 
 /**
  * @since 9.0.0
@@ -59,7 +59,7 @@ public interface SortSupport {
 		if (CompareUtils.isEmpty(sortKeys)) {
 			return Collections.emptyList();
 		}
-		final List<Sort> result = Lists.newArrayList();
+		final List<Sort> result = new ArrayList<>(sortKeys.size());
 		for (String sortKey : sortKeys) {
 			Matcher matcher = sortKeyPattern.matcher(sortKey);
 			if (matcher.matches()) {

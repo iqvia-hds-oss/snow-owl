@@ -15,9 +15,6 @@
  */
 package com.b2international.snowowl.snomed.datastore;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
-
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Supplier;
@@ -54,7 +51,7 @@ public final class SnomedDescriptionUtils {
 		final ExplicitFirstOrdering<String> languageRefSetOrdering = ExplicitFirstOrdering.create(languageRefSetIds);
 		final Multimap<String, SnomedDescription> conceptIdToDescriptionsMap = Multimaps.index(descriptions, SnomedDescription::getConceptId);
 
-		final Map<String, SnomedDescription> conceptToBestPreferredDescriptionMap = newHashMap();
+		final Map<String, SnomedDescription> conceptToBestPreferredDescriptionMap = new HashMap<>();
 
 		for (final Entry<String, Collection<SnomedDescription>> entry : conceptIdToDescriptionsMap.asMap().entrySet()) {
 
@@ -160,8 +157,8 @@ public final class SnomedDescriptionUtils {
 			return Collections.emptyList();
 		}
 		
-		final List<String> languageRefSetIds = newArrayList();
-		final List<ExtendedLocale> unconvertableLocales = new ArrayList<ExtendedLocale>();
+		final List<String> languageRefSetIds = new ArrayList<>(3);
+		final List<ExtendedLocale> unconvertableLocales = new ArrayList<ExtendedLocale>(1);
 
 		for (final ExtendedLocale extendedLocale : locales) {
 			Collection<String> mappedRefSetIds = mapToLanguageRefSetIds(languageMap, extendedLocale);

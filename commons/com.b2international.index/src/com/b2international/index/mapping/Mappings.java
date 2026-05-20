@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.newHashMap;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
@@ -66,7 +64,7 @@ public final class Mappings {
 	}
 
 	public Collection<DocumentMapping> getDocumentMappings() {
-		return ImmutableList.copyOf(mappingsByType.values());
+		return List.copyOf(mappingsByType.values());
 	}
 	
 	public DocumentMapping getMapping(Class<?> type) {
@@ -75,7 +73,7 @@ public final class Mappings {
 	}
 	
 	public DocumentMapping getByType(String className) {
-		final Collection<DocumentMapping> mappings = Lists.newArrayList();
+		final Collection<DocumentMapping> mappings = new ArrayList<>(1);
 		for (DocumentMapping mapping : mappingsByType.values()) {
 			if (mapping.type().getName().equals(className)) {
 				mappings.add(mapping);

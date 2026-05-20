@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
  */
 package com.b2international.index.query;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.SortedSet;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -141,8 +144,12 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 	}
 
 	private void mergeTermFilters(List<Expression> clauses) {
+		if (clauses.isEmpty()) {
+			return;
+		}
+		
 		Multimap<String, Expression> termExpressionsByField = HashMultimap.create();
-		for (Expression expression : List.copyOf(clauses)) {
+		for (Expression expression : clauses) {
 			if (shouldMergeSingleArgumentPredicate(expression)) {
 				termExpressionsByField.put(((SingleArgumentPredicate<?>) expression).getField(), expression);
 			} else if (shouldMergeSetPredicate(expression)) {
@@ -150,15 +157,15 @@ public abstract class AbstractExpressionBuilder<B extends AbstractExpressionBuil
 			}
 		}
 		
-		for (String field : Set.copyOf(termExpressionsByField.keySet())) {
-			Collection<Expression> termExpressions = termExpressionsByField.removeAll(field);
+		for (String field : termExpressionsByField.keySet()) {
+			Collection<Expression> termExpressions = termExpressionsByField.get(field);
 			if (termExpressions.size() > 1) {
 				SortedSet<Comparable<?>> values = Sets.newTreeSet();
 				for (Expression expression : termExpressions) {
-					if (expression instanceof SingleArgumentPredicate<?>) {
-						values.add(((SingleArgumentPredicate<?>) expression).getArgument());
-					} else if (expression instanceof SetPredicate<?>) {
-						values.addAll(((SetPredicate<?>) expression).values());
+					if (expression instanceof SingleArgumentPredicate<?> sap) {
+						values.add(sap.getArgument());
+					} else if (expression instanceof SetPredicate<?> sp) {
+						values.addAll(sp.values());
 					}
 				}
 				// remove all matching clauses first

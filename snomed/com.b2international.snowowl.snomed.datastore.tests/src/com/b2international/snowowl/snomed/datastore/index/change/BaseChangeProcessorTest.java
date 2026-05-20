@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 
+import org.elasticsearch.core.List;
 import org.junit.Before;
 
 import com.b2international.collections.PrimitiveCollectionModule;
@@ -145,6 +146,8 @@ public abstract class BaseChangeProcessorTest extends BaseRevisionIndexTest {
 				.sourceId(sourceId)
 				.destinationId(destinationId)
 				.characteristicTypeId(characteristicTypeId)
+				.memberOf(List.of())
+				.activeMemberOf(List.of())
 				.build();
 	}
 	
@@ -200,6 +203,8 @@ public abstract class BaseChangeProcessorTest extends BaseRevisionIndexTest {
 				.languageCode("en")
 				.moduleId(module())
 				.acceptabilityMap(acceptabilityMap)
+				.memberOf(List.of())
+				.activeMemberOf(List.of())
 				.build();
 	}
 	

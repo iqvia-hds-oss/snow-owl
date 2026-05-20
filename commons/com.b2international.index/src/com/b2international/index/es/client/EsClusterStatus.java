@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.b2international.index.es.client;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -27,7 +24,6 @@ import java.util.stream.Stream;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * @since 7.2
@@ -47,7 +43,7 @@ public final class EsClusterStatus implements Serializable {
 			@JsonProperty("indices") final List<EsIndexStatus> indices) {
 		this.available = available;
 		this.diagnosis = diagnosis;
-		this.indices = Collections.unmodifiableList(newArrayList(indices));
+		this.indices = List.copyOf(indices);
 	}
 	
 	/**
@@ -87,7 +83,7 @@ public final class EsClusterStatus implements Serializable {
 	public boolean isHealthy(String...indices) {
 		final Stream<EsIndexStatus> stream;
 		if (indices != null) {
-			final Set<String> requestedIndices = ImmutableSet.copyOf(indices);
+			final Set<String> requestedIndices = Set.of(indices);
 			stream = this.indices.stream()
 					.filter(index -> requestedIndices.contains(index.getIndex()));
 		} else {

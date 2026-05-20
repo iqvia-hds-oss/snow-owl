@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.index.revision.StagingArea;
 import com.b2international.index.revision.StagingArea.RevisionDiff;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.repository.ChangeSetProcessorBase;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
@@ -44,7 +43,6 @@ import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemb
 import com.b2international.snowowl.snomed.datastore.index.refset.RefSetMemberChange;
 import com.b2international.snowowl.snomed.datastore.index.update.IconIdUpdater;
 import com.b2international.snowowl.snomed.datastore.index.update.ParentageUpdater;
-import com.b2international.snowowl.snomed.datastore.index.update.ReferenceSetMembershipUpdater;
 import com.b2international.snowowl.snomed.datastore.taxonomy.Taxonomy;
 import com.b2international.snowowl.snomed.datastore.taxonomy.TaxonomyGraph;
 import com.google.common.collect.*;
@@ -52,7 +50,7 @@ import com.google.common.collect.*;
 /**
  * @since 4.3
  */
-public final class ConceptChangeProcessor extends ChangeSetProcessorBase {
+public final class ConceptChangeProcessor extends SnomedChangeSetProcessorBase {
 
 	/*
 	 * XXX: Case significance and module changes are also allowed, but they are not relevant from 
@@ -361,10 +359,7 @@ public final class ConceptChangeProcessor extends ChangeSetProcessorBase {
 			inferred.update(id, doc);
 		}
 		
-		final Collection<String> currentMemberOf = cleanRevision == null ? Collections.emptySet() : cleanRevision.getMemberOf();
-		final Collection<String> currentActiveMemberOf = cleanRevision == null ? Collections.emptySet() : cleanRevision.getActiveMemberOf();
-		new ReferenceSetMembershipUpdater(referringRefSets.removeAll(id), currentMemberOf, currentActiveMemberOf)
-				.update(doc);
+		updateReferenceSetMemberships(referringRefSets.removeAll(id), cleanRevision, doc);
 		
 		doc.semanticTags(semanticTags);
 		doc.preferredDescriptions(preferredDescriptions);

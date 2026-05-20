@@ -16,8 +16,6 @@
 package com.b2international.index.revision;
 
 import static com.b2international.index.query.Expressions.*;
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
 
 import java.util.*;
 
@@ -344,9 +342,9 @@ public final class Commit implements WithScore {
 			detailsByObject = ArrayListMultimap.create();
 		}
 		if (!detailsByObject.containsKey(objectId)) {
-			final List<CommitDetail> detailsForObject = newArrayList();
+			final List<CommitDetail> detailsForObject = new ArrayList<>();
 			
-			final Set<ObjectId> visited = newHashSet();
+			final Set<ObjectId> visited = new HashSet<>();
 			final Deque<ObjectId> toCheck = new ArrayDeque<>(); 
 						
 			/* 

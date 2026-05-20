@@ -15,13 +15,8 @@
  */
 package com.b2international.snowowl.core.identity;
 
-import static com.google.common.collect.Lists.newArrayListWithExpectedSize;
-
 import java.time.InstantSource;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.SnowOwl;
@@ -128,7 +123,7 @@ public final class IdentityPlugin extends Plugin {
 	}
 
 	private List<IdentityProvider> createProviders(ServiceProvider ctx, List<IdentityProviderConfig> providerConfigurations) {
-		final List<IdentityProvider> providers = newArrayListWithExpectedSize(3);
+		final List<IdentityProvider> providers = new ArrayList<>(3);
 		final List<IdentityProviderFactory> factories = ctx.service(Plugins.class).getPlugins().stream()
 		.filter(IdentityProviderFactory.class::isInstance)
 		.map(IdentityProviderFactory.class::cast)

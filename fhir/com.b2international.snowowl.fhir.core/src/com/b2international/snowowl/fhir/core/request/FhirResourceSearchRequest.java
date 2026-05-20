@@ -18,10 +18,7 @@ package com.b2international.snowowl.fhir.core.request;
 import static com.google.common.collect.Sets.newHashSet;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -53,8 +50,6 @@ import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
 /**
  * Retrieves FHIR terminology resources (CodeSystem, ValueSet, ConceptMap) based
@@ -240,7 +235,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	}
 
 	private List<String> replaceFieldsToLoad(final List<String> fields) {
-		final List<String> internalFields = Lists.newArrayList(fields);
+		final List<String> internalFields = new ArrayList<>(fields);
 		
 		// If any fields were listed for field selection, make sure the ones we usually need are still included
 		if (!internalFields.isEmpty()) {
@@ -337,7 +332,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				.limit(1)
 				.build());
 			
-			final ResourceFragment resourceSnapshot = Iterables.getFirst(resourceFragments, null);
+			final ResourceFragment resourceSnapshot = resourceFragments.first();
 			if (resourceSnapshot != null) {
 				fragment.setTitle(resourceSnapshot.getTitle());
 				fragment.setStatus(resourceSnapshot.getStatus());

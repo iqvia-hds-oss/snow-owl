@@ -15,8 +15,7 @@
  */
 package com.b2international.snowowl.snomed.datastore.request;
 
-import static com.google.common.collect.Lists.newArrayList;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -104,8 +103,9 @@ final class SnomedInactivationReasonUpdateRequest extends BaseComponentMemberUpd
 	
 	@Override
 	protected void doExecute(TransactionContext context, SnomedComponentDocument componentToUpdate) {
-		final List<SnomedReferenceSetMember> existingMembers = newArrayList();
+		final List<SnomedReferenceSetMember> existingMembers;
 		if (!create) {
+			existingMembers = new ArrayList<>();
 			existingMembers.addAll(SnomedRequests.prepareSearchMember()
 				.all()
 				.filterByReferencedComponent(componentToUpdate.getId())
@@ -113,6 +113,8 @@ final class SnomedInactivationReasonUpdateRequest extends BaseComponentMemberUpd
 				.build()
 				.execute(context)
 				.getItems());
+		} else {
+			existingMembers = List.of();
 		}
 		boolean firstMemberFound = false;
 		
