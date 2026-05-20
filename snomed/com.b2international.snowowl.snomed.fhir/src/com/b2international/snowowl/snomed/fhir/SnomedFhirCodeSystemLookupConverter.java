@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.*;
@@ -47,10 +48,26 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 
 	@Override
 	public String configureConceptExpand(CodeSystemLookupParameters parameters) {
-		String expandDescriptions = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION) ? "descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")" : null;
-		String expandDescendants = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD) ? "descendants(direct:true,expand(pt()))" : null;
-		String expandAncestors = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT) ? "ancestors(direct:true,expand(pt()))" : null;
-		return StringUtils.COMMA_JOINER.join("pt()", expandDescriptions, expandDescendants, expandAncestors);
+		final StringJoiner expand = new StringJoiner(",");
+		expand.add("pt()");
+		
+		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
+			expand.add("descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")");
+		}
+		
+		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD)) {
+			expand.add("descendants(direct:true,expand(pt()))");
+		}
+		
+		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT)) {
+			expand.add("ancestors(direct:true,expand(pt()))");
+		}
+		
+		return expand.toString();
+	}
+	
+	public static void main(String[] args) {
+		
 	}
 	
 	@Override
