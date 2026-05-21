@@ -18,10 +18,7 @@ package com.b2international.snowowl.fhir.core.request;
 import static com.google.common.collect.Sets.newHashSet;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -419,10 +416,14 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		if (start == null) {
 			return null;
 		}
-		
+
 		final Period period = new Period();
+		final DateTimeType startElement = new DateTimeType();
 		
-		period.setStart(new Date(start));
+		startElement.setValue(new Date(start));
+		startElement.setTimeZone(TimeZone.getTimeZone("UTC"));
+		
+		period.setStartElement(startElement);
 		
 		return period;
 	}
