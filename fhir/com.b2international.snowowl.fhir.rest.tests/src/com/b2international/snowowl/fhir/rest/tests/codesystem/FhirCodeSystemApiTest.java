@@ -181,11 +181,14 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode()))
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(1))
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
-			.body("entry[0].resource.title", equalTo("Title of " + getTestCodeSystemId()))
-			.body("entry[0].resource.property", notNullValue())
-			.body("entry[0].resource.filter", notNullValue())
-			.body("entry[0].resource.caseSensitive", equalTo(true))
+			.rootPath("entry[0].resource")
+			.body("id", equalTo(getTestCodeSystemId()))
+			.body("title", equalTo("Title of " + getTestCodeSystemId()))
+			.body("property", notNullValue())
+			.body("filter", notNullValue())
+			.body("caseSensitive", equalTo(true))
+			.body("effectivePeriod", nullValue())
+			
 			//no concept definitions are part of the summary
 			.body("entry.resource", not(hasItem("concept")));
 	}
@@ -202,12 +205,14 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode()))
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(1))
-			.body("entry[0].resource.id", equalTo("SNOMEDCT/2002-01-31"))
-			.body("entry[0].resource.title", equalTo("SNOMEDCT"))
-			.body("entry[0].resource.property", notNullValue())
-			.body("entry[0].resource.filter", notNullValue())
-			.body("entry[0].resource.effectivePeriod", notNullValue())
-			.body("entry[0].resource.caseSensitive", equalTo(true))
+			.rootPath("entry[0].resource")
+			.body("id", equalTo("SNOMEDCT/2002-01-31"))
+			.body("title", equalTo("SNOMEDCT"))
+			.body("property", notNullValue())
+			.body("filter", notNullValue())
+			.body("effectivePeriod", notNullValue())
+			.body("caseSensitive", equalTo(true))
+			
 			//no concept definitions are part of the summary
 			.body("entry.resource", not(hasItem("concept")));
 	}
@@ -224,17 +229,20 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode()))
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(1))
+			
 			// only text, id, meta and mandatory
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
-			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("complete"))
-			.body("entry[0].resource.meta", notNullValue())
-			.body("entry[0].resource.text", notNullValue())
-			.body("entry[0].resource.count", notNullValue())
-			.body("entry[0].resource.name", nullValue())
-			.body("entry[0].resource.concept", nullValue()) 
-			.body("entry[0].resource.copyright", nullValue()) 
-			.body("entry[0].resource.url", nullValue());
+			.rootPath("entry[0].resource")
+			.body("id", equalTo(getTestCodeSystemId()))
+			.body("status", equalTo("draft"))
+			.body("content", equalTo("complete"))
+			.body("meta", notNullValue())
+			.body("text", notNullValue())
+			.body("count", notNullValue())
+			.body("name", nullValue())
+			.body("concept", nullValue()) 
+			.body("copyright", nullValue())
+			.body("effectivePeriod", nullValue())
+			.body("url", nullValue());
 	}
 	
 	@Test
@@ -249,18 +257,21 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode()))
 			.body("type", equalTo("searchset"))
 			.body("total", equalTo(1))
+			
+			.rootPath("entry[0].resource")
 			// only id, meta and mandatory
-			.body("entry[0].resource.id", notNullValue())
-			.body("entry[0].resource.status", equalTo("draft"))
-			.body("entry[0].resource.content", equalTo("complete"))
+			.body("id", notNullValue())
+			.body("status", equalTo("draft"))
+			.body("content", equalTo("complete"))
 			// other fields should be null
-			.body("entry[0].resource.text", nullValue())
-			.body("entry[0].resource.url", nullValue())
-			.body("entry[0].resource.name", nullValue())
-			.body("entry[0].resource.copyright", nullValue())
-			.body("entry[0].resource.count", notNullValue())
-			.body("entry[0].resource.caseSignificance", nullValue())
-			.body("entry[0].resource.text", nullValue());
+			.body("text", nullValue())
+			.body("url", nullValue())
+			.body("name", nullValue())
+			.body("copyright", nullValue())
+			.body("count", notNullValue())
+			.body("caseSignificance", nullValue())
+			.body("effectivePeriod", nullValue())
+			.body("text", nullValue());
 	}
 	
 	@Test
@@ -290,9 +301,11 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("meta.tag.code", not(hasItem(FhirCodeSystems.CODING_SUBSETTED.getCode())))
 			.body("total", equalTo(1))
 			.body("type", equalTo("searchset"))
-			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
-			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()));
+			
+			.rootPath("entry[0].resource")
+			.body("id", equalTo(getTestCodeSystemId()))
+			.body("url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("version", equalTo(getTestCodeSystemUrl()));
 	}
 	
 	@Test
