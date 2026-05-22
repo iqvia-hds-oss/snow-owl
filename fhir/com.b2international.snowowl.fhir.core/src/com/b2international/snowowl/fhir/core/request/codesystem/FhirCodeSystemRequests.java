@@ -63,4 +63,8 @@ public final class FhirCodeSystemRequests {
 		return new FhirCodeSystemSetAsDefaultRequestBuilder(codeSystemId);
 	}
 
+	public FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder prepareSetIncludeInCapabilities() {
+		return new FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder();
+	}
+
 }
