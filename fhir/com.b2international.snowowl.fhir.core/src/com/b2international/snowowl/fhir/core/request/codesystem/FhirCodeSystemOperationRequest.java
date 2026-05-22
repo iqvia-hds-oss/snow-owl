@@ -30,10 +30,10 @@ import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.version.VersionDocument;
-import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
@@ -59,6 +59,9 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	 * any extra fetches and can provide the necessary info for subsequent request execution and responses.
 	 */
 	public static final Set<String> MINIMAL_CODESYSTEM_FIELD_SELECTION = R5ObjectFields.MetadataResource.SUMMARY;
+
+	/** The "use as default" flag in resource settings (appearing both on resource and version documents) */
+	private static final String FIELD_SETTINGS_FHIR_USE_AS_DEFAULT = TerminologyResource.Fields.SETTINGS + "." + TerminologyResource.Settings.FHIR_USE_AS_DEFAULT;
 	
 	private final String system;
 	
@@ -90,31 +93,19 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 			.map(CodeSystem.class::cast);
 	}
 	
-	private Optional<CodeSystem> fetchDefaultSctCodeSystem(final ServiceProvider context) {
-		if (!FhirModelHelpers.isBaseSnomedUri(system) || !StringUtils.isEmpty(version)) {
-			return Optional.empty();
-		}
-		
-		/*
-		 * TODO: See SO-6575: we should not hardcode the core module ID here, but
-		 * instead determine it dynamically.
-		 */
-		return fetchCodeSystem(context, rb -> rb
-			.filterByUrl(system)
-			.filterByVersion(system + "/900000000000207008")
-			.sortBy(SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME)));
-	}
-	
 	private Optional<CodeSystem> fetchByUrlAndVersion(final ServiceProvider context) {
-		// Clean mapping from "system" to "url" and "version" to "version" (get the most recent version if multiple match)
+		// Map "system" to "url" (get the most recent version if multiple match, also prefer the "definitive edition" if the flag is set)
 		return fetchCodeSystem(context, rb -> rb
 			.filterByUrl(system)
 			.filterByVersion(version)
-			.sortBy(SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME)));
+			.sortBy(
+				SearchResourceRequest.Sort.fieldDesc(FIELD_SETTINGS_FHIR_USE_AS_DEFAULT), // "true" > "false" so descending order is needed
+				SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME))
+			);
 	}
 
 	private Optional<CodeSystem> fetchByIdAndVersion(final ServiceProvider context) {
-		// Using "name" as the "id" filter matches native resource IDs and URLs, see FhirResourceSearchRequest#addFhirIdFilter
+		// Map "system" to "name" which matches the native resource ID without any post-processing
 		return fetchCodeSystem(context, rb -> rb
 			.filterByName(system)
 			.filterByVersion(version)
@@ -124,14 +115,12 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	@Override
 	public final R execute(final ServiceProvider context) {
 		/*
-		 * Attempt multiple ways of resolving the CodeSystem resource, in the following order:
+		 * Attempt to resolve the CodeSystem resource in the following two ways:
 		 * 
-		 * 1. If the system URI is a base SNOMED CT URI and no version is specified, attempt to fetch the default SNOMED CT edition
-		 * 2. Search for a CodeSystem with the specified URL and version
-		 * 3. Search for a CodeSystem with the specified ID and version
+		 * 1. Search for a CodeSystem with the specified URL and version ("default edition" first)
+		 * 2. Search for a CodeSystem with the specified resource ID and version (an unofficial fallback outside the FHIR specification, included for convenience)
 		 */
 		final CodeSystem codeSystem = Optional.<CodeSystem>empty()
-			.or(() -> fetchDefaultSctCodeSystem(context))
 			.or(() -> fetchByUrlAndVersion(context))
 			.or(() -> fetchByIdAndVersion(context))
 			.orElseThrow(() -> new NotFoundException("CodeSystem", system));
