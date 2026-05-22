@@ -211,6 +211,8 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("property", notNullValue())
 			.body("filter", notNullValue())
 			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00+00:00"))
+			//end is currently not supported
+			.body("effectivePeriod.end", nullValue())
 			.body("caseSensitive", equalTo(true))
 			
 			//no concept definitions are part of the summary
@@ -578,7 +580,9 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("publisher", equalTo("SNOMED International"))
 			.body("contact[0].telecom[0].system", equalTo("url"))
 			.body("contact[0].telecom[0].value", equalTo("https://b2ihealthcare.com"))
-			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00+00:00"));
+			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00+00:00"))
+			//end is currently not supported
+			.body("effectivePeriod.end", nullValue());
 	}
 	
 	//Summary-count should not be allowed for non-search type operations?
