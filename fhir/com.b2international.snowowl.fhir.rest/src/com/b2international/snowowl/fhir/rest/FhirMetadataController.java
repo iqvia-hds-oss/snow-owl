@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.hl7.fhir.r5.model.CapabilityStatement.TypeRestfulInteraction;
 import org.hl7.fhir.r5.model.Enumeration;
 import org.hl7.fhir.r5.model.Enumerations.*;
 import org.hl7.fhir.r5.model.OperationDefinition.OperationKind;
+import org.hl7.fhir.r5.model.TerminologyCapabilities.TerminologyCapabilitiesCodeSystemComponent;
 import org.osgi.framework.Version;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -49,6 +50,7 @@ import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.date.Dates;
 import com.b2international.snowowl.core.rest.FhirApiConfig;
 import com.b2international.snowowl.core.rest.SnowOwlOpenApiWebMvcResource;
+import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Iterables;
@@ -170,6 +172,16 @@ public class FhirMetadataController extends AbstractFhirController {
 		
 		if ("terminology".equals(mode)) {
 			var terminologyCapabilities = metadataSupplier.get().terminologyCapabilities();
+			
+			// Inject the variable code system component list into the fixed terminology capabilities instance
+			final List<TerminologyCapabilitiesCodeSystemComponent> codeSystemComponents = FhirRequests.codeSystems()
+				.prepareGetComponents()
+				.buildAsync()
+				.execute(getBus())
+				.getSync();
+			
+			terminologyCapabilities.setCodeSystem(codeSystemComponents);
+			
 			return toResponseEntity(terminologyCapabilities, accept, _format, _pretty); 
 		} else {
 			FhirMediaType fhirMediaType = FhirMediaType.parse(accept, _format);
