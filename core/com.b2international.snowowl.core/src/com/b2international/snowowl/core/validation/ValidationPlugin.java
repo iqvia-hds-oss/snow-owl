@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.b2international.snowowl.core.internal.validation;
+package com.b2international.snowowl.core.validation;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -29,6 +29,7 @@ import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Query;
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.config.IndexSettings;
 import com.b2international.snowowl.core.config.RepositoryConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
@@ -37,10 +38,10 @@ import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.setup.ConfigurationRegistry;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
-import com.b2international.snowowl.core.validation.ValidationRequests;
-import com.b2international.snowowl.core.validation.ValidationRuleDirectoryProvider;
 import com.b2international.snowowl.core.validation.eval.GroovyScriptValidationRuleEvaluator;
 import com.b2international.snowowl.core.validation.eval.ValidationRuleEvaluator;
+import com.b2international.snowowl.core.validation.internal.ValidationRepository;
+import com.b2international.snowowl.core.validation.internal.ValidationThreadPool;
 import com.b2international.snowowl.core.validation.issue.ValidationIssue;
 import com.b2international.snowowl.core.validation.issue.ValidationIssueDetailExtensionProvider;
 import com.b2international.snowowl.core.validation.rule.ValidationRule;
@@ -48,7 +49,6 @@ import com.b2international.snowowl.core.validation.whitelist.ValidationWhiteList
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
@@ -62,6 +62,11 @@ public final class ValidationPlugin extends Plugin {
 	private static final Logger LOG = LoggerFactory.getLogger("validation");
 	
 	private static final String VALIDATIONS_INDEX = "validations";
+	
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.VALIDATION);
+	}
 	
 	@Override
 	public void addConfigurations(ConfigurationRegistry registry) {

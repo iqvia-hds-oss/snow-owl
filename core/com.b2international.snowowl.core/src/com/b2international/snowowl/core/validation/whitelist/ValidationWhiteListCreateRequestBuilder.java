@@ -22,8 +22,8 @@ import java.util.List;
 import com.b2international.snowowl.core.ComponentIdentifier;
 import com.b2international.snowowl.core.events.BaseRequestBuilder;
 import com.b2international.snowowl.core.events.Request;
-import com.b2international.snowowl.core.internal.validation.ValidationRepositoryContext;
-import com.b2international.snowowl.core.internal.validation.ValidationRepositoryRequestBuilder;
+import com.b2international.snowowl.core.validation.internal.ValidationRepositoryContext;
+import com.b2international.snowowl.core.validation.internal.ValidationRepositoryRequestBuilder;
 
 /**
  * @since 6.1

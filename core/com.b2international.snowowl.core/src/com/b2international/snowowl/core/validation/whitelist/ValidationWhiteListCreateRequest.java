@@ -24,7 +24,7 @@ import jakarta.validation.constraints.NotEmpty;
 import com.b2international.snowowl.core.ComponentIdentifier;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.id.IDs;
-import com.b2international.snowowl.core.internal.validation.ValidationRepositoryContext;
+import com.b2international.snowowl.core.validation.internal.ValidationRepositoryContext;
 
 /**
  * @since 6.1

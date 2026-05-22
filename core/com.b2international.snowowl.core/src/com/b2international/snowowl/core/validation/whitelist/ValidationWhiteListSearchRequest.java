@@ -24,8 +24,8 @@ import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.internal.validation.ValidationRepository;
 import com.b2international.snowowl.core.request.SearchIndexResourceRequest;
+import com.b2international.snowowl.core.validation.internal.ValidationRepository;
 
 /**
  * @since 6.1

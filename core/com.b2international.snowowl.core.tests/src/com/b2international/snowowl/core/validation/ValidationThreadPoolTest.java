@@ -27,7 +27,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import com.b2international.snowowl.core.events.util.Promise;
-import com.b2international.snowowl.core.internal.validation.ValidationThreadPool;
+import com.b2international.snowowl.core.validation.internal.ValidationThreadPool;
 import com.b2international.snowowl.core.validation.rule.ValidationRule.CheckType;
 import com.google.common.collect.Lists;
 

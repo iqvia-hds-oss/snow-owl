@@ -21,7 +21,7 @@ import jakarta.validation.constraints.NotEmpty;
 
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
-import com.b2international.snowowl.core.internal.validation.ValidationRepository;
+import com.b2international.snowowl.core.validation.internal.ValidationRepository;
 import com.b2international.snowowl.core.validation.rule.ValidationRule.CheckType;
 import com.b2international.snowowl.core.validation.rule.ValidationRule.Severity;
 

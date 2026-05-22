@@ -16,7 +16,7 @@
 package com.b2international.snowowl.core.validation.whitelist;
 
 import com.b2international.snowowl.core.events.Request;
-import com.b2international.snowowl.core.internal.validation.ValidationRepositoryContext;
+import com.b2international.snowowl.core.validation.internal.ValidationRepositoryContext;
 
 /**
  * @since 6.1
