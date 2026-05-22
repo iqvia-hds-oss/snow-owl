@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.branch.BranchPathUtils;
@@ -40,6 +41,7 @@ public final class Version implements Serializable {
 	
 	public static final class Expand {
 		public static final String UPDATED_AT_COMMIT = "updatedAtCommit";
+		public static final String FHIR_SETTINGS = "fhirSettings";
 	}
 	
 	private String id;
@@ -53,6 +55,10 @@ public final class Version implements Serializable {
 	private String author;
 	private String url;
 	private String toolingId;
+	
+	private transient Map<String, Object> settingsSnapshot;
+	private String fhirUrl;
+	private String fhirVersionProperty;
 	
 	/**
 	 * @return the globally unique identifier of this version, resource + version.
@@ -113,6 +119,20 @@ public final class Version implements Serializable {
 		return toolingId;
 	}
 	
+	// settings snapshots are not returned in search results, we are only using it for expands
+	@JsonIgnore
+	public Map<String, Object> getSettingsSnapshot() {
+		return settingsSnapshot;
+	}
+	
+	public String getFhirUrl() {
+		return fhirUrl;
+	}
+	
+	public String getFhirVersionProperty() {
+		return fhirVersionProperty;
+	}
+	
 	// hidden setter to allow deserialization of Version JSON strings without errors
 	@JsonSetter
 	void setResourceBranchPath(String resourceBranchPath) {}
@@ -163,6 +183,18 @@ public final class Version implements Serializable {
 	
 	public void setToolingId(String toolingId) {
 		this.toolingId = toolingId;
+	}
+	
+	public void setSettingsSnapshot(Map<String, Object> settingsSnapshot) {
+		this.settingsSnapshot = settingsSnapshot;
+	}
+	
+	public void setFhirUrl(String fhirUrl) {
+		this.fhirUrl = fhirUrl;
+	}
+	
+	public void setFhirVersionProperty(String fhirVersionProperty) {
+		this.fhirVersionProperty = fhirVersionProperty;
 	}
 	
 	// additional helper methods
