@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.commons.json.Json;
 import com.b2international.snowowl.core.Resource;
 import com.b2international.snowowl.core.ResourceURI;
+import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.branch.Branches;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
@@ -211,7 +212,7 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 				"settings", Json.object(
 					Settings.NAMESPACE, "1000198",
 					Settings.MODULE_IDS, List.of("123456781000198103", "876543211000198107"),
-					CodeSystem.CommonSettings.LOCALES, List.of("en-us", "en-gb")
+					TerminologyResource.Settings.LOCALES, List.of("en-us", "en-gb")
 				)
 			));
 
@@ -221,7 +222,7 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 			.statusCode(200)
 			.body("settings." + Settings.NAMESPACE, equalTo("1000198"))
 			.body("settings." + Settings.MODULE_IDS, equalTo(List.of("123456781000198103", "876543211000198107")))
-			.body("settings." + CodeSystem.CommonSettings.LOCALES, equalTo(List.of("en-us", "en-gb")));
+			.body("settings." + TerminologyResource.Settings.LOCALES, equalTo(List.of("en-us", "en-gb")));
 	}
 	
 	@Test
@@ -298,7 +299,7 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 		createCodeSystem(Json.assign(
 			prepareCodeSystemCreateRequestBody(codeSystemId), 
 			Json.object("settings", Json.object(
-				CodeSystem.CommonSettings.LOCALES, AcceptLanguageHeader.parseHeader("en-x-123456781000198103,en-x-876543211000198107")
+				TerminologyResource.Settings.LOCALES, AcceptLanguageHeader.parseHeader("en-x-123456781000198103,en-x-876543211000198107")
 			))
 		));
 		

@@ -21,7 +21,6 @@ import java.util.Map;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
-import com.b2international.snowowl.core.TerminologyResource.CommonSettings;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -68,7 +67,7 @@ public class CodeSystemResource {
 		cs.setId(SnomedContentRule.SNOMEDCT_ID);
 		cs.setSettings(Map.of(
 			Settings.LANGUAGES, languageMap,
-			CommonSettings.LOCALES, locales
+			TerminologyResource.Settings.LOCALES, locales
 		));
 
 		context

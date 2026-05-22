@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,8 +111,43 @@ public abstract class TerminologyResource extends Resource {
 	/**
 	 * @since 9.0
 	 */
-	public static final class CommonSettings {
+	public static abstract class Settings extends Resource.Settings {
+		
+		/** 
+		 * The locale list supported by this resource. 
+		 */ 
 		public static final String LOCALES = "locales";
+		
+		/** 
+		 * The FHIR URL of the resource if it is different from Snow Owl's native resource URL. Note that while native
+		 * URLs are required to be unique, for FHIR only the URL-version combination needs to be unambiguous. 
+		 */
+		public static final String FHIR_URL = "fhirUrl";
+		
+		/** 
+		 * Indicates whether this resource should be included in the TerminologyCapabilities statement of the server. 
+		 * Expected values are <code>"true"</code> and <code>"false"</code> (string type). 
+		 */
+		public static final String FHIR_INCLUDE_IN_CAPABILITIES = "fhirIncludeInCapabilities";
+		
+		/**
+		 * Indicates whether this resource's <i>latest released version</i> (or if there
+		 * aren't any releases, its draft content) should be used where no version
+		 * information is provided, only the URL.
+		 * <p>
+		 * Note that there is currently no support for using a version other than the
+		 * latest one, even though a snapshot of this setting is saved on all created
+		 * versions.
+		 * <p>
+		 * Expected values are <code>"true"</code> and <code>"false"</code> (string type).
+		 */
+		public static final String FHIR_USE_AS_DEFAULT = "fhirUseAsDefault"; 
+		
+		/** 
+		 * Indicates which property to use as the "version" property when converting to a FHIR resource representation.
+		 * Expected values are <code>"url"</code> and <code>"version"</code> (string type). 
+		 */
+		public static final String FHIR_VERSION_PROPERTY = "fhirVersionProperty";
 	}
 	
 	// standard oid
@@ -318,7 +353,7 @@ public abstract class TerminologyResource extends Resource {
 	 */
 	@JsonIgnore
 	public List<String> getLocales() {
-		return getSettings() == null ? null : (List<String>) getSettings().get(CommonSettings.LOCALES);
+		return getSettings() == null ? null : (List<String>) getSettings().get(Settings.LOCALES);
 	}
 	
 	/**
