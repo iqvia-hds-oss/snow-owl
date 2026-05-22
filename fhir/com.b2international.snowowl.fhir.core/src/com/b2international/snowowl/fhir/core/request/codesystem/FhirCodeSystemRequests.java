@@ -67,4 +67,7 @@ public final class FhirCodeSystemRequests {
 		return new FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder();
 	}
 
+	public FhirCodeSystemGetComponentsRequestBuilder prepareGetComponents() {
+		return new FhirCodeSystemGetComponentsRequestBuilder();
+	}
 }
