@@ -65,7 +65,7 @@ public interface FhirCodeSystemLookupConverter {
 			.map(description -> new CodeSystemLookupResultParameters.Designation()
 				.setValue(description.getTerm())
 				// Split private use extension values returned by Snow Owl into sections of at most 8 characters
-				.setLanguage(FhirRequest.expandLocale(description.getLanguage())))
+				.setLanguage(FhirCodeSystemOperationRequest.expandLocale(description.getLanguage())))
 			.collect(Collectors.toList());
 	}
 

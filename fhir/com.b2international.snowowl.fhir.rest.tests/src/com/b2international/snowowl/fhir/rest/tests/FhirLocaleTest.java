@@ -24,82 +24,82 @@ import org.junit.Test;
 
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.request.codesystem.FhirRequest;
+import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 
 public class FhirLocaleTest {
 
 	@Test
 	public void compactNull() {
-		assertEquals(AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, FhirRequest.compactLocale((CodeType) null));
+		assertEquals(AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, FhirCodeSystemOperationRequest.compactLocale((CodeType) null));
 	}
 	
 	@Test
 	public void compactNullValue() {
-		assertEquals(AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, FhirRequest.compactLocale(new CodeType()));
+		assertEquals(AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, FhirCodeSystemOperationRequest.compactLocale(new CodeType()));
 	}
 	
 	@Test
 	public void compactEmptyValue() {
-		assertEquals(AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, FhirRequest.compactLocale(new CodeType("")));
+		assertEquals(AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, FhirCodeSystemOperationRequest.compactLocale(new CodeType("")));
 	}
 	
 	@Test
 	public void compactValidLanguage() {
-		assertEquals("en", FhirRequest.compactLocale(new CodeType("en")));
+		assertEquals("en", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en")));
 	}
 	
 	@Test
 	public void compactValidCountry() {
-		assertEquals("en-US", FhirRequest.compactLocale(new CodeType("en-US")));
+		assertEquals("en-US", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US")));
 	}
 	
 	@Test
 	public void compactValidPrivateUseExtension() {
-		assertEquals("en-US-x-compact", FhirRequest.compactLocale(new CodeType("en-US-x-compact")));
+		assertEquals("en-US-x-compact", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US-x-compact")));
 	}
 	
 	@Test
 	public void compactLongPrivateUseExtension() {
 		// 19 digits represent the SCTID of a language reference set
-		assertEquals("en-US-x-1234567890123456789", FhirRequest.compactLocale(new CodeType("en-US-x-12345678-90123456-789")));
+		assertEquals("en-US-x-1234567890123456789", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US-x-12345678-90123456-789")));
 	}
 	
 	@Test
 	public void compactInvalidPrivateUseExtension() {
 		// 19 digits as "unbroken" input is not allowed however
-		assertThrows(BadRequestException.class, () -> FhirRequest.compactLocale(new CodeType("en-US-x-1234567890123456789")));
+		assertThrows(BadRequestException.class, () -> FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US-x-1234567890123456789")));
 	}
 	
 	@Test
 	public void compactInvalidLanguage() {
 		// 9 characters long input can not be accepted as a language tag
-		assertThrows(BadRequestException.class, () -> FhirRequest.compactLocale(new CodeType("notsubtag")));
+		assertThrows(BadRequestException.class, () -> FhirCodeSystemOperationRequest.compactLocale(new CodeType("notsubtag")));
 	}
 	
 	@Test
 	public void expandNull() {
-		assertNull(FhirRequest.expandLocale(null));
+		assertNull(FhirCodeSystemOperationRequest.expandLocale(null));
 	}
 	
 	@Test
 	public void expandEmpty() {
-		assertNull(FhirRequest.expandLocale(""));
+		assertNull(FhirCodeSystemOperationRequest.expandLocale(""));
 	}
 	
 	@Test
 	public void expandValidLanguage() {
-		assertEquals("en", FhirRequest.expandLocale("en"));
+		assertEquals("en", FhirCodeSystemOperationRequest.expandLocale("en"));
 	}
 	
 	@Test
 	public void expandValidCountry() {
-		assertEquals("en-US", FhirRequest.expandLocale("en-US"));
+		assertEquals("en-US", FhirCodeSystemOperationRequest.expandLocale("en-US"));
 	}
 	
 	@Test
 	public void expandShortPrivateUseExtension() {
 		// Short private use extensions will work but are not supported
-		assertEquals("en-US-x-expand", FhirRequest.expandLocale("en-US-x-expand"));
+		assertEquals("en-US-x-expand", FhirCodeSystemOperationRequest.expandLocale("en-US-x-expand"));
 	}
 	
 	@Test
@@ -108,13 +108,13 @@ public class FhirLocaleTest {
 		 * Extensions that are already broken up into shorter segments may get split
 		 * further when passed through this method.
 		 */
-		assertEquals("en-US-x-expanded--priv-us-e", FhirRequest.expandLocale("en-US-x-expanded-priv-use"));
+		assertEquals("en-US-x-expanded--priv-us-e", FhirCodeSystemOperationRequest.expandLocale("en-US-x-expanded-priv-use"));
 	}
 	
 	@Test
 	public void expandInvalidPrivateUseExtension() {
 		// 19 digits should be broken up into at most 8 character segments 
-		assertEquals("en-US-x-12345678-90123456-789", FhirRequest.expandLocale("en-US-x-1234567890123456789"));
+		assertEquals("en-US-x-12345678-90123456-789", FhirCodeSystemOperationRequest.expandLocale("en-US-x-1234567890123456789"));
 	}
 	
 }

@@ -49,7 +49,7 @@ import com.google.common.base.Splitter;
  * @since 8.0
  * @param <R> the response type of the request
  */
-public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
+public abstract class FhirCodeSystemOperationRequest<R> implements Request<ServiceProvider, R> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -64,7 +64,7 @@ public abstract class FhirRequest<R> implements Request<ServiceProvider, R> {
 	
 	private final String version;
 
-	public FhirRequest(final String system, final String version) {
+	public FhirCodeSystemOperationRequest(final String system, final String version) {
 		this.system = system;
 		this.version = version;
 	}
