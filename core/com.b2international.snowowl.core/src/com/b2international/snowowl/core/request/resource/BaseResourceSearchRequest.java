@@ -332,8 +332,8 @@ public abstract class BaseResourceSearchRequest<R> extends SearchIndexResourceRe
 	protected void toQuerySortBy(RepositoryContext context, Builder sortBuilder, Sort sort) {
 		if (sort instanceof SortField) {
 			SortField sortField = (SortField) sort;
-			if (Resource.SNOMED_FIRST.equals(sortField.getField())) {
-				sortBuilder.sortByScript("snomedFirst", Map.of(), sort.isAscending() ? Order.ASC : Order.DESC);
+			if (Resource.Fields.SNOMED_FIRST.equals(sortField.getField())) {
+				sortBuilder.sortByScript(Resource.Fields.SNOMED_FIRST, Map.of(), sort.isAscending() ? Order.ASC : Order.DESC);
 				return;
 			}
 		}
@@ -342,7 +342,9 @@ public abstract class BaseResourceSearchRequest<R> extends SearchIndexResourceRe
 	
 	@Override
 	protected SortBy getDefaultSortBy() {
-		return SortBy.builder().sortByScript("snomedFirst", Map.of(), Order.ASC).build();
+		return SortBy.builder()
+			.sortByScript(Resource.Fields.SNOMED_FIRST, Map.of(), Order.ASC)
+			.build();
 	}
 	
 }

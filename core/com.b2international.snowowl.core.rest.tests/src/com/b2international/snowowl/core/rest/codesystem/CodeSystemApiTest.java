@@ -503,11 +503,11 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 	public void codesystem30_AllowMetadataUpdatesOnRetiredResources() throws Exception {
 		String codeSystemId = createCodeSystem(prepareCodeSystemCreateRequestBody("cs30"));
 		assertCodeSystemUpdated(codeSystemId, Map.of(
-			"status", Resource.RETIRED_STATUS
+			"status", Resource.STATUS_RETIRED
 		));
 		assertCodeSystemGet(codeSystemId)
 			.statusCode(200)
-			.body("status", equalTo(Resource.RETIRED_STATUS));
+			.body("status", equalTo(Resource.STATUS_RETIRED));
 		
 		// update copyright and add it to a bundle
 		final String bundleId = IDs.base62UUID();
@@ -528,7 +528,7 @@ public class CodeSystemApiTest extends BaseResourceApiTest {
 	public void codesystem31_DisallowVersioningOfRetiredResources() throws Exception {
 		String codeSystemId = createCodeSystem(prepareCodeSystemCreateRequestBody("cs31"));
 		assertCodeSystemUpdated(codeSystemId, Map.of(
-			"status", Resource.RETIRED_STATUS
+			"status", Resource.STATUS_RETIRED
 		));
 		assertVersionCreated(prepareVersionCreateRequestBody(CodeSystem.uri(codeSystemId), "v1", EffectiveTimes.today()))
 			.statusCode(400)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,23 +37,32 @@ public abstract class Resource implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final String ACTIVE_STATUS = "active";
+	public static final String STATUS_ACTIVE = "active";
 	// known retired status value from FHIR, TODO make it configurable when needed
-	public static final String RETIRED_STATUS = "retired";
-	public static final String DRAFT_STATUS = "draft";
-	public static final String SNOMED_FIRST = "snomedFirst";
+	public static final String STATUS_RETIRED = "retired";
+	public static final String STATUS_DRAFT = "draft";
 
-	public static final class Settings {
-
+	/**
+	 * @since 8.9.0
+	 */
+	public static abstract class Settings {
+		
+		/** 
+		 * The publisher of this resource, eg. <code>"SNOMED International"</code> (string type). 
+		 */
 		public static final String PUBLISHER = "publisher";
-		public static final String DISTRIBUTABLE = "distributable"; // "true" or "false"
-
+		
+		/** 
+		 * Determines whether this resource is subject to syndication or not. 
+		 * Expected values are <code>"true"</code> and <code>"false"</code> (string type). 
+		 */
+		public static final String DISTRIBUTABLE = "distributable";
 	}
 
 	/**
 	 * @since 8.0
 	 */
-	public static class Fields {
+	public static abstract class Fields {
 		public static final String ID = ResourceDocument.Fields.ID;
 		public static final String TITLE = ResourceDocument.Fields.TITLE;
 		public static final String URL = ResourceDocument.Fields.URL;
@@ -64,12 +73,31 @@ public abstract class Resource implements Serializable {
 		public static final String TYPE_RANK = ResourceDocument.Fields.TYPE_RANK;
 		public static final String CREATED_AT = ResourceDocument.Fields.CREATED_AT;
 		public static final String UPDATED_AT = ResourceDocument.Fields.UPDATED_AT;
+		public static final String SETTINGS = ResourceDocument.Fields.SETTINGS;
 
 		// TerminologyResource subtype specific fields, but for convenience and single API access, they are defined here
 		public static final String OID = ResourceDocument.Fields.OID;
 
-		public static final Set<String> ALL = Set.of(ID, TITLE, URL, STATUS, LANGUAGE, OWNER, OID, CREATED_AT, UPDATED_AT, RESOURCE_TYPE, TYPE_RANK,
-				SNOMED_FIRST);
+		// Sort-only field that makes sure that SNOMED CT resources are grouped together at the top or bottom of the list (depending on the sort order)
+		public static final String SNOMED_FIRST = "snomedFirst";
+
+		public static final Set<String> ALL = Set.of(
+			ID, 
+			TITLE, 
+			URL, 
+			OWNER, 
+			STATUS, 
+			LANGUAGE, 
+			RESOURCE_TYPE, 
+			TYPE_RANK,
+			CREATED_AT, 
+			UPDATED_AT, 
+			SETTINGS,
+			//
+			OID, 
+			//
+			SNOMED_FIRST
+		);
 	}
 
 	/**
