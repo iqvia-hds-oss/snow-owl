@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2020 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.core.config;
 
+import java.util.List;
+
 import com.b2international.commons.config.Configuration;
 import com.b2international.commons.config.ConfigurationFactory;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -29,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class SnowOwlConfiguration extends Configuration {
 
 	private String description = "You Know, for Terminologies";
+	
+	private List<String> roles;
 
 	private boolean gzip = true;
 	
@@ -40,6 +44,14 @@ public class SnowOwlConfiguration extends Configuration {
 	
 	public void setDescription(String description) {
 		this.description = description;
+	}
+	
+	public List<String> getRoles() {
+		return roles;
+	}
+	
+	public void setRoles(List<String> roles) {
+		this.roles = roles;
 	}
 	
 	public boolean isGzip() {
