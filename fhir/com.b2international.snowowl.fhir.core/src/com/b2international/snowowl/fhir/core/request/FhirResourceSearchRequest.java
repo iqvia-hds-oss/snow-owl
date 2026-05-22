@@ -65,7 +65,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	private static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
 		R5ObjectFields.MetadataResource.NAME,
 		R5ObjectFields.MetadataResource.META,
-		R5ObjectFields.MetadataResource.TEXT
+		R5ObjectFields.MetadataResource.TEXT,
+		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD
 	);
 	
 	/**
@@ -408,6 +409,19 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			
 		return contactDetail;
 	}
+	
+	private Period toEffectivePeriod(final Long start) {
+		if (start == null) {
+			return null;
+		}
+
+		final Period period = new Period();
+		final DateTimeType startElement = FhirModelHelpers.toDateTimeElement(start);
+		
+		period.setStartElement(startElement);
+		
+		return period;
+	}
 
 	private String getUrl(final String url) {
 		if (FhirModelHelpers.isEditionSnomedUri(url)) {
@@ -462,7 +476,10 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		includeIfFieldSelected(R5ObjectFields.Resource.LANGUAGE, resource::getLanguage, entry::setLanguage);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.PURPOSE, resource::getPurpose, entry::setPurpose);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.COPYRIGHT, resource::getCopyright, entry::setCopyright);
-
+		
+		// Currently support setting start with the effectiveTime of the resource
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD, () -> toEffectivePeriod(resource.getEffectiveTime()), entry::setEffectivePeriod);
+		
 		includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> getBlankNarrative(), entry::setText);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.PUBLISHER, () -> getPublisher(resource.getSettings()), entry::setPublisher);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> toDateTimeType(resource.getEffectiveTime()), entry::setDateElement);
