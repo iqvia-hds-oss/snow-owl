@@ -54,4 +54,8 @@ public final class FhirCodeSystemRequests {
 	public FhirCodeSystemAssignFhirUrlRequestBuilder prepareAssignFhirUrl() {
 		return new FhirCodeSystemAssignFhirUrlRequestBuilder();
 	}
+
+	public FhirCodeSystemRemoveFhirUrlRequestBuilder prepareRemoveFhirUrl() {
+		return new FhirCodeSystemRemoveFhirUrlRequestBuilder();
+	}
 }
