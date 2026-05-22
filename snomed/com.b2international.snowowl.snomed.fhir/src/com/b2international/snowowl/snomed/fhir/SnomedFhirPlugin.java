@@ -16,7 +16,9 @@
 package com.b2international.snowowl.snomed.fhir;
 
 import java.util.Map;
+import java.util.Set;
 
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.plugin.Component;
 import com.b2international.snowowl.core.repository.TerminologyRepositoryConfigurer;
 import com.b2international.snowowl.core.setup.Environment;
@@ -33,6 +35,11 @@ import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConst
 @Component
 public class SnomedFhirPlugin extends Plugin implements TerminologyRepositoryConfigurer {
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.FHIR_API);
+	}
+	
 	@Override
 	public String getToolingId() {
 		return SnomedTerminologyComponentConstants.TOOLING_ID;

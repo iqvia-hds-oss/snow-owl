@@ -18,6 +18,7 @@ package com.b2international.snowowl.core.identity;
 import java.time.InstantSource;
 import java.util.*;
 
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
@@ -40,6 +41,11 @@ import com.google.common.collect.Iterables;
 @Component
 public final class IdentityPlugin extends Plugin {
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.BASE);
+	}
+	
 	@Override
 	public void addConfigurations(ConfigurationRegistry registry) {
 		registry.add("identity", IdentityConfiguration.class);

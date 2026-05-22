@@ -35,6 +35,7 @@ import com.b2international.index.revision.TimestampProvider;
 import com.b2international.snowowl.core.DeprecationLogger;
 import com.b2international.snowowl.core.ResourceTypeConverter;
 import com.b2international.snowowl.core.ResourceURI;
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.collection.TerminologyResourceCollectionToolingSupport;
 import com.b2international.snowowl.core.config.IndexSettings;
 import com.b2international.snowowl.core.config.RepositoryConfiguration;
@@ -81,6 +82,11 @@ public final class SnowOwlPlugin extends Plugin {
 
 	private static final String RESOURCES_INDEX = "resources";
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.BASE);
+	}
+	
 	@Override
 	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) {
 		env.services().registerService(DeprecationLogger.class, new DeprecationLogger());

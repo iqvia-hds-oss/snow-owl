@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,12 @@
  */
 package com.b2international.snowowl.core.internal.locks;
 
+import java.util.Set;
+
 import com.b2international.index.Index;
 import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.config.IndexSettings;
 import com.b2international.snowowl.core.config.RepositoryConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
@@ -39,6 +42,11 @@ public final class LockPlugin extends Plugin {
 
 	private static final String LOCKS_INDEX = "locks";
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.BASE);
+	}
+	
 	@Override
 	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {

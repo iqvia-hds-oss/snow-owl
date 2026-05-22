@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package com.b2international.snowowl.snomed.core;
 
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 
 import com.b2international.index.revision.Hooks.PreCommitHook;
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.compare.DependencyComparer;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
@@ -70,6 +72,11 @@ public final class SnomedPlugin extends TerminologyRepositoryPlugin {
 	 * Unique identifier of the bundle. ID: {@value}
 	 */
 	public static final String PLUGIN_ID = "com.b2international.snowowl.snomed.datastore"; //$NON-NLS-1$
+	
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.NATIVE_API, Role.AUTHORING, Role.INGEST, Role.VALIDATION, Role.CLASSIFICATION);
+	}
 	
 	@Override
 	public void addConfigurations(ConfigurationRegistry registry) {

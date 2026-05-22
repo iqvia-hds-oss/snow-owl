@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 package com.b2international.snowowl.core.attachments;
 
 import java.nio.file.Path;
+import java.util.Set;
 
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.client.TransportConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
@@ -33,6 +35,11 @@ public final class AttachmentPlugin extends Plugin {
 
 	private static final String ATTACHMENTS_FOLDER = "attachments";
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.BASE);
+	}
+	
 	@Override
 	public void preRun(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		final IEventBus bus = env.service(IEventBus.class);

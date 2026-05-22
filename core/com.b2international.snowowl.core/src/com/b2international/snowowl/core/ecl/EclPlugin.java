@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 package com.b2international.snowowl.core.ecl;
 
+import java.util.Set;
+
 import org.eclipse.xtext.parser.IParser;
 import org.eclipse.xtext.serializer.ISerializer;
 import org.eclipse.xtext.validation.IResourceValidator;
 
 import com.b2international.snomed.ecl.EclStandaloneSetup;
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
@@ -33,6 +36,11 @@ import com.google.inject.Injector;
 @Component
 public class EclPlugin extends Plugin {
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.NATIVE_API);
+	}
+	
 	@Override
 	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		final Injector injector = new EclStandaloneSetup().createInjectorAndDoEMFRegistration();

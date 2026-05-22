@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.core.rate;
 
+import java.util.Set;
+
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
@@ -29,6 +32,11 @@ import com.google.common.annotations.VisibleForTesting;
 @Component
 public class ApiPlugin extends Plugin {
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.NATIVE_API);
+	}
+	
 	@Override
 	public void addConfigurations(ConfigurationRegistry registry) {
 		registry.add("api", ApiConfiguration.class);

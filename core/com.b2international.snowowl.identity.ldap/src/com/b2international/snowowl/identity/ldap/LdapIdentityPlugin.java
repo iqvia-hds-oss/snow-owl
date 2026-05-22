@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2020-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.identity.ldap;
 
+import java.util.Set;
+
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.identity.IdentityProvider;
 import com.b2international.snowowl.core.identity.IdentityProviderFactory;
 import com.b2international.snowowl.core.plugin.Component;
@@ -26,6 +29,11 @@ import com.b2international.snowowl.core.setup.Plugin;
 @Component
 public final class LdapIdentityPlugin extends Plugin implements IdentityProviderFactory<LdapIdentityProviderConfig> {
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.BASE);
+	}
+	
 	@Override
 	public IdentityProvider create(LdapIdentityProviderConfig configuration) throws Exception {
 		return new LdapIdentityProvider(configuration);

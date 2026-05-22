@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.core.scripts;
 
+import java.util.Set;
+
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
@@ -27,6 +30,11 @@ import com.b2international.snowowl.core.setup.Plugin;
 @Component
 public final class ScriptPlugin extends Plugin {
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.BASE);
+	}
+	
 	@Override
 	public void init(SnowOwlConfiguration configuration, Environment env, ClassPathScanner scanner) throws Exception {
 		env.services().registerService(ScriptEngine.Registry.class, new ScriptEngine.Registry(scanner));

@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.core.setup;
 
+import java.util.Set;
+
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
@@ -24,6 +27,13 @@ import com.b2international.snowowl.core.plugin.ClassPathScanner;
  */
 public abstract class Plugin {
 
+	/**
+	 * Each plugin must provide at least one associated role. At least one role must be assigned to the terminology server in order for the plugin to get initialized and available runtime.
+	 * Always on plugins are considered the base set, assign them to the {@link Role#BASE} value.
+	 * @return
+	 */
+	public abstract Set<String> getRoles();
+	
 	/**
 	 * Plug-ins can provide additional configuration types to extend the main snowowl.yml configuration file capabilities with their own
 	 * configurations.

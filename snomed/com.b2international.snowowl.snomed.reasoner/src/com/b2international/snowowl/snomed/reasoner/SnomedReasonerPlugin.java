@@ -17,10 +17,12 @@ package com.b2international.snowowl.snomed.reasoner;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.b2international.index.Index;
 import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 import com.b2international.snowowl.core.plugin.Component;
@@ -40,6 +42,11 @@ import com.b2international.snowowl.snomed.reasoner.index.*;
 @Component
 public final class SnomedReasonerPlugin extends Plugin implements TerminologyRepositoryConfigurer {
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.CLASSIFICATION);
+	}
+	
 	@Override
 	public void run(final SnowOwlConfiguration configuration, final Environment env, ClassPathScanner scanner) throws Exception {
 		if (env.isServer()) {

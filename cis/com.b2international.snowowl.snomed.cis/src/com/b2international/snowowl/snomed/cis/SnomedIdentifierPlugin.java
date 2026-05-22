@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,11 @@ public final class SnomedIdentifierPlugin extends Plugin {
 	private static final Logger LOGGER = LoggerFactory.getLogger("snomedids");
 	private static final String SNOMED_IDS_INDEX = "snomedids";
 
+	@Override
+	public Set<String> getRoles() {
+		return Set.of("authoring", "cis");
+	}
+	
 	@Override
 	public void addConfigurations(ConfigurationRegistry registry) {
 		registry.add("cis", SnomedIdentifierConfiguration.class);

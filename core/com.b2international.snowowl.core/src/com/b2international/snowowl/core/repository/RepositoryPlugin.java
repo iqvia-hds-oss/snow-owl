@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.security.Security;
 import java.security.cert.CertificateException;
 import java.util.Map;
+import java.util.Set;
 
 import javax.net.ssl.SSLException;
 
@@ -33,6 +34,7 @@ import com.b2international.index.Indexes;
 import com.b2international.index.mapping.Mappings;
 import com.b2international.snowowl.core.IDisposableService;
 import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.Role;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.client.TransportConfiguration;
 import com.b2international.snowowl.core.config.*;
@@ -74,6 +76,11 @@ public final class RepositoryPlugin extends Plugin {
 	private static final Logger LOG = LoggerFactory.getLogger("core");
 	
 	private static final String JOBS_INDEX = "jobs";
+	
+	@Override
+	public Set<String> getRoles() {
+		return Set.of(Role.BASE);
+	}
 	
 	@Override
 	public void addConfigurations(ConfigurationRegistry registry) {
