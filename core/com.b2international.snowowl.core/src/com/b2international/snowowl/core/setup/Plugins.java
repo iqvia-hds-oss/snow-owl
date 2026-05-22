@@ -15,17 +15,18 @@
  */
 package com.b2international.snowowl.core.setup;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 import com.b2international.commons.CompositeClassLoader;
-import com.b2international.snowowl.core.SnowOwl;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
 
 /**
  * @since 7.0
  */
-public final class Plugins implements Iterable<Plugin> {
+public class Plugins implements Iterable<Plugin> {
 
 	private final Collection<Plugin> plugins;
 	private final CompositeClassLoader compositeClassLoader;
@@ -116,29 +117,6 @@ public final class Plugins implements Iterable<Plugin> {
 	@Override
 	public Iterator<Plugin> iterator() {
 		return plugins.iterator();
-	}
-
-	/**
-	 * Collects all plugin configuration contributions and returns them in a {@link Map} where the key is the desired property name of the
-	 * configuration node and the value is the {@link Class} of the actual configuration node.
-	 * 
-	 * @return
-	 * @since 3.4
-	 */
-	public Map<String, Class<?>> getPluginConfigurations() {
-		final Map<String, Class<?>> moduleConfigMap = new HashMap<>();
-		for (Plugin plugin : getPlugins()) {
-			plugin.addConfigurations(new ConfigurationRegistry() {
-				@Override
-				public void add(String field, Class<?> configurationType) {
-					Class<?> prev = moduleConfigMap.put(field, configurationType);
-					if (prev != null) {
-						throw new SnowOwl.InitializationException("Configuration node already registered for " + field + " - " + prev + " vs. " + configurationType);
-					}
-				}
-			});
-		}
-		return moduleConfigMap;
 	}
 
 	/**

@@ -28,10 +28,13 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.URIUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
 import com.b2international.commons.config.ConfigurationFactory;
 import com.b2international.commons.config.FileConfigurationSourceProvider;
@@ -40,12 +43,15 @@ import com.b2international.commons.validation.ApiValidation;
 import com.b2international.snowowl.core.ApplicationContext.ServiceRegistryEntry;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
+import com.b2international.snowowl.core.setup.ConfigurationRegistry;
 import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 import com.b2international.snowowl.core.setup.Plugins;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Sets;
 
 import jakarta.validation.Validator;
 
@@ -75,6 +81,8 @@ public final class SnowOwl {
 	// System property for additional packages to scan
 	private static final String SO_COMPONENT_SCAN = "so.component.scan"; //$NON-NLS-1$
 	private static final Splitter PACKAGE_SPLITTER = Splitter.on(',').omitEmptyStrings();
+
+	public static final SortedSet<String> DEFAULT_ROLES = ImmutableSortedSet.of();
 	
 	private AtomicBoolean running = new AtomicBoolean(false);
 	private AtomicBoolean preRunCompleted = new AtomicBoolean(false);
@@ -125,24 +133,64 @@ public final class SnowOwl {
 		// temporarily register the scanner into the app context, so that various config deserialization classes work as expected
 		ApplicationContext.getInstance().registerService(ClassPathScanner.class, this.scanner);
 		
-		List<Plugin> plugins = ImmutableList.<Plugin>builder()
+		List<Plugin> pluginList = ImmutableList.<Plugin>builder()
 			.addAll(this.scanner.getComponentsBySuperclass(Plugin.class))
 			.add(additionalPlugins != null ? additionalPlugins : new Plugin[]{})
 			.build();
-		this.plugins = new Plugins(plugins);
-		this.configuration = createConfiguration(confPath, this.plugins);
 		
+		// we need to full list of plugins to read the configuration file first
+		this.configuration = createConfiguration(confPath, getPluginConfigurations(pluginList));
+		// once configuration are parsed deregister the scanner from the global context to allow it to be GCd once full boot complete
+		ApplicationContext.getInstance().unregisterService(ClassPathScanner.class);
+		
+		// prepare server roles
+		final Set<String> serverRoles = new LinkedHashSet<>();
+		
+		final Set<String> rolesToPrint;
+		if (!CompareUtils.isEmpty(this.configuration.getRoles())) {
+			// ensure base role is always enabled when roles are configured
+			serverRoles.add(Role.BASE);
+			serverRoles.addAll(this.configuration.getRoles());
+			rolesToPrint = ImmutableSortedSet.copyOf(this.configuration.getRoles());
+		} else {
+			// keep server roles an empty set (middleware will allow all requests to go through in this case without comparing roles)
+			// serverRoles = ...
+			
+			// otherwise collect all roles available from all plugins and concat them together to a final list to print out to the console
+			rolesToPrint = pluginList.stream().map(Plugin::getRoles).flatMap(Set::stream).collect(ImmutableSortedSet.toImmutableSortedSet(String::compareTo));
+		}
+		
+		// print env to the console
 		final Path dataPath = getDataPath(homePath, configuration.getPaths().getData());
 		this.environment = new Environment(homePath, confPath, dataPath);
-		
-		this.environment.services().registerService(SnowOwlConfiguration.class, this.configuration);
-		this.environment.services().registerService(Plugins.class, this.plugins);
-		// log environment and setting info
 		logEnvironment();
-		this.plugins.getPlugins().forEach(plugin -> log.info("loaded plugin [{}]", plugin));
+		log.info("Server roles: {}", rolesToPrint);
 		
-		// once all plugins are parsed, remove the scanner from the global context
-		ApplicationContext.getInstance().unregisterService(ClassPathScanner.class);
+		// perform plugin filtering and print out enabled plugins to the console along with the roles that enabled it
+		pluginList = pluginList.stream()
+				.filter(plugin -> {
+					if (serverRoles.isEmpty()) {
+						// log the plugin with all role information
+						log.info("loaded plugin [{}] with roles {}", plugin, ImmutableSortedSet.copyOf(plugin.getRoles()));
+						return true;
+					} else {
+						final Set<String> enabledPluginRoles = ImmutableSortedSet.copyOf(Sets.intersection(plugin.getRoles(), serverRoles));
+						if (enabledPluginRoles.isEmpty()) {
+							return false;
+						} else {
+							log.info("loaded plugin [{}] with roles {}", plugin, enabledPluginRoles);
+							return true;
+						}
+					}
+				})
+				.toList();
+		
+		// init plugins field and register plugins and config for further initialization
+		this.plugins = new Plugins(pluginList);
+		this.environment.services().registerService(Plugins.class, this.plugins);
+		this.environment.services().registerService(SnowOwlConfiguration.class, this.configuration);
+		
+		// TODO do we need to restrict classpath scanner to certain packages only? maybe it is hard to do
 	}
 	
 	private Path getHomePath() {
@@ -250,10 +298,32 @@ public final class SnowOwl {
 		return this;
 	}
 
-	private SnowOwlConfiguration createConfiguration(Path configPath, Plugins plugins) throws Exception {
+	/**
+	 * Collects all plugin configuration contributions and returns them in a {@link Map} where the key is the desired property name of the
+	 * configuration node and the value is the {@link Class} of the actual configuration node.
+	 * 
+	 * @return
+	 */
+	private static Map<String, Class<?>> getPluginConfigurations(List<Plugin> plugins) {
+		final Map<String, Class<?>> moduleConfigMap = new HashMap<>();
+		for (Plugin plugin : plugins) {
+			plugin.addConfigurations(new ConfigurationRegistry() {
+				@Override
+				public void add(String field, Class<?> configurationType) {
+					Class<?> prev = moduleConfigMap.put(field, configurationType);
+					if (prev != null) {
+						throw new SnowOwl.InitializationException("Configuration node already registered for " + field + " - " + prev + " vs. " + configurationType);
+					}
+				}
+			});
+		}
+		return moduleConfigMap;
+	}
+	
+	private static SnowOwlConfiguration createConfiguration(Path configPath, final Map<String, Class<?>> pluginConfigurations) throws Exception {
 		final Validator validator = ApiValidation.getValidator();
 		final ConfigurationFactory<SnowOwlConfiguration> factory = new ConfigurationFactory<SnowOwlConfiguration>(SnowOwlConfiguration.class, validator);
-		factory.setAdditionalModules(plugins.getPluginConfigurations());
+		factory.setAdditionalModules(pluginConfigurations);
 		
 		final Path configFile = configPath.resolve(CONFIGURATION_FILE);
 		return configFile != null ? factory.build(new FileConfigurationSourceProvider(), configFile.toString()) : factory.build();
