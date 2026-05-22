@@ -15,22 +15,30 @@
  */
 package com.b2international.snowowl.core.setup;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 import com.b2international.commons.CompositeClassLoader;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.plugin.ClassPathScanner;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * @since 7.0
  */
-public class Plugins implements Iterable<Plugin> {
+public final class Plugins implements Iterable<Plugin> {
 
 	private final Collection<Plugin> plugins;
 	private final CompositeClassLoader compositeClassLoader;
-
+	
+	@FunctionalInterface
+	interface PluginTask {
+		void run(Plugin plugin) throws Exception;
+	}
+	
 	/**
 	 * Constructs a new {@link Plugins} instance with the given set of Plug-ins.
 	 * 
@@ -54,11 +62,9 @@ public class Plugins implements Iterable<Plugin> {
 	 * @see Plugin#init(Environment)
 	 */
 	public void init(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
-		for (Plugin plugin : plugins) {
-			plugin.init(configuration, environment, scanner);
-		}
+		runParallel(plugin -> plugin.init(configuration, environment, scanner));
 	}
-
+	
 	/**
 	 * Executes {@link Plugin#run(SnowOwlConfiguration, Environment, ClassPathScanner)} methods.
 	 * 
@@ -70,9 +76,7 @@ public class Plugins implements Iterable<Plugin> {
 	 * @see Plugin#run(Environment)
 	 */
 	public void run(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
-		for (Plugin plugin : plugins) {
-			plugin.run(configuration, environment, scanner);
-		}
+		runParallel(plugin -> plugin.run(configuration, environment, scanner));
 	}
 
 	/**
@@ -86,9 +90,7 @@ public class Plugins implements Iterable<Plugin> {
 	 * @throws Exception 
 	 */
 	public void preRun(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
-		for (Plugin plugin : plugins) {
-			plugin.preRun(configuration, environment, scanner);
-		}
+		runParallel(plugin -> plugin.preRun(configuration, environment, scanner));
 	}
 	
 	/**
@@ -102,9 +104,7 @@ public class Plugins implements Iterable<Plugin> {
 	 * @throws Exception 
 	 */
 	public void postRun(SnowOwlConfiguration configuration, Environment environment, ClassPathScanner scanner) throws Exception {
-		for (Plugin fragment : plugins) {
-			fragment.postRun(configuration, environment, scanner);
-		}
+		runParallel(plugin -> plugin.postRun(configuration, environment, scanner));
 	}
 
 	/**
@@ -124,6 +124,21 @@ public class Plugins implements Iterable<Plugin> {
 	 */
 	public ClassLoader getCompositeClassLoader() {
 		return compositeClassLoader;
+	}
+	
+	private void runParallel(PluginTask task) throws Exception {
+		var parallelInit = MoreExecutors.listeningDecorator(Executors.newVirtualThreadPerTaskExecutor());
+		var inits = new ArrayList<ListenableFuture<Boolean>>();
+		for (Plugin plugin : this.plugins) {
+			inits.add(parallelInit.submit(new Callable<Boolean>() {
+				@Override
+				public Boolean call() throws Exception {
+					task.run(plugin);
+					return true;
+				}
+			}));
+		}
+		Futures.allAsList(inits).get();
 	}
 
 }
