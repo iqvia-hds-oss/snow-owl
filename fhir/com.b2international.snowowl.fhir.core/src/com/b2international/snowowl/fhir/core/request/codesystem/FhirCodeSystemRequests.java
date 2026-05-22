@@ -50,4 +50,8 @@ public final class FhirCodeSystemRequests {
 	public ResourceDeleteRequestBuilder prepareDelete(final String codeSystemId) {
 		return new ResourceDeleteRequestBuilder(CodeSystem.uri(codeSystemId));
 	}
+
+	public FhirCodeSystemAssignFhirUrlRequestBuilder prepareAssignFhirUrl() {
+		return new FhirCodeSystemAssignFhirUrlRequestBuilder();
+	}
 }
