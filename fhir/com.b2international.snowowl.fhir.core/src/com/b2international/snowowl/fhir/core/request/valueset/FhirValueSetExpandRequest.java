@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @since 8.0
  */
-final class FhirValueSetExpandRequest extends FhirValueSetRequest<ValueSet> {
+final class FhirValueSetExpandRequest extends FhirValueSetOperationRequest<ValueSet> {
 
 	private static final long serialVersionUID = 1L;
 	

@@ -31,7 +31,7 @@ import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
-import com.b2international.snowowl.fhir.core.request.codesystem.FhirRequest;
+import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
@@ -39,16 +39,19 @@ import com.google.common.hash.Hashing;
 /**
  * Common base class to handle implicit ValueSet generation when performing various ValueSet operations.
  * 
+ * @see FhirValueSetExpandRequest
+ * @see FhirValueSetValidateCodeRequest
+ * 
  * @since 10.1.0
  * @param <R> - the result parameter type
  */
-public abstract class FhirValueSetRequest<R> implements Request<ServiceProvider, R> {
+public abstract class FhirValueSetOperationRequest<R> implements Request<ServiceProvider, R> {
 
 	private static final long serialVersionUID = 1L;
 
 	private final String url;
 	
-	public FhirValueSetRequest(String url) {
+	public FhirValueSetOperationRequest(String url) {
 		if (Strings.isNullOrEmpty(url)) {
 			throw new BadRequestException("URL must be defined to identify a value set. 'valueSet' parameter is not available yet.", "url");
 		}
@@ -119,7 +122,7 @@ public abstract class FhirValueSetRequest<R> implements Request<ServiceProvider,
 			.one()
 			.filterByUrl(codeSystemUrl)
 			.filterByVersion(version)
-			.setElements(FhirRequest.MINIMAL_CODESYSTEM_FIELD_SELECTION, false)
+			.setElements(FhirCodeSystemOperationRequest.MINIMAL_CODESYSTEM_FIELD_SELECTION, false)
 			.buildAsync()
 			.execute(context)
 			.getEntry().stream().findFirst()

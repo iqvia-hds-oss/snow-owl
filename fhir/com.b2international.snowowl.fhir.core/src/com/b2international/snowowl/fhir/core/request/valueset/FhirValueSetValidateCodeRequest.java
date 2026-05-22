@@ -29,7 +29,7 @@ import com.google.common.base.Strings;
 /**
  * @since 8.0
  */
-final class FhirValueSetValidateCodeRequest extends FhirValueSetRequest<ValueSetValidateCodeResultParameters> {
+final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest<ValueSetValidateCodeResultParameters> {
 
 	private static final long serialVersionUID = 2L;
 
