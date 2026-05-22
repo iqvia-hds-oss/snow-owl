@@ -210,7 +210,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("title", equalTo("SNOMEDCT"))
 			.body("property", notNullValue())
 			.body("filter", notNullValue())
-			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00+00:00"))
+			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00Z"))
 			//end is currently not supported
 			.body("effectivePeriod.end", nullValue())
 			.body("caseSensitive", equalTo(true))
@@ -580,7 +580,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("publisher", equalTo("SNOMED International"))
 			.body("contact[0].telecom[0].system", equalTo("url"))
 			.body("contact[0].telecom[0].value", equalTo("https://b2ihealthcare.com"))
-			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00+00:00"))
+			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00Z"))
 			//end is currently not supported
 			.body("effectivePeriod.end", nullValue());
 	}
