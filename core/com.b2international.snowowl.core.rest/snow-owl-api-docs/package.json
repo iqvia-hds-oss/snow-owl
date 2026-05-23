@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "qs": "^6.15.1",
+    "qs": "^6.15.2",
     "rapidoc": "^9.3.8",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
