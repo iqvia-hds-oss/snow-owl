@@ -964,14 +964,17 @@ public final class StagingArea {
 		
 		applyPropertyUpdates(toRef, propertyUpdatesToApply);
 		
+		// XXX make sure we use only the diff toRef to detect revisions added to the target branch directly
+		var toOnlyRef = toRef.difference(fromRef);
+		
 		// apply new objects
-		applyNewObjects(added, mergeFromBranchRef, toRef, squash);
+		applyNewObjects(added, mergeFromBranchRef, toOnlyRef, squash);
 		
 		// apply changed objects
-		applyChangedObjects(changed, mergeFromBranchRef, toRef, squash);
+		applyChangedObjects(changed, mergeFromBranchRef, toOnlyRef, squash);
 		
 		// always apply deleted objects, they set the revised timestamp properly without introducing any new document
-		applyRemovedObjects(removed, mergeFromBranchRef, toRef, squash);
+		applyRemovedObjects(removed, mergeFromBranchRef, toOnlyRef, squash);
 		
 		// any externally marked revised revisions should be applied here
 		revisionsToReviseOnMergeSource.putAll(externalRevisionsToReviseOnMergeSource);
@@ -1163,24 +1166,24 @@ public final class StagingArea {
 		conflictsToReport.addAll(conflictProcessor.filterConflicts(this, conflicts));		
 	}
 
-	private void applyRemovedObjects(SetMultimap<Class<? extends Revision>, String> removed, RevisionBranchRef fromRef, RevisionBranchRef toRef,
+	private void applyRemovedObjects(SetMultimap<Class<? extends Revision>, String> removed, RevisionBranchRef fromRef, RevisionBranchRef toOnlyRef,
 			boolean squash) {
 		for (Class<? extends Revision> type : ImmutableSet.copyOf(removed.keySet())) {
 			final Collection<String> removedRevisionIds = removed.removeAll(type);
 			for (List<String> currentRemovedRevisionIds : Iterables.partition(removedRevisionIds, maxTermsCount)) {
-				index.read(toRef, searcher -> searcher.get(type, currentRemovedRevisionIds)).forEach(this::stageRemove);
+				index.read(toOnlyRef, searcher -> searcher.get(type, currentRemovedRevisionIds)).forEach(this::stageRemove);
 			}
 		}
 	}
 
-	private void applyChangedObjects(SetMultimap<Class<? extends Revision>, String> changed, RevisionBranchRef fromRef, RevisionBranchRef toRef,
+	private void applyChangedObjects(SetMultimap<Class<? extends Revision>, String> changed, RevisionBranchRef fromRef, RevisionBranchRef toOnlyRef,
 			boolean squash) {
 		for (Class<? extends Revision> type : ImmutableSet.copyOf(changed.keySet())) {
 			final Collection<String> changedRevisionIds = changed.removeAll(type);
 			
 			for (List<String> currentChangedRevisionIds : Iterables.partition(changedRevisionIds, maxTermsCount)) {
 				
-				final Iterable<? extends Revision> oldRevisions = index.read(toRef, searcher -> searcher.get(type, currentChangedRevisionIds));
+				final Iterable<? extends Revision> oldRevisions = index.read(toOnlyRef, searcher -> searcher.get(type, currentChangedRevisionIds));
 				final Map<String, ? extends Revision> oldRevisionsById = FluentIterable.from(oldRevisions).uniqueIndex(Revision::getId);
 				final Iterable<? extends Revision> updatedRevisions = index.read(fromRef, searcher -> searcher.get(type, currentChangedRevisionIds));
 				final Map<String, ? extends Revision> updatedRevisionsById = FluentIterable.from(updatedRevisions).uniqueIndex(Revision::getId);
@@ -1198,14 +1201,14 @@ public final class StagingArea {
 		}
 	}
 
-	private void applyNewObjects(final SetMultimap<Class<? extends Revision>, String> added, RevisionBranchRef fromRef, RevisionBranchRef toRef, boolean squash) {
+	private void applyNewObjects(final SetMultimap<Class<? extends Revision>, String> added, RevisionBranchRef fromRef, RevisionBranchRef toOnlyRef, boolean squash) {
 		for (Class<? extends Revision> type : ImmutableSet.copyOf(added.keySet())) {
 			final Set<String> addedIds = added.removeAll(type);
 			// skip new objects that are already marked as revised on merge source, content that is present on target should take place instead
 			final Set<String> newRevisionIds = Sets.difference(addedIds, externalRevisionsToReviseOnMergeSource.get(type));
 			
 			for (List<String> currentNewRevisionIds : Iterables.partition(newRevisionIds, maxTermsCount)) {
-				final Iterable<? extends Revision> oldRevisions = index.read(toRef, searcher -> searcher.get(type, currentNewRevisionIds));
+				final Iterable<? extends Revision> oldRevisions = index.read(toOnlyRef, searcher -> searcher.get(type, currentNewRevisionIds));
 				final Iterable<? extends Revision> newRevisions = index.read(fromRef, searcher -> searcher.get(type, currentNewRevisionIds));
 				final Map<String, ? extends Revision> oldRevisionsById = FluentIterable.from(oldRevisions).uniqueIndex(Revision::getId);
 				
