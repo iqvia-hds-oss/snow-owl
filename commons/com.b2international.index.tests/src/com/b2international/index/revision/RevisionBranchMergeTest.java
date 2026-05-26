@@ -15,10 +15,12 @@
  */
 package com.b2international.index.revision;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -148,23 +150,24 @@ public class RevisionBranchMergeTest extends BaseRevisionIndexTest {
 		indexRemove(child, NEW_DATA, NEW_DATA2);
 		// after commit child branch becomes FORWARD
 		assertState(child, MAIN, BranchState.FORWARD);
-		// do the merge with an exclusion
+
+		// do the merge with an exclusion to the deleted element
 		branching()
 			.prepareMerge(child, MAIN)
 			.exclude(STORAGE_KEY1)
 			.squash(true)
 			.merge();
 		
-		// after fast-forward merge
+		// after squash merge
 		// 1. MAIN falls behind compared to the child
 		assertState(MAIN, child, BranchState.FORWARD);
 		
 		// 2. Child should be UP_TO_DATE state compared to the MAIN
 		assertState(child, MAIN, BranchState.BEHIND);
 		
-		// 3. one revision should be visible from MAIN branch, excluded one should not
+		// 3. since nothing got removed, both revisions should be visible after merge
 		assertNotNull(getRevision(MAIN, RevisionData.class, STORAGE_KEY1));
-		assertNull(getRevision(MAIN, RevisionData.class, STORAGE_KEY2));
+		assertNotNull(getRevision(MAIN, RevisionData.class, STORAGE_KEY2));
 	}
 	
 	@Test
@@ -552,8 +555,10 @@ public class RevisionBranchMergeTest extends BaseRevisionIndexTest {
 		final String newParent = createBranch(MAIN, "newParent");
 		final String newBranch = createBranch(newParent, "move");
 		
-		// initial sync produces empty commit but an actual change in the doc
-		branching().prepareMerge(oldBranch, newBranch).squash(false).merge();
+		// initial sync produces a non-empty commit indicating that there was a "conflict" detected during the merge 
+		Commit commit = branching().prepareMerge(oldBranch, newBranch).squash(false).merge();
+		// assert  that the injected conflict change pill is present
+		assertThat(commit.getDetails()).containsOnly(CommitDetail.changed(NEW_DATA.getObjectId().type(), NEW_DATA.getObjectId().type()).objects(ObjectId.ROOT).components(Set.of(NEW_DATA.getId())).build());
 		
 		RevisionData afterFirstSync = getRevision(newBranch, RevisionData.class, STORAGE_KEY1);
 		assertEquals("change", afterFirstSync.getDerivedField());

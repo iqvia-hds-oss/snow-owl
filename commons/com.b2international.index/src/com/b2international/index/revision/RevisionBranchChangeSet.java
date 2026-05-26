@@ -72,6 +72,15 @@ public final class RevisionBranchChangeSet {
 					Class<?> revType = mappings.getClass(detail.getComponent().type());
 					if (Revision.class.isAssignableFrom(revType)) {
 						changedRevisionIdsByType.put((Class<? extends Revision>) revType, detail.getComponent().id());
+						
+						if (!detail.getObject().isRoot()) {
+							Class<?> objectType = mappings.getClass(detail.getObject().type());
+							containersRequiredForNewAndChangedRevisions.put(detail.getComponent(), detail.getObject());
+							// only register as changed container, if the container is not registered as a new revision
+							if (!newRevisionIdsByType.containsEntry((Class<? extends Revision>) objectType, detail.getObject().id())) {
+								changedRevisionIdsByType.put((Class<? extends Revision>) objectType, detail.getObject().id());
+							}
+						}
 					}
 				}
 			} else if (detail.isRemove()) {
@@ -134,7 +143,7 @@ public final class RevisionBranchChangeSet {
 	public ObjectId getContainerId(ObjectId revisionId) {
 		return containersRequiredForNewAndChangedRevisions.get(revisionId);
 	}
-
+	
 	public boolean isRemoved(ObjectId revisionId) {
 		return removedRevisionIdsByType.containsEntry(mappings.getClass(revisionId.type()), revisionId.id());
 	}
