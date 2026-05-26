@@ -436,7 +436,6 @@ public final class StagingArea {
 
 					if (isMerge()) {
 						revisionsToReviseOnMergeSource.put(rev.getClass(), rev.getId());
-						injectChangedEntryToMergeCommit(containerId, objectId);
 					}
 					
 					writer.put(rev);
@@ -1004,6 +1003,7 @@ public final class StagingArea {
 					// FIXME for the future, figure out how to reduce the number of ser/deser during merge
 					stageChange(oldRevision, mapper.convertValue(objectToUpdate, type));
 					revisionsToReviseOnMergeSource.put(type, oldRevision.getId());
+					injectChangedEntryToMergeCommit(oldRevision.getContainerId(), oldRevision.getObjectId());
 				}
 			}
 		}
@@ -1100,6 +1100,12 @@ public final class StagingArea {
 					final Map<String, RevisionCompareDetail> sourcePropertyChanges = sourcePropertyChangesByObject.remove(changedInSourceAndTargetId);
 					final Map<String, RevisionCompareDetail> targetPropertyChanges = targetPropertyChangesByObject.remove(changedInSourceAndTargetId);
 					
+					final ObjectId changeInSourceAndTargetObject = ObjectId.of(type, changedInSourceAndTargetId);
+					ObjectId containerOfChangedInSourceAndTargetObject = fromChangeSet.getContainerId(changeInSourceAndTargetObject);
+					if (containerOfChangedInSourceAndTargetObject == null) {
+						containerOfChangedInSourceAndTargetObject = ObjectId.rootOf(docType);
+					}
+					
 					if (sourcePropertyChanges != null) {
 						for (Entry<String, RevisionCompareDetail> sourceChange : sourcePropertyChanges.entrySet()) {
 							final String changedProperty = sourceChange.getKey();
@@ -1141,6 +1147,8 @@ public final class StagingArea {
 					}
 					
 					// this object has changed on both sides either by tracked field changes or due to some cascading derived field change
+					// apply change pill to the merge commit, so that we know in the future that there was a conflict here which got resolved
+					injectChangedEntryToMergeCommit(containerOfChangedInSourceAndTargetObject, changeInSourceAndTargetObject);
 					// revise the revision on source, since we already have one on this branch already
 					revisionsToReviseOnMergeSource.put(type, changedInSourceAndTargetId);
 				}

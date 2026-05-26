@@ -147,6 +147,27 @@ public class RevisionBranchMergeConflictTest extends BaseRevisionIndexTest {
 	}
 	
 	@Test
+	public void rebaseComponentOfContainer_ChangedOnSourceAndTarget() throws Exception {
+		ContainerRevisionData container = new ContainerRevisionData(STORAGE_KEY1);
+		indexRevision(MAIN, container);
+		final String branchA = createBranch(MAIN, "a");
+		
+		// apply the same change to both sides
+		ComponentRevisionData component = new ComponentRevisionData(STORAGE_KEY2, STORAGE_KEY1, "field2");
+		indexRevision(MAIN, component);
+		indexRevision(branchA, component);
+		
+		final Commit commit = branching().prepareMerge(MAIN, branchA).merge();
+		
+		assertThat(commit.getDetails()).containsOnly(
+			// indicate that the container has changed
+			CommitDetail.changed(container.getObjectId().type(), container.getObjectId().type()).objects(ObjectId.ROOT).components(Set.of(container.getId())).build(),
+			// assert that the injected poison pill is available on the resulting merge commit properly
+			CommitDetail.removed(container.getObjectId().type(), component.getObjectId().type()).objects(container.getId()).components(Set.of(component.getId())).build()
+		);
+	}
+	
+	@Test
 	public void rebaseEnumPropertyChangeToSameValueOnBothSides() throws Exception {
 		EnumPropertyData data = new EnumPropertyData(STORAGE_KEY1, Option.OPTION_B);
 		indexRevision(MAIN, data);
@@ -569,7 +590,9 @@ public class RevisionBranchMergeConflictTest extends BaseRevisionIndexTest {
 		indexChange(MAIN, data, update);
 		indexChange(branchA, data, update);
 		
-		branching().prepareMerge(MAIN, branchA).merge(); // should not throw BranchMergeConflictException
+		final Commit commit = branching().prepareMerge(MAIN, branchA).merge(); // should not throw BranchMergeConflictException
+		// assert that the injected conflict change pill is present properly
+		assertThat(commit.getDetails()).containsOnly(CommitDetail.changed(data.getObjectId().type(), data.getObjectId().type()).objects(ObjectId.ROOT).components(Set.of(data.getId())).build());
 		
 		ObjectPropertyData actual = getRevision(branchA, ObjectPropertyData.class, STORAGE_KEY1);
 		assertDocEquals(
