@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import static com.b2international.index.query.Expressions.exactMatch;
 import static com.b2international.index.query.Expressions.matchAny;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
-import com.b2international.commons.collections.Collections3;
 import com.b2international.index.query.Expression;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Strings;
 
@@ -71,8 +71,8 @@ public abstract class SnomedComponentDocument extends SnomedDocument {
 	
 	public static abstract class Builder<B extends Builder<B, T>, T extends SnomedComponentDocument> extends SnomedDocument.Builder<B, T> {
 		
-		protected List<String> memberOf = Collections.emptyList();
-		protected List<String> activeMemberOf = Collections.emptyList();
+		protected List<String> memberOf;
+		protected List<String> activeMemberOf;
 
 		@Override
 		public B id(String id) {
@@ -83,13 +83,25 @@ public abstract class SnomedComponentDocument extends SnomedDocument {
 			return getSelf();
 		}
 		
+		@JsonIgnore
 		public B activeMemberOf(Collection<String> refsetIds) {
-			this.activeMemberOf = Collections3.toImmutableList(refsetIds);
+			return activeMemberOf(refsetIds == null ? null : List.copyOf(refsetIds));
+		}
+		
+		@JsonSetter
+		public B activeMemberOf(List<String> refsetIds) {
+			this.activeMemberOf = refsetIds;
 			return getSelf();
 		}
 		
+		@JsonIgnore
 		public B memberOf(Collection<String> refsetIds) {
-			this.memberOf = Collections3.toImmutableList(refsetIds);
+			return memberOf(refsetIds == null ? null : List.copyOf(refsetIds));
+		}
+		
+		@JsonSetter
+		public B memberOf(List<String> refsetIds) {
+			this.memberOf = refsetIds;
 			return getSelf();
 		}
 		

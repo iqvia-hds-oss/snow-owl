@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.b2international.snowowl.core.authorization;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,6 @@ import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.core.monitoring.MonitoredRequest;
-import com.google.common.collect.Lists;
 
 /**
  * Represents an authorization context where a permission is required to get access.
@@ -44,7 +44,7 @@ public interface AccessControl {
 	 * @return a {@link Permission}s required to access/execute/etc. this request.
 	 */
 	default List<String> getResources(ServiceProvider context, Request<ServiceProvider, ?> req) {
-		final List<String> accessedResources = Lists.newArrayList();
+		final List<String> accessedResources = new ArrayList<>(2);
 		
 		if (!(this instanceof Request<?, ?>)) {
 			throw new UnsupportedOperationException("AccessControl interface needs to be declared on Request implementations");

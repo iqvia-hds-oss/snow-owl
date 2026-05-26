@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,7 @@
  */
 package com.b2international.index.revision;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.index.Doc;
@@ -32,10 +27,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 
 /**
  * @since 6.6
@@ -125,7 +117,7 @@ public final class CommitDetail {
 		
 		@JsonProperty
 		Builder objects(List<String> objects) {
-			this.objects = objects == null ? null : ImmutableList.copyOf(objects);
+			this.objects = objects == null ? null : List.copyOf(objects);
 			return this;
 		}
 		
@@ -152,13 +144,13 @@ public final class CommitDetail {
 			return this;
 		}
 		
-		public Builder putObjects(String object, Iterable<String> components) {
+		public Builder putObjects(String object, Collection<String> components) {
 			if (this.components == null) {
-				this.components = newArrayList();
-				this.objects = newArrayList();
+				this.components = new ArrayList<>();
+				this.objects = new ArrayList<>();
 			}
 			this.objects.add(object);
-			this.components.add(ImmutableSet.copyOf(components));
+			this.components.add(Set.copyOf(components));
 			return this;
 		}
 		
@@ -279,7 +271,7 @@ public final class CommitDetail {
 	
 	@Override
 	public String toString() {
-		final ToStringHelper toString = MoreObjects.toStringHelper(getClass())
+		final MoreObjects.ToStringHelper toString = MoreObjects.toStringHelper(getClass())
 				.add("op", op)
 				.add("objectType", objectType)
 				.add("objects", objects);

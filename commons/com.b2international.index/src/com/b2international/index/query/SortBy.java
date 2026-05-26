@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,7 @@
  */
 package com.b2international.index.query;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Lists.newArrayList;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -26,8 +24,6 @@ import org.elasticsearch.search.sort.ScriptSortBuilder.ScriptSortType;
 
 import com.b2international.index.ScriptExpression;
 import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 /**
  * @since 4.7
@@ -67,8 +63,8 @@ public abstract class SortBy {
 		private final Order order;
 
 		private SortByField(String field, Order order) {
-			this.field = checkNotNull(field, "field");
-			this.order = checkNotNull(order, "order");
+			this.field = Objects.requireNonNull(field, "field");
+			this.order = Objects.requireNonNull(order, "order");
 		}
 
 		public String getField() {
@@ -168,7 +164,7 @@ public abstract class SortBy {
 		private final List<SortBy> items;
 
 		private MultiSortBy(List<SortBy> items) {
-			this.items = ImmutableList.copyOf(checkNotNull(items, "items"));
+			this.items = List.copyOf(items);
 		}
 		
 		public List<SortBy> getItems() {
@@ -197,7 +193,7 @@ public abstract class SortBy {
 	}
 	
 	public static final class Builder {
-		private final List<SortBy> sorts = newArrayList();
+		private final List<SortBy> sorts = new ArrayList<>(1);
 		
 		public Builder sortByField(String field, Order order) {
 			sorts.add(field(field, order));
@@ -218,7 +214,7 @@ public abstract class SortBy {
 			if (sorts.isEmpty()) {
 				return DEFAULT;
 			} else if (sorts.size() == 1) {
-				return Iterables.getOnlyElement(sorts);
+				return sorts.getFirst();
 			} else {
 				return new MultiSortBy(sorts);
 			}

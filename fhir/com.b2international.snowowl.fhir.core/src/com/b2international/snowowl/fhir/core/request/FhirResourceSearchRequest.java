@@ -49,8 +49,6 @@ import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 
 /**
  * Retrieves FHIR terminology resources (CodeSystem, ValueSet, ConceptMap) based
@@ -72,7 +70,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	private static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
 		R5ObjectFields.MetadataResource.NAME,
 		R5ObjectFields.MetadataResource.META,
-		R5ObjectFields.MetadataResource.TEXT
+		R5ObjectFields.MetadataResource.TEXT,
+		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD
 	);
 	
 	/**
@@ -194,7 +193,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	}
 
 	private List<String> replaceFieldsToLoad(final List<String> fields) {
-		final List<String> internalFields = Lists.newArrayList(fields);
+		final List<String> internalFields = new ArrayList<>(fields);
 		
 		// If any fields were listed for field selection, make sure the ones we usually need are still included
 		if (!internalFields.isEmpty()) {
@@ -291,7 +290,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				.limit(1)
 				.build());
 			
-			final ResourceFragment resourceSnapshot = Iterables.getFirst(resourceFragments, null);
+			final ResourceFragment resourceSnapshot = resourceFragments.first();
 			if (resourceSnapshot != null) {
 				fragment.setTitle(resourceSnapshot.getTitle());
 				fragment.setStatus(resourceSnapshot.getStatus());
@@ -367,6 +366,19 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			
 		return contactDetail;
 	}
+	
+	private Period toEffectivePeriod(final Long start) {
+		if (start == null) {
+			return null;
+		}
+
+		final Period period = new Period();
+		final DateTimeType startElement = FhirModelHelpers.toDateTimeElement(start);
+		
+		period.setStartElement(startElement);
+		
+		return period;
+	}
 
 	private String getUrl(final ResourceFragment fragment) {
 		if (fragment.getSettings() == null) {
@@ -431,7 +443,10 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		includeIfFieldSelected(R5ObjectFields.Resource.LANGUAGE, resource::getLanguage, entry::setLanguage);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.PURPOSE, resource::getPurpose, entry::setPurpose);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.COPYRIGHT, resource::getCopyright, entry::setCopyright);
-
+		
+		// Currently support setting start with the effectiveTime of the resource
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD, () -> toEffectivePeriod(resource.getEffectiveTime()), entry::setEffectivePeriod);
+		
 		includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> getBlankNarrative(), entry::setText);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.PUBLISHER, () -> getPublisher(resource.getSettings()), entry::setPublisher);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> toDateTimeType(resource.getEffectiveTime()), entry::setDateElement);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,7 @@
  */
 package com.b2international.snowowl.snomed.datastore.request;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.collect.Sets.newHashSet;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -87,7 +81,7 @@ public final class EvaluateQueryRefSetMemberRequest extends IndexResourceRequest
 			return new QueryRefSetMemberEvaluationImpl(memberId, targetReferenceSet);
 		}
 
-		final Set<String> expectedConcepts = newHashSet();
+		final Set<String> expectedConcepts = new HashSet<>();
 		final Options expandOptions = expand().getOptions("referencedComponent");
 		final int pageSize = context.getPageSize();
 		
@@ -99,9 +93,9 @@ public final class EvaluateQueryRefSetMemberRequest extends IndexResourceRequest
 			.setLimit(pageSize)
 			.stream(context)
 			.flatMap(batch -> {
-				final Map<String, SnomedConcept> conceptsToAdd = newHashMap(Maps.uniqueIndex(batch, SnomedConcept::getId));
-				final Map<String, SnomedConcept> conceptsSeen = newHashMap();
-				final List<MemberChange> memberChanges = newArrayList();
+				final Map<String, SnomedConcept> conceptsToAdd = new HashMap<>(Maps.uniqueIndex(batch, SnomedConcept::getId));
+				final Map<String, SnomedConcept> conceptsSeen = new HashMap<>();
+				final List<MemberChange> memberChanges = new ArrayList<>();
 
 				expectedConcepts.addAll(conceptsToAdd.keySet());
 				

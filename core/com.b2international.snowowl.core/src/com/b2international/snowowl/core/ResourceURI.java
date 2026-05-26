@@ -62,6 +62,8 @@ public final class ResourceURI implements Serializable, Comparable<ResourceURI> 
 	 */
 	public static final String TILDE = "~";
 	
+	private static final String HEAD_PATH = "/HEAD";
+	
 	// the original value
 	private final String uri;
 	
@@ -91,32 +93,35 @@ public final class ResourceURI implements Serializable, Comparable<ResourceURI> 
 		if (!matcher.matches()) {
 			throw new BadRequestException("Malformed Resource URI value: '%s' must be in format '<resourceType>/<resourceId>/<path>'.", uri);
 		}
-		// ignore HEAD in path part by automatically removing it from the uri
-		this.uri = uri.replaceFirst("/HEAD", "").replaceFirst("~HEAD", ""); 
 		this.resourceType = matcher.group(1);
 		this.resourceId = matcher.group(2);
 		
-		
+		final String pathPart = matcher.group(3);
 		if (hasSpecialResourceIdPart()) {
-			if (!CompareUtils.isEmpty(matcher.group(3))) {
+			if (!CompareUtils.isEmpty(pathPart)) {
 				throw new BadRequestException("Resource URIs cannot use both the special tilde ('~') character and a branch path. Got: %s", uri)
 					.withDeveloperMessage("For child paths use either the '~' or the '/path' alternatives. For nested deeper branch paths always use the forward slash separator.");
 			}
-			this.path = null; // when using special ID part paths cannot get any value
+			// when using special ID part paths cannot get any value
+			this.path = null;
+			// uri should always contain the tilde path part as per contract of this URI class
+			this.uri = uri;
 		} else {
+			// ignore HEAD in path part by automatically removing it from the uri
+			this.uri = uri.contains(HEAD_PATH) ? uri.replaceFirst(HEAD_PATH, "") : uri;
 			// remove leading slash from match
-			this.path = CompareUtils.isEmpty(matcher.group(3)) ? HEAD : matcher.group(3).substring(1);
+			this.path = CompareUtils.isEmpty(pathPart) ? HEAD : pathPart.substring(1);
 		}
-		
 		
 		try {
 
-			if (CompareUtils.isEmpty(matcher.group(5))) {
+			final String timestampPart = matcher.group(5);
+			if (CompareUtils.isEmpty(timestampPart)) {
 				this.timestampPart = "";
 			} else {
 				// test that a valid numeric value was given after the 'at' symbol
-				Long.parseLong(matcher.group(5).substring(1));
-				this.timestampPart = matcher.group(5);
+				Long.parseLong(timestampPart.substring(1));
+				this.timestampPart = timestampPart;
 			}
 			
 		} catch (NumberFormatException e) {

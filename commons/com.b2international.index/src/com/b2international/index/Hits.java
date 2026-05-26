@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public final class Hits<T> implements Iterable<T> {
 	}
 	
 	public T first() {
-		return stream().findFirst().orElse(null);
+		return hits.isEmpty() ? null : hits.getFirst();
 	}
 	
 	public boolean isEmpty() {

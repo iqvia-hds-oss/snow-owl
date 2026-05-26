@@ -15,8 +15,7 @@
  */
 package com.b2international.snowowl.core.monitoring;
 
-import static com.google.common.collect.Lists.newArrayList;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -113,9 +112,9 @@ public final class MonitoredRequest<R> extends DelegatingRequest<ServiceProvider
 		return Maps.transformValues(json, propertyValue -> {
 			if (propertyValue instanceof Map<?, ?>) {
 				return truncateMaps((Map<String, Object>) propertyValue);
-			} else if (propertyValue instanceof Iterable<?>) {
+			} else if (propertyValue instanceof Iterable<?> iter) {
 				// TODO support arrays
-				return truncateIterables((Iterable<?>) propertyValue, 10);
+				return truncateIterables(iter, 10);
 			} else {
 				return propertyValue;
 			}
@@ -123,7 +122,7 @@ public final class MonitoredRequest<R> extends DelegatingRequest<ServiceProvider
 	}
 
 	private static Iterable<?> truncateIterables(Iterable<?> iterable, int limit) {
-        final List<Object> list = newArrayList();
+        final List<Object> list = new ArrayList<>(limit + 1);
         
         int i = 0;
         for (final Object element : iterable) {

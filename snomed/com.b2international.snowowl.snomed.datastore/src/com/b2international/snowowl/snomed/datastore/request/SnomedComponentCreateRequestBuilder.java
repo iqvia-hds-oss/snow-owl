@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.b2international.snowowl.snomed.datastore.request;
 
-import static com.google.common.collect.Lists.newArrayList;
-
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.OverridingMethodsMustInvokeSuper;
@@ -39,7 +38,7 @@ public abstract class SnomedComponentCreateRequestBuilder<B extends SnomedCompon
 	private String moduleId;
 	private Boolean active = Boolean.TRUE;
 	private IdGenerationStrategy idGenerationStrategy;
-	private List<SnomedRefSetMemberCreateRequest> members = newArrayList();
+	private List<SnomedRefSetMemberCreateRequest> members = new ArrayList<>(2);
 	
 	protected SnomedComponentCreateRequestBuilder() { 
 		super();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package com.b2international.snowowl.core.events.bulk;
 
-import static com.google.common.collect.Lists.newArrayList;
-
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,7 +38,7 @@ public final class BulkRequest<C extends ServiceProvider> implements Request<C, 
 
 	@Override
 	public BulkResponse execute(C context) {
-		final List<Object> responses = newArrayList();
+		final List<Object> responses = new ArrayList<>(requests.size());
 		
 		for (Request<C, ?> req : requests) {
 			responses.add(req.execute(context));

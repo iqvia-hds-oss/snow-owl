@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.b2international.snowowl.core.branch;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
@@ -39,6 +38,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 
 /**
  * Utility class for creating {@link IBranchPath branch paths}.
@@ -126,7 +126,8 @@ public abstract class BranchPathUtils {
 		IBranchPath currentPath = branchPath;
 
 		//list for storing branch path top most first, descendants then
-		final List<IBranchPath> $ = newArrayList(currentPath);
+		final List<IBranchPath> $ = new ArrayList<>();
+		$.add(currentPath);
 		
 		while (hasParent) {
 			
@@ -151,7 +152,7 @@ public abstract class BranchPathUtils {
 	 * @return an iterator for traversing the branch hierarchy from bottom to top.
 	 */
 	public static Iterator<IBranchPath> bottomToTopIterator(final IBranchPath branchPath) {
-		return new BackwardListIterator<IBranchPath>(newArrayList(topToBottomIterator(checkNotNull(branchPath, "branchPath"))));
+		return new BackwardListIterator<IBranchPath>(Lists.newArrayList(topToBottomIterator(checkNotNull(branchPath, "branchPath"))));
 	}
 	
 	/**

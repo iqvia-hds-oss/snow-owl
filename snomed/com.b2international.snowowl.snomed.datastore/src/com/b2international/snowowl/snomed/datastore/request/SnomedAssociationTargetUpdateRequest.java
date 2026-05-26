@@ -15,13 +15,8 @@
  */
 package com.b2international.snowowl.snomed.datastore.request;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -195,14 +190,15 @@ final class SnomedAssociationTargetUpdateRequest extends BaseComponentMemberUpda
 			return List.of();
 		}
 		
-		return newArrayList(
-			SnomedRequests.prepareSearchMember()
-				.all()
-				.filterByReferencedComponent(componentToUpdate.getId())
-				.filterByRefSet(associationReferenceSetIds)
-				.build()
-				.execute(context)
-		);
+		final List<SnomedReferenceSetMember> existingMembers = new ArrayList<>();
+		SnomedRequests.prepareSearchMember()
+			.all()
+			.filterByReferencedComponent(componentToUpdate.getId())
+			.filterByRefSet(associationReferenceSetIds)
+			.build()
+			.execute(context)
+			.forEach(existingMembers::add);
+		return existingMembers;
 	}
 	
 }

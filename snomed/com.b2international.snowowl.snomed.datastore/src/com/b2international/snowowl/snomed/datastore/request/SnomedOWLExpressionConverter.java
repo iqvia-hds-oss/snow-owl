@@ -15,9 +15,8 @@
  */
 package com.b2international.snowowl.snomed.datastore.request;
 
-import static com.google.common.collect.Lists.newArrayList;
-
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -192,7 +191,7 @@ public final class SnomedOWLExpressionConverter {
 		
 		Matcher matcher = DIGIT_PATTERN.matcher(expression);
 		
-		List<String> expressionIds = newArrayList();
+		List<String> expressionIds = new ArrayList<>();
 		
 		while (matcher.find()) {
 			

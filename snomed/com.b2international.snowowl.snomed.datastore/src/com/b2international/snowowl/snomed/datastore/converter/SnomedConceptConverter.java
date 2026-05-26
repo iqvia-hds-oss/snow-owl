@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,7 @@
  */
 package com.b2international.snowowl.snomed.datastore.converter;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Maps.newHashMap;
-import static com.google.common.collect.Sets.newHashSet;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import com.b2international.commons.collections.Collections3;
@@ -199,7 +192,7 @@ public final class SnomedConceptConverter extends BaseRevisionResourceConverter<
 			return;
 		}
 		
-		final List<SnomedDescription> synonyms = newArrayList();
+		final List<SnomedDescription> synonyms = new ArrayList<>();
 		for (SnomedConcept result : results) {
 			for (SnomedDescription description : result.getPreferredDescriptions()) {
 				if (!Concepts.FULLY_SPECIFIED_NAME.equals(description.getTypeId())) {
@@ -218,8 +211,8 @@ public final class SnomedConceptConverter extends BaseRevisionResourceConverter<
 			return;
 		}
 		
-		final Map<String, SnomedDescription> firstFsnByConceptId = newHashMap();
-		final List<SnomedDescription> fsns = newArrayList();
+		final Map<String, SnomedDescription> firstFsnByConceptId = new HashMap<>();
+		final List<SnomedDescription> fsns = new ArrayList<>();
 		for (SnomedConcept concept : results) {
 			for (SnomedDescription description : concept.getPreferredDescriptions()) {
 				if (Concepts.FULLY_SPECIFIED_NAME.equals(description.getTypeId())) {
@@ -366,7 +359,7 @@ public final class SnomedConceptConverter extends BaseRevisionResourceConverter<
 		
 		final int limit = getLimit(expandOptions);
 
-		final Collection<String> componentIds = newHashSet(ancestorsByDescendant.values());
+		final Collection<String> componentIds = new HashSet<>(ancestorsByDescendant.values());
 		
 		if (limit > 0 && !componentIds.isEmpty()) {
 			final SnomedConcepts ancestors = SnomedRequests.prepareSearchConcept()
@@ -376,7 +369,7 @@ public final class SnomedConceptConverter extends BaseRevisionResourceConverter<
 					.setExpand(expandOptions.get(EXPAND_OPTION_KEY, Options.class))
 					.build().execute(context());
 			
-			final Map<String, SnomedConcept> ancestorsById = newHashMap();
+			final Map<String, SnomedConcept> ancestorsById = new HashMap<>();
 			ancestorsById.putAll(Maps.uniqueIndex(ancestors, SnomedConcept::getId));
 			for (SnomedConcept concept : results) {
 				final Collection<String> ancestorIds = ancestorsByDescendant.get(concept.getId());
