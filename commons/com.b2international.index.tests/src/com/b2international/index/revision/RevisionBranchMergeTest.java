@@ -145,12 +145,12 @@ public class RevisionBranchMergeTest extends BaseRevisionIndexTest {
 		indexRevision(MAIN, NEW_DATA);
 		indexRevision(MAIN, NEW_DATA2);
 		String child = createBranch(MAIN, "a");
-		// change a revision on the child branch
+		// delete BOTH revisions on the child branch
 		indexRemove(child, NEW_DATA, NEW_DATA2);
 		// after commit child branch becomes FORWARD
 		assertState(child, MAIN, BranchState.FORWARD);
 
-		// do the merge with an exclusion to the deleted element
+		// but when merging exclude the first one, so that should not be deleted
 		branching()
 			.prepareMerge(child, MAIN)
 			.exclude(STORAGE_KEY1)
@@ -164,9 +164,9 @@ public class RevisionBranchMergeTest extends BaseRevisionIndexTest {
 		// 2. Child should be UP_TO_DATE state compared to the MAIN
 		assertState(child, MAIN, BranchState.BEHIND);
 		
-		// 3. since nothing got removed, both revisions should be visible after merge
+		// 3. one revision should be visible from MAIN branch, excluded one should not
 		assertNotNull(getRevision(MAIN, RevisionData.class, STORAGE_KEY1));
-		assertNotNull(getRevision(MAIN, RevisionData.class, STORAGE_KEY2));
+		assertNull(getRevision(MAIN, RevisionData.class, STORAGE_KEY2));
 	}
 	
 	@Test

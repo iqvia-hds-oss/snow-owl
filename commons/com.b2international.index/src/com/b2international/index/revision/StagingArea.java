@@ -964,7 +964,7 @@ public final class StagingArea {
 		
 		applyPropertyUpdates(toRef, propertyUpdatesToApply);
 		
-		// XXX make sure we use only the diff toRef to detect revisions added to the target branch directly
+		// XXX make sure we use only the diff toRef to detect revisions added/changed to the target branch directly (deletions will still use the full history of the to branch)
 		var toOnlyRef = toRef.difference(fromRef);
 		
 		// apply new objects
@@ -974,7 +974,8 @@ public final class StagingArea {
 		applyChangedObjects(changed, mergeFromBranchRef, toOnlyRef, squash);
 		
 		// always apply deleted objects, they set the revised timestamp properly without introducing any new document
-		applyRemovedObjects(removed, mergeFromBranchRef, toOnlyRef, squash);
+		// XXX here when removing object use the entire history of the toRef to find the latest state available for the document
+		applyRemovedObjects(removed, mergeFromBranchRef, toRef, squash);
 		
 		// any externally marked revised revisions should be applied here
 		revisionsToReviseOnMergeSource.putAll(externalRevisionsToReviseOnMergeSource);
