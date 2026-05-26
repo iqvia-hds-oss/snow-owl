@@ -33,6 +33,7 @@ import com.b2international.snowowl.core.api.IBranchPath;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystems;
+import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
@@ -123,7 +124,7 @@ public abstract class CodeSystemRestRequests {
 			"branchPath", branchPath,
 			"owner", "owner",
 			"contact", "https://b2ihealthcare.com",
-			"settings", configureLanguageAndPublisher(settings)
+			"settings", configureCodeSystemSettings(settings)
 		);
 
 		if (extensionOf != null) {
@@ -135,8 +136,10 @@ public abstract class CodeSystemRestRequests {
 		return requestBody;
 	}
 
-	private static Map<String, Object> configureLanguageAndPublisher(Map<String, Object> settings) {
+	private static Map<String, Object> configureCodeSystemSettings(Map<String, Object> settings) {
 		settings = settings == null ? Maps.newHashMap() : Maps.newHashMap(settings);
+		settings.putIfAbsent(TerminologyResource.Settings.FHIR_URL, SnomedTerminologyComponentConstants.SNOMED_URI_SCT);
+		settings.putIfAbsent(TerminologyResource.Settings.FHIR_VERSION_PROPERTY, ResourceDocument.Fields.URL);
 		settings.putIfAbsent(Resource.Settings.PUBLISHER, "SNOMED International");
 		settings.putIfAbsent(Settings.LANGUAGES, List.of(
 			Map.of(

@@ -35,6 +35,7 @@ import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.codesystem.CodeSystems;
+import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.jobs.JobRequests;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
 import com.b2international.snowowl.core.request.ResourceRequests;
@@ -160,6 +161,9 @@ public class SnomedContentRule extends ExternalResource {
 			.setToolingId(SnomedTerminologyComponentConstants.TOOLING_ID)
 			.setSettings(Map.of(
 				Resource.Settings.PUBLISHER, "SNOMED International",
+				TerminologyResource.Settings.FHIR_URL, SnomedTerminologyComponentConstants.SNOMED_URI_SCT,
+				TerminologyResource.Settings.FHIR_VERSION_PROPERTY, ResourceDocument.Fields.URL,
+				TerminologyResource.Settings.FHIR_USE_AS_DEFAULT, "true",
 				Settings.LANGUAGES, List.of(
 					Map.of(
 						"languageTag", "en",
