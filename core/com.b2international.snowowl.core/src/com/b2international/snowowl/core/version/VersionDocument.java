@@ -67,6 +67,11 @@ import com.google.common.base.MoreObjects;
 			version = 3,
 			description = "add text search support to title field",
 			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
+		),
+		@SchemaRevision(
+			version = 4,
+			description = "make settings searchable",
+			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
 		)
 	}
 )
@@ -469,7 +474,6 @@ public final class VersionDocument implements CommitSubject, Serializable {
 	private final String purpose;
 	private final String oid;
 	
-	@Field(index = false) 
 	private final Map<String, Object> settings;
 	private final SortedSet<DependencyDocument> dependencies;
 	
