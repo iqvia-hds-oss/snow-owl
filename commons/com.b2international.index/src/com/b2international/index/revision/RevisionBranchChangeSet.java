@@ -72,7 +72,7 @@ public final class RevisionBranchChangeSet {
 						changedRevisionIdsByType.put((Class<? extends Revision>) revType, detail.getComponent().id());
 						
 						if (!detail.getObject().isRoot()) {
-							Class<?> objectType = mappings.getClass(detail.getObject().type());
+							Class<?> objectType = DocumentMapping.getClass(detail.getObject().type());
 							containersRequiredForNewAndChangedRevisions.put(detail.getComponent(), detail.getObject());
 							// only register as changed container, if the container is not registered as a new revision
 							if (!newRevisionIdsByType.containsEntry((Class<? extends Revision>) objectType, detail.getObject().id())) {
