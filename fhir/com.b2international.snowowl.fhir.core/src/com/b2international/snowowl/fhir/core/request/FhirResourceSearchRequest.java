@@ -251,6 +251,21 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 			internalFields.add(VersionDocument.Fields.EFFECTIVE_TIME);
 		}
 		
+		// If the URL field is requested, retrieve settings as well
+		if (internalFields.remove(R5ObjectFields.CodeSystem.URL)) {
+			internalFields.add(ResourceDocument.Fields.URL);
+			// It would be better to add the FHIR URL override field specifically but this requires a schema change
+			internalFields.add(ResourceDocument.Fields.SETTINGS);
+		}
+		
+		// If the version field is requested, retrieve settings and URL as well
+		if (internalFields.remove(R5ObjectFields.CodeSystem.VERSION)) {
+			internalFields.add(ResourceDocument.Fields.URL);
+			// It would be better to add the FHIR version property field specifically, as in the above case
+			internalFields.add(ResourceDocument.Fields.SETTINGS);
+			internalFields.add(VersionDocument.Fields.VERSION);
+		}
+		
 		// Consult search request subclasses for any additional field mapping
 		configureFieldsToLoad(internalFields);
 		
