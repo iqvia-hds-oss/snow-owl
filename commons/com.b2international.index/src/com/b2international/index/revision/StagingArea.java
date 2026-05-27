@@ -1167,12 +1167,12 @@ public final class StagingArea {
 		conflictsToReport.addAll(conflictProcessor.filterConflicts(this, conflicts));		
 	}
 
-	private void applyRemovedObjects(SetMultimap<Class<? extends Revision>, String> removed, RevisionBranchRef fromRef, RevisionBranchRef toOnlyRef,
+	private void applyRemovedObjects(SetMultimap<Class<? extends Revision>, String> removed, RevisionBranchRef fromRef, RevisionBranchRef toRef,
 			boolean squash) {
 		for (Class<? extends Revision> type : ImmutableSet.copyOf(removed.keySet())) {
 			final Collection<String> removedRevisionIds = removed.removeAll(type);
 			for (List<String> currentRemovedRevisionIds : Iterables.partition(removedRevisionIds, maxTermsCount)) {
-				index.read(toOnlyRef, searcher -> searcher.get(type, currentRemovedRevisionIds)).forEach(this::stageRemove);
+				index.read(toRef, searcher -> searcher.get(type, currentRemovedRevisionIds)).forEach(this::stageRemove);
 			}
 		}
 	}
