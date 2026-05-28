@@ -18,7 +18,7 @@ package com.b2international.snowowl.fhir.core.request.codesystem;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.b2international.commons.exceptions.BadRequestException;
+import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.authorization.AccessControl;
@@ -67,7 +67,8 @@ final class FhirCodeSystemRemoveFhirUrlRequest implements Request<TransactionCon
 			if (uniqueIds.size() != resourcesById.size()) {
 				// Change unique IDs to missing IDs for the error message
 				uniqueIds.removeAll(resourcesById.keySet());
-				throw new BadRequestException("Code system(s) not found for ID(s): %s", uniqueIds);
+				throw new NotFoundException("Code system(s)",  uniqueIds.toString())
+					.withDeveloperMessage("");
 			}
 			
 			targetResources = resourcesById.values();
