@@ -964,8 +964,9 @@ public final class StagingArea {
 		
 		applyPropertyUpdates(toRef, propertyUpdatesToApply);
 		
-		// XXX make sure we use only the diff toRef to detect revisions added/changed to the target branch directly (deletions will still use the full history of the to branch)
-		var mergeTargetRef = toRef.difference(fromRef);
+		// XXX make sure we use only the diff toRef to detect revisions added/changed to the target branch when not squash merging 
+		// (deletions will still use the full history of the to branch)
+		var mergeTargetRef = squash ? toRef : toRef.difference(fromRef);
 		
 		// apply new objects
 		applyNewObjects(added, mergeSourceRef, mergeTargetRef, squash);
