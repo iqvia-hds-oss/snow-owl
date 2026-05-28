@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,9 @@ public class SnomedMergeApiTest extends AbstractSnomedApiTest {
 		deleteComponent(childPath, SnomedComponentType.CONCEPT, conceptId, false).statusCode(204);
 
 		merge(parentPath, childPath, "Rebased concept deletion over concept change").body("status", equalTo(Merge.Status.COMPLETED.name()));
+		
+		// after rebase, the concept should be deleted still
+		getComponent(childPath, SnomedComponentType.CONCEPT, conceptId).statusCode(404);
 	}
 
 	@Test
@@ -450,8 +453,10 @@ public class SnomedMergeApiTest extends AbstractSnomedApiTest {
 		final IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
 		branching.createBranch(a).statusCode(201);
 
+		// apply change on branchPath, deletion on branchA, then rebase the deletion over the change
 		rebaseConceptDeletionOverChange(branchPath, a, conceptId);
 
+		// after successful rebase merge the deletion to branchPath
 		merge(a, branchPath, "Merged concept deletion").body("status", equalTo(Merge.Status.COMPLETED.name()));
 
 		// Concept should now be deleted everywhere
