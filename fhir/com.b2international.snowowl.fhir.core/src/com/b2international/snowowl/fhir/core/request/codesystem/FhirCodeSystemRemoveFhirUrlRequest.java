@@ -22,6 +22,9 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.authorization.AccessControl;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.codesystem.CodeSystems;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.domain.TransactionContext;
 import com.b2international.snowowl.core.events.Request;
@@ -53,28 +56,43 @@ final class FhirCodeSystemRemoveFhirUrlRequest implements Request<TransactionCon
 	@JsonProperty
 	private final List<String> codeSystemIds;
 
-	private Collection<ResourceDocument> targetResources;
+	private List<CodeSystem> targetCodeSystems;
 
 	FhirCodeSystemRemoveFhirUrlRequest(final List<String> codeSystemIds) {
 		this.codeSystemIds = codeSystemIds;
 	}
 
-	private Collection<ResourceDocument> getTargetResources(final TransactionContext context) {
-		if (targetResources == null) {
+	private List<CodeSystem> getTargetCodeSystems(final ServiceProvider context) {
+		if (targetCodeSystems == null) {
 			final Set<String> uniqueIds = new HashSet<>(codeSystemIds);
-			final Map<String, ResourceDocument> resourcesById = context.lookup(uniqueIds, ResourceDocument.class);
 			
-			if (uniqueIds.size() != resourcesById.size()) {
+			targetCodeSystems = CodeSystemRequests.prepareSearchCodeSystem()
+				.filterByIds(uniqueIds)
+				.setFields(
+					ResourceDocument.Fields.ID,
+					ResourceDocument.Fields.RESOURCE_TYPE,
+					ResourceDocument.Fields.BUNDLE_ID,
+					ResourceDocument.Fields.BUNDLE_ANCESTOR_IDS,
+					ResourceDocument.Fields.SETTINGS
+				)
+				.setLimit(context.getPageSize())
+				.stream(context, rb -> rb.buildAsync())
+				.flatMap(CodeSystems::stream)
+				.collect(Collectors.toList());
+			
+			final Set<String> foundIds = targetCodeSystems.stream()
+				.map(CodeSystem::getId)
+				.collect(Collectors.toSet());
+			
+			if (uniqueIds.size() != foundIds.size()) {
 				// Change unique IDs to missing IDs for the error message
-				uniqueIds.removeAll(resourcesById.keySet());
+				uniqueIds.removeAll(foundIds);
 				throw new NotFoundException("Code system(s)",  uniqueIds.toString())
 					.withDeveloperMessage("");
 			}
-			
-			targetResources = resourcesById.values();
 		}
 		
-		return targetResources;
+		return targetCodeSystems;
 	}
 
 	@Override
@@ -84,16 +102,16 @@ final class FhirCodeSystemRemoveFhirUrlRequest implements Request<TransactionCon
 
 	@Override
 	public List<Permission> getPermissions(final ServiceProvider context, final Request<ServiceProvider, ?> req) {
-		final Collection<ResourceDocument> resources = getTargetResources((TransactionContext) context);
+		final List<CodeSystem> codeSystems = getTargetCodeSystems(context);
 		final List<Permission> permissions = new ArrayList<>();
 		
-		for (final ResourceDocument resource : resources) {
+		for (final CodeSystem codeSystem : codeSystems) {
 			final Set<String> uniqueUris = new HashSet<>();
 
-			uniqueUris.add(resource.getResourceURI().getUri());
-			uniqueUris.add(resource.getResourceURI().withoutResourceType());
-			uniqueUris.add(resource.getBundleId());
-			uniqueUris.addAll(resource.getBundleAncestorIds());
+			uniqueUris.add(codeSystem.getResourceURI().getUri());
+			uniqueUris.add(codeSystem.getResourceURI().withoutResourceType());
+			uniqueUris.add(codeSystem.getBundleId());
+			uniqueUris.addAll(codeSystem.getBundleAncestorIds());
 			uniqueUris.remove(IComponent.ROOT_ID);
 			
 			// OR-combine all relevant URIs for a single permission
@@ -142,19 +160,19 @@ final class FhirCodeSystemRemoveFhirUrlRequest implements Request<TransactionCon
 
 	@Override
 	public Boolean execute(final TransactionContext context) {
-		final Collection<ResourceDocument> targetResources = getTargetResources(context);
+		final List<CodeSystem> targetCodeSystems = getTargetCodeSystems(context);
 
 		// Keep only those that actually have at least one of the settings to remove
-		final List<ResourceDocument> modifiableTargetResources = targetResources.stream()
+		final List<CodeSystem> modifiableTargetCodeSystems = targetCodeSystems.stream()
 			.filter(cs -> hasFhirUrlOrVersionProperty(cs.getSettings()))
 			.collect(Collectors.toList());
 
-		if (modifiableTargetResources.isEmpty()) {
+		if (modifiableTargetCodeSystems.isEmpty()) {
 			return Boolean.FALSE;
 		}
 
-		final Set<String> modifiableIdSet = modifiableTargetResources.stream()
-			.map(ResourceDocument::getId)
+		final Set<String> modifiableIdSet = modifiableTargetCodeSystems.stream()
+			.map(CodeSystem::getId)
 			.collect(Collectors.toSet());
 
 		// Pre-fetch version IDs for all modified resources
@@ -174,7 +192,8 @@ final class FhirCodeSystemRemoveFhirUrlRequest implements Request<TransactionCon
 
 		context.ensurePresent(ResourceDocument.class, modifiableIdSet);
 					
-		for (final ResourceDocument targetResource : modifiableTargetResources) {
+		for (final CodeSystem modifiableCodeSystem : modifiableTargetCodeSystems) {
+			final ResourceDocument targetResource = context.lookup(modifiableCodeSystem.getId(), ResourceDocument.class);
 			final Map<String, Object> existingSettings = targetResource.getSettings();
 			final Map<String, Object> newSettings = new HashMap<>(existingSettings != null ? existingSettings : Map.of());
 			newSettings.remove(TerminologyResource.Settings.FHIR_URL);

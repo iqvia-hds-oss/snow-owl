@@ -16,11 +16,15 @@
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.authorization.AccessControl;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.codesystem.CodeSystems;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.domain.TransactionContext;
 import com.b2international.snowowl.core.events.Request;
@@ -57,29 +61,43 @@ final class FhirCodeSystemSetIncludeInCapabilitiesRequest implements Request<Tra
 	@JsonProperty
 	private final boolean includeInCapabilities;
 
-	private Collection<ResourceDocument> targetResources;
+	private List<CodeSystem> targetCodeSystems;
 
 	FhirCodeSystemSetIncludeInCapabilitiesRequest(final List<String> codeSystemIds, final boolean includeInCapabilities) {
 		this.codeSystemIds = codeSystemIds;
 		this.includeInCapabilities = includeInCapabilities;
 	}
 
-	private Collection<ResourceDocument> getTargetResources(final TransactionContext context) {
-		if (targetResources == null) {
+	private List<CodeSystem> getTargetCodeSystems(final ServiceProvider context) {
+		if (targetCodeSystems == null) {
 			final Set<String> uniqueIds = new HashSet<>(codeSystemIds);
-			final Map<String, ResourceDocument> resourcesById = context.lookup(uniqueIds, ResourceDocument.class);
 			
-			if (uniqueIds.size() != resourcesById.size()) {
+			targetCodeSystems = CodeSystemRequests.prepareSearchCodeSystem()
+				.filterByIds(uniqueIds)
+				.setFields(
+					ResourceDocument.Fields.ID,
+					ResourceDocument.Fields.RESOURCE_TYPE,
+					ResourceDocument.Fields.BUNDLE_ID,
+					ResourceDocument.Fields.BUNDLE_ANCESTOR_IDS
+				)
+				.setLimit(context.getPageSize())
+				.stream(context, rb -> rb.buildAsync())
+				.flatMap(CodeSystems::stream)
+				.collect(Collectors.toList());
+			
+			final Set<String> foundIds = targetCodeSystems.stream()
+				.map(CodeSystem::getId)
+				.collect(Collectors.toSet());
+			
+			if (uniqueIds.size() != foundIds.size()) {
 				// Change unique IDs to missing IDs for the error message
-				uniqueIds.removeAll(resourcesById.keySet());
+				uniqueIds.removeAll(foundIds);
 				throw new NotFoundException("Code system(s)",  uniqueIds.toString())
 					.withDeveloperMessage("");
 			}
-			
-			targetResources = resourcesById.values();
 		}
 		
-		return targetResources;
+		return targetCodeSystems;
 	}
 
 	@Override
@@ -89,10 +107,10 @@ final class FhirCodeSystemSetIncludeInCapabilitiesRequest implements Request<Tra
 
 	@Override
 	public void collectAccessedResources(final ServiceProvider context, final Request<ServiceProvider, ?> req, final List<String> accessedResources) {
-		final Collection<ResourceDocument> resources = getTargetResources((TransactionContext) context);
+		final List<CodeSystem> resources = getTargetCodeSystems(context);
 		final Set<String> uniqueUris = new HashSet<>();
 		
-		for (final ResourceDocument resource : resources) {
+		for (final CodeSystem resource : resources) {
 			uniqueUris.add(resource.getResourceURI().getUri());
 			uniqueUris.add(resource.getResourceURI().withoutResourceType());
 			uniqueUris.add(resource.getBundleId());
@@ -140,7 +158,10 @@ final class FhirCodeSystemSetIncludeInCapabilitiesRequest implements Request<Tra
 
 	@Override
 	public Boolean execute(final TransactionContext context) {
-		final Collection<ResourceDocument> targetResources = getTargetResources(context);
+		final List<CodeSystem> targetCodeSystems = getTargetCodeSystems(context);
+		final Set<String> uniqueIds = new HashSet<>(codeSystemIds);
+		context.ensurePresent(ResourceDocument.class, uniqueIds);
+		
 		final String newValue = Boolean.toString(includeInCapabilities);
 
 		// Pre-fetch version IDs for all modified resources
@@ -154,12 +175,13 @@ final class FhirCodeSystemSetIncludeInCapabilitiesRequest implements Request<Tra
 				v -> v.getId(),
 				HashMultimap::create));
 
-		// Pre-fetch all version documents in a single batch
+		// Prefetch all version documents to avoid multiple lookups below (this can't be ensurePresent because that only works with Revisions)
 		context.lookup(versionIdsByResourceId.values(), VersionDocument.class);
 
 		boolean anyChanged = false;
 
-		for (final ResourceDocument targetResource : targetResources) {
+		for (final CodeSystem targetCodeSystem : targetCodeSystems) {
+			final ResourceDocument targetResource = context.lookup(targetCodeSystem.getId(), ResourceDocument.class);
 			final Map<String, Object> existingSettings = targetResource.getSettings();
 			final String currentValue;
 			

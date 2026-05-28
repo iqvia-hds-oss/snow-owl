@@ -19,12 +19,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.b2international.index.query.Expressions;
-import com.b2international.snowowl.core.Resources;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.authorization.AccessControl;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.codesystem.CodeSystems;
 import com.b2international.snowowl.core.domain.IComponent;
-import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.domain.TransactionContext;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.identity.Permission;
@@ -58,14 +59,24 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 	@JsonProperty
 	private final String codeSystemId;
 
-	private List<TerminologyResource> siblingsToUnset;
+	private List<CodeSystem> siblingsToUnset;
 
 	FhirCodeSystemSetAsDefaultRequest(final String codeSystemId) {
 		this.codeSystemId = codeSystemId;
 	}
 
-	private ResourceDocument getTargetResource(final TransactionContext context) {
-		return context.lookup(codeSystemId, ResourceDocument.class);
+	private CodeSystem getCodeSystem(final ServiceProvider context) {
+		return CodeSystemRequests.prepareGetCodeSystem(codeSystemId)
+			.setFields(
+				ResourceDocument.Fields.ID,
+				ResourceDocument.Fields.RESOURCE_TYPE,
+				ResourceDocument.Fields.BUNDLE_ID,
+				ResourceDocument.Fields.BUNDLE_ANCESTOR_IDS,
+				ResourceDocument.Fields.SETTINGS
+			)
+			.buildAsync()
+			.getRequest()
+			.execute(context);
 	}
 	
 	private boolean getCurrentValue(final Map<String, Object> settings) {
@@ -76,31 +87,36 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 		return "true".equals(currentValue);
 	}
 
-	private String getEffectiveFhirUrl(final ResourceDocument resource) {
+	private String getEffectiveFhirUrl(final CodeSystem resource) {
 		return Optional.ofNullable(resource.getSettings())
 			.map(settings -> (String) settings.get(TerminologyResource.Settings.FHIR_URL))
 			.filter(fhirUrl -> !Strings.isNullOrEmpty(fhirUrl))
 			.orElse(resource.getUrl());
 	}
 
-	private List<TerminologyResource> getSiblingsToUnset(final ResourceDocument resource, final RepositoryContext context) {
+	private List<CodeSystem> getSiblingsToUnset(final CodeSystem resource, final ServiceProvider context) {
 		if (siblingsToUnset == null) {
 			final String codeSystemId = resource.getId();
 			final String toolingId = resource.getToolingId();
 			final String effectiveFhirUrl = getEffectiveFhirUrl(resource);
 
-			siblingsToUnset = ResourceRequests.prepareSearch()
+			siblingsToUnset = CodeSystemRequests.prepareSearchCodeSystem()
 				.filterByToolingId(toolingId)
 				.filterBySettings(List.of(
 					Expressions.toDynamicFieldFilter(TerminologyResource.Settings.FHIR_URL, effectiveFhirUrl),
 					Expressions.toDynamicFieldFilter(TerminologyResource.Settings.FHIR_USE_AS_DEFAULT, "true")
 				))
+				.setFields(
+					ResourceDocument.Fields.ID,
+					ResourceDocument.Fields.RESOURCE_TYPE,
+					ResourceDocument.Fields.BUNDLE_ID,
+					ResourceDocument.Fields.BUNDLE_ANCESTOR_IDS,
+					ResourceDocument.Fields.SETTINGS
+				)
 				.setLimit(context.getPageSize())
-				.stream(context)
-				.flatMap(Resources::stream)
+				.stream(context, rb -> rb.buildAsync())
+				.flatMap(CodeSystems::stream)
 				.filter(sibling -> !sibling.getId().equals(codeSystemId))
-				.filter(TerminologyResource.class::isInstance)
-				.map(TerminologyResource.class::cast)
 				.collect(Collectors.toList());
 		}
 
@@ -114,27 +130,27 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 
 	@Override
 	public List<Permission> getPermissions(final ServiceProvider context, final Request<ServiceProvider, ?> req) {
-		final ResourceDocument resource = getTargetResource((TransactionContext) context);
+		final CodeSystem codeSystem = getCodeSystem(context);
 		final List<Permission> permissions = new ArrayList<>();
 		
 		final Set<String> uniqueUris = new HashSet<>();
-		uniqueUris.add(resource.getResourceURI().getUri());
-		uniqueUris.add(resource.getResourceURI().withoutResourceType());
-		uniqueUris.add(resource.getBundleId());
-		uniqueUris.addAll(resource.getBundleAncestorIds());
+		uniqueUris.add(codeSystem.getResourceURI().getUri());
+		uniqueUris.add(codeSystem.getResourceURI().withoutResourceType());
+		uniqueUris.add(codeSystem.getBundleId());
+		uniqueUris.addAll(codeSystem.getBundleAncestorIds());
 		uniqueUris.remove(IComponent.ROOT_ID);
 		
 		// OR-combine all relevant URIs for a single permission
 		permissions.add(Permission.requireAny(getOperation(), uniqueUris));
 		
 		// If the code system is already set as default, we can skip collecting sibling resources because no changes will be made to them
-		if (getCurrentValue(resource.getSettings())) {
+		if (getCurrentValue(codeSystem.getSettings())) {
 			return permissions;
 		}
 
 		// Otherwise the user needs to have edit permission for all siblings that will be updated to unset the flag
-		final List<TerminologyResource> siblingsToUnset = getSiblingsToUnset(resource, (RepositoryContext) context);
-		for (final TerminologyResource sibling : siblingsToUnset) {
+		final List<CodeSystem> siblingsToUnset = getSiblingsToUnset(codeSystem, context);
+		for (final CodeSystem sibling : siblingsToUnset) {
 			final Set<String> uniqueSiblingUris = new HashSet<>();
 			uniqueSiblingUris.add(sibling.getResourceURI().getUri());
 			uniqueSiblingUris.add(sibling.getResourceURI().withoutResourceType());
@@ -192,19 +208,19 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 	@Override
 	public Boolean execute(final TransactionContext context) {
 		// Get the code system to be updated and its effective FHIR URL
-		final ResourceDocument targetResource = getTargetResource(context);
+		final CodeSystem codeSystem = getCodeSystem(context);
 
 		// Check if the code system is already set as default, in which case we can skip the update without making changes to the index
-		if (getCurrentValue(targetResource.getSettings())) {
+		if (getCurrentValue(codeSystem.getSettings())) {
 			return Boolean.FALSE;
 		}
 
 		// Collect any siblings where the "use as default" setting needs to be unset
-		final List<TerminologyResource> siblingsToUnset = getSiblingsToUnset(targetResource, context);
+		final List<CodeSystem> siblingsToUnset = getSiblingsToUnset(codeSystem, context);
 
 		// Collect all modified resource IDs (the target code system and any siblings)
 		final Set<String> allModifiedIds = new HashSet<>();
-		allModifiedIds.add(targetResource.getId());
+		allModifiedIds.add(codeSystem.getId());
 		siblingsToUnset.forEach(sibling -> allModifiedIds.add(sibling.getId()));
 
 		context.ensurePresent(ResourceDocument.class, allModifiedIds);
@@ -226,10 +242,11 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 				HashMultimap::create));
 
 		// Set FHIR_USE_AS_DEFAULT="true" on the target code system
+		final ResourceDocument targetResource = context.lookup(codeSystemId, ResourceDocument.class);
 		final Map<String, Object> targetSettings = targetResource.getSettings();
 		final Map<String, Object> newTargetSettings = toMutableMap(targetSettings);
 		newTargetSettings.put(TerminologyResource.Settings.FHIR_USE_AS_DEFAULT, "true");
-
+		
 		context.update(targetResource, ResourceDocument.builder(targetResource)
 			.settings(newTargetSettings)
 			.build());
@@ -250,7 +267,7 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 				.build());
 		}
 
-		// Prefetch all version documents to avoid multiple lookups below
+		// Prefetch all version documents to avoid multiple lookups below (this can't be ensurePresent because that only works with Revisions)
 		context.lookup(versionIdsByResourceId.values(), VersionDocument.class);
 
 		// Propagate FHIR_USE_AS_DEFAULT to version documents of all modified resources

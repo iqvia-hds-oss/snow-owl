@@ -25,6 +25,9 @@ import com.b2international.snowowl.core.Resources;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.authorization.AccessControl;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.codesystem.CodeSystems;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.domain.TransactionContext;
 import com.b2international.snowowl.core.events.Request;
@@ -80,8 +83,8 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 	private final String fhirVersionProperty;
 
 	// Cached values which would need to be requested multiples times (e.g. for access control checks and request execution)
-	private Collection<ResourceDocument> targetResources;
-	private Collection<ResourceDocument> modifiableTargetResources;
+	private List<CodeSystem> targetCodeSystems;
+	private List<CodeSystem> modifiableTargetResources;
 	private Multimap<String, String> targetVersionIdsByResourceId;
 
 	FhirCodeSystemAssignFhirUrlRequest(final List<String> codeSystemIds, final String fhirUrl, final String fhirVersionProperty) {
@@ -90,22 +93,37 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		this.fhirVersionProperty = fhirVersionProperty;
 	}
 
-	private Collection<ResourceDocument> getTargetResources(final TransactionContext context) {
-		if (targetResources == null) {
+	private List<CodeSystem> getTargetCodeSystems(final ServiceProvider context) {
+		if (targetCodeSystems == null) {
 			final Set<String> uniqueIds = new HashSet<>(codeSystemIds);
-			final Map<String, ResourceDocument> resourcesById = context.lookup(uniqueIds, ResourceDocument.class);
 			
-			if (uniqueIds.size() != resourcesById.size()) {
+			targetCodeSystems = CodeSystemRequests.prepareSearchCodeSystem()
+				.filterByIds(uniqueIds)
+				.setFields(
+					ResourceDocument.Fields.ID,
+					ResourceDocument.Fields.RESOURCE_TYPE,
+					ResourceDocument.Fields.BUNDLE_ID,
+					ResourceDocument.Fields.BUNDLE_ANCESTOR_IDS,
+					ResourceDocument.Fields.SETTINGS
+				)
+				.setLimit(context.getPageSize())
+				.stream(context, rb -> rb.buildAsync())
+				.flatMap(CodeSystems::stream)
+				.collect(Collectors.toList());
+			
+			final Set<String> foundIds = targetCodeSystems.stream()
+				.map(CodeSystem::getId)
+				.collect(Collectors.toSet());
+			
+			if (uniqueIds.size() != foundIds.size()) {
 				// Change unique IDs to missing IDs for the error message
-				uniqueIds.removeAll(resourcesById.keySet());
+				uniqueIds.removeAll(foundIds);
 				throw new NotFoundException("Code system(s)",  uniqueIds.toString())
 					.withDeveloperMessage("");
 			}
-			
-			targetResources = resourcesById.values();
 		}
 		
-		return targetResources;
+		return targetCodeSystems;
 	}
 
 	private static String getEffectiveFhirUrl(final TerminologyResource existingResource) {
@@ -219,9 +237,9 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		}
 	}
 
-	private static String computeEffectiveVersion(final ResourceDocument resourceDocument, final String fhirVersionProperty) {
+	private static String computeEffectiveVersion(final CodeSystem codeSystem, final String fhirVersionProperty) {
 		if (TerminologyResource.Fields.URL.equals(fhirVersionProperty)) {
-			return resourceDocument.getUrl();
+			return codeSystem.getUrl();
 		} else {
 			return "";
 		}
@@ -254,7 +272,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 	}
 
 	private void checkVersionUniqueness(
-		final Collection<ResourceDocument> targetResources,
+		final Collection<CodeSystem> targetCodeSystems,
 		final Collection<TerminologyResource> existingResources, 
 		final TransactionContext context
 	) {
@@ -283,19 +301,19 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 				existingResource.getId());
 		}
 	
-		final Set<String> targetResourceIds = targetResources.stream()
-			.map(ResourceDocument::getId)
+		final Set<String> targetResourceIds = targetCodeSystems.stream()
+			.map(CodeSystem::getId)
 			.collect(Collectors.toSet());
 		
 		final Multimap<String, String> targetVersionIdsByResourceId = getTargetVersionIdsByResourceId(context, targetResourceIds);
 		// context.lookup(targetVersionIdsByResourceId.values(), VersionDocument.class) is called in getTargetVersionIdsByResourceId so not needed here
 		
 		// For target code systems, use the fhirVersionProperty from the request if present, otherwise fall back to their existing value
-		for (final ResourceDocument targetResource : targetResources) {
-			final Map<String, Object> resourceSettings = targetResource.getSettings();
+		for (final CodeSystem targetCodeSystem : targetCodeSystems) {
+			final Map<String, Object> resourceSettings = targetCodeSystem.getSettings();
 			final String resourceProperty = getNewFhirVersionProperty(resourceSettings);
-			final String resourceValue = computeEffectiveVersion(targetResource, resourceProperty);
-			resourceIdsByVersion.put(resourceValue, targetResource.getId());
+			final String resourceValue = computeEffectiveVersion(targetCodeSystem, resourceProperty);
+			resourceIdsByVersion.put(resourceValue, targetCodeSystem.getId());
 			
 			// The parameter will apply to future and existing versions created for the resource so we need to check that as well
 			collectVersions(
@@ -303,7 +321,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 				targetVersionIdsByResourceId, 
 				resourceIdsByVersion, 
 				this::getNewFhirVersionProperty,
-				targetResource.getId());
+				targetCodeSystem.getId());
 		}
 	
 		// Report any duplicated effective versions
@@ -329,16 +347,16 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 
 	@Override
 	public List<Permission> getPermissions(final ServiceProvider context, final Request<ServiceProvider, ?> req) {
-		final Collection<ResourceDocument> resources = getTargetResources((TransactionContext) context);
+		final List<CodeSystem> codeSystems = getTargetCodeSystems(context);
 		final List<Permission> permissions = new ArrayList<>();
 		
-		for (final ResourceDocument resource : resources) {
+		for (final CodeSystem codeSystem : codeSystems) {
 			final Set<String> uniqueUris = new HashSet<>();
 
-			uniqueUris.add(resource.getResourceURI().getUri());
-			uniqueUris.add(resource.getResourceURI().withoutResourceType());
-			uniqueUris.add(resource.getBundleId());
-			uniqueUris.addAll(resource.getBundleAncestorIds());
+			uniqueUris.add(codeSystem.getResourceURI().getUri());
+			uniqueUris.add(codeSystem.getResourceURI().withoutResourceType());
+			uniqueUris.add(codeSystem.getBundleId());
+			uniqueUris.addAll(codeSystem.getBundleAncestorIds());
 			uniqueUris.remove(IComponent.ROOT_ID);
 			
 			// OR-combine all relevant URIs for a single permission
@@ -354,8 +372,8 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		throw new UnsupportedOperationException("Access control is handled by getPermissions() in this request");
 	}
 
-	private boolean needsUpdate(final ResourceDocument targetResource) {
-		final Map<String, Object> settings = targetResource.getSettings();
+	private boolean needsUpdate(final CodeSystem codeSystem) {
+		final Map<String, Object> settings = codeSystem.getSettings();
 		if (settings == null) {
 			return true;
 		}
@@ -373,9 +391,9 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		return false;
 	}
 
-	private Collection<ResourceDocument> getModifiableTargetResources(final TransactionContext context) {
+	private List<CodeSystem> getModifiableCodeSystems(final TransactionContext context) {
 		if (modifiableTargetResources == null) {
-			modifiableTargetResources = getTargetResources(context)
+			modifiableTargetResources = getTargetCodeSystems(context)
 				.stream()
 				.filter(this::needsUpdate)
 				.collect(Collectors.toList());
@@ -419,8 +437,8 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 	@Override
 	public Boolean execute(final TransactionContext context) {
 		// Narrow down resources that actually need to be changed; exit early if all are already up to date
-		final Collection<ResourceDocument> modifiableTargetResources = getModifiableTargetResources(context);
-		if (modifiableTargetResources.isEmpty()) {
+		final List<CodeSystem> modifiableCodeSystems = getModifiableCodeSystems(context);
+		if (modifiableCodeSystems.isEmpty()) {
 			return Boolean.FALSE;
 		}
 
@@ -428,17 +446,20 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		 * Find existing code systems (not in the set about to be changed) that already share the
 		 * same effective FHIR URL. We need to include them in the version uniqueness check.
 		 */
-		final Set<String> modifiableIdSet = modifiableTargetResources.stream()
-			.map(ResourceDocument::getId)
+		final Set<String> modifiableIdSet = modifiableCodeSystems.stream()
+			.map(CodeSystem::getId)
 			.collect(Collectors.toSet());
 		
 		final Collection<TerminologyResource> existingResources = findExistingResourcesWithSameUrl(context, modifiableIdSet);
-		checkVersionUniqueness(modifiableTargetResources, existingResources, context);
+		checkVersionUniqueness(modifiableCodeSystems, existingResources, context);
 	
 		// Pre-fetch version IDs for all modified resources (only the assigned ones)
 		final Multimap<String, String> versionIdsByResourceId = getTargetVersionIdsByResourceId(context, modifiableIdSet);
+	
+		context.ensurePresent(ResourceDocument.class, modifiableIdSet);
 		
-		for (final ResourceDocument targetResource : modifiableTargetResources) {
+		for (final CodeSystem modifiableCodeSystem : modifiableCodeSystems) {
+			final ResourceDocument targetResource = context.lookup(modifiableCodeSystem.getId(), ResourceDocument.class);
 			final Map<String, Object> existingSettings = targetResource.getSettings();
 			final Map<String, Object> newSettings = new HashMap<>(existingSettings != null ? existingSettings : Map.of());
 			newSettings.put(TerminologyResource.Settings.FHIR_URL, fhirUrl);
