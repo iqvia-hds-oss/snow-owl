@@ -16,13 +16,16 @@
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.generateToken;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenRequestWithToken;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Parameters;
@@ -30,8 +33,12 @@ import org.junit.Test;
 
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
+import com.b2international.snowowl.core.domain.IComponent;
+import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
+import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests;
+import com.b2international.snowowl.test.commons.rest.BundleApiAssert;
 
 /**
  * REST test cases for CodeSystem <code>$set-include-in-capabilities</code> operation, verified
@@ -321,5 +328,92 @@ public class FhirCodeSystemSetIncludeInCapabilitiesTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("TerminologyCapabilities"))
 			.body("codeSystem.uri", not(hasItem(TEST_FHIR_URL)));
+	}
+
+	@Test
+	public void GET_CodeSystem_$set_include_in_capabilities_EditPermissionOnResource() throws Exception {
+		// Assign a FHIR URL first (as admin)
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		// User has edit permission on the code system - operation should succeed
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_EDIT, getTestCodeSystemId()),
+			Permission.requireAny(Permission.OPERATION_READ, getTestCodeSystemId())
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("includeInCapabilities", true)
+			.when().get(CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("result"))
+			.body("parameter[0].valueBoolean", equalTo(true));
+	}
+
+	@Test
+	public void GET_CodeSystem_$set_include_in_capabilities_EditPermissionMissing() throws Exception {
+		// Assign a FHIR URL first (as admin)
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		// User has only read permission on the code system, no edit - operation should fail
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, getTestCodeSystemId())
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("includeInCapabilities", true)
+			.when().get(CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES)
+			.then().assertThat()
+			.statusCode(403);
+	}
+
+	@Test
+	public void GET_CodeSystem_$set_include_in_capabilities_EditPermissionOnBundle() throws Exception {
+		// Create a bundle and move the code system into it
+		final String bundleId = getTestCodeSystemId() + "-bundle";
+		
+		try {
+			BundleApiAssert.createBundle(bundleId);
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", bundleId));
+	
+			// Assign a FHIR URL first (as admin)
+			givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+				.pathParam("id", getTestCodeSystemId())
+				.queryParam("fhirUrl", TEST_FHIR_URL)
+				.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+				.then().assertThat()
+				.statusCode(200);
+	
+			// User has edit permission on the parent bundle (not the resource directly) - should still work
+			final String token = generateToken(
+				Permission.requireAny(Permission.OPERATION_EDIT, bundleId)
+			);
+	
+			givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+				.pathParam("id", getTestCodeSystemId())
+				.queryParam("includeInCapabilities", true)
+				.when().get(CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES)
+				.then().assertThat()
+				.statusCode(200)
+				.body("resourceType", equalTo("Parameters"))
+				.body("parameter[0].name", equalTo("result"))
+				.body("parameter[0].valueBoolean", equalTo(true));
+		} finally {
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", IComponent.ROOT_ID));
+			BundleApiAssert.deleteBundle(bundleId);
+		}
 	}
 }

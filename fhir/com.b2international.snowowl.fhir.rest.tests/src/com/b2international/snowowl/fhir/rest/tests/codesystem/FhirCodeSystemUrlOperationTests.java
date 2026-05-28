@@ -16,13 +16,16 @@
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.generateToken;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenRequestWithToken;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.everyItem;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 import org.hl7.fhir.r5.model.Parameters;
 import org.hl7.fhir.r5.model.StringType;
@@ -30,9 +33,13 @@ import org.junit.Test;
 
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
+import com.b2international.snowowl.core.domain.IComponent;
+import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests;
+import com.b2international.snowowl.test.commons.rest.BundleApiAssert;
 
 /**
  * REST test cases for CodeSystem administrative operations ($assign-fhir-url, $remove-fhir-url and $set-as-default).
@@ -664,5 +671,265 @@ public class FhirCodeSystemUrlOperationTests extends FhirRestTest {
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("name"))
 			.body("parameter[0].valueString", equalTo(getTestCodeSystemId() + "/1.0.0"));
+	}
+
+	@Test
+	public void GET_CodeSystem_$assign_fhir_url_EditPermissionOnResource() throws Exception {
+		// User has edit permission on the code system - operation should succeed
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_EDIT, getTestCodeSystemId())
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("result"))
+			.body("parameter[0].valueBoolean", equalTo(true));
+	}
+
+	@Test
+	public void GET_CodeSystem_$assign_fhir_url_EditPermissionMissing() throws Exception {
+		// User has only read permission on the code system, no edit - operation should fail
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, getTestCodeSystemId())
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(403);
+	}
+
+	@Test
+	public void GET_CodeSystem_$assign_fhir_url_EditPermissionOnBundle() throws Exception {
+		// Create a bundle and move the code system into it
+		final String bundleId = getTestCodeSystemId() + "-bundle";
+		
+		try {
+			BundleApiAssert.createBundle(bundleId);
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", bundleId));
+	
+			// User has edit permission on the parent bundle (not the resource directly) - should still work
+			final String token = generateToken(
+				Permission.requireAny(Permission.OPERATION_EDIT, bundleId),
+				Permission.requireAny(Permission.OPERATION_READ, bundleId)
+			);
+	
+			givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+				.pathParam("id", getTestCodeSystemId())
+				.queryParam("fhirUrl", TEST_FHIR_URL)
+				.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+				.then().assertThat()
+				.statusCode(200)
+				.body("resourceType", equalTo("Parameters"))
+				.body("parameter[0].name", equalTo("result"))
+				.body("parameter[0].valueBoolean", equalTo(true));
+		} finally {
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", IComponent.ROOT_ID));
+			BundleApiAssert.deleteBundle(bundleId);
+		}
+	}
+
+	@Test
+	public void GET_CodeSystem_$remove_fhir_url_EditPermissionOnResource() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_EDIT, getTestCodeSystemId())
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.when().get(CODESYSTEM_ID_REMOVE_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("result"))
+			.body("parameter[0].valueBoolean", equalTo(true));
+	}
+
+	@Test
+	public void GET_CodeSystem_$remove_fhir_url_EditPermissionMissing() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, getTestCodeSystemId())
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.when().get(CODESYSTEM_ID_REMOVE_FHIR_URL)
+			.then().assertThat()
+			.statusCode(403);
+	}
+
+	@Test
+	public void GET_CodeSystem_$remove_fhir_url_EditPermissionOnBundle() throws Exception {
+		final String bundleId = getTestCodeSystemId() + "-bundle";
+		
+		try {
+			BundleApiAssert.createBundle(bundleId);
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", bundleId));
+	
+			givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+				.pathParam("id", getTestCodeSystemId())
+				.queryParam("fhirUrl", TEST_FHIR_URL)
+				.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+				.then().assertThat()
+				.statusCode(200);
+	
+			final String token = generateToken(
+				Permission.requireAny(Permission.OPERATION_EDIT, bundleId)
+			);
+	
+			givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+				.pathParam("id", getTestCodeSystemId())
+				.when().get(CODESYSTEM_ID_REMOVE_FHIR_URL)
+				.then().assertThat()
+				.statusCode(200)
+				.body("resourceType", equalTo("Parameters"))
+				.body("parameter[0].name", equalTo("result"))
+				.body("parameter[0].valueBoolean", equalTo(true));
+		} finally {
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", IComponent.ROOT_ID));
+			BundleApiAssert.deleteBundle(bundleId);
+		}
+	}
+
+	@Test
+	public void GET_CodeSystem_$set_as_default_EditPermissionOnResource() throws Exception {
+		final String secondaryCodeSystemId = getTestCodeSystemId() + "-2";
+		createCodeSystem(secondaryCodeSystemId);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", secondaryCodeSystemId)
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_EDIT, getTestCodeSystemId()),
+			Permission.requireAny(Permission.OPERATION_EDIT, secondaryCodeSystemId)
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.when().get(CODESYSTEM_ID_SET_AS_DEFAULT)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("result"))
+			.body("parameter[0].valueBoolean", equalTo(true));
+	}
+
+	@Test
+	public void GET_CodeSystem_$set_as_default_EditPermissionMissing() throws Exception {
+		final String secondaryCodeSystemId = getTestCodeSystemId() + "-2";
+		createCodeSystem(secondaryCodeSystemId);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", secondaryCodeSystemId)
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+		
+		// Set the other code system as default as admin
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", secondaryCodeSystemId)
+			.when().get(CODESYSTEM_ID_SET_AS_DEFAULT)
+			.then().assertThat()
+			.statusCode(200)
+			.body("parameter[0].valueBoolean", equalTo(true));
+
+		// Now the user wants to set the first code system as default but only has read permission on both - should fail
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_EDIT, getTestCodeSystemId()),
+			Permission.requireAny(Permission.OPERATION_READ, secondaryCodeSystemId)
+		);
+
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.pathParam("id", getTestCodeSystemId())
+			.when().get(CODESYSTEM_ID_SET_AS_DEFAULT)
+			.then().assertThat()
+			.statusCode(403);
+	}
+
+	@Test
+	public void GET_CodeSystem_$set_as_default_EditPermissionOnBundle() throws Exception {
+		final String bundleId = getTestCodeSystemId() + "-bundle";
+		
+		try {
+			BundleApiAssert.createBundle(bundleId);
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", bundleId));
+	
+			final String secondaryCodeSystemId = getTestCodeSystemId() + "-2";
+			createCodeSystem(secondaryCodeSystemId);
+			CodeSystemRestRequests.updateCodeSystem(secondaryCodeSystemId, Map.of("bundleId", bundleId));
+	
+			// Assign the same FHIR URL to both code systems
+			givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+				.pathParam("id", getTestCodeSystemId())
+				.queryParam("fhirUrl", TEST_FHIR_URL)
+				.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+				.then().assertThat()
+				.statusCode(200);
+	
+			givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+				.pathParam("id", secondaryCodeSystemId)
+				.queryParam("fhirUrl", TEST_FHIR_URL)
+				.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+				.then().assertThat()
+				.statusCode(200);
+	
+			// User has edit permission on the parent bundle where both resources are located
+			final String token = generateToken(
+				Permission.requireAny(Permission.OPERATION_EDIT, bundleId)
+			);
+	
+			givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+				.pathParam("id", getTestCodeSystemId())
+				.when().get(CODESYSTEM_ID_SET_AS_DEFAULT)
+				.then().assertThat()
+				.statusCode(200)
+				.body("resourceType", equalTo("Parameters"))
+				.body("parameter[0].name", equalTo("result"))
+				.body("parameter[0].valueBoolean", equalTo(true));
+		} finally {
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Map.of("bundleId", IComponent.ROOT_ID));
+			CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId() + "-2", Map.of("bundleId", IComponent.ROOT_ID));
+			BundleApiAssert.deleteBundle(bundleId);
+		}
 	}
 }
