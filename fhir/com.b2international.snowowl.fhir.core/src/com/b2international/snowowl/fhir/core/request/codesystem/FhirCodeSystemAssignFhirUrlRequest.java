@@ -328,19 +328,30 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 	}
 
 	@Override
-	public void collectAccessedResources(final ServiceProvider context, final Request<ServiceProvider, ?> req, final List<String> accessedResources) {
+	public List<Permission> getPermissions(final ServiceProvider context, final Request<ServiceProvider, ?> req) {
 		final Collection<ResourceDocument> resources = getTargetResources((TransactionContext) context);
-		final Set<String> uniqueUris = new HashSet<>();
+		final List<Permission> permissions = new ArrayList<>();
 		
 		for (final ResourceDocument resource : resources) {
+			final Set<String> uniqueUris = new HashSet<>();
+
 			uniqueUris.add(resource.getResourceURI().getUri());
 			uniqueUris.add(resource.getResourceURI().withoutResourceType());
 			uniqueUris.add(resource.getBundleId());
 			uniqueUris.addAll(resource.getBundleAncestorIds());
+			uniqueUris.remove(IComponent.ROOT_ID);
+			
+			// OR-combine all relevant URIs for a single permission
+			permissions.add(Permission.requireAny(getOperation(), uniqueUris));
 		}
 		
-		uniqueUris.remove(IComponent.ROOT_ID);
-		accessedResources.addAll(uniqueUris);
+		// AND-combine permissions for all resources for the request
+		return permissions;
+	}
+	
+	@Override
+	public void collectAccessedResources(final ServiceProvider context, final Request<ServiceProvider, ?> req, final List<String> accessedResources) {
+		throw new UnsupportedOperationException("Access control is handled by getPermissions() in this request");
 	}
 
 	private boolean needsUpdate(final ResourceDocument targetResource) {

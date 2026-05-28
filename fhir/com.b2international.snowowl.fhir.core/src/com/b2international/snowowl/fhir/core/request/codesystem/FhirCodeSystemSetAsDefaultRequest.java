@@ -113,31 +113,45 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 	}
 
 	@Override
-	public void collectAccessedResources(final ServiceProvider context, final Request<ServiceProvider, ?> req, final List<String> accessedResources) {
+	public List<Permission> getPermissions(final ServiceProvider context, final Request<ServiceProvider, ?> req) {
 		final ResourceDocument resource = getTargetResource((TransactionContext) context);
-		final Set<String> uniqueUris = new HashSet<>();
+		final List<Permission> permissions = new ArrayList<>();
 		
+		final Set<String> uniqueUris = new HashSet<>();
 		uniqueUris.add(resource.getResourceURI().getUri());
 		uniqueUris.add(resource.getResourceURI().withoutResourceType());
 		uniqueUris.add(resource.getBundleId());
 		uniqueUris.addAll(resource.getBundleAncestorIds());
-
+		uniqueUris.remove(IComponent.ROOT_ID);
+		
+		// OR-combine all relevant URIs for a single permission
+		permissions.add(Permission.requireAny(getOperation(), uniqueUris));
+		
 		// If the code system is already set as default, we can skip collecting sibling resources because no changes will be made to them
 		if (getCurrentValue(resource.getSettings())) {
-			return;
+			return permissions;
 		}
 
 		// Otherwise the user needs to have edit permission for all siblings that will be updated to unset the flag
 		final List<TerminologyResource> siblingsToUnset = getSiblingsToUnset(resource, (RepositoryContext) context);
 		for (final TerminologyResource sibling : siblingsToUnset) {
-			uniqueUris.add(sibling.getResourceURI().getUri());
-			uniqueUris.add(sibling.getResourceURI().withoutResourceType());
-			uniqueUris.add(sibling.getBundleId());
-			uniqueUris.addAll(sibling.getBundleAncestorIds());
+			final Set<String> uniqueSiblingUris = new HashSet<>();
+			uniqueSiblingUris.add(sibling.getResourceURI().getUri());
+			uniqueSiblingUris.add(sibling.getResourceURI().withoutResourceType());
+			uniqueSiblingUris.add(sibling.getBundleId());
+			uniqueSiblingUris.addAll(sibling.getBundleAncestorIds());
+			uniqueSiblingUris.remove(IComponent.ROOT_ID);
+			
+			permissions.add(Permission.requireAny(getOperation(), uniqueSiblingUris));
 		}
 		
-		uniqueUris.remove(IComponent.ROOT_ID);
-		accessedResources.addAll(uniqueUris);
+		// AND-combine permissions for all resources for the request
+		return permissions;
+	}
+	
+	@Override
+	public void collectAccessedResources(final ServiceProvider context, final Request<ServiceProvider, ?> req, final List<String> accessedResources) {
+		throw new UnsupportedOperationException("Access control is handled by getPermissions() in this request");
 	}
 
 	private static Map<String, Object> toMutableMap(final Map<String, Object> settings) {
