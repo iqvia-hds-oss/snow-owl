@@ -710,9 +710,56 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
 			.statusCode(200)
 			.body("term", equalTo("Description B New Term Task"));
 		// also check that the preferred description array has three entries with the update term
-		getComponent(a, SnomedComponentType.CONCEPT, conceptA, "preferredDescriptions()")
+		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptA, "preferredDescriptions()")
 			.statusCode(200)
 			.body("preferredDescriptions.items.term", equalTo(List.of("FSN of concept", "PT of concept", "Description B New Term Task")));
+	}
+    
+    @Test
+	public void rebaseAndMergeDescriptionAddOverMultipleTasks() throws Exception {
+    	final IBranchPath conceptCreate = BranchPathUtils.createPath(branchPath, "conceptCreate");
+    	branching.createBranch(conceptCreate).statusCode(201);
+    	
+    	final IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
+    	branching.createBranch(a).statusCode(201);
+
+    	// first create a concept and a third description on a task and merge it
+		final String conceptA = createNewConcept(conceptCreate);
+		merge(conceptCreate, branchPath, "Merge concept create branch").body("status", equalTo(Merge.Status.COMPLETED.name()));
+		
+		// then sync it to the second branch
+		merge(branchPath, a, "Rebase branch A").body("status", equalTo(Merge.Status.COMPLETED.name()));
+		
+		// then add a new description on main and sync it to branchA
+		final String descriptionB = createNewDescription(branchPath, conceptA, Concepts.SYNONYM, SnomedApiTestConstants.UK_PREFERRED_MAP);
+		merge(branchPath, a, "Rebase branch A").body("status", equalTo(Merge.Status.COMPLETED.name()));
+
+		// checking state on task after sync
+		getComponent(a, SnomedComponentType.DESCRIPTION, descriptionB)
+			.statusCode(200)
+			.body("term", equalTo("Description term"));
+		// also check that the preferred description array has three entries with the update term
+		getComponent(a, SnomedComponentType.CONCEPT, conceptA, "preferredDescriptions()")
+			.statusCode(200)
+			.body("preferredDescriptions.items.term", equalTo(List.of("FSN of concept", "PT of concept", "Description term")));
+		
+		// Then change the term on the branchA and merge it back to MAIN
+		Map<?, ?> descriptionBUpdateRequest_OnTask = ImmutableMap.builder()
+				.put("term", "Description term Task")
+				.put("commitComment", "Change description B")
+				.build();
+		updateComponent(a, SnomedComponentType.DESCRIPTION, descriptionB, descriptionBUpdateRequest_OnTask).statusCode(204);
+		
+		merge(a, branchPath, "Merge branch A").body("status", equalTo(Merge.Status.COMPLETED.name()));
+		
+		// checking state on "MAIN" after sync
+		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionB)
+			.statusCode(200)
+			.body("term", equalTo("Description term Task"));
+		// also check that the preferred description array has three entries with the update term
+		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptA, "preferredDescriptions()")
+			.statusCode(200)
+			.body("preferredDescriptions.items.term", equalTo(List.of("FSN of concept", "PT of concept", "Description term Task")));
 	}
     
 }
