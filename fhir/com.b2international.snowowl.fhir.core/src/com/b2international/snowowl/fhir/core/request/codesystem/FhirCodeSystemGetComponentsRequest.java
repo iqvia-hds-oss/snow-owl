@@ -170,10 +170,10 @@ final class FhirCodeSystemGetComponentsRequest
 	
 			if (ResourceDocument.Fields.URL.equals(fhirVersionProperty)) {
 				// If the version code is determined by the version's URL, we also need to add the
-				// code system's URL as a version entry as well (representing the HEAD/draft content).
+				// code system's _native_ URL as a version entry as well (representing the HEAD/draft content).
 				// This entry is never the default because it does not correspond to a released version.
 				component.addVersion()
-					.setCode(effectiveFhirUrl)
+					.setCode(codeSystem.getUrl())
 					.setIsDefault(false);
 			}
 	
