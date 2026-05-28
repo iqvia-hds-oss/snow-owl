@@ -1230,8 +1230,7 @@ public final class StagingArea {
 			
 				for (String updatedId : updatedRevisionsById.keySet()) {
 					if (oldRevisionsById.containsKey(updatedId)) {
-						// actual changed revisions should always register themselves for commit if there is a revision on the target
-						stageChange(oldRevisionsById.get(updatedId), updatedRevisionsById.get(updatedId), true);
+						stageChange(oldRevisionsById.get(updatedId), updatedRevisionsById.get(updatedId), squash);
 					} else {
 						stageNew(updatedRevisionsById.get(updatedId), squash);
 					}
@@ -1254,8 +1253,7 @@ public final class StagingArea {
 				
 				newRevisions.forEach(rev -> {
 					if (oldRevisionsById.containsKey(rev.getId())) {
-						// actual changed revisions should always register themselves for commit if there is a revision on the target 
-						stageChange(oldRevisionsById.get(rev.getId()), rev, true); 
+						stageChange(oldRevisionsById.get(rev.getId()), rev, squash); 
 					} else {
 						stageNew(rev, squash);
 					}
