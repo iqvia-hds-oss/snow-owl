@@ -40,6 +40,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Controller exposing administrative instance-level {@code $operations} for {@code CodeSystem} resources:
  * <ul>
  *   <li>{@code $assign-fhir-url} &ndash; assigns an effective FHIR URL (and optional version property) to a code system</li>
+ *   <li>{@code $remove-fhir-url} &ndash; removes the FHIR URL (and version property) from a code system, restoring native URL visibility</li>
  *   <li>{@code $set-as-default} &ndash; marks a code system as the FHIR default for its effective URL</li>
  *   <li>{@code $set-include-in-capabilities} &ndash; controls whether a code system appears in the TerminologyCapabilities statement</li>
  * </ul>
@@ -240,6 +241,188 @@ public class FhirCodeSystemAdminOperationsController extends AbstractFhirControl
 			.setFhirUrl(fhirUrl)
 			.setFhirVersionProperty(fhirVersionProperty)
 			.build(author, String.format("Assigning FHIR URL '%s' to code system '%s'", fhirUrl, codeSystemId))
+			.execute(getBus())
+			.then(result -> toResponseEntity(toResultParameters(result.getResultAs(Boolean.class)), accept, _format, _pretty));
+	}
+
+	@Operation(
+		summary = "Remove the FHIR URL from a code system",
+		description = "Removes the FHIR URL and version property settings from the identified code system, "
+			+ "restoring its visibility under the tooling-provided URL."
+	)
+	@ApiResponse(responseCode = "200", description = "OK")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@ApiResponse(responseCode = "404", description = "Code system not found")
+	@GetMapping(value = "/{id:**}/$remove-fhir-url", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
+		APPLICATION_FHIR_JSON_VALUE,
+		APPLICATION_JSON_VALUE,
+		TEXT_JSON_VALUE,
+
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
+	})
+	public Promise<ResponseEntity<byte[]>> removeFhirUrlGet(
+
+		@Parameter(description = "The id of the code system to invoke the operation on")
+		@PathVariable("id")
+		final String codeSystemId,
+
+		@Parameter(description = "The user identifier used for committing the change")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
+
+	) {
+		return removeFhirUrl(codeSystemId, author, accept, _format, _pretty);
+	}
+
+	@Operation(
+		summary = "Remove the FHIR URL from a code system",
+		description = "Removes the FHIR URL and version property settings from the identified code system, "
+			+ "restoring its visibility under the native (tooling-provided) URL."
+	)
+	@ApiResponse(responseCode = "200", description = "OK")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@ApiResponse(responseCode = "404", description = "Code system not found")
+	@PostMapping(
+		value = "/{id:**}/$remove-fhir-url",
+		consumes = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		},
+		produces = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}
+	)
+	public Promise<ResponseEntity<byte[]>> removeFhirUrlPost(
+
+		@Parameter(description = "The id of the code system to invoke the operation on")
+		@PathVariable("id")
+		final String codeSystemId,
+
+		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The operation's input parameters (no parameters required)", content = {
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
+		})
+		final InputStream requestBody,
+
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.CONTENT_TYPE)
+		final String contentType,
+
+		@Parameter(description = "The user identifier used for committing the change")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
+
+	) {
+		// Parse and validate the body as a Parameters resource (no named parameters will be used for this operation)
+		toFhirResource(requestBody, contentType, Parameters.class);
+		return removeFhirUrl(codeSystemId, author, accept, _format, _pretty);
+	}
+
+	private Promise<ResponseEntity<byte[]>> removeFhirUrl(
+		final String codeSystemId,
+		final String author,
+		final String accept,
+		final String _format,
+		final Boolean _pretty
+	) {
+		return FhirRequests.codeSystems()
+			.prepareRemoveFhirUrl()
+			.setCodeSystemIds(java.util.List.of(codeSystemId))
+			.build(author, String.format("Removing FHIR URL from code system '%s'", codeSystemId))
 			.execute(getBus())
 			.then(result -> toResponseEntity(toResultParameters(result.getResultAs(Boolean.class)), accept, _format, _pretty));
 	}
