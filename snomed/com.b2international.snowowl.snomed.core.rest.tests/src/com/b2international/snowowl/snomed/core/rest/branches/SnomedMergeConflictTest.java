@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -708,7 +708,10 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
 		// checking state on "MAIN" after sync
 		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionB)
 			.statusCode(200)
-			.body("term", equalTo("Description B New Term Task"));
+			.body("term", equalTo("Description B New Term Task"))
+			.body("acceptability", equalTo(Map.of("900000000000508004", "PREFERRED")))
+			.body("memberOf", equalTo(List.of("900000000000508004")))
+			.body("activeMemberOf", equalTo(List.of("900000000000508004")));
 		// also check that the preferred description array has three entries with the update term
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptA, "preferredDescriptions()")
 			.statusCode(200)
@@ -755,7 +758,10 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
 		// checking state on "MAIN" after sync
 		getComponent(branchPath, SnomedComponentType.DESCRIPTION, descriptionB)
 			.statusCode(200)
-			.body("term", equalTo("Description term Task"));
+			.body("term", equalTo("Description term Task"))
+			.body("acceptability", equalTo(Map.of("900000000000508004", "PREFERRED")))
+			.body("memberOf", equalTo(List.of("900000000000508004")))
+			.body("activeMemberOf", equalTo(List.of("900000000000508004")));
 		// also check that the preferred description array has three entries with the update term
 		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptA, "preferredDescriptions()")
 			.statusCode(200)
