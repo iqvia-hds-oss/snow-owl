@@ -21,9 +21,7 @@ import java.util.stream.Collectors;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.NotFoundException;
-import com.b2international.snowowl.core.Resources;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.authorization.AccessControl;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
@@ -126,13 +124,13 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		return targetCodeSystems;
 	}
 
-	private static String getEffectiveFhirUrl(final TerminologyResource existingResource) {
+	private static String getEffectiveFhirUrl(final CodeSystem existingResource) {
 		final Map<String, Object> settings = existingResource.getSettings();
 		if (settings == null) {
 			return existingResource.getUrl();
 		}
 		
-		final String fhirUrl = (String) settings.get(TerminologyResource.Settings.FHIR_URL);
+		final String fhirUrl = (String) settings.get(CodeSystem.Settings.FHIR_URL);
 		if (Strings.isNullOrEmpty(fhirUrl)) {
 			return existingResource.getUrl();
 		}
@@ -140,12 +138,12 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		return fhirUrl;
 	}
 
-	private Collection<TerminologyResource> findExistingResourcesWithSameUrl(final TransactionContext context, final Set<String> modifiableIdSet) {
-		final Map<String, TerminologyResource> existingResourcesById = new HashMap<>();
+	private Collection<CodeSystem> findExistingResourcesWithSameUrl(final TransactionContext context, final Set<String> modifiableIdSet) {
+		final Map<String, CodeSystem> existingResourcesById = new HashMap<>();
 	
 		// Resources explicitly overriding their FHIR URL to the value in the request
-		ResourceRequests.prepareSearch()
-			.filterBySettings(TerminologyResource.Settings.FHIR_URL, fhirUrl)
+		CodeSystemRequests.prepareSearchCodeSystem()
+			.filterBySettings(CodeSystem.Settings.FHIR_URL, fhirUrl)
 			.setFields(
 				ResourceDocument.Fields.ID, 
 				ResourceDocument.Fields.URL, 
@@ -153,9 +151,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 			)
 			.setLimit(context.getPageSize())
 			.stream(context)
-			.flatMap(Resources::stream)
-			.filter(TerminologyResource.class::isInstance)
-			.map(TerminologyResource.class::cast)
+			.flatMap(CodeSystems::stream)
 			.filter(r -> !modifiableIdSet.contains(r.getId()))
 			.forEach(r -> existingResourcesById.put(r.getId(), r));
 	
@@ -165,7 +161,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		 * we need to check the "no override in settings" condition after it has been 
 		 * returned by the search request
 		 */
-		ResourceRequests.prepareSearch()
+		CodeSystemRequests.prepareSearchCodeSystem()
 			.one()
 			.filterByUrl(fhirUrl)
 			.setFields(
@@ -176,8 +172,6 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 			.build()
 			.execute(context)
 			.stream()
-			.filter(TerminologyResource.class::isInstance)
-			.map(TerminologyResource.class::cast)
 			.filter(r -> !modifiableIdSet.contains(r.getId()))
 			.filter(r -> fhirUrl.equals(getEffectiveFhirUrl(r)))
 			.forEach(r -> existingResourcesById.putIfAbsent(r.getId(), r));
@@ -208,15 +202,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		if (settings == null) {
 			return null;
 		} else {
-			return (String) settings.get(TerminologyResource.Settings.FHIR_VERSION_PROPERTY);
-		}
-	}
-
-	private static String computeEffectiveVersion(final TerminologyResource resource, final String fhirVersionProperty) {
-		if (TerminologyResource.Fields.URL.equals(fhirVersionProperty)) {
-			return resource.getUrl();
-		} else {
-			return "";
+			return (String) settings.get(CodeSystem.Settings.FHIR_VERSION_PROPERTY);
 		}
 	}
 
@@ -238,7 +224,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 	}
 
 	private static String computeEffectiveVersion(final CodeSystem codeSystem, final String fhirVersionProperty) {
-		if (TerminologyResource.Fields.URL.equals(fhirVersionProperty)) {
+		if (CodeSystem.Fields.URL.equals(fhirVersionProperty)) {
 			return codeSystem.getUrl();
 		} else {
 			return "";
@@ -246,7 +232,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 	}
 
 	private static String computeEffectiveVersion(final VersionDocument versionDocument, final String fhirVersionProperty) {
-		if (TerminologyResource.Fields.URL.equals(fhirVersionProperty)) {
+		if (CodeSystem.Fields.URL.equals(fhirVersionProperty)) {
 			return versionDocument.getUrl();
 		} else {
 			return versionDocument.getVersion();
@@ -273,21 +259,21 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 
 	private void checkVersionUniqueness(
 		final Collection<CodeSystem> targetCodeSystems,
-		final Collection<TerminologyResource> existingResources, 
+		final Collection<CodeSystem> existingResources, 
 		final TransactionContext context
 	) {
 		// Map from effective version string to the list of code system IDs having it
 		final Multimap<String, String> resourceIdsByVersion = HashMultimap.create();
 
 		final Set<String> existingResourceIds = existingResources.stream()
-			.map(TerminologyResource::getId)
+			.map(CodeSystem::getId)
 			.collect(Collectors.toSet());
 		
 		final Multimap<String, String> existingVersionIdsByResourceId = getVersionIdsByResourceId(context, existingResourceIds);
 		context.lookup(existingVersionIdsByResourceId.values(), VersionDocument.class);
 	
 		// Existing code systems (not being assigned) use their own fhirVersionProperty
-		for (final TerminologyResource existingResource : existingResources) {
+		for (final CodeSystem existingResource : existingResources) {
 			final Map<String, Object> resourceSettings = existingResource.getSettings();
 			final String resourceProperty = getExistingFhirVersionProperty(resourceSettings);
 			final String resourceValue = computeEffectiveVersion(existingResource, resourceProperty);
@@ -378,12 +364,12 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 			return true;
 		}
 		
-		final String currentFhirUrl = (String) settings.get(TerminologyResource.Settings.FHIR_URL);
+		final String currentFhirUrl = (String) settings.get(CodeSystem.Settings.FHIR_URL);
 		if (!fhirUrl.equals(currentFhirUrl)) {
 			return true;
 		}
 		
-		final String currentFhirVersionProperty = (String) settings.get(TerminologyResource.Settings.FHIR_VERSION_PROPERTY);
+		final String currentFhirVersionProperty = (String) settings.get(CodeSystem.Settings.FHIR_VERSION_PROPERTY);
 		if (fhirVersionProperty != null && !fhirVersionProperty.equals(currentFhirVersionProperty)) {
 			return true;
 		}
@@ -413,8 +399,8 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 			currentFhirUrl = null;
 			currentFhirVersionProperty = null;
 		} else {
-			currentFhirUrl = (String) currentSettings.get(TerminologyResource.Settings.FHIR_URL);
-			currentFhirVersionProperty = (String) currentSettings.get(TerminologyResource.Settings.FHIR_VERSION_PROPERTY);
+			currentFhirUrl = (String) currentSettings.get(CodeSystem.Settings.FHIR_URL);
+			currentFhirVersionProperty = (String) currentSettings.get(CodeSystem.Settings.FHIR_VERSION_PROPERTY);
 		}
 	
 		final boolean urlChanged = !fhirUrl.equals(currentFhirUrl);
@@ -424,9 +410,9 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		}
 	
 		final Map<String, Object> newSettings = new HashMap<>(currentSettings != null ? currentSettings : Map.of());
-		newSettings.put(TerminologyResource.Settings.FHIR_URL, fhirUrl);
+		newSettings.put(CodeSystem.Settings.FHIR_URL, fhirUrl);
 		if (fhirVersionProperty != null) {
-			newSettings.put(TerminologyResource.Settings.FHIR_VERSION_PROPERTY, fhirVersionProperty);
+			newSettings.put(CodeSystem.Settings.FHIR_VERSION_PROPERTY, fhirVersionProperty);
 		}
 	
 		context.add(VersionDocument.builder(existingDoc)
@@ -450,7 +436,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 			.map(CodeSystem::getId)
 			.collect(Collectors.toSet());
 		
-		final Collection<TerminologyResource> existingResources = findExistingResourcesWithSameUrl(context, modifiableIdSet);
+		final Collection<CodeSystem> existingResources = findExistingResourcesWithSameUrl(context, modifiableIdSet);
 		checkVersionUniqueness(modifiableCodeSystems, existingResources, context);
 	
 		// Pre-fetch version IDs for all modified resources (only the assigned ones)
@@ -462,10 +448,10 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 			final ResourceDocument targetResource = context.lookup(modifiableCodeSystem.getId(), ResourceDocument.class);
 			final Map<String, Object> existingSettings = targetResource.getSettings();
 			final Map<String, Object> newSettings = new HashMap<>(existingSettings != null ? existingSettings : Map.of());
-			newSettings.put(TerminologyResource.Settings.FHIR_URL, fhirUrl);
+			newSettings.put(CodeSystem.Settings.FHIR_URL, fhirUrl);
 			
 			if (fhirVersionProperty != null) {
-				newSettings.put(TerminologyResource.Settings.FHIR_VERSION_PROPERTY, fhirVersionProperty);
+				newSettings.put(CodeSystem.Settings.FHIR_VERSION_PROPERTY, fhirVersionProperty);
 			}
 			
 			context.update(targetResource, ResourceDocument.builder(targetResource)
