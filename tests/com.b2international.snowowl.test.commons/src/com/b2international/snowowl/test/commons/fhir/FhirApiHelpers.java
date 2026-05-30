@@ -41,6 +41,7 @@ public final class FhirApiHelpers {
 	public static final String CODESYSTEM_ID_REMOVE_FHIR_URL = "/CodeSystem/{id}/$remove-fhir-url";
 	public static final String CODESYSTEM_ID_SET_AS_DEFAULT = "/CodeSystem/{id}/$set-as-default";
 	public static final String CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES = "/CodeSystem/{id}/$set-include-in-capabilities";
+	public static final String CODESYSTEM_INITIALIZE_FHIR_URLS = "/CodeSystem/$initialize-fhir-urls";
 	
 	public static final String VALUESET = "/ValueSet";
 	public static final String VALUESET_ID = "/ValueSet/{id}";

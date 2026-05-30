@@ -18,6 +18,10 @@ package com.b2international.snowowl.fhir.rest;
 import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 
 import java.io.InputStream;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.BooleanType;
 import org.hl7.fhir.r5.model.Parameters;
@@ -421,7 +425,7 @@ public class FhirCodeSystemAdminOperationsController extends AbstractFhirControl
 	) {
 		return FhirRequests.codeSystems()
 			.prepareRemoveFhirUrl()
-			.setCodeSystemIds(java.util.List.of(codeSystemId))
+			.setCodeSystemIds(List.of(codeSystemId))
 			.build(author, String.format("Removing FHIR URL from code system '%s'", codeSystemId))
 			.execute(getBus())
 			.then(result -> toResponseEntity(toResultParameters(result.getResultAs(Boolean.class)), accept, _format, _pretty));
@@ -796,6 +800,190 @@ public class FhirCodeSystemAdminOperationsController extends AbstractFhirControl
 			.then(result -> toResponseEntity(toResultParameters(result.getResultAs(Boolean.class)), accept, _format, _pretty));
 	}
 
+	@Operation(
+		summary = "Initialize FHIR URLs for code systems",
+		description = "Visits code system resources (optionally filtered by a set of IDs) and populates "
+			+ "the FHIR URL and FHIR version property settings based on built-in rules keyed by tooling ID."
+	)
+	@ApiResponse(responseCode = "200", description = "OK")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@GetMapping(value = "/$initialize-fhir-urls", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
+		APPLICATION_FHIR_JSON_VALUE,
+		APPLICATION_JSON_VALUE,
+		TEXT_JSON_VALUE,
+
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
+	})
+	public Promise<ResponseEntity<byte[]>> initializeFhirUrlsGet(
+
+		@Parameter(description = "Comma-separated list of code system IDs to visit (if empty, all code systems are visited)")
+		@RequestParam(value = "codeSystemIds", required = false)
+		final List<String> codeSystemIds,
+
+		@Parameter(description = "Whether to overwrite existing FHIR URL and version property settings (default: false)")
+		@RequestParam(value = "overwrite", required = false, defaultValue = "false")
+		final boolean overwrite,
+
+		@Parameter(description = "The user identifier used for committing the change")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
+
+	) {
+		return initializeFhirUrls(codeSystemIds, overwrite, author, accept, _format, _pretty);
+	}
+
+	@Operation(
+		summary = "Initialize FHIR URLs for code systems",
+		description = "Visits code system resources (optionally filtered by a set of IDs) and populates "
+			+ "the FHIR URL and FHIR version property settings based on built-in rules keyed by tooling ID."
+	)
+	@ApiResponse(responseCode = "200", description = "OK")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@PostMapping(
+		value = "/$initialize-fhir-urls",
+		consumes = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		},
+		produces = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}
+	)
+	public Promise<ResponseEntity<byte[]>> initializeFhirUrlsPost(
+
+		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The operation's input parameters", content = {
+			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_JSON_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_JSON_VALUE, schema = @Schema(type = "object")),
+
+			@Content(mediaType = APPLICATION_FHIR_XML_5_0_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_3_0_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_4_0_1_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_FHIR_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = APPLICATION_XML_VALUE, schema = @Schema(type = "object")),
+			@Content(mediaType = TEXT_XML_VALUE, schema = @Schema(type = "object"))
+		})
+		final InputStream requestBody,
+
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.CONTENT_TYPE)
+		final String contentType,
+
+		@Parameter(description = "The user identifier used for committing the change")
+		@RequestHeader(value = X_AUTHOR, required = false)
+		final String author,
+
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
+
+	) {
+		final Parameters parameters = toFhirResource(requestBody, contentType, Parameters.class);
+		final List<String> codeSystemIds = getStringListParameter(parameters, "codeSystemIds");
+		final boolean overwrite = getBooleanParameter(parameters, "overwrite");
+		return initializeFhirUrls(codeSystemIds, overwrite, author, accept, _format, _pretty);
+	}
+
+	private Promise<ResponseEntity<byte[]>> initializeFhirUrls(
+		final List<String> codeSystemIds,
+		final boolean overwrite,
+		final String author,
+		final String accept,
+		final String _format,
+		final Boolean _pretty
+	) {
+		final Set<String> idSet = codeSystemIds == null ? Set.of() : new LinkedHashSet<>(codeSystemIds);
+		return FhirRequests.codeSystems()
+			.prepareInitializeFhirUrls()
+			.setCodeSystemIds(idSet)
+			.setOverwrite(overwrite)
+			.build(author, "Initializing FHIR URLs for code systems")
+			.execute(getBus())
+			.then(result -> toResponseEntity(toResultParameters(result.getResultAs(Boolean.class)), accept, _format, _pretty));
+	}
+
 	private static Parameters toResultParameters(final boolean result) {
 		return new Parameters().addParameter("result", new BooleanType(result));
 	}
@@ -808,5 +996,13 @@ public class FhirCodeSystemAdminOperationsController extends AbstractFhirControl
 	private static boolean getBooleanParameter(final Parameters parameters, final String name) {
 		final var value = parameters.getParameterValue(name);
 		return value != null && Boolean.parseBoolean(value.primitiveValue());
+	}
+
+	private static List<String> getStringListParameter(final Parameters parameters, final String name) {
+		return parameters.getParameters(name)
+			.stream()
+			.map(p -> p.getValue().primitiveValue())
+			.filter(v -> v != null)
+			.collect(Collectors.toList());
 	}
 }
