@@ -59,6 +59,10 @@ public final class FhirCodeSystemRequests {
 		return new FhirCodeSystemRemoveFhirUrlRequestBuilder();
 	}
 
+	public FhirCodeSystemInitializeFhirUrlsRequestBuilder prepareInitializeFhirUrls() {
+		return new FhirCodeSystemInitializeFhirUrlsRequestBuilder();
+	}
+
 	public FhirCodeSystemSetAsDefaultRequestBuilder prepareSetAsDefault(final String codeSystemId) {
 		return new FhirCodeSystemSetAsDefaultRequestBuilder(codeSystemId);
 	}
