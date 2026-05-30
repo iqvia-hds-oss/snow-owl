@@ -34,17 +34,17 @@ public final class FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder
 
 	public FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder setCodeSystemId(final String codeSystemId) {
 		this.codeSystemIds = List.of(codeSystemId);
-		return this;
+		return getSelf();
 	}
 
 	public FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder setCodeSystemIds(final List<String> codeSystemIds) {
 		this.codeSystemIds = codeSystemIds;
-		return this;
+		return getSelf();
 	}
 
 	public FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder setIncludeInCapabilities(final boolean includeInCapabilities) {
 		this.includeInCapabilities = includeInCapabilities;
-		return this;
+		return getSelf();
 	}
 
 	@Override

@@ -26,7 +26,7 @@ import com.b2international.snowowl.core.events.Request;
  * @since 10.2.0
  */
 public final class FhirCodeSystemAssignFhirUrlRequestBuilder
-	extends BaseRequestBuilder<FhirCodeSystemSetAsDefaultRequestBuilder, TransactionContext, Boolean>
+	extends BaseRequestBuilder<FhirCodeSystemAssignFhirUrlRequestBuilder, TransactionContext, Boolean>
 	implements ResourceRepositoryTransactionRequestBuilder<Boolean> {
 
 	private List<String> codeSystemIds;
@@ -35,22 +35,22 @@ public final class FhirCodeSystemAssignFhirUrlRequestBuilder
 
 	public FhirCodeSystemAssignFhirUrlRequestBuilder setCodeSystemId(final String codeSystemId) {
 		this.codeSystemIds = List.of(codeSystemId);
-		return this;
+		return getSelf();
 	}
 
 	public FhirCodeSystemAssignFhirUrlRequestBuilder setCodeSystemIds(final List<String> codeSystemIds) {
 		this.codeSystemIds = codeSystemIds;
-		return this;
+		return getSelf();
 	}
 
 	public FhirCodeSystemAssignFhirUrlRequestBuilder setFhirUrl(final String fhirUrl) {
 		this.fhirUrl = fhirUrl;
-		return this;
+		return getSelf();
 	}
 
 	public FhirCodeSystemAssignFhirUrlRequestBuilder setFhirVersionProperty(final String fhirVersionProperty) {
 		this.fhirVersionProperty = fhirVersionProperty;
-		return this;
+		return getSelf();
 	}
 
 	@Override
