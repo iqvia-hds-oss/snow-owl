@@ -36,6 +36,7 @@ import com.google.common.base.Strings;
 public final class ImportResponse implements Serializable {
 
 	private static final long serialVersionUID = 1L;
+	private static final int LIMIT = 10_000;
 	
 	private final String error;
 	private final Set<ComponentURI> visitedComponents;
@@ -49,8 +50,10 @@ public final class ImportResponse implements Serializable {
 			@JsonProperty("defects") final List<ImportDefect> defects,
 			@JsonProperty("changeCount") final int changeCount) {
 		this.error = error;
-		this.visitedComponents = visitedComponents;
-		this.defects = defects;
+		this.visitedComponents = visitedComponents.size() <= LIMIT ? visitedComponents 
+				: visitedComponents.stream().limit(LIMIT).collect(Collectors.toSet());
+		this.defects = defects.size() <= LIMIT ? defects 
+				: defects.stream().limit(LIMIT).collect(Collectors.toList());
 		this.changeCount = changeCount;
 	}
 	
