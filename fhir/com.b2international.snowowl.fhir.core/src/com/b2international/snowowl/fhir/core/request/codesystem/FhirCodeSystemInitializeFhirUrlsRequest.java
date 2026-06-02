@@ -131,18 +131,16 @@ final class FhirCodeSystemInitializeFhirUrlsRequest implements Request<Transacti
 				codeSystem.getToolingId(),
 				VersionDocument.Fields.VERSION);
 
-			if (settings != null) {
-				final String currentFhirUrl = (String) settings.get(CodeSystem.Settings.FHIR_URL);
-				
-				// FHIR version property may be absent, in which case it defaults to "version"
-				String currentFhirVersionProperty = (String) settings.get(CodeSystem.Settings.FHIR_VERSION_PROPERTY);
-				if (StringUtils.isEmpty(currentFhirVersionProperty)) {
-					currentFhirVersionProperty = VersionDocument.Fields.VERSION;
-				}
-				
-				if (targetFhirUrl.equals(currentFhirUrl) && targetFhirVersionProperty.equals(currentFhirVersionProperty)) {
-					return false;
-				}
+			final String currentFhirUrl = (String) settings.get(CodeSystem.Settings.FHIR_URL);
+			
+			// FHIR version property may be absent, in which case it defaults to "version"
+			String currentFhirVersionProperty = (String) settings.get(CodeSystem.Settings.FHIR_VERSION_PROPERTY);
+			if (StringUtils.isEmpty(currentFhirVersionProperty)) {
+				currentFhirVersionProperty = VersionDocument.Fields.VERSION;
+			}
+			
+			if (targetFhirUrl.equals(currentFhirUrl) && targetFhirVersionProperty.equals(currentFhirVersionProperty)) {
+				return false;
 			}
 			
 			return true;
