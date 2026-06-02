@@ -88,7 +88,7 @@
             			</goals>
 			            <configuration>
 			            	<includes>
-								<include>**/AllFhirRestTests.java</include>
+								<include>**/AllFhirApiTests.java</include>
 							</includes>
 			            </configuration>
           			</execution>
