@@ -5,15 +5,16 @@
 
 version: 2
 updates:
-  - package-ecosystem: "maven"
+  - package-ecosystem: maven
     directories:
         - "**/*"
-    # Disable automated version updates for maven dependencies (security updates still happen)
-    open-pull-requests-limit: 0
+    open-pull-requests-limit: 10
     schedule:
       interval: daily
+    target-branch: '10.x'
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: daily
+    target-branch: '10.x'
