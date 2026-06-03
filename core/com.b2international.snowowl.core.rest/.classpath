@@ -14,8 +14,8 @@
 	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/spring-jcl-6.2.18.jar"/>
 	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/spring-web-6.2.18.jar"/>
 	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/spring-webmvc-6.2.18.jar"/>
-	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/spring-boot-autoconfigure-3.5.13.jar"/>
-	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/spring-boot-3.5.13.jar"/>
+	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/spring-boot-autoconfigure-3.5.14.jar"/>
+	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/spring-boot-3.5.14.jar"/>
 	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/springdoc-openapi-starter-common-2.8.16.jar"/>
 	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/springdoc-openapi-starter-webmvc-api-2.8.16.jar"/>
 	<classpathentry exported="true" kind="lib" path="WEB-INF/lib/swagger-core-jakarta-2.2.43.jar"/>
