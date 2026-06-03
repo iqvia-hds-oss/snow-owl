@@ -16,6 +16,7 @@
 package com.b2international.snowowl.core.request.io;
 
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -51,7 +52,11 @@ public final class ImportResponse implements Serializable {
 			@JsonProperty("changeCount") final int changeCount) {
 		this.error = error;
 		this.visitedComponents = visitedComponents.size() <= LIMIT ? visitedComponents 
-				: visitedComponents.stream().limit(LIMIT).sorted().collect(Collectors.toSet());
+				: visitedComponents.stream()
+					.limit(LIMIT)
+					.sorted(Comparator.comparing(ComponentURI::terminologyComponentId)
+							.thenComparing(ComponentURI::identifier))
+					.collect(Collectors.toSet());
 		this.defects = defects.size() <= LIMIT ? defects 
 				: defects.stream().limit(LIMIT).collect(Collectors.toList());
 		this.changeCount = changeCount;
