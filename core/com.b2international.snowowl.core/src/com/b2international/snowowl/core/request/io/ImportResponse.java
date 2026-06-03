@@ -51,7 +51,7 @@ public final class ImportResponse implements Serializable {
 			@JsonProperty("changeCount") final int changeCount) {
 		this.error = error;
 		this.visitedComponents = visitedComponents.size() <= LIMIT ? visitedComponents 
-				: visitedComponents.stream().limit(LIMIT).collect(Collectors.toSet());
+				: visitedComponents.stream().limit(LIMIT).sorted().collect(Collectors.toSet());
 		this.defects = defects.size() <= LIMIT ? defects 
 				: defects.stream().limit(LIMIT).collect(Collectors.toList());
 		this.changeCount = changeCount;
