@@ -27,12 +27,6 @@
       		<version>${elasticsearch.java.client.version}</version>
       		<scope>provided</scope>
     	</dependency>
-		<dependency>
-      		<groupId>jakarta.json</groupId>
-      		<artifactId>jakarta.json-api</artifactId>
-      		<version>2.0.2</version>
-      		<scope>provided</scope>
-    	</dependency>
 	</dependencies>
 	
 	<build>
@@ -54,8 +48,6 @@
 							<includeArtifactIds>
 								elasticsearch-java,
 								elasticsearch-rest-client,
-								jakarta.json-api,
-								parsson,
 								opentelemetry-context,
 								opentelemetry-api
 							</includeArtifactIds>
