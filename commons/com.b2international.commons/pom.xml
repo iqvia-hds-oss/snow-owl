@@ -15,8 +15,6 @@
 	<properties>
 		<!-- RFC 6902 JSON Patch implementation - zjsonpatch requires Jackson 2.14+ and Commons Collections 4.4 -->
 		<zjsonpatch.version>0.4.16</zjsonpatch.version>
-		<!-- Graph algorithms lib -->
-		<jgrapht.version>1.5.2</jgrapht.version>
 		<!-- Micrometer Metrics framework -->
 		<micrometer.version>1.14.9</micrometer.version>
 		<!-- Bean Validation -->
@@ -34,12 +32,6 @@
 			<artifactId>zjsonpatch</artifactId>
 			<version>${zjsonpatch.version}</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-  			<groupId>org.jgrapht</groupId>
-  			<artifactId>jgrapht-core</artifactId>
-  			<version>${jgrapht.version}</version>
-  			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.micrometer</groupId>

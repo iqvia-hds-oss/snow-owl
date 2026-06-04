@@ -113,8 +113,6 @@ Import-Package: jakarta.el;version="[5.0.1,6.0.0)",
  org.slf4j;version="2.0.0"
 Bundle-ClassPath: .,
  lib/zjsonpatch-0.4.16.jar,
- lib/jgrapht-core-1.5.2.jar,
- lib/jheaps-0.14.jar,
  lib/micrometer-commons-1.14.9.jar,
  lib/micrometer-observation-1.14.9.jar,
  lib/micrometer-core-1.14.9.jar,
