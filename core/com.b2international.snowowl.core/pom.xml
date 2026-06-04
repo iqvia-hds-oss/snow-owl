@@ -13,7 +13,7 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<java.jwt.version>4.4.0</java.jwt.version>
+		<java.jwt.version>4.5.2</java.jwt.version>
 		<jwks.rsa.version>0.22.1</jwks.rsa.version>
 	</properties>
 
