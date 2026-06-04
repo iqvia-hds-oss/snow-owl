@@ -11,7 +11,7 @@ updates:
         - "releng/target-platform"
     exclude-paths:
         - "dist/**"
-    open-pull-requests-limit: 15
+    open-pull-requests-limit: 20
     schedule:
       interval: daily
     target-branch: '10.x'
