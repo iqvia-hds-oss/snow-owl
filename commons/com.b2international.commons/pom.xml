@@ -18,7 +18,7 @@
 		<!-- Graph algorithms lib -->
 		<jgrapht.version>1.5.2</jgrapht.version>
 		<!-- Micrometer Metrics framework -->
-		<micrometer.version>1.14.9</micrometer.version>
+		<micrometer.version>1.16.5</micrometer.version>
 		<!-- Bean Validation -->
 		<hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
 		<!-- Console Lib -->
