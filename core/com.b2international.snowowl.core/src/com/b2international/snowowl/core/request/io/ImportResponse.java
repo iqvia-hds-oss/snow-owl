@@ -37,7 +37,7 @@ import com.google.common.base.Strings;
 public final class ImportResponse implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private static final int LIMIT = 10_000;
+	private static final int LIMIT = 1000;
 	
 	private final String error;
 	private final Set<ComponentURI> visitedComponents;
