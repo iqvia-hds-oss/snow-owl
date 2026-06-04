@@ -75,7 +75,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.5.0</version>
 				<executions>
 					<execution>
 						<?m2e ignore?>
@@ -109,7 +108,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.11.0</version>
 				<executions>
 					<execution>
 						<?m2e execute onConfiguration?>
@@ -192,7 +190,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<?m2e execute onConfiguration?>
