@@ -8,7 +8,7 @@ updates:
   - package-ecosystem: maven
     directories:
         - "**/*"
-        - "releng/target-platform"
+        - "/releng/target-platform"
     exclude-paths:
         - "dist/**"
     open-pull-requests-limit: 20
