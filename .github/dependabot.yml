@@ -8,7 +8,10 @@ updates:
   - package-ecosystem: maven
     directories:
         - "**/*"
-    open-pull-requests-limit: 10
+        - "releng/target-platform"
+    exclude-paths:
+        - "dist/**"
+    open-pull-requests-limit: 15
     schedule:
       interval: daily
     target-branch: '10.x'
