@@ -16,6 +16,7 @@
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -140,7 +141,11 @@ final class FhirCodeSystemLookupRequest extends FhirCodeSystemOperationRequest<C
 		// second check if the remaining unsupported properties supported by the CodeSystem either via full URL
 		final Set<String> supportedProperties = codeSystem.getProperty() == null 
 				? Collections.emptySet() 
-				: codeSystem.getProperty().stream().map(CodeSystem.PropertyComponent::getUri).collect(Collectors.toSet());
+				: codeSystem.getProperty().stream()
+					.map(CodeSystem.PropertyComponent::getUri)
+					// A CodeSystem.PropertyComponent can exist without a URI, in that case getUri() returns null
+					.filter(Objects::nonNull)
+					.collect(Collectors.toSet());
 		final Set<String> unsupportedProperties = Sets.difference(nonLookupProperties, supportedProperties);
 		
 		// or via their code only
