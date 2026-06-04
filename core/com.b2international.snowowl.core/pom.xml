@@ -14,7 +14,7 @@
 
 	<properties>
 		<java.jwt.version>4.5.2</java.jwt.version>
-		<jwks.rsa.version>0.22.1</jwks.rsa.version>
+		<jwks.rsa.version>0.24.1</jwks.rsa.version>
 	</properties>
 
 	<dependencies>
