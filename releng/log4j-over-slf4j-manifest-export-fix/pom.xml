@@ -11,8 +11,8 @@
 		
 		<!-- Artifact distribution -->
 		<maven.repository.id>nexus_deployment</maven.repository.id>
-		<maven.releases.repository>invalid_prop2_https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>
-		<maven.snapshots.repository>invalid_prop2_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>
+		<maven.releases.repository>https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>
+		<maven.snapshots.repository>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>
 	</properties>
 
 	<dependencies>

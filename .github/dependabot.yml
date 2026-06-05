@@ -10,7 +10,7 @@ updates:
     directory: /
     exclude-paths:
       - "releng/target-platform"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 15
     schedule:
       interval: daily
     ignore:
@@ -20,7 +20,7 @@ updates:
   - package-ecosystem: maven
     directories:
       - "releng/target-platform"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 15
     schedule:
       interval: daily
     ignore:
