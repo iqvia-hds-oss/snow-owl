@@ -19,7 +19,6 @@ import static com.b2international.snowowl.core.rest.OpenAPIExtensions.*;
 import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 
 import java.io.InputStream;
-import java.net.URI;
 import java.time.LocalDate;
 
 import org.hl7.fhir.r5.model.ValueSet;
@@ -67,13 +66,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 )})
 @RestController
 @RequestMapping(value = "/ValueSet")
-public class FhirValueSetController extends AbstractFhirController {
+public class FhirValueSetController extends AbstractFhirResourceController {
 	
 	/**
 	 * <code><b>POST /ValueSet</b></code>
 	 * <p>
 	 * Creates the initial revision of the specified value set. The identifier is randomly assigned and ignored if
 	 * present in the input resource.
+	 * If the value set already exists then a new revision is created instead.
 	 * 
 	 * @param requestBody - an {@link InputStream} whose contents can be deserialized to a FHIR value set resource
 	 * @param contentType
@@ -93,8 +93,7 @@ public class FhirValueSetController extends AbstractFhirController {
 			}),
 		}
 	)
-	@ApiResponse(responseCode = "200", description = "Resource updated")
-	@ApiResponse(responseCode = "201", description = "Resource created")
+	@ApiResponse(responseCode = "201", description = "Resource created or updated")
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PostMapping(consumes =	{
 		APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -117,7 +116,7 @@ public class FhirValueSetController extends AbstractFhirController {
 		APPLICATION_XML_VALUE,
 		TEXT_XML_VALUE
 	})
-	public ResponseEntity<Void> create(
+	public ResponseEntity<byte[]> create(
 			
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The value set resource", content = { 
 			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
@@ -172,8 +171,33 @@ public class FhirValueSetController extends AbstractFhirController {
 		@Parameter(description = """
 			The parent bundle's identifier (defaults to root if not present)""")
 		@RequestHeader(value = X_BUNDLE_ID, required = false)
-		final String bundleId
+		final String bundleId,
 		
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+		
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
 	) {
 		
 		final var valueSet = toFhirResource(requestBody, contentType, ValueSet.class);
@@ -182,7 +206,8 @@ public class FhirValueSetController extends AbstractFhirController {
 		final String generatedId = IDs.base62UUID();
 		valueSet.setId(generatedId);
 		
-		return createOrUpdate(generatedId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(generatedId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
 	}
 
 	/**
@@ -234,7 +259,7 @@ public class FhirValueSetController extends AbstractFhirController {
 		APPLICATION_XML_VALUE,
 		TEXT_XML_VALUE
 	})
-	public ResponseEntity<Void> update(
+	public ResponseEntity<byte[]> update(
 			
 		@Parameter(description = """
 			The identifier of the value set""")
@@ -294,16 +319,43 @@ public class FhirValueSetController extends AbstractFhirController {
 		@Parameter(description = """
 			The parent bundle's identifier (defaults to root if not present)""")
 		@RequestHeader(value = X_BUNDLE_ID, required = false)
-		final String bundleId
+		final String bundleId,
 		
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+		
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty
 	) {
 		
 		final var valueSet = toFhirResource(requestBody, contentType, ValueSet.class);
 
-		return createOrUpdate(id, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(id, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		HttpStatus successStatus = result.isCreated() ? HttpStatus.CREATED : HttpStatus.OK;
+		return toResponseEntity(result, successStatus, accept, _format, _pretty);
 	}
 	
-	private ResponseEntity<Void> createOrUpdate(
+	private FhirResourceUpdateResult createOrUpdate(
 		String id, 
 		ValueSet soValueSet, 
 		LocalDate defaultEffectiveDate, 
@@ -322,7 +374,7 @@ public class FhirValueSetController extends AbstractFhirController {
 			throw new BadRequestException("Value set resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
 		}
 		
-		final FhirResourceUpdateResult updateResult = FhirRequests.valueSets()
+		return FhirRequests.valueSets()
 			.prepareUpdate()
 			.setFhirValueSet(soValueSet)
 			.setAuthor(author)
@@ -334,19 +386,6 @@ public class FhirValueSetController extends AbstractFhirController {
 			.buildAsync()
 			.execute(getBus())
 			.getSync();
-		
-		switch (updateResult.getAction()) {
-			case CREATED:
-				final URI locationUri = MvcUriComponentsBuilder.fromController(FhirValueSetController.class)
-					.pathSegment(updateResult.getId())
-					.build()
-					.toUri();
-				
-				return ResponseEntity.created(locationUri).build();
-				
-			default:
-				return ResponseEntity.ok().build();
-		}
 	}
 	
 	/**
