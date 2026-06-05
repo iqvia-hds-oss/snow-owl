@@ -17,7 +17,7 @@ updates:
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
 
-- package-ecosystem: maven
+  - package-ecosystem: maven
     directories:
       - "releng/target-platform"
     open-pull-requests-limit: 10
