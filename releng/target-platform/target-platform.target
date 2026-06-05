@@ -833,16 +833,6 @@
 			    <type>jar</type>
 			</dependency>
 		</dependencies>
-		<repositories>
-			<repository>
-				<id>b2i-releases</id>
-				<url>https://artifacts.b2ihealthcare.com/repository/maven-releases</url>
-			</repository>
-			<repository>
-				<id>b2i-snapshots</id>
-				<url>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>
-			</repository>
-		</repositories>
 	</location>
 </locations>
 </target>

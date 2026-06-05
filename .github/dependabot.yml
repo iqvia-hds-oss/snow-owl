@@ -8,7 +8,19 @@ version: 2
 updates:
   - package-ecosystem: maven
     directory: /
-    open-pull-requests-limit: 15
+    exclude-paths:
+      - "releng/target-platform"
+    open-pull-requests-limit: 10
+    schedule:
+      interval: daily
+    ignore:
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+- package-ecosystem: maven
+    directories:
+      - "releng/target-platform"
+    open-pull-requests-limit: 10
     schedule:
       interval: daily
     ignore:
