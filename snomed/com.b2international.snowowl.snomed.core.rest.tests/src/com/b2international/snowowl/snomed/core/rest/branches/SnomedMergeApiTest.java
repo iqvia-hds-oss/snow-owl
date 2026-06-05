@@ -33,6 +33,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
+import org.assertj.core.util.Strings;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -42,10 +43,7 @@ import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.merge.Merge;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.core.domain.Acceptability;
-import com.b2international.snowowl.snomed.core.domain.AssociationTarget;
-import com.b2international.snowowl.snomed.core.domain.InactivationProperties;
-import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
+import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
@@ -594,6 +592,69 @@ public class SnomedMergeApiTest extends AbstractSnomedApiTest {
 		getComponent(a, SnomedComponentType.DESCRIPTION, textDefinition1Id).statusCode(200);
 		getComponent(branchPath, SnomedComponentType.DESCRIPTION, textDefinition2Id).statusCode(404);
 		getComponent(a, SnomedComponentType.DESCRIPTION, textDefinition2Id).statusCode(200);
+	}
+	
+	@Test
+	public void rebasePreferredTerm() throws Exception {
+		//Create concept with FSN and PT on MAIN
+		final String conceptId = createNewConcept(branchPath);
+		SnomedConcept concept = getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId, "preferredDescriptions()")
+				.extract()
+				.as(SnomedConcept.class);
+		
+		SnomedDescription fsn = concept.getPreferredDescriptions()
+				.getItems()
+				.stream()
+				.filter(d -> Concepts.FULLY_SPECIFIED_NAME.equals(d.getTypeId()))
+				.findFirst()
+				.get();
+		
+		SnomedDescription pt = concept.getPreferredDescriptions()
+				.getItems()
+				.stream()
+				.filter(d -> Concepts.SYNONYM.equals(d.getTypeId()))
+				.findFirst()
+				.get();
+		
+		//Create a branch
+		final IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
+		branching.createBranch(a).statusCode(201);
+		
+		// Apply a change unrelated to the original concept
+		createNewRelationship(a);
+		
+		//Update FSN on MAIN
+		final String newFsnTerm = "Changed term of FSN (semantic tag)";
+		final Map<?, ?> requestBody = ImmutableMap.builder()
+				.put("term", newFsnTerm)
+				.put("commitComment", "Update FSN term")
+				.build();
+		updateComponent(branchPath, SnomedComponentType.DESCRIPTION, fsn.getId(), requestBody);
+		
+		//Synchronize branch with MAIN
+		merge(branchPath, a, "Rebase branch").body("status", equalTo(Merge.Status.COMPLETED.name()));
+		
+		SnomedDescription fsnOnBranch = getComponent(a, SnomedComponentType.DESCRIPTION, fsn.getId())
+				.statusCode(200)
+				.extract()
+				.as(SnomedDescription.class);
+		SnomedDescription ptOnBranch = getComponent(a, SnomedComponentType.DESCRIPTION, pt.getId())
+				.statusCode(200)
+				.extract()
+				.as(SnomedDescription.class);
+		SnomedConcept conceptOnBranch = getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId, "preferredDescriptions()")
+				.extract()
+				.as(SnomedConcept.class);
+		
+		assertThat(fsnOnBranch.getTerm()).isEqualTo(newFsnTerm);
+		assertThat(fsnOnBranch.getAcceptabilityMap()).isEqualToComparingFieldByField(fsn.getAcceptabilityMap());
+		
+		assertThat(ptOnBranch.getAcceptabilityMap()).isEqualToComparingFieldByField(pt.getAcceptabilityMap());
+		assertThat(ptOnBranch.getTerm()).isEqualTo(pt.getTerm());
+		
+		assertThat(conceptOnBranch.getPreferredDescriptions()).hasSize(2);
+		assertThat(conceptOnBranch.getPreferredDescriptions()).noneMatch(d -> Strings.isNullOrEmpty(d.getTerm()));
+		assertThat(conceptOnBranch.getPreferredDescriptions()).noneMatch(d -> d.getAcceptabilityMap() == null || d.getAcceptabilityMap().isEmpty());
 	}
 
 	@Test
