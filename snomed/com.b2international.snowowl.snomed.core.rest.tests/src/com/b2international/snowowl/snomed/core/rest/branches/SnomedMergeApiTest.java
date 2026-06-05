@@ -669,6 +669,43 @@ public class SnomedMergeApiTest extends AbstractSnomedApiTest {
 		assertThat(conceptOnBranch.getPreferredDescriptions()).noneMatch(d -> Strings.isNullOrEmpty(d.getTerm()));
 		assertThat(conceptOnBranch.getPreferredDescriptions()).noneMatch(d -> d.getAcceptabilityMap() == null || d.getAcceptabilityMap().isEmpty());
 	}
+	
+	@Test
+	public void rebaseNewRelationshipAfterFSNUpdateOnSameConcept() throws Exception {
+		//Create concept with FSN and PT on MAIN
+		final String conceptId = createNewConcept(branchPath);
+		SnomedConcept concept = getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId, "preferredDescriptions()")
+				.extract()
+				.as(SnomedConcept.class);
+		
+		SnomedDescription fsn = concept.getPreferredDescriptions()
+				.getItems()
+				.stream()
+				.filter(d -> Concepts.FULLY_SPECIFIED_NAME.equals(d.getTypeId()))
+				.findFirst()
+				.get();
+		
+		//Create a branch
+		final IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
+		branching.createBranch(a).statusCode(201);
+		
+		// Add a new relationship on the original concept
+		createNewRelationship(a, conceptId, Concepts.FINDING_SITE, Concepts.ROOT_CONCEPT);
+		
+		//Update FSN on MAIN
+		final String newFsnTerm = "Changed term of FSN (semantic tag)";
+		final Map<?, ?> requestBody = ImmutableMap.builder()
+				.put("term", newFsnTerm)
+				.put("commitComment", "Update FSN term")
+				.build();
+		updateComponent(branchPath, SnomedComponentType.DESCRIPTION, fsn.getId(), requestBody);
+		
+		//Synchronize branch with MAIN
+		merge(branchPath, a, "Rebase branch").body("status", equalTo(Merge.Status.COMPLETED.name()));
+		
+		getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId, "preferredDescriptions()").statusCode(200);
+		getComponent(a, SnomedComponentType.CONCEPT, conceptId, "preferredDescriptions()").statusCode(200);
+	}
 
 	@Test
 	public void rebaseStaleBranchWithChangesOnDeletedContent() throws Exception {
