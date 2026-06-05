@@ -5,10 +5,20 @@ on:
     branches:
       - 9.x
       - 10.x
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - '.github.com/dependabot.yml'
+      - 'Jenkinsfile'
   pull_request:
     branches:
       - 9.x
       - 10.x
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - '.github.com/dependabot.yml'
+      - 'Jenkinsfile'
 
 permissions:
   contents: read
