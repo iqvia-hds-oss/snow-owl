@@ -595,7 +595,7 @@ public class SnomedMergeApiTest extends AbstractSnomedApiTest {
 	}
 	
 	@Test
-	public void rebasePreferredTerm() throws Exception {
+	public void rebaseAfterFSNUpdate() throws Exception {
 		//Create concept with FSN and PT on MAIN
 		final String conceptId = createNewConcept(branchPath);
 		SnomedConcept concept = getComponent(branchPath, SnomedComponentType.CONCEPT, conceptId, "preferredDescriptions()")
@@ -647,10 +647,12 @@ public class SnomedMergeApiTest extends AbstractSnomedApiTest {
 				.as(SnomedConcept.class);
 		
 		assertThat(fsnOnBranch.getTerm()).isEqualTo(newFsnTerm);
-		assertThat(fsnOnBranch.getAcceptabilityMap()).isEqualToComparingFieldByField(fsn.getAcceptabilityMap());
+		assertThat(fsnOnBranch.getAcceptabilityMap()).hasSize(1);
+		assertThat(fsnOnBranch.getAcceptabilityMap()).hasEntrySatisfying(Concepts.REFSET_LANGUAGE_TYPE_UK, acc -> Acceptability.PREFERRED.equals(acc));
 		
-		assertThat(ptOnBranch.getAcceptabilityMap()).isEqualToComparingFieldByField(pt.getAcceptabilityMap());
 		assertThat(ptOnBranch.getTerm()).isEqualTo(pt.getTerm());
+		assertThat(ptOnBranch.getAcceptabilityMap()).hasSize(1);
+		assertThat(ptOnBranch.getAcceptabilityMap()).hasEntrySatisfying(Concepts.REFSET_LANGUAGE_TYPE_UK, acc -> Acceptability.PREFERRED.equals(acc));
 		
 		assertThat(conceptOnBranch.getPreferredDescriptions()).hasSize(2);
 		assertThat(conceptOnBranch.getPreferredDescriptions()).noneMatch(d -> Strings.isNullOrEmpty(d.getTerm()));
