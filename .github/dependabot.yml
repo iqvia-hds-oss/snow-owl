@@ -7,10 +7,7 @@ version: 2
 updates:
   - package-ecosystem: maven
     directories:
-        - "**/*"
         - "/releng/target-platform"
-    exclude-paths:
-        - "dist/**"
     open-pull-requests-limit: 20
     schedule:
       interval: daily
