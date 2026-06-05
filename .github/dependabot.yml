@@ -18,7 +18,7 @@ updates:
     # allow access and version/security checks only from maven-central dependencies, do not allow any other registry
     registries:
       - maven-central
-    open-pull-requests-limit: 20
+    open-pull-requests-limit: 15
     schedule:
       interval: daily
     target-branch: '10.x'
