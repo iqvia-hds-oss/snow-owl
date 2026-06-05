@@ -28,10 +28,12 @@ public class FhirResourceUpdateResult {
 	
 	private Action action;
 	private String id;
+	private String message;
 	
-	public FhirResourceUpdateResult(Action action, String id) {
+	public FhirResourceUpdateResult(Action action, String id, String message) {
 		this.action = action;
 		this.id = id;
+		this.message = message;
 	}
 
 	public Action getAction() {
@@ -40,6 +42,10 @@ public class FhirResourceUpdateResult {
 	
 	public String getId() {
 		return id;
+	}
+	
+	public String getMessage() {
+		return message;
 	}
 	
 	public boolean isCreated() {
@@ -52,16 +58,16 @@ public class FhirResourceUpdateResult {
 	public boolean isSkipped() {
 		return Action.SKIPPED == action;
 	}
-
-	public static FhirResourceUpdateResult created(String resourceId) {
-		return new FhirResourceUpdateResult(Action.CREATED, resourceId);
+	
+	public static FhirResourceUpdateResult created(String resourceId, String message) {
+		return new FhirResourceUpdateResult(Action.CREATED, resourceId, message);
 	}
 	
-	public static FhirResourceUpdateResult updated(String resourceId) {
-		return new FhirResourceUpdateResult(Action.UPDATED, resourceId);
+	public static FhirResourceUpdateResult updated(String resourceId, String message) {
+		return new FhirResourceUpdateResult(Action.UPDATED, resourceId, message);
 	}
 	
-	public static FhirResourceUpdateResult skipped(String resourceId) {
-		return new FhirResourceUpdateResult(Action.SKIPPED, resourceId);
+	public static FhirResourceUpdateResult skipped(String resourceId, String message) {
+		return new FhirResourceUpdateResult(Action.SKIPPED, resourceId, message);
 	}
 }
