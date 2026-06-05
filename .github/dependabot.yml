@@ -7,11 +7,7 @@ version: 2
 
 updates:
   - package-ecosystem: maven
-    directories:
-        - "/releng/target-platform"
-    # allow access and version/security checks only from maven-central dependencies, do not allow any other registry
-    registries:
-      - central
+    directory: /
     open-pull-requests-limit: 15
     schedule:
       interval: daily
