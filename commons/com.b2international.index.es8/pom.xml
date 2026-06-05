@@ -11,7 +11,7 @@
 	</parent>
 	
 	<properties>
-		<elasticsearch.java.client.version>8.19.8</elasticsearch.java.client.version>
+		<elasticsearch.java.client.version>8.19.16</elasticsearch.java.client.version>
 	</properties>
 	
 	<dependencies>
