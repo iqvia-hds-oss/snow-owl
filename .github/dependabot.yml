@@ -5,19 +5,13 @@
 
 version: 2
 
-registries:
-  maven-central:
-    type: maven-repository
-    url: https://repo.maven.apache.org/maven2
-    replaces-base: true
-
 updates:
   - package-ecosystem: maven
     directories:
         - "/releng/target-platform"
     # allow access and version/security checks only from maven-central dependencies, do not allow any other registry
     registries:
-      - maven-central
+      - central
     open-pull-requests-limit: 15
     schedule:
       interval: daily
