@@ -40,8 +40,8 @@
 
 		<!-- Artifact distribution -->
 <!--		<maven.repository.id>nexus_deployment</maven.repository.id>-->
-<!--		<maven.releases.repository>https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>-->
-<!--		<maven.snapshots.repository>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>-->
+<!--		<maven.releases.repository>invalid_prop_https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>-->
+<!--		<maven.snapshots.repository>invalid_prop_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>-->
 
 	</properties>
 
@@ -406,7 +406,7 @@
 		-->
 <!--		<repository>-->
 <!--			<id>maven-b2i-releases</id>-->
-<!--			<url>https://artifacts.b2ihealthcare.com/repository/maven-releases</url>-->
+<!--			<url>invalid_repo_https://artifacts.b2ihealthcare.com/repository/maven-releases</url>-->
 <!--			<releases>-->
 <!--				<enabled>true</enabled>-->
 <!--			</releases>-->
@@ -416,7 +416,7 @@
 <!--		</repository>-->
 <!--		<repository>-->
 <!--			<id>maven-b2i-snapshots</id>-->
-<!--			<url>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>-->
+<!--			<url>invalid_repo_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>-->
 <!--			<releases>-->
 <!--				<enabled>false</enabled>-->
 <!--			</releases>-->
