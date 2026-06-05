@@ -26,6 +26,89 @@ updates:
     ignore:
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
+    groups:
+      org-bouncycastle:
+        applies-to: version-updates
+        patterns:
+          - 'org.bouncycastle:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      org-slf4j:
+        applies-to: version-updates
+        patterns:
+          - 'org.slf4j:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      ch-qos-logback:
+        applies-to: version-updates
+        patterns:
+          - 'ch.qos.logback:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      com-fasterxml-jackson:
+        applies-to: version-updates
+        patterns:
+          - 'com.fasterxml.jackson*:*'
+          - 'org.yaml:*'
+          - 'stax2-api:*'
+          - 'woodstox-core:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      io-netty:
+        applies-to: version-updates
+        patterns:
+          - 'io.netty:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      io-swagger-core:
+        applies-to: version-updates
+        patterns:
+          - 'io.swagger.core.v3:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      org-eclipse-jetty:
+        applies-to: version-updates
+        patterns:
+          - 'org.eclipse.jetty*:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      org-ow2-asm:
+        applies-to: version-updates
+        patterns:
+          - 'org.ow2.asm:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      io-rest-assured:
+        applies-to: version-updates
+        patterns:
+          - 'io.rest-assured:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+    groups:
+      net-bytebuddy:
+        applies-to: version-updates
+        patterns:
+          - 'net.bytebuddy:*'
+        update-types:
+          - 'minor'
+          - 'patch'
 
   - package-ecosystem: github-actions
     directory: /
