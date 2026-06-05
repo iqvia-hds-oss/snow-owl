@@ -10,7 +10,10 @@ registries:
     type: maven-repository
     url: https://repo.maven.apache.org/maven2
     replaces-base: true
-
+  maven-b2i-releases:
+    type: maven-repository
+    url: https://artifacts.b2ihealthcare.com/repository/maven-releases
+	
 updates:
   - package-ecosystem: maven
     directories:

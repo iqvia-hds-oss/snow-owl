@@ -10,9 +10,9 @@
 		<slf4j.version>2.0.17</slf4j.version>
 		
 		<!-- Artifact distribution -->
-<!--		<maven.repository.id>nexus_deployment</maven.repository.id>-->
-<!--		<maven.releases.repository>invalid_prop2_https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>-->
-<!--		<maven.snapshots.repository>invalid_prop2_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>-->
+		<maven.repository.id>nexus_deployment</maven.repository.id>
+		<maven.releases.repository>invalid_prop2_https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>
+		<maven.snapshots.repository>invalid_prop2_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>
 	</properties>
 
 	<dependencies>
@@ -88,15 +88,15 @@
 		</plugins>
 	</build>
 
-<!--	<distributionManagement>-->
-<!--		<repository>-->
-<!--			<id>${maven.repository.id}</id>-->
-<!--			<url>${maven.releases.repository}</url>-->
-<!--		</repository>-->
-<!--		<snapshotRepository>-->
-<!--			<id>${maven.repository.id}</id>-->
-<!--			<url>${maven.snapshots.repository}</url>-->
-<!--		</snapshotRepository>-->
-<!--	</distributionManagement>-->
+	<distributionManagement>
+		<repository>
+			<id>${maven.repository.id}</id>
+			<url>${maven.releases.repository}</url>
+		</repository>
+		<snapshotRepository>
+			<id>${maven.repository.id}</id>
+			<url>${maven.snapshots.repository}</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 </project>

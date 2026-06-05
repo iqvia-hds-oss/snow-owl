@@ -39,10 +39,9 @@
 		<testArgLine>${tycho.testArgLine} -Xms${testHeapSize} -Xmx${testHeapSize} -Dosgi.classloader.type=nonparallel -Djetty.home.bundle=org.eclipse.jetty.ee10.osgi.boot -Djetty.http.port=9090 -XX:+AlwaysPreTouch --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/sun.security.x509=ALL-UNNAMED -Dlogback.configurationFile=${testLogConfigFile}</testArgLine>
 
 		<!-- Artifact distribution -->
-<!--		<maven.repository.id>nexus_deployment</maven.repository.id>-->
-<!--		<maven.releases.repository>invalid_prop_https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>-->
-<!--		<maven.snapshots.repository>invalid_prop_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>-->
-
+		<maven.repository.id>nexus_deployment</maven.repository.id>
+		<maven.releases.repository>invalid_prop_https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>
+		<maven.snapshots.repository>invalid_prop_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>
 	</properties>
 
 	<modules>
@@ -404,39 +403,39 @@
 			target platform definition, ie. the ECL, ETL and SCG features. All other sources are now 
 			referenced directly in the TP file. 
 		-->
-<!--		<repository>-->
-<!--			<id>maven-b2i-releases</id>-->
-<!--			<url>invalid_repo_https://artifacts.b2ihealthcare.com/repository/maven-releases</url>-->
-<!--			<releases>-->
-<!--				<enabled>true</enabled>-->
-<!--			</releases>-->
-<!--			<snapshots>-->
-<!--				<enabled>false</enabled>-->
-<!--			</snapshots>-->
-<!--		</repository>-->
-<!--		<repository>-->
-<!--			<id>maven-b2i-snapshots</id>-->
-<!--			<url>invalid_repo_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>-->
-<!--			<releases>-->
-<!--				<enabled>false</enabled>-->
-<!--			</releases>-->
-<!--			<snapshots>-->
-<!--				<enabled>true</enabled>-->
-<!--				<updatePolicy>always</updatePolicy>-->
-<!--			</snapshots>-->
-<!--		</repository>-->
+		<repository>
+			<id>maven-b2i-releases</id>
+			<url>invalid_repo_https://artifacts.b2ihealthcare.com/repository/maven-releases</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>maven-b2i-snapshots</id>
+			<url>invalid_repo_https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
 	</repositories>
 			
-<!--	<distributionManagement>-->
-<!--		<repository>-->
-<!--			<id>${maven.repository.id}</id>-->
-<!--			<url>${maven.releases.repository}</url>-->
-<!--		</repository>-->
-<!--		<snapshotRepository>-->
-<!--			<id>${maven.repository.id}</id>-->
-<!--			<url>${maven.snapshots.repository}</url>-->
-<!--		</snapshotRepository>-->
-<!--	</distributionManagement>-->
+	<distributionManagement>
+		<repository>
+			<id>${maven.repository.id}</id>
+			<url>${maven.releases.repository}</url>
+		</repository>
+		<snapshotRepository>
+			<id>${maven.repository.id}</id>
+			<url>${maven.snapshots.repository}</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<scm>
 		<url>https://github.com/b2ihealthcare/snow-owl</url>
