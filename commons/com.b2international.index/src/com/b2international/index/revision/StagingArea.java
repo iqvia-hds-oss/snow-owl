@@ -768,6 +768,9 @@ public final class StagingArea {
 			if (!currentStagedObject.isCommit() && currentStagedObject.getObject() instanceof Revision && newDocument instanceof Revision) {
 				RevisionDiff diff = new RevisionDiff((Revision) currentStagedObject.getObject(), (Revision) newDocument);
 				if (diff.hasChanges()) {
+					if (!currentStagedObject.isCommit() && commit && isMerge()) {
+						injectChangedEntryToMergeCommit(((Revision) newDocument).getContainerId(), objectId);
+					}
 					stagedObjects.put(objectId, changed(newDocument, diff, commit));
 				}
 			} else {
@@ -807,6 +810,9 @@ public final class StagingArea {
 		ObjectId id = ObjectId.toObjectId(changedRevision, changedRevision.getId());
 		if (stagedObjects.containsKey(id)) {
 			StagedObject currentObject = stagedObjects.get(id);
+			if (!currentObject.isCommit() && commit && isMerge()) {
+				injectChangedEntryToMergeCommit(changedRevision.getContainerId(), id);
+			}
 			stagedObjects.put(id, currentObject.withObject(changedRevision, commit));
 		} else {
 			stagedObjects.put(id, changed(changedRevision, new RevisionDiff(oldRevision, changedRevision), commit));
@@ -964,15 +970,11 @@ public final class StagingArea {
 		
 		applyPropertyUpdates(toRef, propertyUpdatesToApply);
 		
-		// XXX make sure we use only the diff toRef to detect revisions added/changed to the target branch when not squash merging 
-		// (deletions will still use the full history of the to branch)
-		var mergeTargetRef = squash ? toRef : toRef.difference(fromRef);
-		
 		// apply new objects
-		applyNewObjects(added, mergeSourceRef, mergeTargetRef, squash);
+		applyNewObjects(added, mergeSourceRef, toRef, squash);
 		
 		// apply changed objects
-		applyChangedObjects(changed, mergeSourceRef, mergeTargetRef, squash);
+		applyChangedObjects(changed, mergeSourceRef, toRef, squash);
 		
 		// always apply deleted objects, they set the revised timestamp properly without introducing any new document
 		// XXX here when removing object use the entire history of the toRef to find the latest state available for the document
@@ -1194,7 +1196,7 @@ public final class StagingArea {
 					if (oldRevisionsById.containsKey(updatedId)) {
 						stageChange(oldRevisionsById.get(updatedId), updatedRevisionsById.get(updatedId), squash);
 					} else {
-						stageNew(updatedRevisionsById.get(updatedId), squash);
+						stageChange(updatedRevisionsById.get(updatedId), updatedRevisionsById.get(updatedId), squash);
 					}
 				}
 				
