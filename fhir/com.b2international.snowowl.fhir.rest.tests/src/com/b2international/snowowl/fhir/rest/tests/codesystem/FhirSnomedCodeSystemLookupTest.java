@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.Matchers.not;
 
 import java.util.List;
 
@@ -226,6 +227,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", not(hasItem(containsString("null"))))
 			.body("issue.diagnostics[0]", containsString("Unrecognized property [http://snomed.info/id/12345]."));
 	}
 	
