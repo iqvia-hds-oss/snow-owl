@@ -27,7 +27,7 @@
 		
 		<!-- Build tool/compiler versions -->
 		<tycho.version>5.0.3</tycho.version>
-		<jacoco.version>0.8.14</jacoco.version>
+		<jacoco.version>0.8.15</jacoco.version>
 		
 		<!-- Versioning -->
 		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
