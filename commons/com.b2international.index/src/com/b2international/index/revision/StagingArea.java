@@ -402,8 +402,7 @@ public final class StagingArea {
 			if (value.isRemoved() && value.isCommit()) {
 				Object object = value.getObject();
 				deletedIdsByType.put(object.getClass(), key.id());
-				if (object instanceof Revision) {
-					Revision rev = (Revision) object;
+				if (object instanceof Revision rev) {
 					removedComponentsByContainer.put(rev.getContainerId(), key);
 				} else {
 					removedComponentsByContainer.put(ObjectId.rootOf(DocumentMapping.getDocType(object.getClass())), key);
@@ -427,8 +426,7 @@ public final class StagingArea {
 			if (value.isAdded() && value.isCommit()) {
 				Object document = value.getObject();
 				writer.put(document);
-				if (document instanceof Revision) {
-					Revision rev = (Revision) document;
+				if (document instanceof Revision rev) {
 					newComponentsByContainer.put(checkNotNull(rev.getContainerId(), "Missing containerId for revision: %s", rev), rev.getObjectId());
 					if (isMerge()) {
 						revisionsToReviseOnMergeSource.put(document.getClass(), key.id());
@@ -798,11 +796,11 @@ public final class StagingArea {
 		ObjectId objectId = ObjectId.toObjectId(newDocument, key);
 		if (stagedObjects.containsKey(objectId)) {
 			StagedObject currentStagedObject = stagedObjects.get(objectId);
-			if (!currentStagedObject.isCommit() && currentStagedObject.getObject() instanceof Revision && newDocument instanceof Revision newObject) {
-				RevisionDiff diff = new RevisionDiff((Revision) currentStagedObject.getObject(), (Revision) newDocument);
+			if (!currentStagedObject.isCommit() && currentStagedObject.getObject() instanceof Revision currentRevision && newDocument instanceof Revision newRevision) {
+				RevisionDiff diff = new RevisionDiff(currentRevision, newRevision);
 				if (diff.hasChanges()) {
 					if (!currentStagedObject.isCommit() && commit && isMerge()) {
-						injectChangedEntryToMergeCommit(newObject.getContainerId(), objectId);
+						injectChangedEntryToMergeCommit(newRevision.getContainerId(), objectId);
 					}
 					stagedObjects.put(objectId, changed(newDocument, diff, commit));
 				}
