@@ -16,7 +16,7 @@
 		<!-- RFC 6902 JSON Patch implementation - zjsonpatch requires Jackson 2.14+ and Commons Collections 4.4 -->
 		<zjsonpatch.version>0.4.16</zjsonpatch.version>
 		<!-- Micrometer Metrics framework -->
-		<micrometer.version>1.14.9</micrometer.version>
+		<micrometer.version>1.17.0</micrometer.version>
 		<!-- Bean Validation -->
 		<hibernate.validator.version>9.1.0.Final</hibernate.validator.version>
 		<!-- Console Lib -->
