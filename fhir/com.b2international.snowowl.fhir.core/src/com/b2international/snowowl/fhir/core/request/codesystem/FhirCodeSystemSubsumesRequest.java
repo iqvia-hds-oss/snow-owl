@@ -15,7 +15,11 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 
@@ -26,8 +30,10 @@ import com.b2international.snowowl.core.Repository;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -54,6 +60,8 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final String codeA = parameters.getCodeA() != null ? parameters.getCodeA().getValue() : parameters.getCodingA().getCode();
 		final String codeB = parameters.getCodeB() != null ? parameters.getCodeB().getValue() : parameters.getCodingB().getCode();
 		
+		validateCodes(context, codeSystem, codeA, codeB);
+		
 		if (Objects.equals(codeA, codeB)) {
 			return CodeSystemSubsumptionResultParameters.equivalent();
 		} else if (isSubsumedBy(context, codeSystem, codeA, codeB)) {
@@ -61,7 +69,7 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		} else if (isSubsumedBy(context, codeSystem, codeB, codeA)) {
 			return CodeSystemSubsumptionResultParameters.subsumes();	
 		} else {
-			return CodeSystemSubsumptionResultParameters.notSubsumed();				
+			return CodeSystemSubsumptionResultParameters.notSubsumed();
 		}
 	}
 
@@ -86,4 +94,36 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 				.getTotal() > 0;
 	}
 
+	private void validateCodes(ServiceProvider context, CodeSystem codeSystem, String codeA, String codeB) {
+		if (codeA == null || codeB == null) {
+			throw new BadRequestException("codeA and codeB parameters are required");
+		}
+		
+		final List<String> codesToValidate = List.of(codeA, codeB);
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+	
+		final Options conceptSearchOptions = Options.builder()
+				.put(ConceptSearchRequestEvaluator.OptionKey.ID, codesToValidate)
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, codesToValidate.size())
+				.build();
+	
+		final ServiceProvider searchContext = context.inject()
+				.bind(ResourceFragment.class, resource)
+				.build();
+	
+		final Set<String> existingConceptIds = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+				.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions)
+				.stream()
+				.map(Concept::getId)
+				.collect(Collectors.toSet());
+	
+		final Set<String> missingConceptIds = codesToValidate.stream()
+				.filter(code -> !existingConceptIds.contains(code))
+				.collect(Collectors.toCollection(HashSet::new));
+	
+		if (!missingConceptIds.isEmpty()) {
+			throw new BadRequestException("An invalid code was supplied");
+		}
+	}
 }
