@@ -172,7 +172,7 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		final Set<String> targetResourceIds
 	) {
 		return ResourceRequests.prepareSearchVersion()
-			.filterByResources(targetResourceIds) // TODO: check if this filter actually accepts resource identifiers
+			.filterByResources(targetResourceIds)
 			.setFields(
 				VersionDocument.Fields.ID, 
 				VersionDocument.Fields.RESOURCE
