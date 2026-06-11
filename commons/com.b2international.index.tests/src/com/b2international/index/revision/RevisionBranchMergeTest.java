@@ -15,10 +15,12 @@
  */
 package com.b2international.index.revision;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -144,18 +146,19 @@ public class RevisionBranchMergeTest extends BaseRevisionIndexTest {
 		indexRevision(MAIN, NEW_DATA);
 		indexRevision(MAIN, NEW_DATA2);
 		String child = createBranch(MAIN, "a");
-		// change a revision on the child branch
+		// delete BOTH revisions on the child branch
 		indexRemove(child, NEW_DATA, NEW_DATA2);
 		// after commit child branch becomes FORWARD
 		assertState(child, MAIN, BranchState.FORWARD);
-		// do the merge with an exclusion
+
+		// but when merging exclude the first one, so that should not be deleted
 		branching()
 			.prepareMerge(child, MAIN)
 			.exclude(STORAGE_KEY1)
 			.squash(true)
 			.merge();
 		
-		// after fast-forward merge
+		// after squash merge
 		// 1. MAIN falls behind compared to the child
 		assertState(MAIN, child, BranchState.FORWARD);
 		
@@ -552,8 +555,10 @@ public class RevisionBranchMergeTest extends BaseRevisionIndexTest {
 		final String newParent = createBranch(MAIN, "newParent");
 		final String newBranch = createBranch(newParent, "move");
 		
-		// initial sync produces empty commit but an actual change in the doc
-		branching().prepareMerge(oldBranch, newBranch).squash(false).merge();
+		// initial sync produces a non-empty commit indicating that there was a "conflict" detected during the merge 
+		Commit commit = branching().prepareMerge(oldBranch, newBranch).squash(false).merge();
+		// assert  that the injected conflict change pill is present
+		assertThat(commit.getDetails()).containsOnly(CommitDetail.changed(NEW_DATA.getObjectId().type(), NEW_DATA.getObjectId().type()).objects(ObjectId.ROOT).components(Set.of(NEW_DATA.getId())).build());
 		
 		RevisionData afterFirstSync = getRevision(newBranch, RevisionData.class, STORAGE_KEY1);
 		assertEquals("change", afterFirstSync.getDerivedField());

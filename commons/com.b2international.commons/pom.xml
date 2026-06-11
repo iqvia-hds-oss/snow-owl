@@ -15,12 +15,10 @@
 	<properties>
 		<!-- RFC 6902 JSON Patch implementation - zjsonpatch requires Jackson 2.14+ and Commons Collections 4.4 -->
 		<zjsonpatch.version>0.4.16</zjsonpatch.version>
-		<!-- Graph algorithms lib -->
-		<jgrapht.version>1.5.2</jgrapht.version>
 		<!-- Micrometer Metrics framework -->
 		<micrometer.version>1.14.9</micrometer.version>
 		<!-- Bean Validation -->
-		<hibernate.validator.version>8.0.1.Final</hibernate.validator.version>
+		<hibernate.validator.version>9.1.0.Final</hibernate.validator.version>
 		<!-- Console Lib -->
 		<picocli.version>3.5.1</picocli.version>
 		<!-- Java Annotations -->
@@ -34,12 +32,6 @@
 			<artifactId>zjsonpatch</artifactId>
 			<version>${zjsonpatch.version}</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-  			<groupId>org.jgrapht</groupId>
-  			<artifactId>jgrapht-core</artifactId>
-  			<version>${jgrapht.version}</version>
-  			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.micrometer</groupId>
@@ -78,7 +70,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.1.1</version>
 				<executions>
 					<execution>
 						<?m2e execute onConfiguration?>
@@ -107,8 +98,7 @@
 								hibernate-validator,
 								jboss-logging,
 								picocli,
-								jsr305,
-								javax.annotation-api
+								jsr305
 							</includeArtifactIds>
 							<outputDirectory>${basedir}/lib</outputDirectory>
 						</configuration>

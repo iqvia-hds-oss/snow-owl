@@ -71,7 +71,7 @@ public final class StagingArea {
 	private Map<ObjectId, StagedObject> stagedObjects;
 
 	private SortedSet<RevisionBranchPoint> mergeSources;
-	private RevisionBranchRef mergeFromBranchRef;
+	private RevisionBranchRef mergeSourceRef;
 	private boolean squashMerge;
 	private SetMultimap<Class<?>, String> revisionsToReviseOnMergeSource;
 	private SetMultimap<Class<?>, String> externalRevisionsToReviseOnMergeSource;
@@ -157,7 +157,7 @@ public final class StagingArea {
 	 */
 	public <T> T readFromMergeSource(RevisionIndexRead<T> read) {
 		Preconditions.checkState(isMerge(), "Cannot read revisions from mergeSource branch in non-merge scenarios. Perform a merge() before calling this method.");
-		return index.read(mergeFromBranchRef, read);
+		return index.read(mergeSourceRef, read);
 	}
 	
 	/**
@@ -402,8 +402,7 @@ public final class StagingArea {
 			if (value.isRemoved() && value.isCommit()) {
 				Object object = value.getObject();
 				deletedIdsByType.put(object.getClass(), key.id());
-				if (object instanceof Revision) {
-					Revision rev = (Revision) object;
+				if (object instanceof Revision rev) {
 					removedComponentsByContainer.put(rev.getContainerId(), key);
 				} else {
 					removedComponentsByContainer.put(ObjectId.rootOf(DocumentMapping.getDocType(object.getClass())), key);
@@ -427,8 +426,7 @@ public final class StagingArea {
 			if (value.isAdded() && value.isCommit()) {
 				Object document = value.getObject();
 				writer.put(document);
-				if (document instanceof Revision) {
-					Revision rev = (Revision) document;
+				if (document instanceof Revision rev) {
 					newComponentsByContainer.put(checkNotNull(rev.getContainerId(), "Missing containerId for revision: %s", rev), rev.getObjectId());
 					if (isMerge()) {
 						revisionsToReviseOnMergeSource.put(document.getClass(), key.id());
@@ -457,7 +455,6 @@ public final class StagingArea {
 
 					if (isMerge()) {
 						revisionsToReviseOnMergeSource.put(rev.getClass(), rev.getId());
-						injectChangedEntryToMergeCommit(containerId, objectId);
 					}
 					
 					if (rev instanceof CommitSubject subject) {
@@ -490,7 +487,7 @@ public final class StagingArea {
 		// apply revised flag on merge source branch
 		if (isMerge()) {
 			for (Class<?> type : revisionsToReviseOnMergeSource.keySet()) {
-				writer.setRevised(type, ImmutableSet.copyOf(revisionsToReviseOnMergeSource.get(type)), mergeFromBranchRef);
+				writer.setRevised(type, ImmutableSet.copyOf(revisionsToReviseOnMergeSource.get(type)), mergeSourceRef);
 			}
 		}
 		
@@ -724,7 +721,7 @@ public final class StagingArea {
 	 * @return <code>true</code> if the staging area is merging content from another branch into the current branch
 	 */
 	public boolean isMerge() {
-		return mergeFromBranchRef != null;
+		return mergeSourceRef != null;
 	}
 	
 	/**
@@ -733,7 +730,7 @@ public final class StagingArea {
 	 */
 	public String getMergeFromBranchPath() {
 		Preconditions.checkState(isMerge(), "Cannot get merge from branch path in non-merge scenarios. Start a merge() before calling this method.");
-		return mergeFromBranchRef.path();
+		return mergeSourceRef.path();
 	}
 	
 	/**
@@ -741,7 +738,7 @@ public final class StagingArea {
 	 */
 	public void rollback() {
 		clear();
-		this.mergeFromBranchRef = null;
+		this.mergeSourceRef = null;
 		this.mergeSources = null;
 	}
 	
@@ -799,9 +796,12 @@ public final class StagingArea {
 		ObjectId objectId = ObjectId.toObjectId(newDocument, key);
 		if (stagedObjects.containsKey(objectId)) {
 			StagedObject currentStagedObject = stagedObjects.get(objectId);
-			if (!currentStagedObject.isCommit() && currentStagedObject.getObject() instanceof Revision && newDocument instanceof Revision) {
-				RevisionDiff diff = new RevisionDiff((Revision) currentStagedObject.getObject(), (Revision) newDocument);
+			if (!currentStagedObject.isCommit() && currentStagedObject.getObject() instanceof Revision currentRevision && newDocument instanceof Revision newRevision) {
+				RevisionDiff diff = new RevisionDiff(currentRevision, newRevision);
 				if (diff.hasChanges()) {
+					if (!currentStagedObject.isCommit() && commit && isMerge()) {
+						injectChangedEntryToMergeCommit(newRevision.getContainerId(), objectId);
+					}
 					stagedObjects.put(objectId, changed(newDocument, diff, commit));
 				}
 			} else {
@@ -841,6 +841,9 @@ public final class StagingArea {
 		ObjectId id = ObjectId.toObjectId(changedRevision, changedRevision.getId());
 		if (stagedObjects.containsKey(id)) {
 			StagedObject currentObject = stagedObjects.get(id);
+			if (!currentObject.isCommit() && commit && isMerge()) {
+				injectChangedEntryToMergeCommit(changedRevision.getContainerId(), id);
+			}
 			stagedObjects.put(id, currentObject.withObject(changedRevision, commit));
 		} else {
 			stagedObjects.put(id, changed(changedRevision, new RevisionDiff(oldRevision, changedRevision), commit));
@@ -940,8 +943,8 @@ public final class StagingArea {
 	
 	/*package*/ void merge(RevisionBranchRef fromRef, RevisionBranchRef toRef, boolean squash, RevisionConflictProcessor conflictProcessor, Set<String> exclusions) throws BranchMergeConflictException {
 		checkArgument(this.mergeSources == null, "Already merged another ref to this StagingArea. Commit staged changes to apply them.");
-		this.mergeFromBranchRef = fromRef.difference(toRef);
-		this.mergeSources = this.mergeFromBranchRef
+		this.mergeSourceRef = fromRef.difference(toRef);
+		this.mergeSources = this.mergeSourceRef
 				.segments()
 				.stream()
 				.filter(segment -> segment.branchId() != toRef.branchId())
@@ -1005,13 +1008,14 @@ public final class StagingArea {
 		applyPropertyUpdates(toRef, propertyUpdatesToApply);
 		
 		// apply new objects
-		applyNewObjects(added, mergeFromBranchRef, toRef, squash);
+		applyNewObjects(added, mergeSourceRef, toRef, squash);
 		
 		// apply changed objects
-		applyChangedObjects(changed, mergeFromBranchRef, toRef, squash);
+		applyChangedObjects(changed, mergeSourceRef, toRef, squash);
 		
 		// always apply deleted objects, they set the revised timestamp properly without introducing any new document
-		applyRemovedObjects(removed, mergeFromBranchRef, toRef, squash);
+		// XXX here when removing object use the entire history of the toRef to find the latest state available for the document
+		applyRemovedObjects(removed, mergeSourceRef, toRef, squash);
 		
 		// any externally marked revised revisions should be applied here
 		revisionsToReviseOnMergeSource.putAll(externalRevisionsToReviseOnMergeSource);
@@ -1043,6 +1047,7 @@ public final class StagingArea {
 					// FIXME for the future, figure out how to reduce the number of ser/deser during merge
 					stageChange(oldRevision, mapper.convertValue(objectToUpdate, type));
 					revisionsToReviseOnMergeSource.put(type, oldRevision.getId());
+					injectChangedEntryToMergeCommit(oldRevision.getContainerId(), oldRevision.getObjectId());
 				}
 			}
 		}
@@ -1139,6 +1144,12 @@ public final class StagingArea {
 					final Map<String, RevisionCompareDetail> sourcePropertyChanges = sourcePropertyChangesByObject.remove(changedInSourceAndTargetId);
 					final Map<String, RevisionCompareDetail> targetPropertyChanges = targetPropertyChangesByObject.remove(changedInSourceAndTargetId);
 					
+					final ObjectId changeInSourceAndTargetObject = ObjectId.of(type, changedInSourceAndTargetId);
+					ObjectId containerOfChangedInSourceAndTargetObject = fromChangeSet.getContainerId(changeInSourceAndTargetObject);
+					if (containerOfChangedInSourceAndTargetObject == null) {
+						containerOfChangedInSourceAndTargetObject = ObjectId.rootOf(docType);
+					}
+					
 					if (sourcePropertyChanges != null) {
 						for (Entry<String, RevisionCompareDetail> sourceChange : sourcePropertyChanges.entrySet()) {
 							final String changedProperty = sourceChange.getKey();
@@ -1180,6 +1191,8 @@ public final class StagingArea {
 					}
 					
 					// this object has changed on both sides either by tracked field changes or due to some cascading derived field change
+					// apply change pill to the merge commit, so that we know in the future that there was a conflict here which got resolved
+					injectChangedEntryToMergeCommit(containerOfChangedInSourceAndTargetObject, changeInSourceAndTargetObject);
 					// revise the revision on source, since we already have one on this branch already
 					revisionsToReviseOnMergeSource.put(type, changedInSourceAndTargetId);
 				}
@@ -1204,24 +1217,23 @@ public final class StagingArea {
 		}
 	}
 
-	private void applyChangedObjects(SetMultimap<Class<? extends Revision>, String> changed, RevisionBranchRef fromRef, RevisionBranchRef toRef,
+	private void applyChangedObjects(SetMultimap<Class<? extends Revision>, String> changed, RevisionBranchRef fromRef, RevisionBranchRef toOnlyRef,
 			boolean squash) {
 		for (Class<? extends Revision> type : ImmutableSet.copyOf(changed.keySet())) {
 			final Collection<String> changedRevisionIds = changed.removeAll(type);
 			
 			for (List<String> currentChangedRevisionIds : Iterables.partition(changedRevisionIds, maxTermsCount)) {
 				
-				final Iterable<? extends Revision> oldRevisions = index.read(toRef, searcher -> searcher.get(type, currentChangedRevisionIds));
+				final Iterable<? extends Revision> oldRevisions = index.read(toOnlyRef, searcher -> searcher.get(type, currentChangedRevisionIds));
 				final Map<String, ? extends Revision> oldRevisionsById = FluentIterable.from(oldRevisions).uniqueIndex(Revision::getId);
 				final Iterable<? extends Revision> updatedRevisions = index.read(fromRef, searcher -> searcher.get(type, currentChangedRevisionIds));
 				final Map<String, ? extends Revision> updatedRevisionsById = FluentIterable.from(updatedRevisions).uniqueIndex(Revision::getId);
 			
 				for (String updatedId : updatedRevisionsById.keySet()) {
 					if (oldRevisionsById.containsKey(updatedId)) {
-						// actual changed revisions should always register themselves for commit if there is a revision on the target
-						stageChange(oldRevisionsById.get(updatedId), updatedRevisionsById.get(updatedId), true);
+						stageChange(oldRevisionsById.get(updatedId), updatedRevisionsById.get(updatedId), squash);
 					} else {
-						stageNew(updatedRevisionsById.get(updatedId), squash);
+						stageChange(updatedRevisionsById.get(updatedId), updatedRevisionsById.get(updatedId), squash);
 					}
 				}
 				
@@ -1229,21 +1241,20 @@ public final class StagingArea {
 		}
 	}
 
-	private void applyNewObjects(final SetMultimap<Class<? extends Revision>, String> added, RevisionBranchRef fromRef, RevisionBranchRef toRef, boolean squash) {
+	private void applyNewObjects(final SetMultimap<Class<? extends Revision>, String> added, RevisionBranchRef mergeSourceRef, RevisionBranchRef mergeTargetRef, boolean squash) {
 		for (Class<? extends Revision> type : ImmutableSet.copyOf(added.keySet())) {
 			final Set<String> addedIds = added.removeAll(type);
 			// skip new objects that are already marked as revised on merge source, content that is present on target should take place instead
 			final Set<String> newRevisionIds = Sets.difference(addedIds, externalRevisionsToReviseOnMergeSource.get(type));
 			
 			for (List<String> currentNewRevisionIds : Iterables.partition(newRevisionIds, maxTermsCount)) {
-				final Iterable<? extends Revision> oldRevisions = index.read(toRef, searcher -> searcher.get(type, currentNewRevisionIds));
-				final Iterable<? extends Revision> newRevisions = index.read(fromRef, searcher -> searcher.get(type, currentNewRevisionIds));
+				final Iterable<? extends Revision> oldRevisions = index.read(mergeTargetRef, searcher -> searcher.get(type, currentNewRevisionIds));
+				final Iterable<? extends Revision> newRevisions = index.read(mergeSourceRef, searcher -> searcher.get(type, currentNewRevisionIds));
 				final Map<String, ? extends Revision> oldRevisionsById = FluentIterable.from(oldRevisions).uniqueIndex(Revision::getId);
 				
 				newRevisions.forEach(rev -> {
 					if (oldRevisionsById.containsKey(rev.getId())) {
-						// actual changed revisions should always register themselves for commit if there is a revision on the target 
-						stageChange(oldRevisionsById.get(rev.getId()), rev, true); 
+						stageChange(oldRevisionsById.get(rev.getId()), rev, squash); 
 					} else {
 						stageNew(rev, squash);
 					}

@@ -26,8 +26,8 @@
 		<slf4j.version>2.0.17</slf4j.version>
 		
 		<!-- Build tool/compiler versions -->
-		<tycho.version>5.0.2</tycho.version>
-		<jacoco.version>0.8.14</jacoco.version>
+		<tycho.version>5.0.3</tycho.version>
+		<jacoco.version>0.8.15</jacoco.version>
 		
 		<!-- Versioning -->
 		<maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
@@ -42,7 +42,6 @@
 		<maven.repository.id>nexus_deployment</maven.repository.id>
 		<maven.releases.repository>https://artifacts.b2ihealthcare.com/repository/maven-releases</maven.releases.repository>
 		<maven.snapshots.repository>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</maven.snapshots.repository>
-
 	</properties>
 
 	<modules>
@@ -344,9 +343,29 @@
 					</configuration>
 				</plugin>
 				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>build-helper-maven-plugin</artifactId>
+					<version>3.6.1</version>
+				</plugin>
+				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-assembly-plugin</artifactId>
-					<version>2.3</version>
+					<version>3.8.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-clean-plugin</artifactId>
+					<version>3.5.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>3.5.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>3.11.0</version>
 				</plugin>
 				<plugin>
 					<artifactId>maven-install-plugin</artifactId>
@@ -367,13 +386,25 @@
 	</build>
 
 	<repositories>
+		<!-- Specify central first, as most of our dependencies come from there, ensure that all extra repositories are defined with an id after the central id -->
+		<repository>
+	      <id>central</id>
+	      <url>https://repo.maven.apache.org/maven2</url>
+	      <name>Central Repository</name>
+	      <releases>
+	      	  <enabled>true</enabled>
+	      </releases>
+      	  <snapshots>
+      	  	  <enabled>false</enabled>
+	      </snapshots>
+    	</repository>
 		<!-- 
-			Repositories defined here should allow resolving zipped update sites with an mvn: URL in the
+			B2i repositories defined here should allow resolving zipped update sites with an mvn: URL in the
 			target platform definition, ie. the ECL, ETL and SCG features. All other sources are now 
 			referenced directly in the TP file. 
 		-->
 		<repository>
-			<id>b2i-releases</id>
+			<id>maven-b2i-releases</id>
 			<url>https://artifacts.b2ihealthcare.com/repository/maven-releases</url>
 			<releases>
 				<enabled>true</enabled>
@@ -383,7 +414,7 @@
 			</snapshots>
 		</repository>
 		<repository>
-			<id>b2i-snapshots</id>
+			<id>maven-b2i-snapshots</id>
 			<url>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>
 			<releases>
 				<enabled>false</enabled>

@@ -14,11 +14,11 @@
 	<properties>
 		<spring.version>6.2.18</spring.version>
 		<spring.security.version>6.5.10</spring.security.version>
-		<springdoc.version>2.8.16</springdoc.version>
+		<springdoc.version>2.8.17</springdoc.version>
 		<!-- Ensure that Spring Boot version matches the version supported by SpringDoc -->
-		<spring.boot.version>3.5.13</spring.boot.version>
+		<spring.boot.version>3.5.14</spring.boot.version>
 		<!-- Make sure this version matches the one present in the target-platform for swagger-annotations and models -->
-		<swagger.core.version>2.2.43</swagger.core.version>
+		<swagger.core.version>2.2.47</swagger.core.version>
 		<!-- Node.js version to use for building the API docs site -->
 		<node.version>v22.22.2</node.version>
 		<npm.version>10.9.8</npm.version>
@@ -75,7 +75,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<?m2e ignore?>
@@ -109,7 +108,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
-				<version>3.1.1</version>
 				<executions>
 					<execution>
 						<?m2e execute onConfiguration?>
@@ -148,7 +146,7 @@
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
-				<version>1.15.0</version>
+				<version>1.15.4</version>
 				<executions>
 					<execution>
 						<?m2e execute onConfiguration?>
@@ -192,7 +190,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<?m2e execute onConfiguration?>
