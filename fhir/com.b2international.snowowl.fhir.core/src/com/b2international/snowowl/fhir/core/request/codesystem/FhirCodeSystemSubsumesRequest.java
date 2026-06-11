@@ -108,7 +108,6 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 	}
 	
 	private boolean isSubsumedBy(Concept subTypeConcept, String superTypeCode) {
-		return subTypeConcept.getAncestorIds() != null && 
-				(subTypeConcept.getParentIds().contains(superTypeCode) || subTypeConcept.getAncestorIds().contains(superTypeCode));
+		return subTypeConcept.getParentIds().contains(superTypeCode) || subTypeConcept.getAncestorIds().contains(superTypeCode);
 	}
 }
