@@ -124,7 +124,7 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void GET_CodeSystem_$susbsumes_Invalid() throws Exception {
+	public void GET_CodeSystem_$susbsumes_codeA_Invalid() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", "invalid")
 			.queryParam("codeB", BACTERIA)
@@ -137,7 +137,24 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem(("An invalid code was supplied")));
+			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeA: \"invalid\"."));
+	}
+	
+	@Test
+	public void GET_CodeSystem_$susbsumes_codeB_Invalid() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("codeA", BACTERIA)
+			.queryParam("codeB", "invalid")
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
+			.when().get(CODESYSTEM_SUBSUMES)
+			.then().assertThat()
+			.statusCode(400)
+			
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeB: \"invalid\"."));
 	}
 	
 	@Test
@@ -154,6 +171,6 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem(("An invalid code was supplied")));
+			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeA: \"invalid\"."));
 	}
 }
