@@ -186,7 +186,6 @@ public class FhirModelHelpers {
 					VersionDocument.Fields.VERSION,
 					VersionDocument.Fields.SETTINGS
 				)
-				.setExpand(Version.Expand.FHIR_SETTINGS + "()")
 				.buildAsync()
 				.execute(context)
 				.first();
