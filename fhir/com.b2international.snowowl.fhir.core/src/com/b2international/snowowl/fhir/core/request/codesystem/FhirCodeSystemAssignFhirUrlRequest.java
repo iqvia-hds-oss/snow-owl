@@ -81,9 +81,9 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 	private final String fhirVersionProperty;
 
 	// Cached values which would need to be requested multiples times (e.g. for access control checks and request execution)
-	private List<CodeSystem> targetCodeSystems;
-	private List<CodeSystem> modifiableTargetResources;
-	private Multimap<String, String> targetVersionIdsByResourceId;
+	private transient List<CodeSystem> targetCodeSystems;
+	private transient List<CodeSystem> modifiableTargetResources;
+	private transient Multimap<String, String> targetVersionIdsByResourceId;
 
 	FhirCodeSystemAssignFhirUrlRequest(final List<String> codeSystemIds, final String fhirUrl, final String fhirVersionProperty) {
 		this.codeSystemIds = codeSystemIds;

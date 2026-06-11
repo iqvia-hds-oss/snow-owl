@@ -59,7 +59,7 @@ final class FhirCodeSystemSetAsDefaultRequest implements Request<TransactionCont
 	@JsonProperty
 	private final String codeSystemId;
 
-	private List<CodeSystem> siblingsToUnset;
+	private transient List<CodeSystem> siblingsToUnset;
 
 	FhirCodeSystemSetAsDefaultRequest(final String codeSystemId) {
 		this.codeSystemId = codeSystemId;

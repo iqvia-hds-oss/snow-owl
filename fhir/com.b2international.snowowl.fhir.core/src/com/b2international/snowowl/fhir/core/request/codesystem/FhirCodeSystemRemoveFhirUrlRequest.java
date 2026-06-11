@@ -56,7 +56,7 @@ final class FhirCodeSystemRemoveFhirUrlRequest implements Request<TransactionCon
 	@JsonProperty
 	private final List<String> codeSystemIds;
 
-	private List<CodeSystem> targetCodeSystems;
+	private transient List<CodeSystem> targetCodeSystems;
 
 	FhirCodeSystemRemoveFhirUrlRequest(final List<String> codeSystemIds) {
 		this.codeSystemIds = codeSystemIds;

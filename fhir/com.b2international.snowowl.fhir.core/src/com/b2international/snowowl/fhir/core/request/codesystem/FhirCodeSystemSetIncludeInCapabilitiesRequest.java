@@ -61,7 +61,7 @@ final class FhirCodeSystemSetIncludeInCapabilitiesRequest implements Request<Tra
 	@JsonProperty
 	private final boolean includeInCapabilities;
 
-	private List<CodeSystem> targetCodeSystems;
+	private transient List<CodeSystem> targetCodeSystems;
 
 	FhirCodeSystemSetIncludeInCapabilitiesRequest(final List<String> codeSystemIds, final boolean includeInCapabilities) {
 		this.codeSystemIds = codeSystemIds;
