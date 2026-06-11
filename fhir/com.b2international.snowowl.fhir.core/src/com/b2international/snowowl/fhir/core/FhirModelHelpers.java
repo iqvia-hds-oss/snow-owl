@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.DateTimeType;
@@ -34,12 +35,14 @@ import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -290,4 +293,51 @@ public class FhirModelHelpers {
 		return genericImplicitValueSetUrl.replace(GENERIC_IMPLICIT_VALUESET_SUFFIX, ""); 
 	}
 
+	// Methods related to FHIR-specific settings
+	
+	public static String getEffectiveFhirUrl(final TerminologyResource resource) {
+		final Map<String, Object> settings = resource.getSettings();
+		if (settings == null) {
+			return resource.getUrl();
+		}
+		
+		final String fhirUrlOverride = (String) settings.get(TerminologyResource.Settings.FHIR_URL);
+		if (Strings.isNullOrEmpty(fhirUrlOverride)) {
+			return resource.getUrl();
+		} else {
+			return fhirUrlOverride;
+		}
+	}
+
+	private static String computeEffectiveVersion(
+		final String fhirVersionProperty, 
+		final Supplier<String> urlSupplier, 
+		final Supplier<String> versionSupplier
+	) {
+		if (fhirVersionProperty == null) {
+			return versionSupplier.get();
+		}
+		
+		switch (fhirVersionProperty) {
+			case ResourceDocument.Fields.URL:
+				return urlSupplier.get();
+			case VersionDocument.Fields.VERSION:
+				return versionSupplier.get();
+			default:
+				throw new IllegalStateException("Unsupported FHIR version property '" + fhirVersionProperty + "'");
+		}
+	}
+
+	public static String computeEffectiveVersion(final CodeSystem codeSystem, final String fhirVersionProperty) {
+		return computeEffectiveVersion(fhirVersionProperty, codeSystem::getUrl, () -> "");
+	}
+
+	public static String computeEffectiveVersion(final VersionDocument versionDocument, final String fhirVersionProperty) {
+		return computeEffectiveVersion(fhirVersionProperty, versionDocument::getUrl, versionDocument::getVersion);
+	}
+	
+	public static String computeEffectiveVersion(final Version version, final String fhirVersionProperty) {
+		return computeEffectiveVersion(fhirVersionProperty, version::getUrl, version::getVersion);
+	}
+	
 }

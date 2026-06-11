@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
+import static com.b2international.snowowl.fhir.core.FhirModelHelpers.computeEffectiveVersion;
+import static com.b2international.snowowl.fhir.core.FhirModelHelpers.getEffectiveFhirUrl;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,20 +56,6 @@ final class FhirCodeSystemGetComponentsRequest
 		.nullsFirst()
 		.onResultOf(Version::getEffectiveTime);
 
-	private static String getEffectiveFhirUrl(final TerminologyResource resource) {
-		final Map<String, Object> settings = resource.getSettings();
-		if (settings == null) {
-			return resource.getUrl();
-		}
-		
-		final String fhirUrlOverride = (String) settings.get(TerminologyResource.Settings.FHIR_URL);
-		if (Strings.isNullOrEmpty(fhirUrlOverride)) {
-			return resource.getUrl();
-		}
-
-		return fhirUrlOverride;
-	}
-
 	private static String getFhirVersionProperty(final Map<String, Object> settings) {
 		if (settings == null) {
 			return null;
@@ -90,14 +79,6 @@ final class FhirCodeSystemGetComponentsRequest
 		}
 		
 		return "true".equals(settings.get(TerminologyResource.Settings.FHIR_USE_AS_DEFAULT));
-	}
-
-	private static String computeEffectiveVersionCode(final Version version, final String fhirVersionProperty) {
-		if (ResourceDocument.Fields.URL.equals(fhirVersionProperty)) {
-			return version.getUrl();
-		} else {
-			return version.getVersion();
-		}
 	}
 
 	@Override
@@ -178,7 +159,7 @@ final class FhirCodeSystemGetComponentsRequest
 			}
 	
 			for (final Version version : versions) {
-				final String effectiveVersionCode = computeEffectiveVersionCode(version, fhirVersionProperty);
+				final String effectiveVersionCode = computeEffectiveVersion(version, fhirVersionProperty);
 				final boolean isDefault = markDefault && version.getId().equals(latestVersionId);
 				
 				component.addVersion()

@@ -15,6 +15,9 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
+import static com.b2international.snowowl.fhir.core.FhirModelHelpers.computeEffectiveVersion;
+import static com.b2international.snowowl.fhir.core.FhirModelHelpers.getEffectiveFhirUrl;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -35,7 +38,6 @@ import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.core.version.Versions;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Strings;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
@@ -124,20 +126,6 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 		return targetCodeSystems;
 	}
 
-	private static String getEffectiveFhirUrl(final CodeSystem existingResource) {
-		final Map<String, Object> settings = existingResource.getSettings();
-		if (settings == null) {
-			return existingResource.getUrl();
-		}
-		
-		final String fhirUrl = (String) settings.get(CodeSystem.Settings.FHIR_URL);
-		if (Strings.isNullOrEmpty(fhirUrl)) {
-			return existingResource.getUrl();
-		}
-		
-		return fhirUrl;
-	}
-
 	private Collection<CodeSystem> findExistingResourcesWithSameUrl(final TransactionContext context, final Set<String> modifiableIdSet) {
 		final Map<String, CodeSystem> existingResourcesById = new HashMap<>();
 	
@@ -220,22 +208,6 @@ final class FhirCodeSystemAssignFhirUrlRequest implements Request<TransactionCon
 			return fhirVersionProperty;
 		} else {
 			return getExistingFhirVersionProperty(settings);
-		}
-	}
-
-	private static String computeEffectiveVersion(final CodeSystem codeSystem, final String fhirVersionProperty) {
-		if (CodeSystem.Fields.URL.equals(fhirVersionProperty)) {
-			return codeSystem.getUrl();
-		} else {
-			return "";
-		}
-	}
-
-	private static String computeEffectiveVersion(final VersionDocument versionDocument, final String fhirVersionProperty) {
-		if (CodeSystem.Fields.URL.equals(fhirVersionProperty)) {
-			return versionDocument.getUrl();
-		} else {
-			return versionDocument.getVersion();
 		}
 	}
 
