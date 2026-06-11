@@ -10,7 +10,7 @@ updates:
     directory: /
     exclude-paths:
       - "releng/target-platform"
-    open-pull-requests-limit: 15
+    open-pull-requests-limit: 10
     schedule:
       interval: daily
     ignore:
@@ -20,7 +20,7 @@ updates:
   - package-ecosystem: maven
     directories:
       - "releng/target-platform"
-    open-pull-requests-limit: 15
+    open-pull-requests-limit: 10
     schedule:
       interval: daily
     ignore:
@@ -34,7 +34,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       org-slf4j:
         applies-to: version-updates
         patterns:
@@ -42,7 +41,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       ch-qos-logback:
         applies-to: version-updates
         patterns:
@@ -50,7 +48,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       com-fasterxml-jackson:
         applies-to: version-updates
         patterns:
@@ -61,7 +58,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       io-netty:
         applies-to: version-updates
         patterns:
@@ -69,7 +65,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       io-swagger-core:
         applies-to: version-updates
         patterns:
@@ -77,7 +72,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       org-eclipse-jetty:
         applies-to: version-updates
         patterns:
@@ -85,7 +79,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       org-ow2-asm:
         applies-to: version-updates
         patterns:
@@ -93,7 +86,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       io-rest-assured:
         applies-to: version-updates
         patterns:
@@ -101,7 +93,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-    groups:
       net-bytebuddy:
         applies-to: version-updates
         patterns:
