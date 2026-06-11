@@ -15,10 +15,9 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -60,70 +59,56 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final String codeA = parameters.getCodeA() != null ? parameters.getCodeA().getValue() : parameters.getCodingA().getCode();
 		final String codeB = parameters.getCodeB() != null ? parameters.getCodeB().getValue() : parameters.getCodingB().getCode();
 		
-		validateCodes(context, codeSystem, codeA, codeB);
+		final Map<String, Concept> conceptsById = fetchConcepts(context, codeSystem, codeA, codeB);
+		
+		final Concept conceptA = conceptsById.get(codeA);
+		final Concept conceptB = conceptsById.get(codeB);
+		
+		if (conceptA == null) {
+			throw new BadRequestException(String.format("An invalid code was supplied, codeA: \"%s\".", codeA));
+		}
+		
+		if (conceptB == null) {
+			throw new BadRequestException(String.format("An invalid code was supplied, codeB: \"%s\".", codeB));
+		}
 		
 		if (Objects.equals(codeA, codeB)) {
 			return CodeSystemSubsumptionResultParameters.equivalent();
-		} else if (isSubsumedBy(context, codeSystem, codeA, codeB)) {
-			return CodeSystemSubsumptionResultParameters.subsumedBy(); 
-		} else if (isSubsumedBy(context, codeSystem, codeB, codeA)) {
-			return CodeSystemSubsumptionResultParameters.subsumes();	
+		} else if (isSubsumedBy(conceptA, codeB)) {
+			return CodeSystemSubsumptionResultParameters.subsumedBy();
+		} else if (isSubsumedBy(conceptB, codeA)) {
+			return CodeSystemSubsumptionResultParameters.subsumes();
 		} else {
 			return CodeSystemSubsumptionResultParameters.notSubsumed();
 		}
 	}
 
-	private boolean isSubsumedBy(ServiceProvider context, CodeSystem codeSystem, final String subType, final String superType) {
-		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
-
-		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+	private Map<String, Concept> fetchConcepts(ServiceProvider context, CodeSystem codeSystem, String codeA, String codeB) {
 		
-		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
-		Options conceptSearchOptions = Options.builder()
-				.put(ConceptSearchRequestEvaluator.OptionKey.ID, subType)
-				.put(ConceptSearchRequestEvaluator.OptionKey.ANCESTOR, superType)
-				// we only need hit count to answer the subsumes question
-				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, 0) 
-				.build();
-		
-		// seed already fetched resource information to prevent refetching the metadata
-		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
-		
-		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions)
-				.getTotal() > 0;
-	}
-
-	private void validateCodes(ServiceProvider context, CodeSystem codeSystem, String codeA, String codeB) {
 		if (codeA == null || codeB == null) {
 			throw new BadRequestException("codeA and codeB parameters are required");
 		}
-		
-		final List<String> codesToValidate = List.of(codeA, codeB);
+
+		final List<String> conceptIds = List.of(codeA, codeB);
+
 		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
 		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
-	
+		
 		final Options conceptSearchOptions = Options.builder()
-				.put(ConceptSearchRequestEvaluator.OptionKey.ID, codesToValidate)
-				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, codesToValidate.size())
-				.build();
+			.put(ConceptSearchRequestEvaluator.OptionKey.ID, conceptIds)
+			.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, conceptIds.size())
+			.build();
+		
+		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+
+		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+			.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions)
+			.stream()
+			.collect(Collectors.toMap(Concept::getId, concept -> concept));
+	}
 	
-		final ServiceProvider searchContext = context.inject()
-				.bind(ResourceFragment.class, resource)
-				.build();
-	
-		final Set<String> existingConceptIds = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions)
-				.stream()
-				.map(Concept::getId)
-				.collect(Collectors.toSet());
-	
-		final Set<String> missingConceptIds = codesToValidate.stream()
-				.filter(code -> !existingConceptIds.contains(code))
-				.collect(Collectors.toCollection(HashSet::new));
-	
-		if (!missingConceptIds.isEmpty()) {
-			throw new BadRequestException("An invalid code was supplied");
-		}
+	private boolean isSubsumedBy(Concept subTypeConcept, String superTypeCode) {
+		return subTypeConcept.getAncestorIds() != null && 
+				(subTypeConcept.getParentIds().contains(superTypeCode) || subTypeConcept.getAncestorIds().contains(superTypeCode));
 	}
 }
