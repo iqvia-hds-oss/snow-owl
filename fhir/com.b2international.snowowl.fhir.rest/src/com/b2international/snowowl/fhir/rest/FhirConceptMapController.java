@@ -374,6 +374,10 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 			throw new BadRequestException("Concept map resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
 		}
 		
+		if (!soConceptMap.hasUrl()) {
+			throw new BadRequestException("Concept map resource did not contain a url element.");
+		}
+		
 		return FhirRequests.conceptMaps()
 			.prepareUpdate()
 			.setFhirConceptMap(soConceptMap)

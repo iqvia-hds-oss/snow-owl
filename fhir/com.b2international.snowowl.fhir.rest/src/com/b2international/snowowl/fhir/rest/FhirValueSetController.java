@@ -374,6 +374,10 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 			throw new BadRequestException("Value set resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
 		}
 		
+		if (!soValueSet.hasUrl()) {
+			throw new BadRequestException("Value set resource did not contain a url element.");
+		}
+		
 		return FhirRequests.valueSets()
 			.prepareUpdate()
 			.setFhirValueSet(soValueSet)

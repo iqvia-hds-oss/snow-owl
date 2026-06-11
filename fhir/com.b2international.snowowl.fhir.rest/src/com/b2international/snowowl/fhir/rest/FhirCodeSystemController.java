@@ -369,7 +369,7 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 		}
 		
 		if (!codeSystem.hasUrl()) {
-			throw new BadRequestException("Code system resource did not contain an url element.");
+			throw new BadRequestException("Code system resource did not contain a url element.");
 		}
 		
 		return FhirRequests.codeSystems()
