@@ -23,6 +23,7 @@ import java.time.ZoneOffset;
 import java.util.Map;
 
 import com.b2international.snowowl.core.ResourceURI;
+import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.branch.BranchPathUtils;
 import com.b2international.snowowl.core.commit.CommitInfo;
 import com.b2international.snowowl.core.date.DateFormats;
@@ -41,7 +42,6 @@ public final class Version implements Serializable {
 	
 	public static final class Expand {
 		public static final String UPDATED_AT_COMMIT = "updatedAtCommit";
-		public static final String FHIR_SETTINGS = "fhirSettings";
 	}
 	
 	private String id;
@@ -55,10 +55,7 @@ public final class Version implements Serializable {
 	private String author;
 	private String url;
 	private String toolingId;
-	
-	private transient Map<String, Object> settingsSnapshot;
-	private String fhirUrl;
-	private String fhirVersionProperty;
+	private Map<String, Object> settingsSnapshot;
 	
 	/**
 	 * @return the globally unique identifier of this version, resource + version.
@@ -119,18 +116,8 @@ public final class Version implements Serializable {
 		return toolingId;
 	}
 	
-	// settings snapshots are not returned in search results, we are only using it for expands
-	@JsonIgnore
 	public Map<String, Object> getSettingsSnapshot() {
 		return settingsSnapshot;
-	}
-	
-	public String getFhirUrl() {
-		return fhirUrl;
-	}
-	
-	public String getFhirVersionProperty() {
-		return fhirVersionProperty;
 	}
 	
 	// hidden setter to allow deserialization of Version JSON strings without errors
@@ -189,14 +176,6 @@ public final class Version implements Serializable {
 		this.settingsSnapshot = settingsSnapshot;
 	}
 	
-	public void setFhirUrl(String fhirUrl) {
-		this.fhirUrl = fhirUrl;
-	}
-	
-	public void setFhirVersionProperty(String fhirVersionProperty) {
-		this.fhirVersionProperty = fhirVersionProperty;
-	}
-	
 	// additional helper methods
 	
 	@JsonIgnore
@@ -211,6 +190,20 @@ public final class Version implements Serializable {
 	@JsonSetter
 	void setVersionResourceURI(ResourceURI versionResourceURI) {
 		// ignore
+	}
+
+	@JsonIgnore
+	public String getFhirUrl() {
+		return (settingsSnapshot != null) 
+			? (String) settingsSnapshot.get(TerminologyResource.Settings.FHIR_URL) 
+			: null;
+	}
+
+	@JsonIgnore
+	public String getFhirVersionProperty() {
+		return (settingsSnapshot != null) 
+			? (String) settingsSnapshot.get(TerminologyResource.Settings.FHIR_VERSION_PROPERTY) 
+			: null;
 	}
 
 }

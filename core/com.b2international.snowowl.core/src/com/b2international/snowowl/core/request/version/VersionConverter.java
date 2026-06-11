@@ -16,11 +16,9 @@
 package com.b2international.snowowl.core.request.version;
 
 import java.util.List;
-import java.util.Map;
 
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.commons.options.Options;
-import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.branch.Branch;
 import com.b2international.snowowl.core.commit.CommitInfo;
 import com.b2international.snowowl.core.domain.RepositoryContext;
@@ -62,21 +60,17 @@ public class VersionConverter extends BaseResourceConverter<VersionDocument, Ver
 		version.setAuthor(doc.getAuthor());
 		version.setUrl(doc.getUrl());
 		version.setToolingId(doc.getToolingId());
-		// We will be storing settings temporarily; it will be cleared after expand options are processed
 		version.setSettingsSnapshot(doc.getSettings());
 		return version;
 	}
 
 	@Override
 	public void expand(final List<Version> results) {
-
 		if (results.isEmpty() || expand().isEmpty()) {
 			return;
 		}
 
 		expandUpdatedAtCommit(results);
-		expandFhirSettings(results);
-		clearSettings(results);
 	}
 
 	private void expandUpdatedAtCommit(final List<Version> results) {
@@ -97,25 +91,4 @@ public class VersionConverter extends BaseResourceConverter<VersionDocument, Ver
 		}
 	}
 
-	private void expandFhirSettings(final List<Version> results) {
-		if (expand().containsKey(Version.Expand.FHIR_SETTINGS)) {
-			results.stream()
-				.forEach(res -> {
-					final Map<String, Object> settings = res.getSettingsSnapshot();
-					if (settings == null) {
-						return;
-					}
-					
-					final String fhirUrl = (String) settings.get(TerminologyResource.Settings.FHIR_URL);
-					final String fhirVersionProperty = (String) settings.get(TerminologyResource.Settings.FHIR_VERSION_PROPERTY);
-					
-					res.setFhirUrl(fhirUrl);
-					res.setFhirVersionProperty(fhirVersionProperty);
-				});
-		}
-	}
-
-	private void clearSettings(final List<Version> results) {
-		results.forEach(res -> res.setSettingsSnapshot(null));
-	}
 }
