@@ -141,27 +141,21 @@ final class FhirCodeSystemLookupRequest extends FhirCodeSystemOperationRequest<C
 				? Collections.emptyList()
 				: codeSystem.getProperty();
 		
-		// Official properties are always supported
-		final Set<String> lookupProperties = CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES;
+		// First, check if any of the properties are lookup request properties
+		final Set<String> nonLookupProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);
 		
-		// Collect property URIs and codes from the code system
+		// Second, check if the remaining unsupported properties are supported by the CodeSystem either via full URL
 		final Set<String> supportedPropertyUris = codeSystemProperties.stream()
 				.map(CodeSystem.PropertyComponent::getUri)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
+		final Set<String> unsupportedByUri = Sets.difference(nonLookupProperties, supportedPropertyUris);
 		
+		// or via their code only
 		final Set<String> supportedPropertyCodes = codeSystemProperties.stream()
 				.map(CodeSystem.PropertyComponent::getCode)
 				.filter(Objects::nonNull)
 				.collect(Collectors.toSet());
-		
-		// Check if any of the properties are lookup request properties
-		final Set<String> nonLookupProperties = Sets.difference(requestedProperties, lookupProperties);
-		
-		// First, check if any of the properties match a supported property URI
-		final Set<String> unsupportedByUri = Sets.difference(nonLookupProperties, supportedPropertyUris);
-		
-		// Second, check if any of the properties match a supported property code
 		final Set<String> unsupportedProperties = Sets.difference(unsupportedByUri, supportedPropertyCodes);
 
 		if (!unsupportedProperties.isEmpty()) {
