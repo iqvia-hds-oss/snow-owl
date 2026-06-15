@@ -67,8 +67,8 @@ jobs:
           --batch-mode
 
     # Upload Code Coverage
-    - name: Upload Codecov
-      uses: codecov/codecov-action@v7.0.0
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: true
+    #- name: Upload Codecov
+    #  uses: codecov/codecov-action@v7.0.0
+    #  with:
+    #    token: ${{ secrets.CODECOV_TOKEN }}
+    #    fail_ci_if_error: true
