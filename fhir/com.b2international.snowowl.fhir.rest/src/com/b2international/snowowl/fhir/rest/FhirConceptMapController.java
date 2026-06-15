@@ -82,6 +82,9 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 	 * @param owner
 	 * @param ownerProfileName
 	 * @param bundleId
+	 * @param accept
+	 * @param _format
+	 * @param _pretty
 	 * @return
 	 */
 	@Operation(
@@ -224,6 +227,9 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 	 * @param owner
 	 * @param ownerProfileName
 	 * @param bundleId
+	 * @param accept
+	 * @param _format
+	 * @param _pretty
 	 * @return
 	 */
 	@Operation(
