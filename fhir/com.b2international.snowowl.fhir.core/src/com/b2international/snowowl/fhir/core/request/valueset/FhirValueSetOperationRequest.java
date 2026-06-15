@@ -161,6 +161,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		String version, 
 		String query
 	) {
+		// TODO: Support FHIR implicit Value Set URLs for LOINC, and in the future other code systems as well
 		if (!FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
 			// This is a generic implicit Value Set URL which only supports the "fhir_vs" query type for now
 			if (!"fhir_vs".equals(query)) {
