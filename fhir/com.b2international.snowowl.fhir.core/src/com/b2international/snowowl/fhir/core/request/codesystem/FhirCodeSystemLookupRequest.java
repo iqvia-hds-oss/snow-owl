@@ -170,5 +170,5 @@ final class FhirCodeSystemLookupRequest extends FhirCodeSystemOperationRequest<C
 				throw new BadRequestException(String.format("Unrecognized properties %s. Supported properties are: %s.", unsupportedProperties, supportedPropertiesDisplay), "LookupRequest.property");
 			}
 		}
-	}
+	} 
 }
