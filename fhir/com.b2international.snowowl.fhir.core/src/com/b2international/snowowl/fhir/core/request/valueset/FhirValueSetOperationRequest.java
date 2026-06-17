@@ -27,6 +27,8 @@ import org.hl7.fhir.r5.model.ValueSet;
 
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
+import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
@@ -129,10 +131,12 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 			.filterByUrl(codeSystemUrl)
 			.filterByVersion(version)
 			.setElements(FhirCodeSystemOperationRequest.MINIMAL_CODESYSTEM_FIELD_SELECTION, false)
+			.sortBy(Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME)) // Use latest version if "filterByVersion" is left unused
 			.buildAsync()
 			.execute(context)
-			.getEntry().stream().findFirst()
-			.map(Bundle.BundleEntryComponent.class::cast)
+			.getEntry()
+			.stream()
+			.findFirst()
 			.map(Bundle.BundleEntryComponent::getResource)
 			.map(CodeSystem.class::cast)
 			.orElse(null);
