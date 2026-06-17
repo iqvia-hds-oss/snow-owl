@@ -64,11 +64,11 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final Concept conceptA = conceptsById.get(codeA);
 		final Concept conceptB = conceptsById.get(codeB);
 		
-		if (conceptA == null) {
+		if (conceptA == null && conceptB == null) {
+			throw new BadRequestException(String.format("Invalid codes were supplied, codeA: \"%s\", codeB: \"%s\".", codeA, codeB));
+		} else if (conceptA == null) {
 			throw new BadRequestException(String.format("An invalid code was supplied, codeA: \"%s\".", codeA));
-		}
-		
-		if (conceptB == null) {
+		} else if (conceptB == null) {
 			throw new BadRequestException(String.format("An invalid code was supplied, codeB: \"%s\".", codeB));
 		}
 		
