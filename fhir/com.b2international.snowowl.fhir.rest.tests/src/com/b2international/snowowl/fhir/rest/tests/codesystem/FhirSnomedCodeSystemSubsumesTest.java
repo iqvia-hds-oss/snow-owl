@@ -171,6 +171,6 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeA: \"invalid\"."));
+			.body("issue.diagnostics", hasItem("Invalid codes were supplied, codeA: \"invalid\", codeB: \"invalid\"."));
 	}
 }
