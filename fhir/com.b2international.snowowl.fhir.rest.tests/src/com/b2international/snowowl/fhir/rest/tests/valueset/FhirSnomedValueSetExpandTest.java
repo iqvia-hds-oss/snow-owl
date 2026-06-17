@@ -249,5 +249,20 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(0));
 	}
-
+	
+	@Test
+	public void expandSnomedCodeSystemURL_termFilter() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=isa/105590001&filter=drug")
+			.when().get(VALUESET_EXPAND)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("ValueSet"))
+			.body("id", notNullValue())
+			.body("expansion.total", equalTo(1))
+			.body("expansion.contains[0].code", equalTo("410942007"))
+			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
+			.body("expansion.contains[0].display", equalTo("Drug or medicament (substance)"));
+	}
 }

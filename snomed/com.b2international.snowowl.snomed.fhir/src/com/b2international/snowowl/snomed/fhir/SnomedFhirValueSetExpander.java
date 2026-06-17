@@ -36,6 +36,7 @@ import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.core.request.ExpandParser;
 import com.b2international.snowowl.core.request.SearchIndexResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
+import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
@@ -59,7 +60,8 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
 		}
 		
-		final String termFilter = parameters.getFilter() == null ? null : parameters.getFilter().getValue();
+		final String term = parameters.getFilter() == null ? null : parameters.getFilter().getValue();
+		final TermFilter termFilter = term == null ? null : TermFilter.match().term(term).build();
 
 		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
 		OptionsBuilder conceptSearchOptions = Options.builder()
@@ -71,7 +73,7 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 				.put(ConceptSearchRequestEvaluator.OptionKey.DISPLAY, "FSN")
 				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirCodeSystemOperationRequest.compactLocale(parameters.getDisplayLanguage())))
 				// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
-				.put(SearchResourceRequest.OptionKey.SORT_BY, !CompareUtils.isEmpty(termFilter) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
+				.put(SearchResourceRequest.OptionKey.SORT_BY, !CompareUtils.isEmpty(term) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
 		
 		configureValueSetQuery(valueSet, conceptSearchOptions);
 		
@@ -199,5 +201,5 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 			
 			contains.addDesignation(designation);
 		}
-	}
+	} 
 }
