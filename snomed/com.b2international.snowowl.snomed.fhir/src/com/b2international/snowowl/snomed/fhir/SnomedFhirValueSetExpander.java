@@ -201,5 +201,5 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 			
 			contains.addDesignation(designation);
 		}
-	}
+	} 
 }
