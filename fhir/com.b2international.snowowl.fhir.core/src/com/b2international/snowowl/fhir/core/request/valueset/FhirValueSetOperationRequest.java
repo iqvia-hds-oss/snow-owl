@@ -161,15 +161,23 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		String version, 
 		String query
 	) {
-		if (!FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
-			// This is a generic implicit Value Set URL which only supports the "fhir_vs" query type for now
-			if (!"fhir_vs".equals(query)) {
-				throw new BadRequestException("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
-			}
-			
-			return genericAllConcepts(valueSet, codeSystem, codeSystemUrl);
+		if (FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
+			return handleSctImplicitValueSetUrl(valueSet, codeSystem, urlValue, version, query);
+		} else if (FhirModelHelpers.isLoincImplicitValueSetUrl(urlValue)) {
+			return handleLoincImplicitValueSetUrl(valueSet, codeSystem, urlValue, codeSystemUrl, version, query);
+		} else {
+			return handleGenericImplicitValueSetUrl(valueSet, codeSystem, urlValue, codeSystemUrl, version, query);
 		}
-		
+	}
+
+	private ValueSet handleSctImplicitValueSetUrl(
+		ValueSet valueSet, 
+		CodeSystem codeSystem, 
+		String urlValue,
+		// String codeSystemUrl is not needed for SCT implicit Value Sets
+		String version,
+		String query
+	) {
 		// This is a SNOMED CT implicit Value Set URL which supports multiple query types based on the "fhir_vs" query parameter
 		if (Strings.isNullOrEmpty(query) || "fhir_vs".equals(query)) {
 			return sctAllConcepts(valueSet, codeSystem, version);
@@ -218,18 +226,6 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		// We have ran out of supported query types, return bad request response for unsupported query parameter value
 		// TODO: check against declared filter values in CodeSystem
 		throw new BadRequestException("Unsupported implicit SNOMED CT Value Set URL type: " + urlValue, urlValue);
-	}
-
-	private ValueSet genericAllConcepts(ValueSet valueSet, CodeSystem codeSystem, String codeSystemUrl) {
-		valueSet
-			.setName(String.format("%s concepts", codeSystem.getName()))
-			.setDescription(String.format("All concepts from %s code system", codeSystem.getName()));
-			
-		valueSet.getCompose()
-			.addInclude()
-				.setSystem(codeSystemUrl);
-		
-		return valueSet;
 	}
 
 	private ValueSet sctAllConcepts(ValueSet valueSet, CodeSystem codeSystem, String version) {
@@ -292,6 +288,89 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 				.setProperty("concept")
 				.setOp(FilterOperator.IN)
 				.setValue(refsetId);
+		
+		return valueSet;
+	}
+
+	private ValueSet handleLoincImplicitValueSetUrl(
+		ValueSet valueSet, 
+		CodeSystem codeSystem, 
+		String urlValue,
+		String codeSystemUrl, 
+		String version, 
+		String query
+	) {
+		// This is a LOINC implicit Value Set URL which supports the "/vs" and "/vs/[part]" URL patterns
+		if (!Strings.isNullOrEmpty(query)) {
+			throw new BadRequestException("Unsupported implicit Value Set URL with query parameters: " + urlValue, urlValue);
+		}
+		
+		final String code = FhirModelHelpers.getLoincImplicitValueSetCode(urlValue);
+		if (code == null) {
+			// The "all concepts" implicit Value Set definition will work for LOINC as well
+			return genericAllConcepts(valueSet, codeSystem, codeSystemUrl, version);
+		} else if (code.startsWith("LP-")) {
+			// This is a LOINC implicit Value Set URL for a specific part, extract the part number and configure the Value Set accordingly
+			return loincPartDescendants(valueSet, codeSystem, codeSystemUrl, version, code);
+		}
+		
+		// Return bad request response for unsupported query parameter value
+		throw new BadRequestException("Unsupported implicit LOINC Value Set URL type: " + urlValue, urlValue);
+	}
+
+	private ValueSet loincPartDescendants(
+		ValueSet valueSet, 
+		CodeSystem codeSystem, 
+		String codeSystemUrl, 
+		String version,
+		String code
+	) {
+		valueSet
+			.setName(String.format("%s concepts with part %s", codeSystem.getName(), code))
+			.setDescription(String.format("Descendants of LOINC part %s", code));
+		
+		valueSet.getCompose()
+			.addInclude()
+				.setSystem(codeSystemUrl)
+				.setVersion(version)
+				.addFilter()
+				.setProperty("constraint")
+				.setOp(FilterOperator.ISA)
+				.setValue(code);
+		
+		return valueSet;
+	}
+
+	private ValueSet handleGenericImplicitValueSetUrl(
+		ValueSet valueSet, 
+		CodeSystem codeSystem, 
+		String urlValue, 
+		String codeSystemUrl,
+		String version, 
+		String query
+	) {
+		// This is a generic implicit Value Set URL which only supports the "fhir_vs" query type for now
+		if (!"fhir_vs".equals(query)) {
+			throw new BadRequestException("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
+		}
+		
+		return genericAllConcepts(valueSet, codeSystem, codeSystemUrl, version);
+	}
+
+	private ValueSet genericAllConcepts(
+		ValueSet valueSet, 
+		CodeSystem codeSystem, 
+		String codeSystemUrl, 
+		String version
+	) {
+		valueSet
+			.setName(String.format("%s concepts", codeSystem.getName()))
+			.setDescription(String.format("All concepts from %s code system", codeSystem.getName()));
+			
+		valueSet.getCompose()
+			.addInclude()
+				.setSystem(codeSystemUrl)
+				.setVersion(version);
 		
 		return valueSet;
 	}	
