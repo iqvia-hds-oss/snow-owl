@@ -57,7 +57,8 @@ public class FhirModelHelpers {
 	public static final String OID_PREFIX = "urn:oid:";
 	
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
-
+	public static final String LOINC_BASE_URI_STRING = "http://loinc.org";
+	
 	public static final String VERSION_SEGMENT = "/version/";
 
 	private static final String GENERIC_IMPLICIT_VALUESET_SUFFIX = "/vs";

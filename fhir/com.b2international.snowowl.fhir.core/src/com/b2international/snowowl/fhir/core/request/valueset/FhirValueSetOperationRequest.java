@@ -97,6 +97,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		String codeSystemUrl = null;
 		String version = null;
 		String query = "";
+		
 		if (FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
 			codeSystemUrl = FhirModelHelpers.SNOMED_BASE_URI_STRING;
 			// extract the non-query part from the URL value
@@ -109,13 +110,18 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 			if (FhirModelHelpers.SNOMED_BASE_URI_STRING.equals(version)) {
 				version = version.concat("/900000000000207008");
 			}
+		} else if (FhirModelHelpers.isLoincImplicitValueSetUrl(urlValue)) {
+			// version cannot be extracted from the URL in this case (TODO: add support for alternatives e.g. force-system-version)
+			codeSystemUrl = FhirModelHelpers.LOINC_BASE_URI_STRING;
+			if (urlValue.contains("?")) {
+				query = urlValue.split("\\?")[1];
+			}
 		} else if (FhirModelHelpers.isGenericImplicitValueSetUrl(urlValue)) {
+			// version cannot be extracted from the URL either
 			codeSystemUrl = FhirModelHelpers.toGenericCodeSystemUrl(urlValue);
-			// version cannot be extracted from the URL (TODO use another parameter, force-system-version or something else)
 		} else {
 			throw new BadRequestException("Unsupported implicit Value Set URL " + urlValue, urlValue);
 		}
-		
 		
 		// try to lookup the CodeSystem using the baseUrl and version (to get the proper edition)
 		CodeSystem codeSystem = FhirRequests.codeSystems().prepareSearch()
@@ -164,7 +170,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		if (FhirModelHelpers.isSnomedImplicitValueSetUrl(urlValue)) {
 			return handleSctImplicitValueSetUrl(valueSet, codeSystem, urlValue, version, query);
 		} else if (FhirModelHelpers.isLoincImplicitValueSetUrl(urlValue)) {
-			return handleLoincImplicitValueSetUrl(valueSet, codeSystem, urlValue, codeSystemUrl, version, query);
+			return handleLoincImplicitValueSetUrl(valueSet, codeSystem, urlValue, query);
 		} else {
 			return handleGenericImplicitValueSetUrl(valueSet, codeSystem, urlValue, codeSystemUrl, version, query);
 		}
@@ -296,8 +302,6 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		ValueSet valueSet, 
 		CodeSystem codeSystem, 
 		String urlValue,
-		String codeSystemUrl, 
-		String version, 
 		String query
 	) {
 		// This is a LOINC implicit Value Set URL which supports the "/vs" and "/vs/[part]" URL patterns
@@ -308,10 +312,10 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		final String code = FhirModelHelpers.getLoincImplicitValueSetCode(urlValue);
 		if (code == null) {
 			// The "all concepts" implicit Value Set definition will work for LOINC as well
-			return genericAllConcepts(valueSet, codeSystem, codeSystemUrl, version);
+			return genericAllConcepts(valueSet, codeSystem, codeSystem.getUrl(), codeSystem.getVersion());
 		} else if (code.startsWith("LP-")) {
 			// This is a LOINC implicit Value Set URL for a specific part, extract the part number and configure the Value Set accordingly
-			return loincPartDescendants(valueSet, codeSystem, codeSystemUrl, version, code);
+			return loincPartDescendants(valueSet, codeSystem, codeSystem.getUrl(), codeSystem.getVersion(), code);
 		}
 		
 		// Return bad request response for unsupported query parameter value
