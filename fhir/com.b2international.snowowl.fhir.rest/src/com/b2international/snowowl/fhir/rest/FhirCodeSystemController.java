@@ -85,7 +85,7 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 	 * @param accept
 	 * @param _format
 	 * @param _pretty
-	 * @return
+	 * @return operation outcome
 	 */
 	@Operation(
 		summary = "Create new code system", 
@@ -230,7 +230,7 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 	 * @param accept
 	 * @param _format
 	 * @param _pretty
-	 * @return
+	 * @return operation outcome
 	 */
 	@Operation(
 		summary = "Create a new or update an existing code system with identifier", 

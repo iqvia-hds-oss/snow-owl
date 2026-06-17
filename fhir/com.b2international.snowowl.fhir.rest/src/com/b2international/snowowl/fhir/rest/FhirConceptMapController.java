@@ -85,7 +85,7 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 	 * @param accept
 	 * @param _format
 	 * @param _pretty
-	 * @return
+	 * @return operation outcome
 	 */
 	@Operation(
 		summary = "Create new concept map", 
@@ -230,7 +230,7 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 	 * @param accept
 	 * @param _format
 	 * @param _pretty
-	 * @return
+	 * @return operation outcome
 	 */
 	@Operation(
 		summary = "Create a new or update an existing concept map with identifier", 

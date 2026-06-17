@@ -85,7 +85,7 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 	 * @param accept
 	 * @param _format
 	 * @param _pretty
-	 * @return
+	 * @return operation outcome
 	 */
 	@Operation(
 		summary = "Create new value set", 
@@ -230,7 +230,7 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 	 * @param accept
 	 * @param _format
 	 * @param _pretty
-	 * @return
+	 * @return operation outcome
 	 */
 	@Operation(
 		summary = "Create a new or update an existing value set with identifier", 
