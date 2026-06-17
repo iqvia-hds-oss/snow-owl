@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.attachments.InternalAttachmentRegistry;
 import com.b2international.snowowl.core.authorization.AccessControl;
-import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.BranchContext;
@@ -527,7 +526,7 @@ final class SnomedRf2ImportRequest implements Request<BranchContext, ImportRespo
 		
 		ResourceRequests.prepareUpdate(resourceUri.getResourceId())
 				.setSettings(Map.of(
-					CodeSystem.CommonSettings.LOCALES, currentLocales,
+					TerminologyResource.Settings.LOCALES, currentLocales,
 					Settings.LANGUAGES, List.copyOf(mergedLanguagesConfiguration.values())
 				))
 				.build(author, String.format("Update '%s' settings based on RF2 import", resourceUri.getResourceId()))

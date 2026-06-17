@@ -17,9 +17,11 @@ package com.b2international.snowowl.fhir.core;
 
 import java.util.Date;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.DateTimeType;
@@ -32,10 +34,15 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.TerminologyResource;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
+import com.b2international.snowowl.core.version.VersionDocument;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -118,39 +125,6 @@ public class FhirModelHelpers {
 		return uri != null && uri.startsWith(SNOMED_BASE_URI_STRING + "/");
 	}
 	
-	public static boolean isRegularVersionedUri(String uri) {
-		// Check that the version segment is present and not at the start or end of the URI
-		return uri != null 
-			&& !uri.startsWith(VERSION_SEGMENT) 
-			&& !uri.endsWith(VERSION_SEGMENT)
-			&& uri.contains(VERSION_SEGMENT);
-	}
-	
-	public static String addRegularVersionSuffix(String uri) {
-		// If the URI already contains a version segment, don't add it again
-		if (isRegularVersionedUri(uri)) {
-			return uri;
-		}
-
-		// Remove trailing slash if present
-		if (uri.endsWith("/")) { 
-			uri = uri.substring(0, uri.length() - 1); 
-		}
-		
-		// Append version segment to the URI
-		return uri + VERSION_SEGMENT;
-	}
-	
-	public static String getRegularUrlBase(String uri) {
-		// If the URI does not contain a version segment, return it as is
-		if (!isRegularVersionedUri(uri)) {
-			return uri;
-		}
-
-		// Otherwise return the portion of the URI before the "/version/" segment
-		return uri.substring(0, uri.indexOf(VERSION_SEGMENT));
-	}
-
 	public static String getSystemWithoutOidPrefix(CanonicalType system) {
 		return getSystemWithoutOidPrefix(system == null ? null : system.getValue());
 	}
@@ -167,6 +141,10 @@ public class FhirModelHelpers {
 		return system;
 	}
 	
+	public static record SystemAndVersion(String system, String version) {
+		// Empty record body
+	}
+	
 	/**
 	 * Provides a fallback URN for resource URIs that cannot be resolved to an
 	 * actual resource. This suggests an internal inconsistency in the data, but
@@ -180,88 +158,110 @@ public class FhirModelHelpers {
 	 * @param resourceUri
 	 * @return
 	 */
-	private static String getUrnForUnresolvedUri(final ResourceURI resourceUri) {
+	private static SystemAndVersion getSystemAndVersionForUnresolvedUri(final ResourceURI resourceUri) {
 		final String resourceType = resourceUri.getResourceType()
 			.toLowerCase(Locale.ENGLISH);
 		final String resourceUriWithoutType = resourceUri.getResourceId()
 			.toLowerCase(Locale.ENGLISH);
 		
-		return String.format("urn:snowowl:%s:%s", resourceType, resourceUriWithoutType);
+		return new SystemAndVersion(
+			String.format("urn:snowowl:%s:%s", resourceType, resourceUriWithoutType),
+			null);
 	}
 
-	private static String getUrlForResourceUri(final ServiceProvider context, final ResourceURI resourceUri) {
+	private static SystemAndVersion getSystemAndVersionForResourceUri(final ServiceProvider context, final ResourceURI resourceUri) {
 		if (TerminologyRegistry.UNSPECIFIED.equals(resourceUri.getResourceId())) {
-			return getUrnForUnresolvedUri(resourceUri);
+			return getSystemAndVersionForUnresolvedUri(resourceUri);
 		}
 		
-		final Optional<Version> versionWithURI;
+		final Optional<Version> versionForURI;
 		
 		if (!StringUtils.isEmpty(resourceUri.getPath())) {
-			versionWithURI = ResourceRequests.prepareSearchVersion()
+			versionForURI = ResourceRequests.prepareSearchVersion()
 				.one()
-				.filterByResource(resourceUri.withoutPath())
-				.filterByVersionId(resourceUri.getPath())
+				.filterById(resourceUri.withoutResourceType())
+				.setFields(
+					VersionDocument.Fields.ID,
+					VersionDocument.Fields.URL,
+					VersionDocument.Fields.VERSION,
+					VersionDocument.Fields.SETTINGS
+				)
 				.buildAsync()
 				.execute(context)
 				.first();
 		} else {
-			versionWithURI = Optional.empty();
+			versionForURI = Optional.empty();
 		}
 			
-		if (versionWithURI.isPresent()) {
-			return versionWithURI.get().getUrl();
+		if (versionForURI.isPresent()) {
+			final Version version = versionForURI.get();
+			
+			final String fhirUrlOverride = version.getFhirUrl();
+			if (StringUtils.isEmpty(fhirUrlOverride)) {
+				return new SystemAndVersion(version.getUrl(), version.getVersion());
+			}
+			
+			final String fhirVersionProperty = version.getFhirVersionProperty();
+			if (ResourceDocument.Fields.URL.equals(fhirVersionProperty)) {
+				return new SystemAndVersion(fhirUrlOverride, version.getUrl());
+			} else {
+				return new SystemAndVersion(fhirUrlOverride, version.getVersion());
+			}
 		}
 			
 		try {
 			
-			return ResourceRequests.prepareGet(resourceUri)
+			final com.b2international.snowowl.core.Resource resource = ResourceRequests.prepareGet(resourceUri)
+				.setFields(
+					ResourceDocument.Fields.ID,
+					ResourceDocument.Fields.URL,
+					ResourceDocument.Fields.SETTINGS
+				)
 				.buildAsync()
-				.execute(context)
-				.getUrl();
+				.execute(context);
+			
+			final Map<String, Object> resourceSettings = resource.getSettings();
+			if (resourceSettings == null) {
+				return new SystemAndVersion(resource.getUrl(), null);
+			}
+			
+			final String fhirUrlOverride = (String) resourceSettings.get(TerminologyResource.Settings.FHIR_URL);
+			if (StringUtils.isEmpty(fhirUrlOverride)) {
+				return new SystemAndVersion(resource.getUrl(), null);
+			}
+			
+			final String fhirVersionProperty = (String) resourceSettings.get(TerminologyResource.Settings.FHIR_VERSION_PROPERTY);
+			if (ResourceDocument.Fields.URL.equals(fhirVersionProperty)) {
+				return new SystemAndVersion(fhirUrlOverride, resource.getUrl());
+			} else {
+				return new SystemAndVersion(fhirUrlOverride, null);
+			}
 			
 		} catch (final NotFoundException e) {
-			return getUrnForUnresolvedUri(resourceUri);
+			return getSystemAndVersionForUnresolvedUri(resourceUri);
 		}
 	}
 	
-	public static Function<ResourceURI, String> createResourceUriToUrlFunction(final ServiceProvider context) {
-		final CacheLoader<ResourceURI, String> loader = CacheLoader.from(resourceUri -> getUrlForResourceUri(context, resourceUri));
-		final LoadingCache<ResourceURI, String> urlByResourceId = CacheBuilder.newBuilder().build(loader);
+	public static Function<ResourceURI, SystemAndVersion> createResourceUriToUrlFunction(final ServiceProvider context) {
+		final CacheLoader<ResourceURI, SystemAndVersion> loader = CacheLoader.from(resourceUri -> getSystemAndVersionForResourceUri(context, resourceUri));
+		final LoadingCache<ResourceURI, SystemAndVersion> urlByResourceId = CacheBuilder.newBuilder().build(loader);
 		return urlByResourceId;
 	}
 	
 	public static void setSystemAndVersion(
 		final ResourceURI resourceUri, 
-		final Function<ResourceURI, String> mapperFunction, 
+		final Function<ResourceURI, SystemAndVersion> mapperFunction, 
 		final Consumer<String> systemConsumer, 
 		final Consumer<String> versionConsumer
 	) {
-		final String fhirUrl = mapperFunction.apply(resourceUri);
-		
-		if (isSnomedUri(fhirUrl)) {
-			// For SNOMED CT we need to use the base URL as the system and the original URL as the version
-			systemConsumer.accept(FhirModelHelpers.SNOMED_BASE_URI_STRING);
-			versionConsumer.accept(fhirUrl);
-			return;
-		}
-		
-		if (isRegularVersionedUri(fhirUrl)) {
-			// For regular versioned URIs we can use the portion before the "/version/" segment as the system
-			systemConsumer.accept(getRegularUrlBase(fhirUrl));
-		} else {
-			// For other URIs we can use the resulting URL as the system
-			systemConsumer.accept(fhirUrl);
-		}
-			
-		// Instead of checking the resulting URL for version information, use the original ResourceURI's path as the version
-		if (!resourceUri.isHead() && !resourceUri.isNext()) {
-			versionConsumer.accept(resourceUri.getPath());
-		}
+		final SystemAndVersion systemAndVersion = mapperFunction.apply(resourceUri);
+		systemConsumer.accept(systemAndVersion.system());
+		versionConsumer.accept(systemAndVersion.version());
 	}
 
 	public static CanonicalType toCanonicalType(
 		final ResourceURI resourceUri, 
-		final Function<ResourceURI, String> mapperFunction
+		final Function<ResourceURI, SystemAndVersion> mapperFunction
 	) {
 		final CanonicalType canonicalType = new CanonicalType();
 		setSystemAndVersion(resourceUri, mapperFunction, canonicalType::setValue, canonicalType::addVersion);
@@ -277,12 +277,12 @@ public class FhirModelHelpers {
 		return isSnomedImplicitValueSetUrl(url) || isGenericImplicitValueSetUrl(url);
 	}
 	
-	// for snomed we need a proper SNOMED URI + fhir_vs after the ? query start 
+	// For SNOMED CT we need a proper SNOMED URI + fhir_vs after the ? query start 
 	public static boolean isSnomedImplicitValueSetUrl(String url) {
 		return url != null && url.startsWith(SNOMED_BASE_URI_STRING) && url.substring(url.indexOf("?") + 1, url.indexOf("?") + "fhir_vs".length() + 1).equals("fhir_vs");
 	}
 	
-	// generic means the original CodeSystem URL + an ending /vs suffix to get the implicit ValueSet working
+	// "Generic" means the original CodeSystem URL + an ending /vs suffix to get the implicit ValueSet working
 	public static boolean isGenericImplicitValueSetUrl(String url) {
 		return url != null && url.startsWith("http://") && url.endsWith(GENERIC_IMPLICIT_VALUESET_SUFFIX);
 	}
@@ -292,4 +292,51 @@ public class FhirModelHelpers {
 		return genericImplicitValueSetUrl.replace(GENERIC_IMPLICIT_VALUESET_SUFFIX, ""); 
 	}
 
+	// Methods related to FHIR-specific settings
+	
+	public static String getEffectiveFhirUrl(final TerminologyResource resource) {
+		final Map<String, Object> settings = resource.getSettings();
+		if (settings == null) {
+			return resource.getUrl();
+		}
+		
+		final String fhirUrlOverride = (String) settings.get(TerminologyResource.Settings.FHIR_URL);
+		if (Strings.isNullOrEmpty(fhirUrlOverride)) {
+			return resource.getUrl();
+		} else {
+			return fhirUrlOverride;
+		}
+	}
+
+	private static String computeEffectiveVersion(
+		final String fhirVersionProperty, 
+		final Supplier<String> urlSupplier, 
+		final Supplier<String> versionSupplier
+	) {
+		if (fhirVersionProperty == null) {
+			return versionSupplier.get();
+		}
+		
+		switch (fhirVersionProperty) {
+			case ResourceDocument.Fields.URL:
+				return urlSupplier.get();
+			case VersionDocument.Fields.VERSION:
+				return versionSupplier.get();
+			default:
+				throw new IllegalStateException("Unsupported FHIR version property '" + fhirVersionProperty + "'");
+		}
+	}
+
+	public static String computeEffectiveVersion(final CodeSystem codeSystem, final String fhirVersionProperty) {
+		return computeEffectiveVersion(fhirVersionProperty, codeSystem::getUrl, () -> "");
+	}
+
+	public static String computeEffectiveVersion(final VersionDocument versionDocument, final String fhirVersionProperty) {
+		return computeEffectiveVersion(fhirVersionProperty, versionDocument::getUrl, versionDocument::getVersion);
+	}
+	
+	public static String computeEffectiveVersion(final Version version, final String fhirVersionProperty) {
+		return computeEffectiveVersion(fhirVersionProperty, version::getUrl, version::getVersion);
+	}
+	
 }

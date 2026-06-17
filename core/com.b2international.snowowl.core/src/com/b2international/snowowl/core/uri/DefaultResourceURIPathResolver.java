@@ -125,7 +125,7 @@ public final class DefaultResourceURIPathResolver implements ResourceURIPathReso
 				})
 				.orElseGet(() -> {
 					// for draft resources allow HEAD to be queried via LATEST
-					if (uriToResolve.isLatest() && Resource.DRAFT_STATUS.equals(terminologyResource.getStatus())) {
+					if (uriToResolve.isLatest() && Resource.STATUS_DRAFT.equals(terminologyResource.getStatus())) {
 						return getResourceHeadBranch(uriToResolve, terminologyResource);
 					}
 					if (uriToResolve.isLatest() || !allowBranches) {

@@ -15,12 +15,12 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import java.util.List;
 
@@ -177,14 +177,14 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter[0].name", equalTo("name"))
-			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
+			.body("parameter[0].valueString", equalTo("SNOMEDCT/2020-01-31")) // latest version is now returned
 			.body("parameter[1].name", equalTo("display"))
 			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
 			.body("parameter[2].name", equalTo("version"))
-			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL + "/version/20200131"))
 			.body("parameter[3].name", equalTo("property"))
 			.body("parameter[3].part[0].valueCode", equalTo(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode()))
-			.body("parameter[3].part[1].valueDateTime", equalTo("2026-04-27"));
+			.body("parameter[3].part[1].valueDateTime", equalTo("2002-01-31")); // effective time remains unchanged
 	}
 	
 	@Test

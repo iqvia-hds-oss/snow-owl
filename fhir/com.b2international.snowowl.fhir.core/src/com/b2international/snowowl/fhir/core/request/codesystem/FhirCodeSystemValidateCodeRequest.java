@@ -41,7 +41,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * @since 8.0
  */
-final class FhirCodeSystemValidateCodeRequest extends FhirRequest<CodeSystemValidateCodeResultParameters> {
+final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationRequest<CodeSystemValidateCodeResultParameters> {
 
 	private static final long serialVersionUID = 1L;
 

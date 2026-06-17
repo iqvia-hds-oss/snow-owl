@@ -406,7 +406,7 @@ public class EsDocumentSearcher implements Searcher {
 						break;
 					default:
 						// Use field name directly otherwise
-						reqSource.sort(SortBuilders.fieldSort(field).order(sortOrder));
+						reqSource.sort(SortBuilders.fieldSort(field).order(sortOrder).unmappedType("keyword"));
 						break;
 				}
 			} else if (item instanceof SortByScript) {

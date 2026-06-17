@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @see <a href="http://hl7.org/fhir/codesystem-operation-subsumes.html">offical FHIR $subsumes operation docs</a> for more details.
  * @since 8.0
  */
-final class FhirCodeSystemSubsumesRequest extends FhirRequest<CodeSystemSubsumptionResultParameters> {
+final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest<CodeSystemSubsumptionResultParameters> {
 
 	private static final long serialVersionUID = 1L;
 	

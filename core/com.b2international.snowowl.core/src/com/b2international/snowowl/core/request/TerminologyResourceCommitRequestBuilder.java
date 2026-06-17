@@ -29,7 +29,7 @@ public class TerminologyResourceCommitRequestBuilder
 		extends RepositoryCommitRequestBuilder<TerminologyResourceCommitRequestBuilder>
 		implements TerminologyResourceContentRequestBuilder<CommitResult> {
 	
-	public static final Set<String> READ_ONLY_STATUSES = Set.of(Resource.RETIRED_STATUS);
+	public static final Set<String> READ_ONLY_STATUSES = Set.of(Resource.STATUS_RETIRED);
 
 	@Override
 	public boolean snapshot() {

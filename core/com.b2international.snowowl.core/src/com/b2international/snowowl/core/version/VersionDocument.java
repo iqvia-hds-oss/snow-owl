@@ -67,6 +67,11 @@ import com.google.common.base.MoreObjects;
 			version = 3,
 			description = "add text search support to title field",
 			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
+		),
+		@SchemaRevision(
+			version = 4,
+			description = "make settings searchable",
+			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
 		)
 	}
 )
@@ -103,7 +108,18 @@ public final class VersionDocument implements CommitSubject, Serializable {
 		public static final String RESOURCE_TYPE = "resourceType";
 		public static final String RESOURCE_ID = "resourceId";
 		
-		public static final Set<String> SORT_FIELDS = Set.of(ID, VERSION, DESCRIPTION, EFFECTIVE_TIME, RESOURCE, BRANCH_PATH, AUTHOR, CREATED_AT, TOOLING_ID, URL);
+		public static final Set<String> SORT_FIELDS = Set.of(
+			ID, 
+			VERSION, 
+			DESCRIPTION, 
+			EFFECTIVE_TIME, 
+			RESOURCE, 
+			BRANCH_PATH,
+			CREATED_AT,
+			TOOLING_ID,
+			URL,
+			AUTHOR
+		);
 	}
 
 	public static class Expressions {
@@ -168,6 +184,32 @@ public final class VersionDocument implements CommitSubject, Serializable {
 	
 	public static Builder builder() {
 		return new Builder();
+	}
+	
+	public static Builder builder(VersionDocument from) {
+		return builder()
+			.id(from.getId())
+			.version(from.getVersion())
+			.description(from.getDescription())
+			.effectiveTime(from.getEffectiveTime())
+			.resource(from.getResource())
+			.branchPath(from.getBranchPath())
+			.createdAt(from.getCreatedAt())
+			.updatedAt(from.getUpdatedAt())
+			.toolingId(from.getToolingId())
+			.url(from.getUrl())
+			.author(from.getAuthor())
+			
+			.resourceDescription(from.getResourceDescription())
+			.title(from.getTitle())
+			.status(from.getStatus())
+			.contact(from.getContact())
+			.copyright(from.getCopyright())
+			.language(from.getLanguage())
+			.purpose(from.getPurpose())
+			.oid(from.getOid())
+			.dependencies(from.getDependencies())
+			.settings(from.getSettings());
 	}
 	
 	@JsonPOJOBuilder(withPrefix="")
@@ -432,7 +474,6 @@ public final class VersionDocument implements CommitSubject, Serializable {
 	private final String purpose;
 	private final String oid;
 	
-	@Field(index = false) 
 	private final Map<String, Object> settings;
 	private final SortedSet<DependencyDocument> dependencies;
 	

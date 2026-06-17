@@ -32,12 +32,20 @@ public final class FhirApiHelpers {
 	
 	public static final String CODESYSTEM = "/CodeSystem";
 	public static final String CODESYSTEM_ID = "/CodeSystem/{id}";
+	
 	public static final String CODESYSTEM_LOOKUP = "/CodeSystem/$lookup";
 	public static final String CODESYSTEM_SUBSUMES = "/CodeSystem/$subsumes";
 	public static final String CODESYSTEM_VALIDATE_CODE = "/CodeSystem/$validate-code";
-
+	
+	public static final String CODESYSTEM_ID_ASSIGN_FHIR_URL = "/CodeSystem/{id}/$assign-fhir-url";
+	public static final String CODESYSTEM_ID_REMOVE_FHIR_URL = "/CodeSystem/{id}/$remove-fhir-url";
+	public static final String CODESYSTEM_ID_SET_AS_DEFAULT = "/CodeSystem/{id}/$set-as-default";
+	public static final String CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES = "/CodeSystem/{id}/$set-include-in-capabilities";
+	public static final String CODESYSTEM_INITIALIZE_FHIR_URLS = "/CodeSystem/$initialize-fhir-urls";
+	
 	public static final String VALUESET = "/ValueSet";
 	public static final String VALUESET_ID = "/ValueSet/{id}";
+	
 	public static final String VALUESET_EXPAND = "/ValueSet/$expand";
 	public static final String VALUESET_ID_EXPAND = "/ValueSet/{id}/$expand";
 	public static final String VALUESET_VALIDATE_CODE = "/ValueSet/$validate-code";
@@ -45,10 +53,13 @@ public final class FhirApiHelpers {
 	
 	public static final String CONCEPTMAP = "/ConceptMap";
 	public static final String CONCEPTMAP_ID = "/ConceptMap/{id}";
+	
 	public static final String CONCEPTMAP_TRANSLATE = "/ConceptMap/$translate";
 	public static final String CONCEPTMAP_ID_TRANSLATE = "/ConceptMap/{id}/$translate";
 
 	public static final String LOAD_PACKAGE = "/$load-package";
+
+	public static final String METADATA = "/metadata";
 	
 	public static final String toJson(Resource resource) throws Exception {
 		return new JsonParser().composeString(resource);

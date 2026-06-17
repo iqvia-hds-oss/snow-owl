@@ -114,4 +114,10 @@ public class BundleApiAssert {
 		);
 	}
 
+	public static void deleteBundle(final String bundleId) {
+		givenAuthenticatedRequest(BUNDLE_API)
+			.when().delete("/{id}", bundleId)
+			.then().statusCode(204);
+	}
+
 }

@@ -50,4 +50,28 @@ public final class FhirCodeSystemRequests {
 	public ResourceDeleteRequestBuilder prepareDelete(final String codeSystemId) {
 		return new ResourceDeleteRequestBuilder(CodeSystem.uri(codeSystemId));
 	}
+
+	public FhirCodeSystemAssignFhirUrlRequestBuilder prepareAssignFhirUrl() {
+		return new FhirCodeSystemAssignFhirUrlRequestBuilder();
+	}
+
+	public FhirCodeSystemRemoveFhirUrlRequestBuilder prepareRemoveFhirUrl() {
+		return new FhirCodeSystemRemoveFhirUrlRequestBuilder();
+	}
+
+	public FhirCodeSystemInitializeFhirUrlsRequestBuilder prepareInitializeFhirUrls() {
+		return new FhirCodeSystemInitializeFhirUrlsRequestBuilder();
+	}
+
+	public FhirCodeSystemSetAsDefaultRequestBuilder prepareSetAsDefault(final String codeSystemId) {
+		return new FhirCodeSystemSetAsDefaultRequestBuilder(codeSystemId);
+	}
+
+	public FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder prepareSetIncludeInCapabilities() {
+		return new FhirCodeSystemSetIncludeInCapabilitiesRequestBuilder();
+	}
+
+	public FhirCodeSystemGetComponentsRequestBuilder prepareGetComponents() {
+		return new FhirCodeSystemGetComponentsRequestBuilder();
+	}
 }

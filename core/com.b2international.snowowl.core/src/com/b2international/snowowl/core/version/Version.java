@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 
 import com.b2international.snowowl.core.ResourceURI;
+import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.branch.BranchPathUtils;
 import com.b2international.snowowl.core.commit.CommitInfo;
 import com.b2international.snowowl.core.date.DateFormats;
@@ -53,6 +55,7 @@ public final class Version implements Serializable {
 	private String author;
 	private String url;
 	private String toolingId;
+	private Map<String, Object> settingsSnapshot;
 	
 	/**
 	 * @return the globally unique identifier of this version, resource + version.
@@ -113,6 +116,10 @@ public final class Version implements Serializable {
 		return toolingId;
 	}
 	
+	public Map<String, Object> getSettingsSnapshot() {
+		return settingsSnapshot;
+	}
+	
 	// hidden setter to allow deserialization of Version JSON strings without errors
 	@JsonSetter
 	void setResourceBranchPath(String resourceBranchPath) {}
@@ -165,6 +172,10 @@ public final class Version implements Serializable {
 		this.toolingId = toolingId;
 	}
 	
+	public void setSettingsSnapshot(Map<String, Object> settingsSnapshot) {
+		this.settingsSnapshot = settingsSnapshot;
+	}
+	
 	// additional helper methods
 	
 	@JsonIgnore
@@ -179,6 +190,20 @@ public final class Version implements Serializable {
 	@JsonSetter
 	void setVersionResourceURI(ResourceURI versionResourceURI) {
 		// ignore
+	}
+
+	@JsonIgnore
+	public String getFhirUrl() {
+		return (settingsSnapshot != null) 
+			? (String) settingsSnapshot.get(TerminologyResource.Settings.FHIR_URL) 
+			: null;
+	}
+
+	@JsonIgnore
+	public String getFhirVersionProperty() {
+		return (settingsSnapshot != null) 
+			? (String) settingsSnapshot.get(TerminologyResource.Settings.FHIR_VERSION_PROPERTY) 
+			: null;
 	}
 
 }

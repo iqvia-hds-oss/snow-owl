@@ -194,8 +194,8 @@ public final class VersionCreateRequest implements Request<RepositoryContext, Bo
 							monitor.worked(1);
 							
 							// move all draft resources to active status after versioning
-							if (Resource.DRAFT_STATUS.equals(resourceToVersion.getStatus())) {
-								tx.update(resourceToVersion.toDocumentBuilder().build(), resourceToVersion.toDocumentBuilder().status(Resource.ACTIVE_STATUS).build());
+							if (Resource.STATUS_DRAFT.equals(resourceToVersion.getStatus())) {
+								tx.update(resourceToVersion.toDocumentBuilder().build(), resourceToVersion.toDocumentBuilder().status(Resource.STATUS_ACTIVE).build());
 							}
 							
 							// generate version document for each resource 
@@ -214,7 +214,7 @@ public final class VersionCreateRequest implements Request<RepositoryContext, Bo
 									.toolingId(resourceToVersion.getToolingId())
 									.url(buildVersionUrl(lockContext, resourceToVersion))
 									.resourceSnapshot(resourceToVersion)
-									.status(Resource.ACTIVE_STATUS)
+									.status(Resource.STATUS_ACTIVE)
 									.build());
 						});
 						return Boolean.TRUE;

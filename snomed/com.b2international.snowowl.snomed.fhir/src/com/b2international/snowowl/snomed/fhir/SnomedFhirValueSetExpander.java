@@ -38,7 +38,7 @@ import com.b2international.snowowl.core.request.SearchIndexResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.b2international.snowowl.fhir.core.request.codesystem.FhirRequest;
+import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
 import com.b2international.snowowl.snomed.core.domain.Acceptability;
@@ -69,7 +69,7 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, parameters.getAfter() == null ? null : parameters.getAfter().getValue())
 				// SNOMED only preferred display support (VS should always use FSN)
 				.put(ConceptSearchRequestEvaluator.OptionKey.DISPLAY, "FSN")
-				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirRequest.compactLocale(parameters.getDisplayLanguage())))
+				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirCodeSystemOperationRequest.compactLocale(parameters.getDisplayLanguage())))
 				// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
 				.put(SearchResourceRequest.OptionKey.SORT_BY, !CompareUtils.isEmpty(termFilter) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));
 		

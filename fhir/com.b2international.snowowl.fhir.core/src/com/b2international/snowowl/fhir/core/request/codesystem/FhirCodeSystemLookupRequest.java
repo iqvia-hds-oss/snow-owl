@@ -50,7 +50,7 @@ import com.google.common.collect.Sets;
  * @see LookupResult
  * @since 8.0
  */
-final class FhirCodeSystemLookupRequest extends FhirRequest<CodeSystemLookupResultParameters> {
+final class FhirCodeSystemLookupRequest extends FhirCodeSystemOperationRequest<CodeSystemLookupResultParameters> {
 
 	private static final long serialVersionUID = 1L;
 	

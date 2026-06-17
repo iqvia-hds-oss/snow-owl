@@ -25,7 +25,7 @@ import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.b2international.snowowl.fhir.core.request.codesystem.FhirRequest;
+import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetCodeValidator;
 
 /**
@@ -49,7 +49,7 @@ public final class SnomedFhirValueSetCodeValidator extends SnomedFhirImplicitVal
 				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, 1)
 				// SNOMED only preferred display support (VS should always use FSN)
 				.put(ConceptSearchRequestEvaluator.OptionKey.DISPLAY, "FSN")
-				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirRequest.compactLocale(parameters.getDisplayLanguage())));
+				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirCodeSystemOperationRequest.compactLocale(parameters.getDisplayLanguage())));
 		
 		configureValueSetQuery(valueSet, conceptSearchOptions);
 		

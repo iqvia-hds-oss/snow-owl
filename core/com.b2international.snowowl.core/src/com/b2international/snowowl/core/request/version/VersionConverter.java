@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2023-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,18 +60,17 @@ public class VersionConverter extends BaseResourceConverter<VersionDocument, Ver
 		version.setAuthor(doc.getAuthor());
 		version.setUrl(doc.getUrl());
 		version.setToolingId(doc.getToolingId());
+		version.setSettingsSnapshot(doc.getSettings());
 		return version;
 	}
 
 	@Override
 	public void expand(final List<Version> results) {
-
 		if (results.isEmpty() || expand().isEmpty()) {
 			return;
 		}
 
 		expandUpdatedAtCommit(results);
-
 	}
 
 	private void expandUpdatedAtCommit(final List<Version> results) {

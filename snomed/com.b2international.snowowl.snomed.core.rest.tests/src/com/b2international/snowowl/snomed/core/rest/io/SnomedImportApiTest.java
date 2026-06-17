@@ -750,7 +750,7 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
 			.setTitle(codeSystemId)
 			.setSettings(
 				Map.of(
-					TerminologyResource.CommonSettings.LOCALES,
+					TerminologyResource.Settings.LOCALES,
 					List.of(customLocale1, customLocale2)
 				)
 			)
@@ -765,7 +765,7 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
   		
   		assertThat(codeSystem.getSettings()).containsOnly(
 			Map.entry(
-				TerminologyResource.CommonSettings.LOCALES,
+				TerminologyResource.Settings.LOCALES,
 				List.of(customLocale1.toString(), customLocale2.toString())
 			)
   		);
@@ -784,7 +784,7 @@ public class SnomedImportApiTest extends AbstractSnomedApiTest {
   		
   		assertThat(codeSystemAfterImport.getSettings()).contains(
 			Map.entry(
-				TerminologyResource.CommonSettings.LOCALES,
+				TerminologyResource.Settings.LOCALES,
 				List.of(
 					customLocale1.toString(),
 					customLocale2.toString(),

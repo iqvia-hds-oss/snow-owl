@@ -158,10 +158,13 @@ public final class RepositoryTransactionContext extends DelegatingBranchContext 
 	}
 	
 	private String getObjectId(Object component) {
-		if (component instanceof Revision) {
-			return ((Revision) component).getId();
+		if (component instanceof Revision revision) {
+			return revision.getId();
+		} else if (component instanceof VersionDocument version) {
+			return version.getId();
+		} else {
+			throw new UnsupportedOperationException("Cannot get objectId for " + component);
 		}
-		throw new UnsupportedOperationException("Cannot get objectId for " + component);
 	}
 
 	private <T> Pair<String, Class<?>> createComponentKey(final String componentId, Class<T> type) {
