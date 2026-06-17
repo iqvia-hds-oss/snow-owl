@@ -16,6 +16,8 @@
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -128,34 +130,45 @@ final class FhirCodeSystemLookupRequest extends FhirCodeSystemOperationRequest<C
 	}
 	
 	private void validateRequestedProperties(CodeSystem codeSystem) {
-		// no property requested, nothing to validate
+		// No property requested, nothing to validate
 		if (parameters.getPropertyValues().isEmpty()) {
 			return;
 		}
-		
-		final Set<String> requestedProperties = Set.copyOf(parameters.getPropertyValues());
-		// first check if any of the properties are lookup request properties
-		final Set<String> nonLookupProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);
 
-		// second check if the remaining unsupported properties supported by the CodeSystem either via full URL
-		final Set<String> supportedProperties = codeSystem.getProperty() == null 
-				? Collections.emptySet() 
-				: codeSystem.getProperty().stream().map(CodeSystem.PropertyComponent::getUri).collect(Collectors.toSet());
-		final Set<String> unsupportedProperties = Sets.difference(nonLookupProperties, supportedProperties);
+		final Set<String> requestedProperties = Set.copyOf(parameters.getPropertyValues());
+
+		final List<CodeSystem.PropertyComponent> codeSystemProperties = codeSystem.getProperty() == null
+				? Collections.emptyList()
+				: codeSystem.getProperty();
+		
+		// First, check if any of the properties are lookup request properties
+		final Set<String> nonLookupProperties = Sets.difference(requestedProperties, CodeSystemLookupParameters.OFFICIAL_R5_PROPERTY_VALUES);
+		
+		// Second, check if the remaining unsupported properties are supported by the CodeSystem either via full URL
+		final Set<String> supportedPropertyUris = codeSystemProperties.stream()
+				.map(CodeSystem.PropertyComponent::getUri)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+		final Set<String> unsupportedByUri = Sets.difference(nonLookupProperties, supportedPropertyUris);
 		
 		// or via their code only
-		final Set<String> supportedCodes = codeSystem.getProperty() == null 
-				? Collections.emptySet() 
-				: codeSystem.getProperty().stream().map(CodeSystem.PropertyComponent::getCode).collect(Collectors.toSet());
-		final Set<String> unsupportedCodes = Sets.difference(unsupportedProperties, supportedCodes);
-		
-		if (!unsupportedCodes.isEmpty()) {
-			if (unsupportedCodes.size() == 1) {
-				throw new BadRequestException(String.format("Unrecognized property %s. Supported properties are: %s.", unsupportedCodes, supportedProperties), "LookupRequest.property");
+		final Set<String> supportedPropertyCodes = codeSystemProperties.stream()
+				.map(CodeSystem.PropertyComponent::getCode)
+				.filter(Objects::nonNull)
+				.collect(Collectors.toSet());
+		final Set<String> unsupportedProperties = Sets.difference(unsupportedByUri, supportedPropertyCodes);
+
+		if (!unsupportedProperties.isEmpty()) {
+			final Set<String> supportedPropertiesDisplay = codeSystemProperties.stream()
+					.map(property -> property.getUri() != null ? property.getUri() : property.getCode())
+					.filter(Objects::nonNull)
+					.collect(Collectors.toSet());
+
+			if (unsupportedProperties.size() == 1) {
+				throw new BadRequestException(String.format("Unrecognized property %s. Supported properties are: %s.", unsupportedProperties, supportedPropertiesDisplay), "LookupRequest.property");
 			} else {
-				throw new BadRequestException(String.format("Unrecognized properties %s. Supported properties are: %s.", unsupportedCodes, supportedProperties), "LookupRequest.property");
+				throw new BadRequestException(String.format("Unrecognized properties %s. Supported properties are: %s.", unsupportedProperties, supportedPropertiesDisplay), "LookupRequest.property");
 			}
 		}
-	}
-
+	} 
 }
