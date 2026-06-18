@@ -19,5 +19,5 @@ Import-Package: net.jpountz.lz4;version="[1.10.2,2.0.0)",
  net.jpountz.util;version="[1.10.2,2.0.0)",
  net.jpountz.xxhash;version="[1.10.2,2.0.0)"
 Bundle-ActivationPolicy: lazy
-Require-Bundle: org.jetbrains.kotlin.osgi-bundle;bundle-version="1.9.22",
+Require-Bundle: org.jetbrains.kotlin.osgi-bundle;bundle-version="1.9.25",
  com.google.guava;bundle-version="[33.4.0,34.0.0)"
