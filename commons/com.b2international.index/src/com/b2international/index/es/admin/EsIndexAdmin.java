@@ -80,11 +80,11 @@ import com.b2international.index.query.Expression;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Query;
 import com.b2international.index.revision.Commit;
-import com.b2international.index.util.JsonDiff;
 import com.b2international.index.util.NumericClassUtils;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.ImmutableSortedSet;
@@ -249,18 +249,9 @@ public final class EsIndexAdmin implements IndexAdmin {
 			// check if index is present
 			if (exists(index)) {
 				
-				// update mapping if required
-				final MappingMetadata currentIndexMapping;
+				final MappingMetadata currentIndexMapping = getCurrentMapping(index, mapping);
 				
-				try {
-					final GetMappingsRequest getMappingsRequest = new GetMappingsRequest().indices(index);
-					currentIndexMapping = client.indices().getMapping(getMappingsRequest)
-						.mappings()
-						.get(index);
-				} catch (Exception e) {
-					throw new IndexException(String.format("Failed to get mapping of '%s' for type '%s'", name, mapping.typeAsString()), e);
-				}
-				
+				// detect schema changes and update if required
 				final ObjectNode newTypeMapping = mapper.valueToTree(typeMapping);
 				final ObjectNode currentTypeMapping = mapper.valueToTree(currentIndexMapping.getSourceAsMap());
 				
@@ -273,41 +264,8 @@ public final class EsIndexAdmin implements IndexAdmin {
 				checkState(oldVersion <= newVersion, "Current model version should never be greater than the new model version. In case of '%s' got old '%s' vs new '%s'.", mapping.type().getSimpleName(), oldVersion, newVersion);
 				
 				// always perform a schema diff to detect compatible and incompatible changes and report them when needed
-				SortedSet<String> compatibleChanges = Sets.newTreeSet();
-				SortedSet<String> incompatibleChanges = Sets.newTreeSet();
-				final JsonDiff schemaChanges = JsonDiff.diff(currentTypeMapping, newTypeMapping);
-				
-				schemaChanges.forEach(change -> {
-					
-					// ignore _meta changes
-					if (change.getFieldPath().startsWith(DocumentMapping._META)) {
-						return;
-					}
-					
-					if (change.isAdd()) {
-						
-						// XXX object type is the default type, so if the current mapping does not contain this node, we shouldn't trigger an update
-						if (change.getFieldPath().endsWith("/type") && "object".equals(change.serializeValue())) {
-							return;
-						}
-						
-						compatibleChanges.add(change.getFieldPath());
-						
-					} else if (change.isMove() || change.isReplace()) {
-						incompatibleChanges.add(change.getFieldPath());
-					} else if (change.isRemove()) {
-						
-						// XXX while remove is bad it is hard to detect true incompatibility where we try to support dynamic fields (like Maps)
-						// throw the incompatibility error only when a root field is being reported, not a nested property under the root property
-						if (change.getFieldPath().contains("/properties")) {
-							return;
-						}
-						
-						incompatibleChanges.add(change.getFieldPath());
-					}
-					
-				});
-				
+				final SchemaDiff schemaChanges = SchemaDiff.diff(currentTypeMapping, newTypeMapping);
+
 				if (oldVersion < newVersion) {
 					
 					indent++; // separate migration messages visually from the rest
@@ -315,6 +273,8 @@ public final class EsIndexAdmin implements IndexAdmin {
 					log().info("{}Detected schema version difference in '{}': {} vs {}", getLogIndent(), index, oldVersion, newVersion);
 					
 					long currentVersion = oldVersion;
+					
+					boolean fullReindexPerformed = false;
 					
 					// perform migration to the new schema using the migrators starting from oldVersion up until the current latest version
 					// run one migrator at a time (TODO optimize later for schema versions that can be executed together)
@@ -443,6 +403,8 @@ public final class EsIndexAdmin implements IndexAdmin {
 							// delete temporary index
 							doDeleteIndexes(temporaryIndex);
 							
+							fullReindexPerformed = true;
+							
 							break;
 						default:
 							throw new UnsupportedOperationException("Unknown schema migration strategy " + schema.strategy());
@@ -454,11 +416,35 @@ public final class EsIndexAdmin implements IndexAdmin {
 						
 					}
 					
+					
+					// once all schema migrations have been performed and there were no full reindexes
+					// refetch the mapping and diff it again to see if there are any inconsistencies present
+					// mainly enabled field changes for incorrect mapping updates which require full reindex
+					if (!fullReindexPerformed) {
+						final MappingMetadata mappingAfterMigration = getCurrentMapping(index, mapping);
+						final ObjectNode mappingAfterMigrationObject = mapper.valueToTree(mappingAfterMigration.getSourceAsMap());
+						final SchemaDiff schemaChangesAfterMigration = SchemaDiff.diff(newTypeMapping, mappingAfterMigrationObject);
+						
+						if (!schemaChangesAfterMigration.getCompatibleChanges().isEmpty() || !schemaChangesAfterMigration.getIncompatibleChanges().isEmpty()) {
+							// same schema version, but there are field changes, report as error, as any schema change requires an explicit schema version to be registered in order to update the mapping and the content
+							throw new IndexException(String.format(
+									"After migrating to the latest mapping schema version the resulted schema in the index was different compared to the desired mapping. This might be a result of an incorrect, unsupported field migration. '%s' has the following field changes after schema migration: '%s'. ",
+									index,
+									ImmutableSortedSet.<String>naturalOrder()
+									.addAll(schemaChangesAfterMigration.getCompatibleChanges())
+									.addAll(schemaChangesAfterMigration.getIncompatibleChanges()).build()));
+						}
+					}
+					
 					indent--;
 					
-				} else if (!compatibleChanges.isEmpty() || !incompatibleChanges.isEmpty()) {
+				} else if (!schemaChanges.getCompatibleChanges().isEmpty() || !schemaChanges.getIncompatibleChanges().isEmpty()) {
 					// same schema version, but there are field changes, report as error, as any schema change requires an explicit schema version to be registered in order to update the mapping and the content
-					throw new IndexException(String.format("New schema version is required when modifying the mapping of an existing index. '%s' has the following field changes '%s'. ", index, ImmutableSortedSet.<String>naturalOrder().addAll(compatibleChanges).addAll(incompatibleChanges).build()));
+					throw new IndexException(String.format(
+							"New schema version is required when modifying the mapping of an existing index. '%s' has the following field changes '%s'. ",
+							index,
+							ImmutableSortedSet.<String>naturalOrder().addAll(schemaChanges.getCompatibleChanges())
+									.addAll(schemaChanges.getIncompatibleChanges()).build()));
 				} else {
 					// no schema version changes, and no actual schema changes, good to go
 				}
@@ -484,6 +470,20 @@ public final class EsIndexAdmin implements IndexAdmin {
 		
 		log().info("'{}' indexes are ready.", name);
 		
+	}
+
+	private MappingMetadata getCurrentMapping(final String index, final DocumentMapping mapping) {
+		final MappingMetadata currentIndexMapping;
+		
+		try {
+			final GetMappingsRequest getMappingsRequest = new GetMappingsRequest().indices(index);
+			currentIndexMapping = client.indices().getMapping(getMappingsRequest)
+				.mappings()
+				.get(index);
+		} catch (Exception e) {
+			throw new IndexException(String.format("Failed to get mapping of '%s' for type '%s'", name, mapping.typeAsString()), e);
+		}
+		return currentIndexMapping;
 	}
 
 	private static Stream<Hits<SearchHit>> readAllRaw(EsDocumentSearcher previousIndexSearcher, DocumentMapping mapping, int batchSize) {
@@ -544,7 +544,8 @@ public final class EsIndexAdmin implements IndexAdmin {
 		
 	}
 	
-	private void doDeleteIndexes(final String...indexesToDelete) {
+	@VisibleForTesting
+	public void doDeleteIndexes(final String...indexesToDelete) {
 		
 		final DeleteIndexRequest deleteIndexRequest = new DeleteIndexRequest().indices(indexesToDelete);
 		
@@ -915,7 +916,8 @@ public final class EsIndexAdmin implements IndexAdmin {
 //		waitForYellowHealth();
 	}
 	
-	private String generateTypeIndexName(DocumentMapping mapping) {
+	@VisibleForTesting
+	public String generateTypeIndexName(DocumentMapping mapping) {
 		if (mapping.getParent() != null) {
 			return String.format("%s%s-%s", this.prefix, this.name, mapping.getParent().typeAsString());
 		} else {

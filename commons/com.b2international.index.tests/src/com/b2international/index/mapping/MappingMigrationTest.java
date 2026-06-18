@@ -16,9 +16,11 @@
 package com.b2international.index.mapping;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +30,7 @@ import org.junit.runners.MethodSorters;
 
 import com.b2international.index.*;
 import com.b2international.index.admin.IndexAdmin;
+import com.b2international.index.es.admin.EsIndexAdmin;
 import com.b2international.index.mapping.FieldAlias.FieldAliasType;
 import com.b2international.index.migrate.DocumentMappingMigrationStrategy;
 import com.b2international.index.migrate.DocumentMappingMigrator;
@@ -252,6 +255,119 @@ public class MappingMigrationTest extends BaseIndexTest {
 		}
 		
 	}
+	
+	@Doc(
+		type = "schema",
+		revisions = {
+			@SchemaRevision(version = 2, strategy = DocumentMappingMigrationStrategy.NO_REINDEX)
+		}
+	)
+	static class SchemaDocWithNotSearchableMapTypeField {
+		
+		@ID
+		private String id;
+		private String field;
+		
+		// initially just storing values, not making them searchable
+		@Field(index = false)
+		private Map<String, Object> settings;
+		
+		@JsonCreator
+		public SchemaDocWithNotSearchableMapTypeField(@JsonProperty("id") String id, @JsonProperty("field") String field, @JsonProperty("settings") Map<String, Object> settings) {
+			this.id = id;
+			this.field = field;
+			this.settings = settings;
+		}
+		
+		public String getId() {
+			return id;
+		}
+		
+		public String getField() {
+			return field;
+		}
+		
+		public Map<String, Object> getSettings() {
+			return settings;
+		}
+		
+	}
+	
+	@Doc(
+		type = "schema",
+		revisions = {
+			// this kind of mapping migration requires a custom script reindexing, IN_PLACE should raise an error
+			@SchemaRevision(version = 3, strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE)
+		}
+	)
+	static class SchemaDocWithSearchableMapTypeFieldInvalidStrategy {
+		
+		@ID
+		private String id;
+		private String field;
+		
+		// simulate search reenablement with annotation removal
+		// @Field(index = false)
+		private Map<String, Object> settings;
+		
+		@JsonCreator
+		public SchemaDocWithSearchableMapTypeFieldInvalidStrategy(@JsonProperty("id") String id, @JsonProperty("field") String field, @JsonProperty("settings") Map<String, Object> settings) {
+			this.id = id;
+			this.field = field;
+			this.settings = settings;
+		}
+		
+		public String getId() {
+			return id;
+		}
+		
+		public String getField() {
+			return field;
+		}
+		
+		public Map<String, Object> getSettings() {
+			return settings;
+		}
+		
+	}
+	
+	@Doc(
+		type = "schema",
+		revisions = {
+			// this kind of mapping migration requires script based reindexing without an actual migrator
+			@SchemaRevision(version = 3, strategy = DocumentMappingMigrationStrategy.REINDEX_SCRIPT)
+		}
+	)
+	static class SchemaDocWithSearchableMapTypeField {
+		
+		@ID
+		private String id;
+		private String field;
+		
+		// then in v3, we make the settings field searchable by removing the disabling annotation config
+		// @Field(index = false)
+		private Map<String, Object> settings;
+		
+		@JsonCreator
+		public SchemaDocWithSearchableMapTypeField(@JsonProperty("id") String id, @JsonProperty("field") String field, @JsonProperty("settings") Map<String, Object> settings) {
+			this.id = id;
+			this.field = field;
+			this.settings = settings;
+		}
+		
+		public String getId() {
+			return id;
+		}
+		
+		public String getField() {
+			return field;
+		}
+		
+		public Map<String, Object> getSettings() {
+			return settings;
+		}
+		
+	}
 
 	private SchemaDoc existingDoc1;
 	private SchemaDoc existingDoc2;
@@ -362,11 +478,68 @@ public class MappingMigrationTest extends BaseIndexTest {
 		assertDocEquals(new SchemaDocRenamedField(existingDoc1.getId(), existingDoc1.getField()), getDocument(SchemaDocRenamedField.class, KEY1));
 		assertDocEquals(new SchemaDocRenamedField(existingDoc2.getId(), existingDoc2.getField()), getDocument(SchemaDocRenamedField.class, KEY2));
 	}
+
+	@Test
+	public void migrate07_EnableSearchingOnMapTypeField_InvalidStrategy() throws Exception {
+		// first add a Map type field to the index to see that is picked up properly
+		admin().updateMappings(new Mappings(SchemaDocWithNotSearchableMapTypeField.class));
+		admin().create();
+		
+		// updating existingDoc1 with new Map type should work
+		indexDocument(new SchemaDocWithNotSearchableMapTypeField(existingDoc1.getId(), existingDoc2.getField(), Map.of("key", "value")));
+		
+		// assert values are stored
+		var docWithMapTypeField = getDocument(SchemaDocWithNotSearchableMapTypeField.class, existingDoc1.getId());
+		assertThat(docWithMapTypeField.getSettings()).isEqualTo(Map.of("key", "value"));
+		
+		// but search should not return it yet
+		var beforeHits = search(Query.select(SchemaDocWithNotSearchableMapTypeField.class).where(Expressions.matchDynamic("settings", List.of("key#value"))).build());
+		assertThat(beforeHits).isEmpty();
+		
+		// try to update Mapping to perform the migration using an incorrect inplace strategy
+		admin().updateMappings(new Mappings(SchemaDocWithSearchableMapTypeFieldInvalidStrategy.class));
+		
+		assertThatExceptionOfType(IndexException.class)
+			.isThrownBy(() -> admin().create())
+			.withMessageContaining("After migrating to the latest mapping schema version the resulted schema in the index was different compared to the desired mapping.");
+	}
+	
+	@Test
+	public void migrate08_EnableSearchingOnMapTypeField() throws Exception {
+		// first add a Map type field to the index to see that is picked up properly
+		admin().updateMappings(new Mappings(SchemaDocWithNotSearchableMapTypeField.class));
+		admin().create();
+		
+		// updating existingDoc1 with new Map type should work
+		indexDocument(new SchemaDocWithNotSearchableMapTypeField(existingDoc1.getId(), existingDoc2.getField(), Map.of("key", "value")));
+		
+		// assert values are stored
+		var docWithMapTypeField = getDocument(SchemaDocWithNotSearchableMapTypeField.class, existingDoc1.getId());
+		assertThat(docWithMapTypeField.getSettings()).isEqualTo(Map.of("key", "value"));
+		
+		// but search should not return it yet
+		var beforeHits = search(Query.select(SchemaDocWithNotSearchableMapTypeField.class).where(Expressions.matchDynamic("settings", List.of("key#value"))).build());
+		assertThat(beforeHits).isEmpty();
+		
+		// update Mapping to perform the migration using script and reindex
+		admin().updateMappings(new Mappings(SchemaDocWithSearchableMapTypeField.class));
+		admin().create();
+		
+		// after the upgrade settings is searchable and should return the expected doc
+		var afterHits = search(Query.select(SchemaDocWithSearchableMapTypeField.class).where(Expressions.matchDynamic("settings", List.of("key#value"))).build());
+		assertThat(afterHits).extracting(SchemaDocWithSearchableMapTypeField::getId).containsOnly(existingDoc1.getId());
+		
+		// for sanity check, update the mapping again and run the migrator, should not raise any issues
+		admin().updateMappings(new Mappings(SchemaDocWithSearchableMapTypeField.class));
+		admin().create();
+	}
 	
 	@After
 	public void teardown() {
-		// delete the indexes completely
-		admin().delete();
+		// delete the indexes using direct raw index access and using mappings, not the actual recognized index list to allow every index to be deleted
+		var admin = (EsIndexAdmin) index.getRevisionIndex().index().admin();
+		var indexNames = index.getRevisionIndex().admin().getIndexMapping().getMappings().getDocumentMappings().stream().map(admin::generateTypeIndexName).toArray(l -> new String[l]);
+		admin.doDeleteIndexes(indexNames);
 	}
 	
 	/*
