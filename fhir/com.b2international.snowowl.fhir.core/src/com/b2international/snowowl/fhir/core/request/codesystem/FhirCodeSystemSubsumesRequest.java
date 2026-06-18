@@ -15,7 +15,10 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 
@@ -26,8 +29,10 @@ import com.b2international.snowowl.core.Repository;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -54,36 +59,55 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final String codeA = parameters.getCodeA() != null ? parameters.getCodeA().getValue() : parameters.getCodingA().getCode();
 		final String codeB = parameters.getCodeB() != null ? parameters.getCodeB().getValue() : parameters.getCodingB().getCode();
 		
+		final Map<String, Concept> conceptsById = fetchConcepts(context, codeSystem, codeA, codeB);
+		
+		final Concept conceptA = conceptsById.get(codeA);
+		final Concept conceptB = conceptsById.get(codeB);
+		
+		if (conceptA == null && conceptB == null) {
+			throw new BadRequestException(String.format("Invalid codes were supplied, codeA: \"%s\", codeB: \"%s\".", codeA, codeB));
+		} else if (conceptA == null) {
+			throw new BadRequestException(String.format("An invalid code was supplied, codeA: \"%s\".", codeA));
+		} else if (conceptB == null) {
+			throw new BadRequestException(String.format("An invalid code was supplied, codeB: \"%s\".", codeB));
+		}
+		
 		if (Objects.equals(codeA, codeB)) {
 			return CodeSystemSubsumptionResultParameters.equivalent();
-		} else if (isSubsumedBy(context, codeSystem, codeA, codeB)) {
-			return CodeSystemSubsumptionResultParameters.subsumedBy(); 
-		} else if (isSubsumedBy(context, codeSystem, codeB, codeA)) {
-			return CodeSystemSubsumptionResultParameters.subsumes();	
+		} else if (isSubsumedBy(conceptA, codeB)) {
+			return CodeSystemSubsumptionResultParameters.subsumedBy();
+		} else if (isSubsumedBy(conceptB, codeA)) {
+			return CodeSystemSubsumptionResultParameters.subsumes();
 		} else {
-			return CodeSystemSubsumptionResultParameters.notSubsumed();				
+			return CodeSystemSubsumptionResultParameters.notSubsumed();
 		}
 	}
 
-	private boolean isSubsumedBy(ServiceProvider context, CodeSystem codeSystem, final String subType, final String superType) {
-		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
+	private Map<String, Concept> fetchConcepts(ServiceProvider context, CodeSystem codeSystem, String codeA, String codeB) {
+		
+		if (codeA == null || codeB == null) {
+			throw new BadRequestException("codeA and codeB parameters are required");
+		}
 
+		final List<String> conceptIds = List.of(codeA, codeB);
+
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
 		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
 		
-		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
-		Options conceptSearchOptions = Options.builder()
-				.put(ConceptSearchRequestEvaluator.OptionKey.ID, subType)
-				.put(ConceptSearchRequestEvaluator.OptionKey.ANCESTOR, superType)
-				// we only need hit count to answer the subsumes question
-				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, 0) 
-				.build();
+		final Options conceptSearchOptions = Options.builder()
+			.put(ConceptSearchRequestEvaluator.OptionKey.ID, conceptIds)
+			.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, conceptIds.size())
+			.build();
 		
-		// seed already fetched resource information to prevent refetching the metadata
 		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
-		
-		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions)
-				.getTotal() > 0;
-	}
 
+		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+			.evaluate(resource.getResourceURI(), searchContext, conceptSearchOptions)
+			.stream()
+			.collect(Collectors.toMap(Concept::getId, concept -> concept));
+	}
+	
+	private boolean isSubsumedBy(Concept subTypeConcept, String superTypeCode) {
+		return subTypeConcept.getParentIds().contains(superTypeCode) || subTypeConcept.getAncestorIds().contains(superTypeCode);
+	} 
 }

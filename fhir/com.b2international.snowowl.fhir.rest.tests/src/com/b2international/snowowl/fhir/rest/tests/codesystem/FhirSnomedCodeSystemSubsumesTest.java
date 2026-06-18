@@ -16,9 +16,11 @@
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
 import static com.b2international.snowowl.fhir.rest.tests.FhirTestConcepts.BACTERIA;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM_SUBSUMES;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
+import static org.hamcrest.Matchers.hasItem;
 
 import org.junit.Test;
 
@@ -121,4 +123,54 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("parameter[0].valueCode", equalTo("subsumes"));
 	}
 	
+	@Test
+	public void GET_CodeSystem_$susbsumes_codeA_Invalid() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("codeA", "invalid")
+			.queryParam("codeB", BACTERIA)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
+			.when().get(CODESYSTEM_SUBSUMES)
+			.then().assertThat()
+			.statusCode(400)
+			
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeA: \"invalid\"."));
+	}
+	
+	@Test
+	public void GET_CodeSystem_$susbsumes_codeB_Invalid() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("codeA", BACTERIA)
+			.queryParam("codeB", "invalid")
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
+			.when().get(CODESYSTEM_SUBSUMES)
+			.then().assertThat()
+			.statusCode(400)
+			
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeB: \"invalid\"."));
+	}
+	
+	@Test
+	public void GET_CodeSystem_$susbsumes_Invalid_Same_Codes() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("codeA", "invalid")
+			.queryParam("codeB", "invalid")
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
+			.when().get(CODESYSTEM_SUBSUMES)
+			.then().assertThat()
+			.statusCode(400)
+			
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("Invalid codes were supplied, codeA: \"invalid\", codeB: \"invalid\"."));
+	}
 }
