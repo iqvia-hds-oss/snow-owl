@@ -68,10 +68,17 @@ import com.google.common.base.MoreObjects;
 			description = "add text search support to title field",
 			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
 		),
+		// version 4 of this schema was invalid, as enabled fields are not allowed to be changed
+		// ES refuses to tell us when we remove the enabled=false flag and replace it with dynamic=true
+//		@SchemaRevision(
+//			version = 4,
+//			description = "make settings searchable",
+//			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
+//		),
 		@SchemaRevision(
-			version = 4,
-			description = "make settings searchable",
-			strategy = DocumentMappingMigrationStrategy.REINDEX_INPLACE
+			version = 5,
+			description = "make settings searchable (with valid strategy)",
+			strategy = DocumentMappingMigrationStrategy.REINDEX_SCRIPT
 		)
 	}
 )
