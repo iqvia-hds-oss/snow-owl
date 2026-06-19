@@ -639,10 +639,14 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
     			.as(SnomedReferenceSetMember.class);
     	assertThat(axiomMember.getClassOWLRelationships()).containsOnly(create(IS_A, parentConcept, 0));
     	
-    	//Create a branch and create a new concept on this branch
+    	//Create a branch and update the module of the axiom member on this branch
     	final IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
-    	branching.createBranch(a).statusCode(201);
-    	createNewConcept(a, Concepts.ROOT_CONCEPT);
+    	branching.createBranch(a).statusCode(201);    	
+		Map<?, ?> moduleUpdateRequest = ImmutableMap.builder()
+				.put(SnomedRf2Headers.FIELD_MODULE_ID, Concepts.MODULE_SCT_MODEL_COMPONENT)
+				.put("commitComment", "Update OWL axiom module")
+				.build();
+    	updateComponent(a, SnomedComponentType.MEMBER, axiom, moduleUpdateRequest);
     	
     	//On MAIN update the child concept's OWL axiom with a new parent
 		Map<?, ?> axiomUpdateRequest = ImmutableMap.builder()
@@ -651,8 +655,10 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
 				.build();
     	updateComponent(branchPath, SnomedComponentType.MEMBER, axiom, axiomUpdateRequest);
     	
+    	//Synchronize the child branch
     	merge(branchPath, a, "Rebase branch A").body("status", equalTo(Merge.Status.COMPLETED.name()));
     	
+    	//Check if member OWL relationships have been correctly updated on the child branch
     	SnomedReferenceSetMember axiomMemberOnBranch = getComponent(a, SnomedComponentType.MEMBER, axiom, "owlRelationships()")
     			.extract()
     			.as(SnomedReferenceSetMember.class);
