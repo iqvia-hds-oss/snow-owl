@@ -53,8 +53,8 @@ updates:
         patterns:
           - 'com.fasterxml.jackson*:*'
           - 'org.yaml:*'
-          - 'stax2-api:*'
-          - 'woodstox-core:*'
+          - 'org.codehaus.woodstox:*'
+          - 'com.fasterxml.woodstox:*'
         update-types:
           - 'minor'
           - 'patch'
