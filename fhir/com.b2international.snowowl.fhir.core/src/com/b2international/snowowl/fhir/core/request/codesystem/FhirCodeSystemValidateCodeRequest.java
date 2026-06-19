@@ -56,6 +56,8 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 
 	@Override
 	public CodeSystemValidateCodeResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
+		final String system = codeSystem.getUrl();
+		final String version = codeSystem.getVersion();
 		final Set<Coding> codings = collectCodingsToValidate(parameters);
 		
 		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
@@ -94,9 +96,19 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 		Set<String> missingConceptIds = Sets.difference(codingsById.keySet(), conceptsById.keySet());
 		
 		if (!missingConceptIds.isEmpty()) {
+			final String missingCodes = ImmutableSortedSet.copyOf(missingConceptIds).toString();
+		
+			final String message = String.format("Could not find code%s '%s' in CodeSystem '%s' version '%s'.",
+			missingConceptIds.size() == 1 ? "" : "s",
+			missingCodes,
+			system,
+			version);
+		
 			return new CodeSystemValidateCodeResultParameters()
 				.setResult(false)
-				.setMessage(String.format("Could not find code%s '%s'.", missingConceptIds.size() == 1 ? "" : "s", ImmutableSortedSet.copyOf(missingConceptIds)));
+				.setSystem(system)
+				.setVersion(version)
+				.setMessage(message);
 		}
 		
 		// TODO: add more validation functionality that is checked for each coding (eg. alternative terms)
@@ -111,13 +123,19 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 				if (!expectedDisplay.equals(actualDisplay)) {
 					return new CodeSystemValidateCodeResultParameters()
 						.setResult(false)
+						.setSystem(system)
+						.setVersion(version)
 						.setMessage(String.format("Incorrect display '%s' for code '%s'.", expectedDisplay, coding.getCode())) 
 						.setDisplay(actualDisplay);
 				}
 			}
 		}
 		
-		return new CodeSystemValidateCodeResultParameters().setResult(true);
+
+		return new CodeSystemValidateCodeResultParameters()
+			.setResult(true)
+			.setSystem(system)
+			.setVersion(version);
 	}
 	
 	private Set<Coding> collectCodingsToValidate(CodeSystemValidateCodeParameters parameters) {
