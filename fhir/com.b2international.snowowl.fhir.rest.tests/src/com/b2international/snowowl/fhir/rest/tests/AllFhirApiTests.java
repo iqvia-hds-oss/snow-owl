@@ -24,6 +24,7 @@ import org.junit.runners.Suite.SuiteClasses;
 import com.b2international.snowowl.fhir.rest.tests.capabilitystatement.CapabilityStatementApiTest;
 import com.b2international.snowowl.fhir.rest.tests.codesystem.*;
 import com.b2international.snowowl.fhir.rest.tests.packages.FhirLoadPackageApiTest;
+import com.b2international.snowowl.fhir.rest.tests.valueset.FhirImplicitValueSetUrlTest;
 import com.b2international.snowowl.fhir.rest.tests.valueset.FhirSnomedValueSetExpandTest;
 import com.b2international.snowowl.fhir.rest.tests.valueset.FhirSnomedValueSetValidateCodeTest;
 import com.b2international.snowowl.fhir.rest.tests.valueset.FhirValueSetApiTest;
@@ -40,6 +41,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 @SuiteClasses({
 	// Helpers
 	SnomedUriParsingTest.class,
+	FhirImplicitValueSetUrlTest.class,
 	
 	// CapabilityStatement
 	CapabilityStatementApiTest.class,

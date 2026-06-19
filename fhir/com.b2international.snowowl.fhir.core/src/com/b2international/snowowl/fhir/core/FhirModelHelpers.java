@@ -22,6 +22,8 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.DateTimeType;
@@ -55,10 +57,14 @@ public class FhirModelHelpers {
 	public static final String OID_PREFIX = "urn:oid:";
 	
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
-
+	public static final String LOINC_BASE_URI_STRING = "http://loinc.org";
+	
 	public static final String VERSION_SEGMENT = "/version/";
 
 	private static final String GENERIC_IMPLICIT_VALUESET_SUFFIX = "/vs";
+	
+	// Slash is a non-capturing group, the optional "code" is a named capturing group
+	private static final Pattern LOINC_IMPLICIT_VALUESET_PATTERN = Pattern.compile("http://loinc.org/vs(?:/(?<code>[a-zA-Z0-9\\-]+))?");
 	
 	/**
 	 * @param resource
@@ -274,12 +280,32 @@ public class FhirModelHelpers {
 	 * @return
 	 */
 	public static boolean isImplicitValueSetURL(String url) {
-		return isSnomedImplicitValueSetUrl(url) || isGenericImplicitValueSetUrl(url);
+		return isSnomedImplicitValueSetUrl(url)
+			|| isLoincImplicitValueSetUrl(url)
+			|| isGenericImplicitValueSetUrl(url);
 	}
 	
 	// For SNOMED CT we need a proper SNOMED URI + fhir_vs after the ? query start 
 	public static boolean isSnomedImplicitValueSetUrl(String url) {
 		return url != null && url.startsWith(SNOMED_BASE_URI_STRING) && url.substring(url.indexOf("?") + 1, url.indexOf("?") + "fhir_vs".length() + 1).equals("fhir_vs");
+	}
+	
+	// For LOINC we need a LOINC URI + "/vs" suffix that is allowed to continue with a single path segment
+	public static boolean isLoincImplicitValueSetUrl(String url) {
+		return url != null && LOINC_IMPLICIT_VALUESET_PATTERN.matcher(url).matches();
+	}
+	
+	public static String getLoincImplicitValueSetCode(String url) {
+		if (url == null) {
+			return null;
+		}
+		
+		final Matcher matcher = LOINC_IMPLICIT_VALUESET_PATTERN.matcher(url);
+		if (!matcher.matches()) {
+			return null;
+		}
+		
+		return Strings.emptyToNull(matcher.group("code"));
 	}
 	
 	// "Generic" means the original CodeSystem URL + an ending /vs suffix to get the implicit ValueSet working
