@@ -15,10 +15,9 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 
 import org.hl7.fhir.r5.model.Coding;
 import org.junit.Test;
@@ -27,6 +26,7 @@ import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 
 /**
@@ -47,9 +47,12 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter[0].name", equalTo("result"))
 			.body("parameter[0].valueBoolean", equalTo(false))
-			.body("parameter[1].name", equalTo("message"))
-			.body("parameter[1].valueString", equalTo("Could not find code '[12345]'."))
-			.body("parameter[2]", nullValue());
+			.body("parameter[1].name", equalTo("system"))
+			.body("parameter[1].valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[3].name", equalTo("message"))
+			.body("parameter[3].valueString", equalTo("Could not find code '[12345]' in CodeSystem 'http://snomed.info/sct' version 'http://snomed.info/sct/900000000000207008'."));
 	}
 	
 	@Test
@@ -64,10 +67,14 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter[0].name", equalTo("result"))
 			.body("parameter[0].valueBoolean", equalTo(false))
-			.body("parameter[1].name", equalTo("message"))
-			.body("parameter[1].valueString", equalTo("Incorrect display 'Unknown display' for code '138875005'."))
-			.body("parameter[2].name", equalTo("display"))
-			.body("parameter[2].valueString", equalTo("SNOMED CT Concept"));
+			.body("parameter[1].name", equalTo("system"))
+			.body("parameter[1].valueUri", equalTo("http://snomed.info/sct"))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter[3].name", equalTo("message"))
+			.body("parameter[3].valueString", equalTo("Incorrect display 'Unknown display' for code '138875005'."))
+			.body("parameter[4].name", equalTo("display"))
+			.body("parameter[4].valueString", equalTo("SNOMED CT Concept"));
 	}
 	
 	@Test
@@ -81,7 +88,10 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter[0].name", equalTo("result"))
 			.body("parameter[0].valueBoolean", equalTo(true))
-			.body("parameter[1]", nullValue());
+			.body("parameter[1].name", equalTo("system"))
+			.body("parameter[1].valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 	
@@ -96,7 +106,10 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 		.statusCode(200)
 		.body("parameter[0].name", equalTo("result"))
 		.body("parameter[0].valueBoolean", equalTo(true))
-		.body("parameter[1]", nullValue());
+		.body("parameter[1].name", equalTo("system"))
+		.body("parameter[1].valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+		.body("parameter[2].name", equalTo("version"))
+		.body("parameter[2].valueString", equalTo("http://snomed.info/sct/900000000000207008/version/20200131"));
 	}
 	
 	@Test
@@ -117,7 +130,10 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter[0].name", equalTo("result"))
 			.body("parameter[0].valueBoolean", equalTo(true))
-			.body("parameter[1]", nullValue());
+			.body("parameter[1].name", equalTo("system"))
+			.body("parameter[1].valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 	@Test
@@ -125,7 +141,7 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 		var parameters = new CodeSystemValidateCodeParameters()
 			.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.setCoding(new Coding()
-				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)					
+				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 				.setVersion(SNOMEDCT_URL)
 				.setCode(Concepts.ROOT_CONCEPT));
 
@@ -138,7 +154,10 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter[0].name", equalTo("result"))
 			.body("parameter[0].valueBoolean", equalTo(true))
-			.body("parameter[1]", nullValue());
+			.body("parameter[1].name", equalTo("system"))
+			.body("parameter[1].valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 	@Test
@@ -159,7 +178,10 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter[0].name", equalTo("result"))
 			.body("parameter[0].valueBoolean", equalTo(true))
-			.body("parameter[1]", nullValue());
+			.body("parameter[1].name", equalTo("system"))
+			.body("parameter[1].valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 }
