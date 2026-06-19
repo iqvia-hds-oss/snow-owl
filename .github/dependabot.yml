@@ -75,6 +75,7 @@ updates:
         applies-to: version-updates
         patterns:
           - 'org.eclipse.jetty*:*'
+          - 'jakarta.websocket:*'
         update-types:
           - 'minor'
           - 'patch'
