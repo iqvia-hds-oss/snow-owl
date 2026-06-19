@@ -92,14 +92,15 @@ public final class IndexMapping {
 		// override mappings
 		this.mappings = mappings;
 		
-		// remove all unknown index registrations and return them for deletion
-		final Set<String> removedIndexes = new HashSet<>();
+		// remove all linked index registrations that have been updated and return them if anyone wants to act on them
+		final Set<String> removedOrUpdatedIndexes = new HashSet<>();
 		for (final DocumentMapping previousMapping : Set.copyOf(this.mappingByIndex.inverse().keySet())) {
 			if (!this.mappings.getDocumentMappings().contains(previousMapping)) {
-				removedIndexes.add(this.mappingByIndex.inverse().remove(previousMapping));
+				removedOrUpdatedIndexes.add(this.mappingByIndex.inverse().remove(previousMapping));
 			}
 		}
-		return removedIndexes;
+		
+		return removedOrUpdatedIndexes;
 	}
 	
 	/**
