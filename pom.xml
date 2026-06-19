@@ -19,8 +19,8 @@
 		<!-- Dependency versions for Tycho's target platform filter -->
 		<elk.version>0.4.3</elk.version>
 		<guava.versionRange>[33.4.0,34.0.0)</guava.versionRange>
-		<jackson.annotations.version>2.21</jackson.annotations.version>
-		<jackson.version>2.21.1</jackson.version>
+		<jackson.annotations.version>2.22</jackson.annotations.version>
+		<jackson.version>2.22.0</jackson.version>
 		<logback.versionRange>[1.5.32,1.6.0)</logback.versionRange>
 		<osgi.versionRange>[3.24.0,3.25.0)</osgi.versionRange>
 		<slf4j.version>2.0.17</slf4j.version>
