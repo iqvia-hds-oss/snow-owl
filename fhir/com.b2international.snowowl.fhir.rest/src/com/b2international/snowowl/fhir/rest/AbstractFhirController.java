@@ -133,7 +133,7 @@ public abstract class AbstractFhirController extends AbstractRestService {
 
 		return ResponseEntity.status(HttpStatus.OK)
 			.contentType(mediaType.getMediaType())
-			.body(baos.toByteArray());		
+			.body(baos.toByteArray());
 	}
 	
 	protected final ResponseEntity<byte[]> toResponseEntity(
@@ -158,18 +158,30 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	}
 	
 	protected final ResponseEntity<byte[]> toResponseEntity(
-		final HttpStatus httpStatus,
-		final Resource resource, 
-		final String accept, 
-		final String _format,
-		final Boolean _pretty
+			final HttpStatus httpStatus,
+			final Map<String, String> headers,
+			final Resource resource, 
+			final String accept, 
+			final String _format,
+			final Boolean _pretty
 	) {
 		final FhirMediaType mediaType = FhirMediaType.parse(accept, _format);
 		final byte[] body = writeToBytes(resource, mediaType, _pretty);
 
 		return ResponseEntity.status(httpStatus)
 			.contentType(mediaType.getMediaType())
+			.headers(h -> h.setAll(headers))
 			.body(body);
+	}
+	
+	protected final ResponseEntity<byte[]> toResponseEntity(
+		final HttpStatus httpStatus,
+		final Resource resource, 
+		final String accept, 
+		final String _format,
+		final Boolean _pretty
+	) {
+		return toResponseEntity(httpStatus, Map.of(), resource, accept, _format, _pretty);
 	}
 
 	private byte[] writeToBytes(final Resource resource, final FhirMediaType mediaType, final Boolean _pretty) {

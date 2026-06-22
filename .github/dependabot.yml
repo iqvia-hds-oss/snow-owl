@@ -34,16 +34,10 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-      org-slf4j:
+      slf4j:
         applies-to: version-updates
         patterns:
           - 'org.slf4j:*'
-        update-types:
-          - 'minor'
-          - 'patch'
-      ch-qos-logback:
-        applies-to: version-updates
-        patterns:
           - 'ch.qos.logback:*'
         update-types:
           - 'minor'
@@ -75,6 +69,7 @@ updates:
         applies-to: version-updates
         patterns:
           - 'org.eclipse.jetty*:*'
+          - 'jakarta.websocket:*'
         update-types:
           - 'minor'
           - 'patch'
