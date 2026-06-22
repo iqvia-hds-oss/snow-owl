@@ -22,7 +22,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.b2international.commons.CompareUtils;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.snowowl.core.uri.ComponentURI;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -54,7 +53,7 @@ public final class ImportResponse implements Serializable {
 		this.error = error;
 		
 		Set<ComponentURI> limitedVisitedComponents = null; 
-		if (!CompareUtils.isEmpty(visitedComponents)) {
+		if (visitedComponents != null) {
 			limitedVisitedComponents = visitedComponents.stream()
 						.limit(LIMIT)
 						.sorted(Comparator.comparing(ComponentURI::componentType)
@@ -63,7 +62,7 @@ public final class ImportResponse implements Serializable {
 		}
 		
 		List<ImportDefect> limitedDefects = null;
-		if (!CompareUtils.isEmpty(defects)) {
+		if (defects != null) {
 			limitedDefects = defects.size() <= LIMIT ? defects : defects.stream().limit(LIMIT).toList();
 		}
 				
