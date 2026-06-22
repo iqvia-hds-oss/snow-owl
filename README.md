@@ -3,13 +3,13 @@
 Snow Owl<sup>&reg;</sup> is a highly scalable, open source terminology server with revision-control capabilities and collaborative authoring platform features. It allows you to store, search and author high volumes of terminology artifacts quickly and efficiently.
 If you’d like to see Snow Owl in action, the [Snowray Terminology Service™](https://snowray.app) provides a managed terminology server and high-quality terminology content management from your web browser.
 
-[![build status](https://img.shields.io/github/actions/workflow/status/b2ihealthcare/snow-owl/maven.yml?branch=10.x&style=flat-square)](https://github.com/b2ihealthcare/snow-owl/actions)
-[![latest release](https://img.shields.io/github/v/release/b2ihealthcare/snow-owl?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/releases/tag/v10.0.0)
-[![downloads](https://img.shields.io/github/downloads/b2ihealthcare/snow-owl/total.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/releases/)
-[![Docker](https://img.shields.io/docker/pulls/b2ihealthcare/snow-owl-oss?style=flat-square)](https://hub.docker.com/r/b2ihealthcare/snow-owl-oss)
-[![GitHub](https://img.shields.io/github/license/b2ihealthcare/snow-owl.svg?style=flat-square)](https://github.com/b2ihealthcare/snow-owl/blob/10.x/LICENSE)
-[![codecov](https://codecov.io/gh/b2ihealthcare/snow-owl/branch/10.x/graph/badge.svg?style=flat-square)](https://codecov.io/gh/b2ihealthcare/snow-owl)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl?ref=badge_shield)
+[![build status](https://img.shields.io/github/actions/workflow/status/iqvia-hds-oss/snow-owl/maven.yml?branch=10.x&style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/actions)
+[![latest release](https://img.shields.io/github/v/release/iqvia-hds-oss/snow-owl?style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/releases/tag/v10.0.0)
+[![downloads](https://img.shields.io/github/downloads/iqvia-hds-oss/snow-owl/total.svg?style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/releases/)
+[![Docker](https://img.shields.io/docker/pulls/iqvia-hds-oss/snow-owl-oss?style=flat-square)](https://hub.docker.com/r/iqvia-hds-oss/snow-owl-oss)
+[![GitHub](https://img.shields.io/github/license/iqvia-hds-oss/snow-owl.svg?style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/blob/10.x/LICENSE)
+[![codecov](https://codecov.io/gh/iqvia-hds-oss/snow-owl/branch/10.x/graph/badge.svg?style=flat-square)](https://codecov.io/gh/iqvia-hds-oss/snow-owl)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fiqvia-hds-oss%2Fsnow-owl.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fiqvia-hds-oss%2Fsnow-owl?ref=badge_shield)
 
 # Introduction
 
@@ -22,9 +22,9 @@ Features include:
         * RF2 Release File Specification as of 2026-05-01
         * Support for Relationships with concrete values
         * Official and Custom Reference Sets
-        * Expression Constraint Language v2.2.0 [spec](https://confluence.ihtsdotools.org/download/attachments/33493263/doc_ExpressionConstraintLanguage_v2.2-en-US_INT_20231122.pdf?api=v2), [implementation](https://github.com/b2ihealthcare/snomed-ecl)
-        * Compositional Grammar 2.3.1 [spec](https://confluence.ihtsdotools.org/download/attachments/33496020/doc_CompositionalGrammar_v2.3.1-en-US_INT_20161118.pdf?api=v2), [implementation](https://github.com/b2ihealthcare/snomed-scg)
-        * Expression Template Language 1.0.0 [spec](https://confluence.ihtsdotools.org/download/attachments/45529301/doc_TemplateSyntax_v1.0-en-US_INT_20170726.pdf?api=v2), [implementation](https://github.com/b2ihealthcare/snomed-etl)
+        * Expression Constraint Language v2.2.0 [spec](https://confluence.ihtsdotools.org/download/attachments/33493263/doc_ExpressionConstraintLanguage_v2.2-en-US_INT_20231122.pdf?api=v2), [implementation](https://github.com/iqvia-hds-oss/snomed-ecl)
+        * Compositional Grammar 2.3.1 [spec](https://confluence.ihtsdotools.org/download/attachments/33496020/doc_CompositionalGrammar_v2.3.1-en-US_INT_20161118.pdf?api=v2), [implementation](https://github.com/iqvia-hds-oss/snomed-scg)
+        * Expression Template Language 1.0.0 [spec](https://confluence.ihtsdotools.org/download/attachments/45529301/doc_TemplateSyntax_v1.0-en-US_INT_20170726.pdf?api=v2), [implementation](https://github.com/iqvia-hds-oss/snomed-etl)
     * LOINC, ICD-10 (+ modifications) and Custom CodeSystems are available when licensed
     * With its modular design, the server can maintain multiple terminologies (including local codes, mapping sets, value sets)
 * Various sets of APIs
@@ -56,15 +56,15 @@ Pure extractable binaries can also be installed manually on most major operating
 This distribution only includes features licensed under the Apache 2.0 license. To get access to the full set of features, please contact [B2i Healthcare](mailto:info@b2ihealthcare.com).
 {% endhint %}
 
-View the detailed release notes [here](https://github.com/b2ihealthcare/snow-owl/releases/tag/v10.0.0).
+View the detailed release notes [here](https://github.com/iqvia-hds-oss/snow-owl/releases/tag/v10.0.0).
 
-Not the version you're looking for? View [past releases](https://github.com/b2ihealthcare/snow-owl/releases).
+Not the version you're looking for? View [past releases](https://github.com/iqvia-hds-oss/snow-owl/releases).
 
 ### Install and Run
 
 NOTE: You need to have at least version 25 of the JDK installed for local builds and running the development environment. Official releases include the [Eclipse Temurin](https://adoptium.net/temurin/releases/?version=25) runtime.
 
-The recommended install option is via the [official OSS](https://hub.docker.com/r/b2ihealthcare/snow-owl-oss) (or the Pro version registries if you have access to those) Docker image. 
+The recommended install option is via the [official OSS](https://hub.docker.com/r/iqvia-hds-oss/snow-owl-oss) (or the Pro version registries if you have access to those) Docker image. 
 
 If you prefer to download a package and run it manually, then once the package is installed:
 
@@ -140,14 +140,14 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 # Versioning
 
-Our [releases](https://github.com/b2ihealthcare/snow-owl/releases) use [semantic versioning](http://semver.org). You can find a chronologically ordered list of notable changes in [CHANGELOG.md](CHANGELOG.md).
+Our [releases](https://github.com/iqvia-hds-oss/snow-owl/releases) use [semantic versioning](http://semver.org). You can find a chronologically ordered list of notable changes in [CHANGELOG.md](CHANGELOG.md).
 
 # License
 
 This project is licensed under the Apache 2.0 License. See [LICENSE](LICENSE) for details and refer to [NOTICE](NOTICE) for additional licensing notes and uses of third-party components.
 
 
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fb2ihealthcare%2Fsnow-owl?ref=badge_large)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fiqvia-hds-oss%2Fsnow-owl.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fiqvia-hds-oss%2Fsnow-owl?ref=badge_large)
 
 # Acknowledgements
 
