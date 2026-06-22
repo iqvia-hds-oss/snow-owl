@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 
 /**
  * @since 10.1.0
@@ -50,6 +51,8 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
 			.body("parameter.find { it.name == 'message' }.valueString", equalTo("OK"));
 	}
 	
