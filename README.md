@@ -5,8 +5,7 @@ If you’d like to see Snow Owl in action, the [Snowray Terminology Service™](
 
 [![build status](https://img.shields.io/github/actions/workflow/status/iqvia-hds-oss/snow-owl/maven.yml?branch=10.x&style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/actions)
 [![latest release](https://img.shields.io/github/v/release/iqvia-hds-oss/snow-owl?style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/releases/tag/v10.0.0)
-[![downloads](https://img.shields.io/github/downloads/iqvia-hds-oss/snow-owl/total.svg?style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/releases/)
-[![Docker](https://img.shields.io/docker/pulls/iqvia-hds-oss/snow-owl-oss?style=flat-square)](https://hub.docker.com/r/iqvia-hds-oss/snow-owl-oss)
+[![Docker](https://img.shields.io/docker/pulls/b2ihealthcare/snow-owl-oss?style=flat-square)](https://hub.docker.com/r/b2ihealthcare/snow-owl-oss)
 [![GitHub](https://img.shields.io/github/license/iqvia-hds-oss/snow-owl.svg?style=flat-square)](https://github.com/iqvia-hds-oss/snow-owl/blob/10.x/LICENSE)
 [![codecov](https://codecov.io/gh/iqvia-hds-oss/snow-owl/branch/10.x/graph/badge.svg?style=flat-square)](https://codecov.io/gh/iqvia-hds-oss/snow-owl)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fiqvia-hds-oss%2Fsnow-owl.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fiqvia-hds-oss%2Fsnow-owl?ref=badge_shield)
