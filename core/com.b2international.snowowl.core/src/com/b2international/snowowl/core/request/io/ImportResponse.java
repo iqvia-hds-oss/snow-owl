@@ -22,6 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.b2international.commons.CompareUtils;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.snowowl.core.uri.ComponentURI;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -51,14 +52,23 @@ public final class ImportResponse implements Serializable {
 			@JsonProperty("defects") final List<ImportDefect> defects,
 			@JsonProperty("changeCount") final int changeCount) {
 		this.error = error;
-		this.visitedComponents = visitedComponents.size() <= LIMIT ? visitedComponents 
-				: visitedComponents.stream()
-				.limit(LIMIT)
-				.sorted(Comparator.comparing(ComponentURI::componentType)
-						.thenComparing(ComponentURI::identifier))
-				.collect(Collectors.toSet());
-		this.defects = defects.size() <= LIMIT ? defects 
-				: defects.stream().limit(LIMIT).collect(Collectors.toList());
+		
+		Set<ComponentURI> limitedVisitedComponents = null; 
+		if (!CompareUtils.isEmpty(visitedComponents)) {
+			limitedVisitedComponents = visitedComponents.stream()
+						.limit(LIMIT)
+						.sorted(Comparator.comparing(ComponentURI::componentType)
+								.thenComparing(ComponentURI::identifier))
+						.collect(Collectors.toSet());
+		}
+		
+		List<ImportDefect> limitedDefects = null;
+		if (!CompareUtils.isEmpty(defects)) {
+			limitedDefects = defects.size() <= LIMIT ? defects : defects.stream().limit(LIMIT).toList();
+		}
+				
+		this.visitedComponents = limitedVisitedComponents;
+		this.defects = limitedDefects;
 		this.changeCount = changeCount;
 	}
 	
@@ -75,17 +85,17 @@ public final class ImportResponse implements Serializable {
 	
 	@JsonIgnore
 	public List<ImportDefect> getErrors() {
-		return Collections3.toImmutableList(getDefects()).stream().filter(ImportDefect::isError).collect(Collectors.toList());
+		return Collections3.toImmutableList(getDefects()).stream().filter(ImportDefect::isError).toList();
 	}
 	
 	@JsonIgnore
 	public List<ImportDefect> getWarnings() {
-		return Collections3.toImmutableList(getDefects()).stream().filter(ImportDefect::isWarning).collect(Collectors.toList());
+		return Collections3.toImmutableList(getDefects()).stream().filter(ImportDefect::isWarning).toList();
 	}
 	
 	@JsonIgnore
 	public List<ImportDefect> getInfos() {
-		return Collections3.toImmutableList(getDefects()).stream().filter(ImportDefect::isInfo).collect(Collectors.toList());
+		return Collections3.toImmutableList(getDefects()).stream().filter(ImportDefect::isInfo).toList();
 	}
 	
 	public String getError() {
