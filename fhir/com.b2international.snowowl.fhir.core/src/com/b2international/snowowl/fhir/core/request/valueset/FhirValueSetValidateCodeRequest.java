@@ -22,6 +22,7 @@ import com.b2international.fhir.r5.operations.ValueSetValidateCodeResultParamete
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -46,6 +47,8 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		// TODO support coding and codeable concept parameters as well to get the referenced code
 		final String code = parameters.getCode() == null ? null : parameters.getCode().getCode();
+		final String system = getValidationSystem(valueSet);
+		final String version = getValidationVersion(valueSet);
 		
 		if (Strings.isNullOrEmpty(code)) {
 			throw new BadRequestException("'code' parameter is required to perform the operation.", "code");
@@ -58,10 +61,15 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				.validateCode(context, valueSet, code, parameters);
 		
 		if (valueSetExpansionContainsComponent == null) {
+			
+			final String message = String.format("Could not find code '%s' in ValueSet '%s'.", code, valueSet.getUrl());
+			
 			// Found a member that uses the requested code: verify the code system, version, display label via a code system lookup request
 			return new ValueSetValidateCodeResultParameters()
 					.setResult(false)
-					.setMessage(String.format("The requested code '%s' is not part of the given Value Set '%s'.", code, getUrl()));
+					.setSystem(system)
+					.setVersion(version)
+					.setMessage(message);
 		} else {
 			
 			// TODO add system and version validation here?
@@ -73,9 +81,51 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 					.setMessage("OK")
 					.setDisplay(valueSetExpansionContainsComponent.getDisplay())
 					.setCode(valueSetExpansionContainsComponent.getCode())
-					.setSystem(valueSetExpansionContainsComponent.getSystem())
-					.setVersion(valueSetExpansionContainsComponent.getVersion());
+					.setSystem(Strings.isNullOrEmpty(valueSetExpansionContainsComponent.getSystem())
+							? system
+							: valueSetExpansionContainsComponent.getSystem())
+					.setVersion(Strings.isNullOrEmpty(valueSetExpansionContainsComponent.getVersion())
+							? version
+							: valueSetExpansionContainsComponent.getVersion()
+);
 		}
 	}
+	
 
+	private String getValidationSystem(ValueSet valueSet) {
+		if (parameters.getSystem() != null) {
+			return parameters.getSystem().getValue();
+		}
+	
+	if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()) {
+		final String system = valueSet.getCompose().getIncludeFirstRep().getSystem();
+			if (!Strings.isNullOrEmpty(system)) {
+				return system;
+			}
+		}
+		return valueSet.getUrl();
+	}
+	
+
+	private String getValidationVersion(ValueSet valueSet) {
+		if (parameters.getSystemVersion() != null) {
+			return parameters.getSystemVersion().getValue();
+		}
+	
+		if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()) {
+			final String version = valueSet.getCompose().getIncludeFirstRep().getVersion();
+			
+			if (!Strings.isNullOrEmpty(version)) {
+				return version;
+			}
+		}
+	
+		final Object codeSystemVersion = valueSet.getUserData(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION);
+		
+		if (codeSystemVersion instanceof String version && !Strings.isNullOrEmpty(version)) {
+			return version;
+		}
+
+		return valueSet.getVersion();
+	}
 }
