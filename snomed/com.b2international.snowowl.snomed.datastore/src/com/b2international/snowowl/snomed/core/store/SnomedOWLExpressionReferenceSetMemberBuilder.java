@@ -18,8 +18,6 @@ package com.b2international.snowowl.snomed.core.store;
 import com.b2international.snowowl.core.domain.TransactionContext;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
-import com.b2international.snowowl.snomed.datastore.request.SnomedOWLExpressionConverter;
-import com.b2international.snowowl.snomed.datastore.request.SnomedOWLExpressionConverterResult;
 
 /**
  * @since 6.5
@@ -36,11 +34,7 @@ public final class SnomedOWLExpressionReferenceSetMemberBuilder extends SnomedMe
 	@Override
 	public void init(final SnomedRefSetMemberIndexEntry.Builder component, final TransactionContext context) {
 		super.init(component, context);
-		SnomedOWLExpressionConverterResult result = context.service(SnomedOWLExpressionConverter.class).toSnomedOWLRelationships(getReferencedComponentId(), owlExpression);
-		component
-			.field(SnomedRf2Headers.FIELD_OWL_EXPRESSION, owlExpression)
-			.classAxiomRelationships(result.getClassAxiomRelationships())
-			.gciAxiomRelationships(result.getGciAxiomRelationships());
+		component.field(SnomedRf2Headers.FIELD_OWL_EXPRESSION, owlExpression);
 	}
 	
 }

@@ -34,13 +34,7 @@ final class SnomedOWLExpressionMemberUpdateDelegate extends SnomedRefSetMemberUp
 		final String owlExpression = getProperty(SnomedRf2Headers.FIELD_OWL_EXPRESSION);
 
 		if (!Strings.isNullOrEmpty(owlExpression) && !owlExpression.equals(original.getOwlExpression())) {
-			SnomedOWLExpressionConverterResult result = context.service(SnomedOWLExpressionConverter.class).toSnomedOWLRelationships(original.getReferencedComponentId(), owlExpression);
-				
-			member
-				.field(SnomedRf2Headers.FIELD_OWL_EXPRESSION, owlExpression)
-				.classAxiomRelationships(result.getClassAxiomRelationships())
-				.gciAxiomRelationships(result.getGciAxiomRelationships());				
-			
+			member.field(SnomedRf2Headers.FIELD_OWL_EXPRESSION, owlExpression);		
 			return true;
 		}
 
