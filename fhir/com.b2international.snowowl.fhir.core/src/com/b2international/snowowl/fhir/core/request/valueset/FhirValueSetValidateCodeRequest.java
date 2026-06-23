@@ -97,15 +97,16 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			return parameters.getSystem().getValue();
 		}
 	
-	if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()) {
-		final String system = valueSet.getCompose().getIncludeFirstRep().getSystem();
+		if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()) {
+			final String system = valueSet.getCompose().getIncludeFirstRep().getSystem();
+			
 			if (!Strings.isNullOrEmpty(system)) {
 				return system;
 			}
 		}
+		
 		return valueSet.getUrl();
 	}
-	
 
 	private String getValidationVersion(ValueSet valueSet) {
 		if (parameters.getSystemVersion() != null) {

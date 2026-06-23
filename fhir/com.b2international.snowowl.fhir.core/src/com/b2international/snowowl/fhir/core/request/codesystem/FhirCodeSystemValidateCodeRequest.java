@@ -99,10 +99,10 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			final String missingCodes = ImmutableSortedSet.copyOf(missingConceptIds).toString();
 		
 			final String message = String.format("Could not find code%s '%s' in CodeSystem '%s' version '%s'.",
-			missingConceptIds.size() == 1 ? "" : "s",
-			missingCodes,
-			system,
-			version);
+				missingConceptIds.size() == 1 ? "" : "s",
+				missingCodes,
+				system,
+				version);
 		
 			return new CodeSystemValidateCodeResultParameters()
 				.setResult(false)
