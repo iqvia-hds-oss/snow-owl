@@ -18,6 +18,7 @@ package com.b2international.snowowl.core.rest.io;
 import java.io.Serializable;
 import java.util.function.Function;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.ApiError;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
@@ -73,15 +74,43 @@ public final class ImportJob implements Serializable {
 	}
 	
 	public static ImportJob fromRemoteJobEntry(RemoteJobEntry job, Function<ObjectMapper, ImportResponse> successMapper) {
-		ApiError error = null;
-		ImportResponse response = null;
-		ObjectMapper mapper = ApplicationContext.getServiceForClass(ObjectMapper.class);
-		if (RemoteJobState.FAILED == job.getState()) {
-			error = job.getResultAs(mapper, ApiError.class);
-		} else if (job.isSuccessful()) {
-			response = successMapper.apply(mapper);
+		final ObjectMapper mapper = ApplicationContext.getServiceForClass(ObjectMapper.class);
+		
+		final ApiError error;
+		final ImportResponse response;
+		
+		switch (job.getState()) {
+			case FINISHED:
+				error = null;
+				response = successMapper.apply(mapper);
+				break;
+				
+			case FAILED:
+				error = job.getResultAs(mapper, ApiError.class);
+				response = ImportResponse.error(getErrorMessage(error));
+				break;
+				
+			default:
+				error = null;
+				response = null;
+				break;
 		}
+		
 		return new ImportJob(job.getId(), job.getState(), error, response);
+	}
+
+	private static String getErrorMessage(final ApiError error) {
+		final String message = error.getMessage();
+		if (!StringUtils.isEmpty(message)) {
+			return message;
+		} else {
+			final String developerMessage = error.getDeveloperMessage();
+			if (!StringUtils.isEmpty(developerMessage)) {
+				return developerMessage;
+			} else {
+				return "An unknown error occurred during the import operation.";
+			}
+		}
 	}
 	
 }
