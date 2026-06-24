@@ -317,7 +317,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		if (code == null) {
 			// The "all concepts" implicit Value Set definition will work for LOINC as well
 			return genericAllConcepts(valueSet, codeSystem, codeSystem.getUrl(), codeSystem.getVersion());
-		} else if (code.startsWith("LP-")) {
+		} else if (code.startsWith("LP")) {
 			// This is a LOINC implicit Value Set URL for a specific part, extract the part number and configure the Value Set accordingly
 			return loincPartDescendants(valueSet, codeSystem, codeSystem.getUrl(), codeSystem.getVersion(), code);
 		}
