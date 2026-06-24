@@ -21,6 +21,7 @@ import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 import java.io.InputStream;
 import java.time.LocalDate;
 
+import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -96,7 +97,13 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(responseCode = "201", description = "Resource created or updated")
+	@ApiResponse(
+		responseCode = "201",
+		description = "Value set created or updated",
+		content = {
+			@Content(schema = @Schema(implementation = OperationOutcome.class))
+		}
+	)
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PostMapping(consumes =	{
 		APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -241,8 +248,20 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(responseCode = "200", description = "Resource updated")
-	@ApiResponse(responseCode = "201", description = "Resource created")
+	@ApiResponse(
+		responseCode = "200",
+		description = "Value set updated",
+		content = {
+			@Content(schema = @Schema(implementation = OperationOutcome.class))
+		}
+	)
+	@ApiResponse(
+		responseCode = "201",
+		description = "Value set created",
+		content = {
+			@Content(schema = @Schema(implementation = OperationOutcome.class))
+		}
+	)
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PutMapping(value = "/{id:**}", consumes = {
 		APPLICATION_FHIR_JSON_5_0_VALUE,

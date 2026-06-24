@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.time.LocalDate;
 
 import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.OperationOutcome;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -96,7 +97,13 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(responseCode = "201", description = "Resource created or updated")
+	@ApiResponse(
+		responseCode = "201",
+		description = "Code system created or updated",
+		content = {
+			@Content(schema = @Schema(implementation = OperationOutcome.class))
+		}
+	)
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PostMapping(consumes =	{
 		APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -241,8 +248,20 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(responseCode = "200", description = "Resource updated")
-	@ApiResponse(responseCode = "201", description = "Resource created")
+	@ApiResponse(
+		responseCode = "200",
+		description = "Code system updated",
+		content = {
+			@Content(schema = @Schema(implementation = OperationOutcome.class))
+		}
+	)
+	@ApiResponse(
+		responseCode = "201",
+		description = "Code system created",
+		content = {
+			@Content(schema = @Schema(implementation = OperationOutcome.class))
+		}
+	)
 	@ApiResponse(responseCode = "400", description = "Bad Request")
 	@PutMapping(value = "/{id:**}", consumes = {
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
