@@ -68,6 +68,7 @@ import com.b2international.snowowl.snomed.validation.SnomedQueryValidationRuleEv
 	ConceptIconIdUpdaterTest.class,
 	// ECL test cases
 	SnomedEclEvaluationRequestTest.class,
+	SnomedEclEvaluationRequestRefinementIsaTest.class,
 	SnomedEclEvaluationRequestPropertyFilterTest.class,
 	SnomedEclEvaluationRequestHistorySupplementTest.class,
 	SnomedStatedEclEvaluationTest.class,

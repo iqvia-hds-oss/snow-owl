@@ -70,6 +70,7 @@ public abstract class BaseSnomedEclEvaluationRequestTest extends BaseRevisionInd
 	protected static final String OTHER_ID = Concepts.ABBREVIATION;
 	protected static final String HAS_ACTIVE_INGREDIENT = Concepts.HAS_ACTIVE_INGREDIENT;
 	protected static final String SUBSTANCE = Concepts.SUBSTANCE;
+	protected static final String IS_A = Concepts.IS_A;
 	
 	protected static final String AXIOM = "axiom";
 	
