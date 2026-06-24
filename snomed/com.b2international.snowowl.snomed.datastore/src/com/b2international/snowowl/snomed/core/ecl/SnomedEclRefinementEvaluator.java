@@ -47,6 +47,7 @@ import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
 import com.b2international.snowowl.snomed.core.tree.Trees;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRelationshipSearchRequestBuilder;
@@ -330,6 +331,7 @@ final class SnomedEclRefinementEvaluator {
 			propertyCardinality = Range.closed(min, max);
 		}
 		final Function<Property, Object> idProvider = refinement.isReversed() ? Property::getValue : Property::getObjectId;
+		// resolve non-* focusConcept ECLs to IDs, so we can filter relationships by source
 		final Promise<Set<String>> focusConceptIdsPromise = focusConcepts.isAnyExpression() 
 				? Promise.immediate(null) // XXX send null collection to skip filtering by source concepts/referenced components
 				: grouped ? focusConcepts.resolveToConceptsWithGroups(context).then(Multimap::keySet) : focusConcepts.resolve(context);
@@ -347,10 +349,8 @@ final class SnomedEclRefinementEvaluator {
 		final Collection<String> typeConceptFilter = evalToConceptIds(context, refinement.getAttribute(), expressionForm).getSync(1, TimeUnit.MINUTES);
 		
 		if (comparison instanceof AttributeComparison) {
-			// resolve non-* focusConcept ECLs to IDs, so we can filter relationships by source/destination
-			// filterByType and filterByDestination accepts ECL expressions as well, so serialize them into ECL and pass as String when required
-			// if reversed refinement, then we are interested in the destinationIds otherwise we need the sourceIds
 			final Collection<String> destinationConceptFilter = evalToConceptIds(context, ((AttributeComparison) comparison).getValue(), expressionForm).getSync(1, TimeUnit.MINUTES);
+			// if reversed refinement, then we are interested in the destinationIds otherwise we need the sourceIds
 			final Collection<String> focusConceptFilter = refinement.isReversed() ? destinationConceptFilter : focusConceptIds;
 			final Collection<String> valueConceptFilter = refinement.isReversed() ? focusConceptIds : destinationConceptFilter;
 			return evalStatements(context, focusConceptFilter, typeConceptFilter, valueConceptFilter, grouped, expressionForm);
@@ -592,38 +592,69 @@ final class SnomedEclRefinementEvaluator {
 			final Collection<String> destinationFilter,
 			final boolean groupedRelationshipsOnly,
 			final String expressionForm) {
-
-		final ImmutableList.Builder<String> fieldsToLoad = ImmutableList.builder();
-		fieldsToLoad.add(SnomedDocument.Fields.ID, SOURCE_ID, TYPE_ID, DESTINATION_ID);
-		if (groupedRelationshipsOnly) {
-			fieldsToLoad.add(RELATIONSHIP_GROUP);
-		}
 		
-		SnomedRelationshipSearchRequestBuilder searchRelationships = SnomedRequests.prepareSearchRelationship()
-				.filterByActive(true) 
-				.filterBySources(sourceFilter)
-				.filterByTypes(typeFilter)
-				.filterByDestinations(destinationFilter)
-				.filterByCharacteristicTypes(getCharacteristicTypes(expressionForm))
-				.setEclExpressionForm(expressionForm)
-				.setFields(fieldsToLoad.build())
-				.setLimit(context.getPageSize());
-		
-		// if a grouping refinement, then filter relationships with group >= 1
-		if (groupedRelationshipsOnly) {
-			searchRelationships.filterByGroup(1, Integer.MAX_VALUE);
-		}
-		
-		Promise<Collection<Property>> relationshipSearch = searchRelationships
-				.transformAsync(context, req -> req.build(context.service(ResourceURI.class)), relationships -> relationships.stream().map(r -> new Property(r.getSourceId(), r.getTypeId(), r.getDestinationId(), r.getRelationshipGroup())));
-		
-		if (Trees.STATED_FORM.equals(expressionForm)) {
-			final Set<Property> axiomStatements = evalAxiomStatements(context, groupedRelationshipsOnly, sourceFilter, typeFilter, destinationFilter);
-			return relationshipSearch.then(relationshipStatements -> ImmutableSet.<Property>builder().addAll(relationshipStatements).addAll(axiomStatements).build());
+		// If it is only a single ISA filter then we can use the parents or stated parents instead of an actual relationship search
+		// TODO this should be an ECL rewrite feature
+		if (typeFilter != null && typeFilter.size() == 1 && Concepts.IS_A.equals(Iterables.getOnlyElement(typeFilter))) {
+			if (Trees.STATED_FORM.equals(expressionForm)) {
+				return SnomedRequests.prepareSearchConcept()
+						.filterByIds(sourceFilter)
+						.filterByStatedParents(destinationFilter)
+						.setEclExpressionForm(expressionForm)
+						.setFields(List.of(SnomedConceptDocument.Fields.ID, SnomedConceptDocument.Fields.STATED_PARENTS))
+						.setLimit(context.getPageSize())
+						.transformAsync(context, req -> req.build(context.service(ResourceURI.class)), concepts -> concepts.stream().flatMap(concept -> {
+							return concept.getStatedParentIdsAsString()
+									.stream()
+									.filter(parentId -> destinationFilter == null || destinationFilter.contains(parentId))
+									.map(parentId -> new Property(concept.getId(), Concepts.IS_A, parentId, 0)); 
+						}));
+			} else {
+				return SnomedRequests.prepareSearchConcept()
+						.filterByIds(sourceFilter)
+						.filterByParents(destinationFilter)
+						.setEclExpressionForm(expressionForm)
+						.setFields(List.of(SnomedConceptDocument.Fields.ID, SnomedConceptDocument.Fields.PARENTS))
+						.setLimit(context.getPageSize())
+						.transformAsync(context, req -> req.build(context.service(ResourceURI.class)), concepts -> concepts.stream().flatMap(concept -> {
+							return concept.getParentIdsAsString()
+									.stream()
+									.filter(parentId -> destinationFilter == null || destinationFilter.contains(parentId))
+									.map(parentId -> new Property(concept.getId(), Concepts.IS_A, parentId, 0)); 
+						}));
+			}
 		} else {
-			return relationshipSearch;
+			final ImmutableList.Builder<String> fieldsToLoad = ImmutableList.builder();
+			fieldsToLoad.add(SnomedDocument.Fields.ID, SOURCE_ID, TYPE_ID, DESTINATION_ID);
+			if (groupedRelationshipsOnly) {
+				fieldsToLoad.add(RELATIONSHIP_GROUP);
+			}
+			
+			SnomedRelationshipSearchRequestBuilder searchRelationships = SnomedRequests.prepareSearchRelationship()
+					.filterByActive(true) 
+					.filterBySources(sourceFilter)
+					.filterByTypes(typeFilter)
+					.filterByDestinations(destinationFilter)
+					.filterByCharacteristicTypes(getCharacteristicTypes(expressionForm))
+					.setEclExpressionForm(expressionForm)
+					.setFields(fieldsToLoad.build())
+					.setLimit(context.getPageSize());
+			
+			// if a grouping refinement, then filter relationships with group >= 1
+			if (groupedRelationshipsOnly) {
+				searchRelationships.filterByGroup(1, Integer.MAX_VALUE);
+			}
+			
+			Promise<Collection<Property>> relationshipSearch = searchRelationships
+					.transformAsync(context, req -> req.build(context.service(ResourceURI.class)), relationships -> relationships.stream().map(r -> new Property(r.getSourceId(), r.getTypeId(), r.getDestinationId(), r.getRelationshipGroup())));
+			
+			if (Trees.STATED_FORM.equals(expressionForm)) {
+				final Set<Property> axiomStatements = evalAxiomStatements(context, groupedRelationshipsOnly, sourceFilter, typeFilter, destinationFilter);
+				return relationshipSearch.then(relationshipStatements -> ImmutableSet.<Property>builder().addAll(relationshipStatements).addAll(axiomStatements).build());
+			} else {
+				return relationshipSearch;
+			}
 		}
-		
 	}
 
 	static Promise<Set<String>> evalToConceptIds(final BranchContext context, final ExpressionConstraint expressionConstraint, final String expressionForm) {
