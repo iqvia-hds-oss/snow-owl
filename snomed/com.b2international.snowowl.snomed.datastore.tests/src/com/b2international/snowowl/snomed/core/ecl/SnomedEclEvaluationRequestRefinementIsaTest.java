@@ -80,6 +80,7 @@ public class SnomedEclEvaluationRequestRefinementIsaTest extends BaseSnomedEclEv
 		return AXIOM.equals(expressionForm);
 	}
 
+	@Override
 	protected final boolean isInferred() {
 		return Trees.INFERRED_FORM.equals(expressionForm);
 	}
