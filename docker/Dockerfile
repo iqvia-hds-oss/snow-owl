@@ -43,15 +43,15 @@ EXPOSE 2036 8080
 LABEL org.label-schema.license="Apache-2.0" \
     org.label-schema.name="Snow Owl OSS" \
     org.label-schema.schema-version="1.0" \
-    org.label-schema.url="https://github.com/iqvia-hds/snow-owl" \
+    org.label-schema.url="https://github.com/iqvia-hds-oss/snow-owl" \
     org.label-schema.usage="https://docs.b2ihealthcare.com/snow-owl" \
-    org.label-schema.vcs-url="https://github.com/iqvia-hds/snow-owl/tree/10.x" \
+    org.label-schema.vcs-url="https://github.com/iqvia-hds-oss/snow-owl/tree/10.x" \
     org.label-schema.vendor="IQVIA" \
     org.opencontainers.image.licenses="Apache-2.0" \
     org.opencontainers.image.title="Snow Owl OSS" \
-    org.opencontainers.image.url="https://github.com/iqvia-hds/snow-owl" \
+    org.opencontainers.image.url="https://github.com/iqvia-hds-oss/snow-owl" \
     org.opencontainers.image.documentation="https://docs.b2ihealthcare.com/snow-owl" \
-    org.opencontainers.image.source="https://github.com/iqvia-hds/snow-owl/tree/10.x" \
+    org.opencontainers.image.source="https://github.com/iqvia-hds-oss/snow-owl/tree/10.x" \
     org.opencontainers.image.vendor="IQVIA"
 
 USER snowowl:root
