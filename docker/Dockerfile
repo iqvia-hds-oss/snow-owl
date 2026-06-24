@@ -35,7 +35,7 @@ COPY bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod g=u /etc/passwd && \
     chmod 0555 /usr/local/bin/docker-entrypoint.sh && \
     chmod 0775 /usr/share/snowowl && \
-    chown --silent --recursive snowowl bin configuration resources serviceability work 
+    chown --silent --recursive snowowl bin configuration resources serviceability work
 
 # Expose necessary ports used by Snow Owl
 EXPOSE 2036 8080
@@ -43,16 +43,16 @@ EXPOSE 2036 8080
 LABEL org.label-schema.license="Apache-2.0" \
     org.label-schema.name="Snow Owl OSS" \
     org.label-schema.schema-version="1.0" \
-    org.label-schema.url="https://github.com/b2ihealthcare/snow-owl" \
+    org.label-schema.url="https://github.com/iqvia-hds/snow-owl" \
     org.label-schema.usage="https://docs.b2ihealthcare.com/snow-owl" \
-    org.label-schema.vcs-url="https://github.com/b2ihealthcare/snow-owl/tree/10.x" \
-    org.label-schema.vendor="B2i Healthcare" \
+    org.label-schema.vcs-url="https://github.com/iqvia-hds/snow-owl/tree/10.x" \
+    org.label-schema.vendor="IQVIA" \
     org.opencontainers.image.licenses="Apache-2.0" \
     org.opencontainers.image.title="Snow Owl OSS" \
-    org.opencontainers.image.url="https://github.com/b2ihealthcare/snow-owl" \
+    org.opencontainers.image.url="https://github.com/iqvia-hds/snow-owl" \
     org.opencontainers.image.documentation="https://docs.b2ihealthcare.com/snow-owl" \
-    org.opencontainers.image.source="https://github.com/b2ihealthcare/snow-owl/tree/10.x" \
-    org.opencontainers.image.vendor="B2i Healthcare"
+    org.opencontainers.image.source="https://github.com/iqvia-hds/snow-owl/tree/10.x" \
+    org.opencontainers.image.vendor="IQVIA"
 
 USER snowowl:root
 
