@@ -66,6 +66,9 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			// System and version were inferred from the implicit url
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
 			.body("parameter.find { it.name == 'message' }.valueString", containsString("Could not find code '138875005' in ValueSet 'http://snomed.info/sct/900000000000207008?fhir_vs=isa/105590001'"));
 	}
 	
