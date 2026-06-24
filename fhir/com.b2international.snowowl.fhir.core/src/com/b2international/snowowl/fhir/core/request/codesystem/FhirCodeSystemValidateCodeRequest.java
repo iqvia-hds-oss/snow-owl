@@ -33,6 +33,7 @@ import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Sets;
 
@@ -98,11 +99,11 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 		if (!missingConceptIds.isEmpty()) {
 			final String missingCodes = ImmutableSortedSet.copyOf(missingConceptIds).toString();
 		
-			final String message = String.format("Could not find code%s '%s' in CodeSystem '%s' version '%s'.",
+			final String message = String.format("Could not find code%s '%s' in CodeSystem '%s'%s.",
 				missingConceptIds.size() == 1 ? "" : "s",
 				missingCodes,
 				system,
-				version);
+				formatVersionMessage(version));
 		
 			return new CodeSystemValidateCodeResultParameters()
 				.setResult(false)
@@ -159,5 +160,9 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 		}
 		
 		return codings;
+	}
+	
+	private String formatVersionMessage(String version) {
+		return Strings.isNullOrEmpty(version) ? "" : String.format(" version '%s'", version);
 	}
 }
