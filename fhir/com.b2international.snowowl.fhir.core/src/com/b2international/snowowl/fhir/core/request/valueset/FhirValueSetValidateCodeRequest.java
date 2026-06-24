@@ -16,13 +16,13 @@
 package com.b2international.snowowl.fhir.core.request.valueset;
 
 import org.hl7.fhir.r5.model.ValueSet;
+import org.hl7.fhir.r5.model.ValueSet.ConceptSetComponent;
 
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeParameters;
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeResultParameters;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -47,12 +47,15 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		// TODO support coding and codeable concept parameters as well to get the referenced code
 		final String code = parameters.getCode() == null ? null : parameters.getCode().getCode();
-		final String system = getValidationSystem(valueSet);
-		final String version = getValidationVersion(valueSet);
 		
 		if (Strings.isNullOrEmpty(code)) {
 			throw new BadRequestException("'code' parameter is required to perform the operation.", "code");
 		}
+		
+		// TODO have an 'inferSystem' flag to infer the system from the url (the parameter is planned to be added in R6)
+		// Currently the server always tries to infer the system param from the url
+		String system = parameters.getSystem() != null ? parameters.getSystem().getValue() : null;
+		String version = parameters.getSystemVersion() != null ? parameters.getSystemVersion().getValue() : null;
 		
 		final ValueSet.ValueSetExpansionContainsComponent valueSetExpansionContainsComponent = context.service(RepositoryManager.class)
 				.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
@@ -62,11 +65,16 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		if (valueSetExpansionContainsComponent == null) {
 			
+			ConceptSetComponent compose = valueSet.getCompose().getIncludeFirstRep();
+			
+			system = compose.getSystem();
+			version = compose.getVersion();
+			
 			final String message = String.format("Could not find code '%s' in ValueSet '%s'.", code, valueSet.getUrl());
 			
-			// Found a member that uses the requested code: verify the code system, version, display label via a code system lookup request
 			return new ValueSetValidateCodeResultParameters()
 					.setResult(false)
+					.setCode(code)
 					.setSystem(system)
 					.setVersion(version)
 					.setMessage(message);
@@ -79,54 +87,10 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			return new ValueSetValidateCodeResultParameters()
 					.setResult(true)
 					.setMessage("OK")
-					.setDisplay(valueSetExpansionContainsComponent.getDisplay())
 					.setCode(valueSetExpansionContainsComponent.getCode())
-					.setSystem(Strings.isNullOrEmpty(valueSetExpansionContainsComponent.getSystem())
-							? system
-							: valueSetExpansionContainsComponent.getSystem())
-					.setVersion(Strings.isNullOrEmpty(valueSetExpansionContainsComponent.getVersion())
-							? version
-							: valueSetExpansionContainsComponent.getVersion()
-);
+					.setSystem(valueSetExpansionContainsComponent.getSystem())
+					.setVersion(valueSetExpansionContainsComponent.getVersion())
+					.setDisplay(valueSetExpansionContainsComponent.getDisplay());
 		}
-	}
-	
-
-	private String getValidationSystem(ValueSet valueSet) {
-		if (parameters.getSystem() != null) {
-			return parameters.getSystem().getValue();
-		}
-	
-		if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()) {
-			final String system = valueSet.getCompose().getIncludeFirstRep().getSystem();
-			
-			if (!Strings.isNullOrEmpty(system)) {
-				return system;
-			}
-		}
-		
-		return valueSet.getUrl();
-	}
-
-	private String getValidationVersion(ValueSet valueSet) {
-		if (parameters.getSystemVersion() != null) {
-			return parameters.getSystemVersion().getValue();
-		}
-	
-		if (valueSet.hasCompose() && valueSet.getCompose().hasInclude()) {
-			final String version = valueSet.getCompose().getIncludeFirstRep().getVersion();
-			
-			if (!Strings.isNullOrEmpty(version)) {
-				return version;
-			}
-		}
-	
-		final Object codeSystemVersion = valueSet.getUserData(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION);
-		
-		if (codeSystemVersion instanceof String version && !Strings.isNullOrEmpty(version)) {
-			return version;
-		}
-
-		return valueSet.getVersion();
 	}
 }
