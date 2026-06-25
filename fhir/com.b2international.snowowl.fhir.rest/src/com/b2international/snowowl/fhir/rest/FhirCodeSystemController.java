@@ -35,7 +35,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
-import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
@@ -215,7 +214,8 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 		 */
 		String codeSystemId = FhirWriteSupport.base64SafeId(codeSystem.getId());
 		
-		final boolean codeSystemExists = CodeSystemRequests.prepareSearchCodeSystem()
+		final boolean codeSystemExists = FhirRequests.codeSystems()
+			.prepareSearch()
 			.filterById(codeSystemId)
 			.setLimit(0)
 			.buildAsync()
