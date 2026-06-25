@@ -34,7 +34,7 @@ import com.b2international.snowowl.snomed.datastore.request.SnomedOWLExpressionC
  */
 public final class OwlAxiomMemberChangeProcessor extends ChangeSetProcessorBase {
 
-	private SnomedOWLExpressionConverter converter;
+	private final SnomedOWLExpressionConverter converter;
 
 	public OwlAxiomMemberChangeProcessor(SnomedOWLExpressionConverter converter) {
 		super("axiom member changes");
