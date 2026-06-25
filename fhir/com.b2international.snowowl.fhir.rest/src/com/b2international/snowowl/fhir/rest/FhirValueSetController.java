@@ -41,6 +41,7 @@ import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
+import com.b2international.snowowl.fhir.core.request.conceptmap.FhirWriteSupport;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -205,11 +206,32 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 		
 		final var valueSet = toFhirResource(requestBody, contentType, ValueSet.class);
 
-		// Ignore the input identifier on purpose and assign one locally
-		final String generatedId = IDs.base62UUID();
-		valueSet.setId(generatedId);
+		/*
+		 * XXX: To avoid having to parse the FHIR representation on the client side, check here
+		 * whether an existing resource should be updated or a new one created. If the user has
+		 * insufficient permissions to read an existing resource, a create interaction will be
+		 * attempted, but this will fail immediately since the URL is taken by another resource.
+		 */
+		final String safeId = FhirWriteSupport.base64SafeId(valueSet.getId());
+		String valueSetId = safeId.endsWith("_vs") ? safeId : safeId + "_vs";
 		
-		FhirResourceUpdateResult result = createOrUpdate(generatedId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		final boolean valueSetExists = FhirRequests.valueSets()
+			.prepareSearch()
+			.filterById(valueSetId)
+			.setLimit(0)
+			.buildAsync()
+			.execute(getBus())
+			.getSync()
+			.getTotal() > 0;
+		
+		if (!valueSetExists) {
+			valueSetId = IDs.base62UUID();
+		}
+		
+		// Ensure the resource ID is set to the value we will be using for creation or update (generated or base64-and-collision-safe)
+		valueSet.setId(valueSetId);
+		
+		FhirResourceUpdateResult result = createOrUpdate(valueSetId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
 	}
 
