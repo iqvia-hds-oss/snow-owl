@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.time.LocalDate;
 
 import org.hl7.fhir.r5.model.CodeSystem;
-import org.hl7.fhir.r5.model.OperationOutcome;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -97,14 +96,8 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(
-		responseCode = "201",
-		description = "Code system created or updated",
-		content = {
-			@Content(schema = @Schema(implementation = OperationOutcome.class))
-		}
-	)
-	@ApiResponse(responseCode = "400", description = "Bad Request")
+	@ApiResponse(responseCode = "201", description = "Code system created or updated", content = @Content(schema = @Schema(implementation = OperationOutcomeSchema.class)))
+	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = OperationOutcomeSchema.class)))
 	@PostMapping(consumes =	{
 		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
@@ -248,21 +241,9 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(
-		responseCode = "200",
-		description = "Code system updated",
-		content = {
-			@Content(schema = @Schema(implementation = OperationOutcome.class))
-		}
-	)
-	@ApiResponse(
-		responseCode = "201",
-		description = "Code system created",
-		content = {
-			@Content(schema = @Schema(implementation = OperationOutcome.class))
-		}
-	)
-	@ApiResponse(responseCode = "400", description = "Bad Request")
+	@ApiResponse(responseCode = "200", description = "Concept map updated", content = @Content(schema = @Schema(implementation = OperationOutcomeSchema.class)))
+	@ApiResponse(responseCode = "201", description = "Concept map created", content = @Content(schema = @Schema(implementation = OperationOutcomeSchema.class)))
+	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = OperationOutcomeSchema.class)))
 	@PutMapping(value = "/{id:**}", consumes = {
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
 		APPLICATION_FHIR_JSON_4_3_0_VALUE,
