@@ -155,7 +155,8 @@ final class FhirCodeSystemGetComponentsRequest
 				// This entry is never the default because it does not correspond to a released version.
 				component.addVersion()
 					.setCode(codeSystem.getUrl())
-					.setIsDefault(false);
+					.setIsDefault(false)
+					.setCompositional(true);
 			}
 	
 			for (final Version version : versions) {
