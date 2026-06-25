@@ -52,4 +52,16 @@ public abstract class BaseConceptPreCommitHookTest extends BaseChangeProcessorTe
 		});
 	}
 	
+	protected final OwlAxiomMemberChangeProcessor processAxiom() {
+		return index().read(MAIN, new RevisionIndexRead<OwlAxiomMemberChangeProcessor>() {
+			@Override
+			public OwlAxiomMemberChangeProcessor execute(RevisionSearcher searcher) throws IOException {
+				final SnomedOWLExpressionConverter expressionConverter = new SnomedOWLExpressionConverter(context().inject().bind(RevisionSearcher.class, searcher).build());
+				final OwlAxiomMemberChangeProcessor processor = new OwlAxiomMemberChangeProcessor(expressionConverter);
+				processor.process(staging(), searcher);
+				return processor;
+			}
+		});
+	}
+	
 }
