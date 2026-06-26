@@ -18,24 +18,44 @@ package com.b2international.snowowl.fhir.core.request.conceptmap;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import org.hl7.fhir.r5.model.Meta;
 import org.hl7.fhir.r5.model.MetadataResource;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.version.Version;
+import com.google.common.base.CharMatcher;
 
 /**
  * @since 8.7.1
  */
 public interface FhirWriteSupport {
 
-	static final Pattern DISALLOWED_ID_PATTERN = Pattern.compile(String.format("[^%s]", IDs.BASE64_CHARSET));
-	static final String SAFE_ID_CHARACTER = "_";
+	/**
+	 * Pattern to match any character that is permitted in a resource ID without having to be encoded.
+	 * <p>
+	 * We have multiple conflicting requirements for resource IDs:
+	 * <ul>
+	 * <li><b>Branch names</b>: allowed characters are <code>[a-zA-Z0-9._~-]</code>
+	 * <li><b>Native resource IDs</b>: allowed characters are <code>[A-Za-z0-9-_]</code>
+	 * <li><b>Versioned resource IDs</b>: allowed characters are <code>[A-Za-z0-9-_/]</code> (the '/' is a separator)
+	 * <li><b>FHIR identifiers</b>: allowed characters are <code>[A-Za-z0-9-.]</code>
+	 * </ul>
+	 */
+	CharMatcher ALLOWED_ID_MATCHER = CharMatcher.inRange('A', 'Z')
+		.or(CharMatcher.inRange('a', 'z'))
+		.or(CharMatcher.inRange('0', '9'))
+		.or(CharMatcher.anyOf("-_/"));
+	
+	/**
+	 * Replacement character for any input that is not allowed in a resource ID.
+	 * This character is safe to use in all contexts (branch names, native resource
+	 * IDs, versioned resource IDs and FHIR identifiers).
+	 */
+	String SAFE_ID_CHARACTER = "_";
 
 	default LocalDate getEffectiveDate(final MetadataResource resource, final LocalDate defaultEffectiveDate) {
 		return Optional.ofNullable(resource.getDate())
@@ -77,19 +97,26 @@ public interface FhirWriteSupport {
 	}
 	
 	static String base64SafeId(final String id) {
-		String replacedId = DISALLOWED_ID_PATTERN.matcher(id).replaceAll(result -> {
-			if (result.group().equals(".")) {
-				return SAFE_ID_CHARACTER;
+		if (StringUtils.isEmpty(id)) {
+			return id;
+		}
+		
+		final StringBuilder safeIdBuilder = new StringBuilder();
+		
+		id.chars().forEach(c -> {
+			if (ALLOWED_ID_MATCHER.matches((char) c)) {
+				// Allowed characters are safe to use as-is (we are making an exception for the forward slash as well)
+				safeIdBuilder.append((char) c);
+			} else if (c == '.') {
+				// The dot character appears in FHIR identifiers frequently so we will replace it with a single underscore
+				safeIdBuilder.append(SAFE_ID_CHARACTER);
 			} else {
-				return SAFE_ID_CHARACTER + "u" + (int) result.group().charAt(0);
+				// Any other disallowed character will be replaced with a safe character followed by the Unicode code point of the character
+				safeIdBuilder.append(SAFE_ID_CHARACTER).append("u").append(c);
 			}
 		});
-	
-		if (replacedId.startsWith(SAFE_ID_CHARACTER)) {
-			replacedId = "u95" + replacedId.substring(1);
-		}
-	
-		return replacedId.replace("__", "_u95");
+		
+		return safeIdBuilder.toString();
 	}
 
 }
