@@ -41,6 +41,7 @@ import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
+import com.b2international.snowowl.fhir.rest.ResponseTypeSchemas.OperationOutcome;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -96,8 +97,8 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(responseCode = "201", description = "Resource created or updated")
-	@ApiResponse(responseCode = "400", description = "Bad Request")
+	@ApiResponse(responseCode = "201", description = "Value set created or updated", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
+	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
 	@PostMapping(consumes =	{
 		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
@@ -241,9 +242,9 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 			}),
 		}
 	)
-	@ApiResponse(responseCode = "200", description = "Resource updated")
-	@ApiResponse(responseCode = "201", description = "Resource created")
-	@ApiResponse(responseCode = "400", description = "Bad Request")
+	@ApiResponse(responseCode = "200", description = "Value set updated", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
+	@ApiResponse(responseCode = "201", description = "Value set created", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
+	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
 	@PutMapping(value = "/{id:**}", consumes = {
 		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
