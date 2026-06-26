@@ -350,27 +350,8 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 	) {
 		
 		final var codeSystem = toFhirResource(requestBody, contentType, CodeSystem.class);
-		final String codeSystemId;
 		
-		// XXX: Check early whether an existing resource should be updated or a new one created
-		final boolean codeSystemExists = FhirRequests.codeSystems()
-			.prepareSearch()
-			.filterById(id)
-			.setLimit(0)
-			.buildAsync()
-			.execute(getBus())
-			.getSync()
-			.getTotal() > 0;
-		
-		if (!codeSystemExists) {
-			// The user has no access to the resource or it does not exist, generate a new ID right away
-			codeSystemId = IDs.base62UUID();
-			codeSystem.setId(codeSystemId);
-		} else {
-			codeSystemId = id;
-		}
-		
-		FhirResourceUpdateResult result = createOrUpdate(codeSystemId, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(id, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		HttpStatus successStatus = result.isCreated() ? HttpStatus.CREATED : HttpStatus.OK;
 		return toResponseEntity(result, successStatus, accept, _format, _pretty);
 	}

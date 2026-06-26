@@ -356,27 +356,8 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 	) {
 		
 		final var conceptMap = toFhirResource(requestBody, contentType, ConceptMap.class);
-		final String conceptMapId;
 		
-		// XXX: Check early whether an existing resource should be updated or a new one created
-		final boolean conceptMapExists = FhirRequests.conceptMaps()
-			.prepareSearch()
-			.filterById(id)
-			.setLimit(0)
-			.buildAsync()
-			.execute(getBus())
-			.getSync()
-			.getTotal() > 0;
-			
-		if (!conceptMapExists) {
-			// The user has no access to the resource or it does not exist, generate a new ID right away
-			conceptMapId = IDs.base62UUID();
-			conceptMap.setId(conceptMapId);
-		} else {
-			conceptMapId = id;
-		}
-		
-		FhirResourceUpdateResult result = createOrUpdate(conceptMapId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(id, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		HttpStatus successStatus = result.isCreated() ? HttpStatus.CREATED : HttpStatus.OK;
 		return toResponseEntity(result, successStatus, accept, _format, _pretty);
 	}

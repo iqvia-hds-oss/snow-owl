@@ -356,27 +356,8 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 	) {
 		
 		final var valueSet = toFhirResource(requestBody, contentType, ValueSet.class);
-		final String valueSetId;
-		
-		// XXX: Check early whether an existing resource should be updated or a new one created
-		final boolean valueSetExists = FhirRequests.valueSets()
-			.prepareSearch()
-			.filterById(id)
-			.setLimit(0)
-			.buildAsync()
-			.execute(getBus())
-			.getSync()
-			.getTotal() > 0;
-			
-		if (!valueSetExists) {
-			// The user has no access to the resource or it does not exist, generate a new ID right away
-			valueSetId = IDs.base62UUID();
-			valueSet.setId(valueSetId);
-		} else {
-			valueSetId = id;
-		}
 
-		FhirResourceUpdateResult result = createOrUpdate(valueSetId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(id, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		HttpStatus successStatus = result.isCreated() ? HttpStatus.CREATED : HttpStatus.OK;
 		return toResponseEntity(result, successStatus, accept, _format, _pretty);
 	}
