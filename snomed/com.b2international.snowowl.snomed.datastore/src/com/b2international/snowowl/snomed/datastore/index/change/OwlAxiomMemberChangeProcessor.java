@@ -18,8 +18,7 @@ package com.b2international.snowowl.snomed.datastore.index.change;
 import static com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType.OWL_AXIOM;
 
 import java.io.IOException;
-
-import org.elasticsearch.core.Set;
+import java.util.Set;
 
 import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.index.revision.StagingArea;

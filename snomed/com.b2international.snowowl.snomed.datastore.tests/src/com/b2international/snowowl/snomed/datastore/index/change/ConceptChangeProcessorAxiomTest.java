@@ -18,8 +18,8 @@ package com.b2international.snowowl.snomed.datastore.index.change;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collections;
+import java.util.List;
 
-import org.elasticsearch.core.List;
 import org.junit.Test;
 
 import com.b2international.index.revision.Revision;
