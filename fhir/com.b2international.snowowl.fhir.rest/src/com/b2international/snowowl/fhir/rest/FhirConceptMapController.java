@@ -41,6 +41,7 @@ import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
+import com.b2international.snowowl.fhir.core.request.conceptmap.FhirWriteSupport;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -205,11 +206,31 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 		
 		final var conceptMap = toFhirResource(requestBody, contentType, ConceptMap.class);
 
-		// Ignore the input identifier on purpose and assign one locally
-		final String generatedId = IDs.base62UUID();
-		conceptMap.setId(generatedId);
+		/*
+		 * XXX: To avoid having to parse the FHIR representation on the client side, check here
+		 * whether an existing resource should be updated or a new one created. If the user has
+		 * insufficient permissions to read an existing resource, a create interaction will be
+		 * attempted, but this will fail immediately since the URL is taken by another resource.
+		 */
+		String conceptMapId = FhirWriteSupport.base64SafeId(conceptMap.getId());
 		
-		FhirResourceUpdateResult result = createOrUpdate(generatedId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		final boolean conceptMapExists = FhirRequests.conceptMaps()
+			.prepareSearch()
+			.filterById(conceptMapId)
+			.setLimit(0)
+			.buildAsync()
+			.execute(getBus())
+			.getSync()
+			.getTotal() > 0;
+		
+		if (!conceptMapExists) {
+			conceptMapId = IDs.base62UUID();
+		}
+		
+		// Ensure the resource ID is set to the value we will be using for creation or update (generated or base64-and-collision-safe)
+		conceptMap.setId(conceptMapId);
+		
+		FhirResourceUpdateResult result = createOrUpdate(conceptMapId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
 	}
 
