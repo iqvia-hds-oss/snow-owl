@@ -18,6 +18,7 @@ package com.b2international.snowowl.snomed.datastore.index.change;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -83,6 +84,79 @@ public class ConceptChangeProcessorAxiomTest extends BaseConceptPreCommitHookTes
 		assertDocEquals(expected, actual);
 		assertEquals(0, processor.getNewMappings().size());
 		assertEquals(0, processor.getDeletions().size());
+		
+		final OwlAxiomMemberChangeProcessor axiomProcessor = processAxiom();		
+		assertEquals(1, axiomProcessor.getNewMappings().size());
+		final SnomedRefSetMemberIndexEntry expectedAxiom = SnomedRefSetMemberIndexEntry.builder(member)
+				.classAxiomRelationships(List.of(SnomedOWLRelationshipDocument.create(Concepts.IS_A, parentConcept.getId(), 0)))
+				.build();
+		assertDocEquals(expectedAxiom, Iterables.getOnlyElement(axiomProcessor.getNewMappings().values()));
+		assertEquals(0, axiomProcessor.getDeletions().size());
+		assertEquals(0, axiomProcessor.getChangedMappings().size());
+	}
+	
+	@Test
+	public void newGciSubClassOfAxiom() throws Exception {
+		SnomedConceptDocument concept = concept().build();
+		indexRevision(MAIN, concept);
+		
+		statedChangedConceptIds.add(Long.parseLong(concept.getId()));
+		
+		SnomedRefSetMemberIndexEntry member = createOwlAxiom(concept.getId(), String.format("SubClassOf(ObjectIntersectionOf(:%s :%s) :%s)", Concepts.TOPLEVEL_METADATA, Concepts.PHYSICAL_OBJECT, concept.getId())).build();
+		stageNew(member);
+		
+		final ConceptChangeProcessor processor = process();
+		
+		assertEquals(1, processor.getChangedMappings().size());
+		final SnomedConceptDocument expected = docWithDefaults(concept)
+				.activeMemberOf(Collections.singleton(Concepts.REFSET_OWL_AXIOM))
+				.memberOf(Collections.singleton(Concepts.REFSET_OWL_AXIOM))
+				.build();
+		final Revision actual = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
+		assertDocEquals(expected, actual);
+		assertEquals(0, processor.getNewMappings().size());
+		assertEquals(0, processor.getDeletions().size());
+		
+		final OwlAxiomMemberChangeProcessor axiomProcessor = processAxiom();		
+		assertEquals(1, axiomProcessor.getNewMappings().size());
+		final SnomedRefSetMemberIndexEntry expectedAxiom = SnomedRefSetMemberIndexEntry.builder(member)
+				.gciAxiomRelationships(List.of(
+						SnomedOWLRelationshipDocument.create(Concepts.IS_A, Concepts.PHYSICAL_OBJECT, 0), 
+						SnomedOWLRelationshipDocument.create(Concepts.IS_A, Concepts.TOPLEVEL_METADATA, 0) 
+						))
+				.build();
+		assertDocEquals(expectedAxiom, Iterables.getOnlyElement(axiomProcessor.getNewMappings().values()));
+		assertEquals(0, axiomProcessor.getDeletions().size());
+		assertEquals(0, axiomProcessor.getChangedMappings().size());
+	}
+	
+	@Test
+	public void newTransitiveObjectPropertyAxiom() throws Exception {
+		SnomedConceptDocument concept = concept().build();
+		SnomedConceptDocument parentConcept = concept().build();
+		
+		indexRevision(MAIN, concept, parentConcept);
+				
+		SnomedRefSetMemberIndexEntry member = createOwlAxiom(concept.getId(), String.format("TransitiveObjectProperty(:%s)", parentConcept.getId())).build();
+		stageNew(member);
+		
+		final ConceptChangeProcessor processor = process();
+		assertEquals(1, processor.getChangedMappings().size());
+		final SnomedConceptDocument expected = docWithDefaults(concept)
+				.activeMemberOf(Collections.singleton(Concepts.REFSET_OWL_AXIOM))
+				.memberOf(Collections.singleton(Concepts.REFSET_OWL_AXIOM))
+				.build();
+		final Revision actual = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
+		assertDocEquals(expected, actual);
+		
+		final OwlAxiomMemberChangeProcessor axiomProcessor = processAxiom();		
+		assertEquals(1, axiomProcessor.getNewMappings().size());
+		final SnomedRefSetMemberIndexEntry expectedAxiom = SnomedRefSetMemberIndexEntry.builder(member)
+				.gciAxiomRelationships(Collections.emptyList())
+				.build();
+		assertDocEquals(expectedAxiom, Iterables.getOnlyElement(axiomProcessor.getNewMappings().values()));
+		assertEquals(0, axiomProcessor.getDeletions().size());
+		assertEquals(0, axiomProcessor.getChangedMappings().size());
 	}
 	
 	@Test

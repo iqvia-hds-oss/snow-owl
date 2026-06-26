@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.snomed.core.rest.branches;
 
+import static com.b2international.snowowl.snomed.common.SnomedConstants.Concepts.IS_A;
+import static com.b2international.snowowl.snomed.core.domain.refset.SnomedOWLRelationship.create;
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.createComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.deleteComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRequests.getComponent;
@@ -49,6 +51,7 @@ import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
+import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.core.rest.AbstractSnomedApiTest;
 import com.b2international.snowowl.snomed.core.rest.SnomedApiTestConstants;
 import com.b2international.snowowl.snomed.core.rest.SnomedComponentType;
@@ -624,6 +627,47 @@ public class SnomedMergeConflictTest extends AbstractSnomedApiTest {
    		assertThat(conceptOnChild.getStatedAncestorIdsAsString()).containsOnly(IComponent.ROOT_ID, Concepts.ROOT_CONCEPT);
    		assertThat(conceptOnChild.getAncestorIdsAsString()).isEmpty();
    	}
+    
+    @Test
+    public void axiomMemberConflict() throws Exception {
+    	//Create a parent, and a child concept, and an axiom to represent the Is A relationship between the two
+    	final String parentConcept = createNewConcept(branchPath, Concepts.ROOT_CONCEPT);
+    	final String concept = createNewConcept(branchPath, parentConcept);
+    	String axiom = createNewRefSetMember(branchPath, concept, Concepts.REFSET_OWL_AXIOM, Map.of(SnomedRf2Headers.FIELD_OWL_EXPRESSION, String.format("SubClassOf(:%s :%s)", concept, parentConcept)));
+    	SnomedReferenceSetMember axiomMember = getComponent(branchPath, SnomedComponentType.MEMBER, axiom, "owlRelationships()")
+    			.extract()
+    			.as(SnomedReferenceSetMember.class);
+    	assertThat(axiomMember.getClassOWLRelationships()).containsOnly(create(IS_A, parentConcept, 0));
+    	
+    	//Create a branch and update the module of the axiom member on this branch
+    	final IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
+    	branching.createBranch(a).statusCode(201);    	
+		Map<?, ?> moduleUpdateRequest = ImmutableMap.builder()
+				.put(SnomedRf2Headers.FIELD_MODULE_ID, Concepts.MODULE_SCT_MODEL_COMPONENT)
+				.put("commitComment", "Update OWL axiom module")
+				.build();
+    	updateComponent(a, SnomedComponentType.MEMBER, axiom, moduleUpdateRequest);
+    	
+    	//On MAIN update the child concept's OWL axiom with a new parent
+		Map<?, ?> axiomUpdateRequest = ImmutableMap.builder()
+				.put(SnomedRf2Headers.FIELD_OWL_EXPRESSION, String.format("SubClassOf(:%s :%s)", concept, Concepts.TOPLEVEL_METADATA))
+				.put("commitComment", "Update OWL axiom parent")
+				.build();
+    	updateComponent(branchPath, SnomedComponentType.MEMBER, axiom, axiomUpdateRequest);
+    	
+    	//Synchronize the child branch
+    	merge(branchPath, a, "Rebase branch A").body("status", equalTo(Merge.Status.COMPLETED.name()));
+    	
+    	//Check if member OWL relationships have been correctly updated on the child branch
+    	SnomedReferenceSetMember axiomMemberOnBranch = getComponent(a, SnomedComponentType.MEMBER, axiom, "owlRelationships()")
+    			.extract()
+    			.as(SnomedReferenceSetMember.class);
+    	assertThat(axiomMemberOnBranch.getClassOWLRelationships()).containsOnly(create(IS_A, Concepts.TOPLEVEL_METADATA, 0));
+    	
+    	SnomedConcept conceptOnBranch = getComponent(a, SnomedComponentType.CONCEPT, concept, "relationships()").statusCode(200).extract().as(SnomedConcept.class);
+    	//Includes both parents as concept has a stated relationship with the original parent
+    	assertThat(conceptOnBranch.getStatedParentIdsAsString()).containsOnly(Concepts.TOPLEVEL_METADATA, parentConcept); 
+    }
     
     @Test
 	public void rebaseResolvableModuleAndTermChange() throws Exception {

@@ -277,7 +277,8 @@ public final class SnomedRepositoryPreCommitHook extends BaseRepositoryPreCommit
 			// those values will be used in the ConceptChangeProcessor for example to properly compute the preferredDescriptions derived field
 			new DescriptionChangeProcessor(),
 			new ConceptChangeProcessor(DoiDataProvider.INSTANCE, SnomedIconProvider.INSTANCE.getAvailableIconIds(), statedTaxonomy, inferredTaxonomy),
-			new RelationshipChangeProcessor()
+			new RelationshipChangeProcessor(),
+			new OwlAxiomMemberChangeProcessor(expressionConverter)
 		);
 	}
 	
