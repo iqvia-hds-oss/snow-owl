@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.b2international.commons.StringUtils;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
@@ -42,7 +41,6 @@ import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
-import com.b2international.snowowl.fhir.core.request.conceptmap.FhirWriteSupport;
 import com.b2international.snowowl.fhir.rest.ResponseTypeSchemas.OperationOutcome;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -208,32 +206,9 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 		
 		final var codeSystem = toFhirResource(requestBody, contentType, CodeSystem.class);
 
-		/*
-		 * XXX: To avoid having to parse the FHIR representation on the client side, check here
-		 * whether an existing resource should be updated or a new one created. The ID escaping
-		 * mechanism should only modify identifiers that did not originally come from Snow Owl.
-		 */
-		String codeSystemId = FhirWriteSupport.safeId(codeSystem.getId(), true);
-		
-		if (!StringUtils.isEmpty(codeSystemId)) {
-			
-			final boolean codeSystemExists = FhirRequests.codeSystems()
-				.prepareSearch()
-				.filterById(codeSystemId)
-				.setLimit(0)
-				.buildAsync()
-				.execute(getBus())
-				.getSync()
-				.getTotal() > 0;
-			
-			if (!codeSystemExists) {
-				// The user has no access to the resource or it does not exist, generate a new ID right away
-				codeSystemId = IDs.base62UUID();
-			}
-			
-			// Update the value in the resource to ensure it is consistent with the ID we just computed
-			codeSystem.setId(codeSystemId);
-		}
+		// Ignore the input identifier on purpose and assign one locally
+		final String codeSystemId = IDs.base62UUID();
+		codeSystem.setId(codeSystemId);
 		
 		FhirResourceUpdateResult result = createOrUpdate(codeSystemId, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
@@ -375,8 +350,27 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 	) {
 		
 		final var codeSystem = toFhirResource(requestBody, contentType, CodeSystem.class);
+		final String codeSystemId;
 		
-		FhirResourceUpdateResult result = createOrUpdate(id, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		// XXX: Check early whether an existing resource should be updated or a new one created
+		final boolean codeSystemExists = FhirRequests.codeSystems()
+			.prepareSearch()
+			.filterById(id)
+			.setLimit(0)
+			.buildAsync()
+			.execute(getBus())
+			.getSync()
+			.getTotal() > 0;
+		
+		if (!codeSystemExists) {
+			// The user has no access to the resource or it does not exist, generate a new ID right away
+			codeSystemId = IDs.base62UUID();
+			codeSystem.setId(codeSystemId);
+		} else {
+			codeSystemId = id;
+		}
+		
+		FhirResourceUpdateResult result = createOrUpdate(codeSystemId, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		HttpStatus successStatus = result.isCreated() ? HttpStatus.CREATED : HttpStatus.OK;
 		return toResponseEntity(result, successStatus, accept, _format, _pretty);
 	}

@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.b2international.commons.StringUtils;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
@@ -42,7 +41,6 @@ import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
-import com.b2international.snowowl.fhir.core.request.conceptmap.FhirWriteSupport;
 import com.b2international.snowowl.fhir.rest.ResponseTypeSchemas.OperationOutcome;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -208,32 +206,9 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 		
 		final var valueSet = toFhirResource(requestBody, contentType, ValueSet.class);
 
-		/*
-		 * XXX: To avoid having to parse the FHIR representation on the client side, check here
-		 * whether an existing resource should be updated or a new one created. The ID escaping
-		 * mechanism should only modify identifiers that did not originally come from Snow Owl.
-		 */
-		String valueSetId = FhirWriteSupport.safeId(valueSet.getId(), true);
-		
-		if (!StringUtils.isEmpty(valueSetId)) {
-		
-			final boolean valueSetExists = FhirRequests.valueSets()
-				.prepareSearch()
-				.filterById(valueSetId)
-				.setLimit(0)
-				.buildAsync()
-				.execute(getBus())
-				.getSync()
-				.getTotal() > 0;
-			
-			if (!valueSetExists) {
-				// The user has no access to the resource or it does not exist, generate a new ID right away
-				valueSetId = IDs.base62UUID();
-			}
-			
-			// Update the value in the resource to ensure it is consistent with the ID we just computed
-			valueSet.setId(valueSetId);
-		}
+		// Ignore the input identifier on purpose and assign one locally
+		final String valueSetId = IDs.base62UUID();
+		valueSet.setId(valueSetId);
 		
 		FhirResourceUpdateResult result = createOrUpdate(valueSetId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
@@ -381,8 +356,27 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 	) {
 		
 		final var valueSet = toFhirResource(requestBody, contentType, ValueSet.class);
+		final String valueSetId;
+		
+		// XXX: Check early whether an existing resource should be updated or a new one created
+		final boolean valueSetExists = FhirRequests.valueSets()
+			.prepareSearch()
+			.filterById(id)
+			.setLimit(0)
+			.buildAsync()
+			.execute(getBus())
+			.getSync()
+			.getTotal() > 0;
+			
+		if (!valueSetExists) {
+			// The user has no access to the resource or it does not exist, generate a new ID right away
+			valueSetId = IDs.base62UUID();
+			valueSet.setId(valueSetId);
+		} else {
+			valueSetId = id;
+		}
 
-		FhirResourceUpdateResult result = createOrUpdate(id, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(valueSetId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		HttpStatus successStatus = result.isCreated() ? HttpStatus.CREATED : HttpStatus.OK;
 		return toResponseEntity(result, successStatus, accept, _format, _pretty);
 	}
