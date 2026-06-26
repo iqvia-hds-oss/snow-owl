@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,29 @@ import java.util.List;
 /**
  * @since 10.2
  */
-public interface OperationOutcomeSchema {
-	public interface Details {
-		public String getText();
-	}
+public abstract class ResponseTypeSchemas {
 	
-	public interface Issue {
-		public String getSeverity();
-		public String getCode();
-		public OperationOutcomeSchema.Details getDetails();
-		public String getDiagnostics();
-		public List<String> getExpression();
+	/**
+	 * Schema describing FHIR Operation Outcome.
+	 * 
+	 * @see <a href="https://hl7.org/fhir/operationoutcome.html">FHIR documentation: OperationOutcome</a>
+	 * 
+	 * @since 10.2
+	 */
+	public interface OperationOutcome {
+		public interface Details {
+			public String getText();
+		}
+		
+		public interface Issue {
+			public String getSeverity();
+			public String getCode();
+			public Details getDetails();
+			public String getDiagnostics();
+			public List<String> getExpression();
+		}
+		
+		public String getResourceType();
+		public List<Issue> getIssue();
 	}
-	
-	public String getResourceType();
-	public List<OperationOutcomeSchema.Issue> getIssue();
 }
