@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
@@ -41,6 +42,7 @@ import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
+import com.b2international.snowowl.fhir.core.request.conceptmap.FhirWriteSupport;
 import com.b2international.snowowl.fhir.rest.ResponseTypeSchemas.OperationOutcome;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -206,11 +208,34 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 		
 		final var conceptMap = toFhirResource(requestBody, contentType, ConceptMap.class);
 
-		// Ignore the input identifier on purpose and assign one locally
-		final String generatedId = IDs.base62UUID();
-		conceptMap.setId(generatedId);
+		/*
+		 * XXX: To avoid having to parse the FHIR representation on the client side, check here
+		 * whether an existing resource should be updated or a new one created. The ID escaping
+		 * mechanism should only modify identifiers that did not originally come from Snow Owl.
+		 */
+		String conceptMapId = FhirWriteSupport.safeId(conceptMap.getId(), true);
 		
-		FhirResourceUpdateResult result = createOrUpdate(generatedId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		if (!StringUtils.isEmpty(conceptMapId)) {
+		
+			final boolean conceptMapExists = FhirRequests.conceptMaps()
+				.prepareSearch()
+				.filterById(conceptMapId)
+				.setLimit(0)
+				.buildAsync()
+				.execute(getBus())
+				.getSync()
+				.getTotal() > 0;
+			
+			if (!conceptMapExists) {
+				// The user has no access to the resource or it does not exist, generate a new ID right away
+				conceptMapId = IDs.base62UUID();
+			}
+			
+			// Update the value in the resource to ensure it is consistent with the ID we just computed
+			conceptMap.setId(conceptMapId);
+		}
+		
+		FhirResourceUpdateResult result = createOrUpdate(conceptMapId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
 	}
 
