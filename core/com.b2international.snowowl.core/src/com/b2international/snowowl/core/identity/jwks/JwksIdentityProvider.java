@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2022-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,8 @@ public final class JwksIdentityProvider implements IdentityProvider {
 		final JwkProvider jwkProvider = new JwkProviderBuilder(new URL(config.getJwksUrl()))
 				// TODO do we need configuration support for this?
 				.cached(5, 24, TimeUnit.HOURS)
-				.rateLimited(10, 1, TimeUnit.MINUTES)
+				// as the jwks values are cached, make sure we disable the default rate limiting configuration, we don't need to protect the endpoint this way
+				.rateLimited(false)
 				.build();
 		
 		final RSAKeyProvider rsaKeyProvider = new RSAKeyProvider() {
