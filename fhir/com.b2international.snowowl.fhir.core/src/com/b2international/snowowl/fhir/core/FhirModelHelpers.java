@@ -53,6 +53,10 @@ import com.google.common.cache.LoadingCache;
  * @since 9.4.0
  */
 public class FhirModelHelpers {
+	
+	public enum ValidateCodeInputType {
+		CODE, CODING, CODEABLE_CONCEPT
+	}
 
 	public static final String OID_PREFIX = "urn:oid:";
 	
@@ -364,5 +368,4 @@ public class FhirModelHelpers {
 	public static String computeEffectiveVersion(final Version version, final String fhirVersionProperty) {
 		return computeEffectiveVersion(fhirVersionProperty, version::getUrl, version::getVersion);
 	}
-	
 }
