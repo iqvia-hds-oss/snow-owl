@@ -207,10 +207,10 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 		final var codeSystem = toFhirResource(requestBody, contentType, CodeSystem.class);
 
 		// Ignore the input identifier on purpose and assign one locally
-		final String generatedId = IDs.base62UUID();
-		codeSystem.setId(generatedId);
+		final String codeSystemId = IDs.base62UUID();
+		codeSystem.setId(codeSystemId);
 		
-		FhirResourceUpdateResult result = createOrUpdate(generatedId, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(codeSystemId, codeSystem, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
 	}
 

@@ -442,7 +442,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	private T toFhirResource(final RepositoryContext context, final ResourceFragment resource) {
 		final T entry = createResource();
 		
-		entry.setId(resource.getId());
+		// XXX: We still allow retrieving a resource by versioned identifier, but the ID used in the FHIR resource will always be the resource ID
+		entry.setId(resource.extractResourceId());
 		entry.setStatus(toPublicationStatus(resource.getStatus()));
 		entry.setMeta(toMeta(resource.getUpdatedAt(), resource.getCreatedAt()));
 		

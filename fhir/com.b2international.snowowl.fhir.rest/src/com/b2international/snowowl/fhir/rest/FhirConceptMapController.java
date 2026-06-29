@@ -207,10 +207,10 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 		final var conceptMap = toFhirResource(requestBody, contentType, ConceptMap.class);
 
 		// Ignore the input identifier on purpose and assign one locally
-		final String generatedId = IDs.base62UUID();
-		conceptMap.setId(generatedId);
+		final String conceptMapId = IDs.base62UUID();
+		conceptMap.setId(conceptMapId);
 		
-		FhirResourceUpdateResult result = createOrUpdate(generatedId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(conceptMapId, conceptMap, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
 	}
 

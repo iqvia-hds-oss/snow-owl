@@ -207,10 +207,10 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 		final var valueSet = toFhirResource(requestBody, contentType, ValueSet.class);
 
 		// Ignore the input identifier on purpose and assign one locally
-		final String generatedId = IDs.base62UUID();
-		valueSet.setId(generatedId);
+		final String valueSetId = IDs.base62UUID();
+		valueSet.setId(valueSetId);
 		
-		FhirResourceUpdateResult result = createOrUpdate(generatedId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
+		FhirResourceUpdateResult result = createOrUpdate(valueSetId, valueSet, defaultEffectiveDate, author, owner, ownerProfileName, bundleId);
 		return toResponseEntity(result, HttpStatus.CREATED, accept, _format, _pretty);
 	}
 
