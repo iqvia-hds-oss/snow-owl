@@ -488,11 +488,13 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("total", equalTo(2))
 			.body("type", equalTo("searchset"))
 			.body("entry[0].resource.id", equalTo("SNOMEDCT")) // XXX: the versioned code system id is not returned in the resource
+			.body("entry[0].resource.name", equalTo("SNOMEDCT/2002-01-31"))
 			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[0].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20020131?fhir_vs"))
 			.body("entry[0].resource.version", equalTo(SNOMEDCT_URL + "/version/20020131"))
 			.body("entry[0].resource.date", equalTo("2002-01-31T00:00:00Z"))
-			.body("entry[1].resource.id", equalTo("SNOMEDCT/2020-01-31"))
+			.body("entry[1].resource.id", equalTo("SNOMEDCT")) // XXX: same with this one
+			.body("entry[1].resource.name", equalTo("SNOMEDCT/2020-01-31"))
 			.body("entry[1].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("entry[1].resource.valueSet", equalTo(SNOMEDCT_URL + "/version/20200131?fhir_vs"))
 			.body("entry[1].resource.version", equalTo(SNOMEDCT_URL + "/version/20200131"))
