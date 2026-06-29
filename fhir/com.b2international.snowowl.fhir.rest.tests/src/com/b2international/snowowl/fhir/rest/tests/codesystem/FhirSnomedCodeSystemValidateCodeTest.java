@@ -50,7 +50,7 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
 			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
 			.body("parameter.find { it.name == 'issues' }.resource.issue[0].details.coding[0].code", equalTo("invalid-code"))
-			.body("parameter.find { it.name == 'message' }.valueString", equalTo("Unknown code '12345' in the CodeSystem 'http://snomed.info/sct' version 'http://snomed.info/sct/900000000000207008'."));
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("Unknown code '12345' in the CodeSystem 'http://snomed.info/sct' version 'http://snomed.info/sct/900000000000207008'"));
 	}
 	
 	@Test
@@ -66,7 +66,7 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
 			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
 			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
-			.body("parameter.find { it.name == 'message' }.valueString", equalTo("Incorrect display 'Unknown display' for code '138875005'."))
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("Incorrect display 'Unknown display' for code '138875005'. Recommended display is 'SNOMED CT Concept'"))
 			.body("parameter.find { it.name == 'issues' }.resource.issue[0].details.coding[0].code", equalTo("invalid-display"))
 			.body("parameter.find { it.name == 'display' }.valueString", equalTo("SNOMED CT Concept"));
 	}
@@ -214,7 +214,24 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void POST_CodeSystem_$validate_code_R5_Multiple_IN_Params() throws Exception {
+	public void POST_CodeSystem_$validate_code_No_Code_Params() throws Exception {
+		var parameters = new CodeSystemValidateCodeParameters()
+				.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING);
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON_R5_0_0)
+			.accept(APPLICATION_FHIR_JSON_R5_0_0)
+			.body(toJson(parameters.getParameters()))
+			.when().post(CODESYSTEM_VALIDATE_CODE)
+			.then().assertThat()
+			.statusCode(400)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue[0].code", equalTo("invalid"))
+			.body("issue[0].diagnostics", equalTo("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code."));
+	}
+	
+	@Test
+	public void POST_CodeSystem_$validate_code_Multiple_IN_Params() throws Exception {
 		
 		var coding = new Coding()
 				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
@@ -249,6 +266,6 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue[0].code", equalTo("invalid"))
-			.body("issue[0].diagnostics", equalTo("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for CodeSystem/$validate-code."));
+			.body("issue[0].diagnostics", equalTo("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code."));
 	}
 }

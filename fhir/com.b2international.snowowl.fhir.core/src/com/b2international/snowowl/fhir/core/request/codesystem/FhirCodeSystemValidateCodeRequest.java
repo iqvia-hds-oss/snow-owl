@@ -23,6 +23,7 @@ import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.OperationOutcome;
 
+import com.b2international.commons.CompareUtils;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
@@ -31,11 +32,9 @@ import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.FhirModelHelpers.ValidateCodeInputType;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -58,113 +57,56 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 	@Override
 	public CodeSystemValidateCodeResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
 		
-		final ValidateCodeInputType inputType = getValidateCodeInputType(parameters);
-		final String system = codeSystem.getUrl();
-		final String version = codeSystem.getVersion();
-		final List<Coding> codings = collectCodingsToValidate(parameters, inputType);
-		
-		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
-		
-		final Set<String> codes = codings.stream()
-			.map(Coding::getCode)
-			.filter(code -> !Strings.isNullOrEmpty(code))
-			.collect(Collectors.toCollection(HashSet::new));
-	
-		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
-		ResourceURI codeSystemUri = resource.getResourceURI();
-		
-		if (parameters.getDate() != null) {
-			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
-		}
-		
-		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
-		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
-		Options conceptSearchOptions = Options.builder()
-			.put(ConceptSearchRequestEvaluator.OptionKey.ID, codes)
-			.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, codes.size())
-			.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
-			.build();
-		
-		// seed already fetched resource information to prevent refetching the metadata
-		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
-		
-		final Map<String, Concept> conceptsById = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-			.evaluate(codeSystemUri, searchContext, conceptSearchOptions)
-			.stream()
-			.collect(Collectors.toMap(
-				Concept::getId,
-				c -> c));
-		
-		// Multiple codings can be passed in inside a CodeableConcept
-		if (inputType == ValidateCodeInputType.CODEABLE_CONCEPT) {
-			return validateCodeableConcept(codings, conceptsById, system, version);
-		}
-		
-		// If a Code or Coding is supplied, then only a single-code validation is necessary
-		return validateSingleCode(inputType, Iterables.getOnlyElement(codings), conceptsById, system, version);
-	}
-
-	private ValidateCodeInputType getValidateCodeInputType(CodeSystemValidateCodeParameters parameters) {
 		final boolean hasCode = parameters.getCode() != null;
 		final boolean hasCoding = parameters.getCoding() != null;
-		final boolean hasCodeableConcept = parameters.getCodeableConcept() != null;
+		final boolean hasCodeableConcept = parameters.getCodeableConcept() != null && parameters.getCodeableConcept().getCoding() != null;
 		
-		final int inputCount = (hasCode ? 1 : 0) + (hasCoding ? 1 : 0) + (hasCodeableConcept ? 1 : 0);
-	
-		if (inputCount != 1) {
-			throw new BadRequestException("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for CodeSystem/$validate-code.");
+		if (!hasCode && !hasCoding && !hasCodeableConcept) {
+			throw new BadRequestException("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
 		}
-	
-		if (hasCoding) {
-			return ValidateCodeInputType.CODING;
+		
+		if (hasCode ? (hasCoding || hasCodeableConcept) : (hasCoding && hasCodeableConcept)) {
+			throw new BadRequestException("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
 		}
-	
-		if (hasCodeableConcept) {
-			return ValidateCodeInputType.CODEABLE_CONCEPT;
-		}
-	
-		return ValidateCodeInputType.CODE;
-	}
-	
-	private List<Coding> collectCodingsToValidate(CodeSystemValidateCodeParameters parameters, ValidateCodeInputType validateCodeInputType) {
-		// Use list to make sure the order of the parameters remain the same
-		List<Coding> codings = new ArrayList<>();
-				
-		if (validateCodeInputType == ValidateCodeInputType.CODE) {
+		
+		final List<Coding> codings;
+		final String propertyTemplate;
+		final boolean validateDisplay;
+		
+		if (hasCode) {
 				
 			Coding coding = new Coding()
 					.setCode(parameters.getCode().getValue())
 					.setDisplay(parameters.getDisplay() != null ? parameters.getDisplay().getValue() : null);
 				
-			codings.add(coding);
+			codings = List.of(coding);
+			propertyTemplate = "code";
+			validateDisplay = true;
 			
-		} else if (validateCodeInputType == ValidateCodeInputType.CODING) {
+		} else if (hasCoding) {
 			
-			codings.add(parameters.getCoding());
+			codings = List.of(parameters.getCoding());
+			propertyTemplate = "coding.code";
+			validateDisplay = true;
 			
-		} else if (validateCodeInputType == ValidateCodeInputType.CODEABLE_CONCEPT)	{
-			if (parameters.getCodeableConcept().getCoding() != null) {
-				parameters.getCodeableConcept().getCoding().forEach(coding -> {
-					if (!codings.contains(coding)) {
-						codings.add(coding);
-					}
-				});
-			}
+		} else if (hasCodeableConcept)	{
+			
+			codings = List.copyOf(parameters.getCodeableConcept().getCoding());
+			propertyTemplate = "CodeableConcept.coding[%d].code";
+			validateDisplay = false;
+		
+		} else {
+			throw new IllegalStateException("Should not happen");
 		}
-		return codings;
-	}
-	
-	private CodeSystemValidateCodeResultParameters validateCodeableConcept(
-			List<Coding> codings, 
-			Map<String, Concept> conceptsById,
-			String system,
-			String version) {
 		
-		boolean foundValidCoding = false;
-		Concept firstValidConcept = null;
+		final Map<String, Concept> conceptsById = fetchCodes(context, codeSystem, codings);
 		
-		final OperationOutcome issues = new OperationOutcome();
-		final List<String> messages = new ArrayList<>();
+		final String system = codeSystem.getUrl();
+		final String version = codeSystem.getVersion();
+		
+		Concept conceptToDisplayInResult = null;
+		final StringJoiner messages = new StringJoiner("; ");
+		final List<OperationOutcome.OperationOutcomeIssueComponent> issues = new ArrayList<>(1);
 		
 		for (int i = 0; i < codings.size(); i++) {
 			
@@ -178,106 +120,110 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			final Concept concept = conceptsById.get(code);
 			
 			if (concept == null) {
-				final String location = String.format("CodeableConcept.coding[%d].code", i);
+				final String location = String.format(propertyTemplate, i);
+				final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidCodeIssue(code, system, version, location);
+				messages.add(issue.getDetails().getText());
+				issues.add(issue);
+			} else {
+				// Display information about the first valid concept that the system has found
+				if (conceptToDisplayInResult == null) {
+					conceptToDisplayInResult = concept;
+				}
 				
-				addInvalidCodeIssue(issues, code, system, version, location);
+				// if display needs to be validated, validate it here
+				if (validateDisplay) {
+					
+					final String expectedDisplay = coding.getDisplay();
+					final String actualDisplay = concept.getTerm();
+					
+					if (expectedDisplay != null && !expectedDisplay.equals(actualDisplay)) {
+						
+						final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidDisplayIssue(code, expectedDisplay, actualDisplay);
+						messages.add(issue.getDetails().getText());
+						issues.add(issue);
+						
+					} else {
+						// display looks good, no issue found
+					}
+					
+				} else {
+					// otherwise no issue is found
+				}
 				
-				messages.add(String.format("Unknown code '%s' in the CodeSystem '%s'%s",
-						code,
-						system,
-						formatVersionMessage(version))
-				);
-				continue;
 			}
-			
-			// Display information about the first valid concept that the system has found
-			if (!foundValidCoding) {
-				firstValidConcept = concept;
-			}
-			
-			foundValidCoding = true;
 		}
 		
-		if (foundValidCoding) {
-			// According to the FHIR standards, if one coding is valid, the response should be true
-			return new CodeSystemValidateCodeResultParameters()
-					.setResult(true)
-					.setCode(firstValidConcept.getId())
-					.setSystem(system)
-					.setVersion(version)
-					.setDisplay(firstValidConcept.getTerm())
-					.setIssues(issues).setMessage(String.join("; ", messages));
+		final CodeSystemValidateCodeResultParameters result = new CodeSystemValidateCodeResultParameters();
+		
+		result
+			.setSystem(system)
+			.setVersion(version);
+		
+		if (conceptToDisplayInResult != null) {
+			result
+				.setCode(conceptToDisplayInResult.getId())
+				.setDisplay(conceptToDisplayInResult.getTerm());
+		}
+		
+		if (!CompareUtils.isEmpty(issues)) {
+			result
+				// if at least one code is found in case of a codeableConcept request, then regardless of the issues this should be marked true
+				.setResult(conceptToDisplayInResult != null && hasCodeableConcept)
+				.setIssues(new OperationOutcome().setIssue(issues));
+		} else {
+			// if there are not issues the result if always true
+			result
+				.setResult(true);
+		}
+		
+		final String message = messages.toString();
+		if (!CompareUtils.isEmpty(message)) {
+			result.setMessage(message);
 		}
 	
-		return new CodeSystemValidateCodeResultParameters()
-				.setResult(false)
-				.setSystem(system)
-				.setVersion(version)
-				.setCodeableConcept(parameters.getCodeableConcept())
-				.setIssues(issues)
-				.setMessage(String.join("; ", messages));
+		return result;
+
 	}
 
-	private CodeSystemValidateCodeResultParameters validateSingleCode(
-		ValidateCodeInputType inputType,
-		Coding coding,
-		Map<String, Concept> conceptsById,
-		String system,
-		String version) {
-		
-		final String code = coding.getCode();
-		final Concept concept = conceptsById.get(code);
-		final OperationOutcome issues = new OperationOutcome();
-		final String location = inputType == ValidateCodeInputType.CODING ? "coding.code" : "code";
-		
-		if (concept == null) {
-			addInvalidCodeIssue(issues, code, system, version, location);
-			
-			return new CodeSystemValidateCodeResultParameters()
-				.setResult(false)
-				.setCode(code)
-				.setSystem(system)
-				.setVersion(version)
-				.setIssues(issues)
-				.setMessage(String.format("Unknown code '%s' in the CodeSystem '%s'%s.",
-						code,
-						system,
-						formatVersionMessage(version))
-				);
-		}
-		
-		final String expectedDisplay = coding.getDisplay();
-		final String actualDisplay = concept.getTerm();
-		
-		if (expectedDisplay != null && !expectedDisplay.equals(actualDisplay)) {
-			addInvalidDisplayIssue(issues, code, expectedDisplay, actualDisplay);
-			
-			return new CodeSystemValidateCodeResultParameters()
-				.setResult(false)
-				.setCode(code)
-				.setSystem(system)
-				.setVersion(version)
-				.setDisplay(actualDisplay)
-				.setIssues(issues)
-				.setMessage(String.format("Incorrect display '%s' for code '%s'.", expectedDisplay, code));
-		}
-		
-		return new CodeSystemValidateCodeResultParameters()
-			.setResult(true)
-			.setCode(concept.getId())
-			.setSystem(system)
-			.setVersion(version)
-			.setDisplay(actualDisplay);
-	}
+	private Map<String, Concept> fetchCodes(ServiceProvider context, CodeSystem codeSystem, final List<Coding> codings) {
+		final Set<String> codes = codings.stream()
+			.map(Coding::getCode)
+			.filter(code -> !Strings.isNullOrEmpty(code))
+			.collect(Collectors.toSet());
 	
-	private void addInvalidCodeIssue(OperationOutcome outcome, String code, String system, String version, String location) {
+		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
+		ResourceURI codeSystemUri = resource.getResourceURI();
+		
+		if (parameters.getDate() != null) {
+			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
+		}
+		
+		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
+		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+		Options conceptSearchOptions = Options.builder()
+			.put(ConceptSearchRequestEvaluator.OptionKey.ID, codes)
+			.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, codes.size())
+			.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
+			.build();
+		
+		// seed already fetched resource information to prevent refetching the metadata
+		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		
+		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+			.evaluate(codeSystemUri, searchContext, conceptSearchOptions)
+			.stream()
+			.collect(Collectors.toMap(Concept::getId, c -> c));
+	}
+
+	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidCodeIssue(String code, String system, String version, String location) {
 		final String message = String.format("Unknown code '%s' in the CodeSystem '%s'%s",
 			code,
 			system,
 			formatVersionMessage(version)
 		);
 	
-		outcome.addIssue()
+		return new OperationOutcome.OperationOutcomeIssueComponent()
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.CODEINVALID)
 			.setDetails(new CodeableConcept()
@@ -290,18 +236,14 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 	}
 	
 
-	private void addInvalidDisplayIssue(
-		OperationOutcome outcome,
-		String code,
-		String expectedDisplay,
-		String actualDisplay) {
+	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidDisplayIssue(String code, String expectedDisplay, String actualDisplay) {
 		
 		final String message = String.format("Incorrect display '%s' for code '%s'. Recommended display is '%s'",
 			expectedDisplay,
 			code,
 			actualDisplay);
 		
-		outcome.addIssue()
+		return new OperationOutcome.OperationOutcomeIssueComponent()
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.INVALID)
 			.setDetails(new CodeableConcept()
