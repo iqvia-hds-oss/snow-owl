@@ -33,6 +33,7 @@ import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.Versions;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.google.common.base.Strings;
 import com.google.common.collect.*;
 
@@ -167,6 +168,38 @@ final class FhirCodeSystemGetComponentsRequest
 					.setCode(effectiveVersionCode)
 					.setIsDefault(isDefault)
 					.setCompositional(true);
+			}
+		}
+		
+		// In a second pass, try to set the default version for components that have no fhirUseAsDefault setting applied or they were all set to "false"
+		for (final TerminologyCapabilitiesCodeSystemComponent component : componentByUrl.values()) {
+			final boolean noDefaultMarked = component.getVersion()
+				.stream()
+				.noneMatch(v -> v.getIsDefault());
+			
+			if (noDefaultMarked) {
+				var versions = component.getVersion()
+					.stream()
+					.sorted(Collections.reverseOrder(Comparator.comparing(v -> v.getCode())));
+				
+				if (component.getUri().equals(FhirModelHelpers.SNOMED_BASE_URI_STRING)) {
+					// For SNOMED CT, if no version is marked as default, find the latest INT version and mark it as default
+					versions = versions.filter(v -> v.getCode().startsWith(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+					
+					final var latestVersion = versions.findFirst();
+					if (latestVersion.isPresent()) {
+						latestVersion.get().setIsDefault(true);
+						continue;
+					}
+					
+					// Try again, this time without the filter (the latest version will be set outside this if block)
+					versions = component.getVersion()
+						.stream()
+						.sorted(Collections.reverseOrder(Comparator.comparing(v -> v.getCode())));
+				}
+				
+				// For other code systems, if no version is marked as default, find the latest version and mark it as default
+				versions.findFirst().ifPresent(v -> v.setIsDefault(true));
 			}
 		}
 	
