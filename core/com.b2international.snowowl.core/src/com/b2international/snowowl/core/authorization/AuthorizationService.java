@@ -109,17 +109,22 @@ public interface AuthorizationService {
 		return new AuthorizationService() {
 			@Override
 			public User checkPermission(ServiceProvider context, User user, List<Permission> requiredPermissions) {
-				if (subject.equals(user)) {
-					final ImmutableSet<Permission> temporaryPermissions = ImmutableSet.<Permission>builder()
-						.addAll(user.getPermissions())
-						.add(Permission.requireAll(Permission.ALL, resourceId))
-						.build();
-					
-					final User temporaryUser = new User(user.getUserId(), temporaryPermissions.asList());
-					delegate.checkPermission(context, temporaryUser, requiredPermissions);
-					return user;
-				} else {
+				try {
 					return delegate.checkPermission(context, user, requiredPermissions);
+				} catch (ForbiddenException e) {
+					if (!subject.equals(user)) {
+						throw e;
+					}
+					
+					// Check whether the extra permission granted for the resource satisfies all required permissions
+					final Permission extraPermission = Permission.requireAll(Permission.ALL, resourceId);
+					
+					if (requiredPermissions.stream().allMatch(p -> extraPermission.implies(p))) {
+						// We don't cache the extra permission in the user object as this information might confuse the delegate
+						return user;
+					} else {
+						throw e;
+					}
 				}
 			}
 			
