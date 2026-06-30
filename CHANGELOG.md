@@ -1,6 +1,54 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 10.2.0
+
+### FHIR
+- Support the effectiveTimePeriod property on versioned resources (#1513)
+- Support CodeSystem entries in TerminologyCapabilities (#1517, #1635)
+  * New API endpoints to control which resources are exposed through the capabilities list
+- Support LOINC implicit Value Set URLs (#1593)
+- Support more detailed error message when calling CodeSystem/$validate-code or ValueSet/$validate-code operations (#1619)
+  * Also add support for coding and codeableConcept input parameters and display validation
+- Improve FHIR POST and PUT resource endpoint behavior (#1552, #1632)
+  * Respond with OperationOutcome when a create/update happens, so that the caller knows what happend even if the request succeeds
+  * Allow updating existing resources and/or importing newer versions of matching resources when permission allows
+  * Properly validate existing resources, even if those collide through the ID, URL or OID values
+
+### Security
+- Mitigate security vulnerabilities CVE-2026-8723, CVE-2026-41305, CVE-2026-42583, CVE-2026-42584, CVE-2026-42587, CVE-2026-44249, CVE-2026-45416
+
+### Bugs/Improvements
+- [index] resolve an incorrect revision merge logic issue (#1515, #1566)
+- [index] resolved an index schema migration issue where unsupported schema migration got through the first boot time but returned an error during the server's second boot time (#1598)
+- [core] set ImportResponse object even if an import job request has failed (#1618)
+- [snomed] fixed an issue where conflicting OWL Axioms during a merge operation failed to merge properly, resulting in missing attributes/data (#1612) 
+- [fhir] make X-Author header optional in FHIR resource delete requests (#1510)
+- [fhir] resolved a CodeSystem/$lookup operation issue where a `null` property was returned in the supported property list (#1551)
+- [fhir] resolved a ValueSet/$expand operation issue where term filtering caused the request to fail as opposed to filter properly (#1571)
+- [fhir] resolved a CodeSystem/$subsumes operation issue where equivalent but invalid supplied codes were recognized as equivalent as opposed to raising an error (#1570)
+- [fhir] resolved an issue where date parameters parsed in non-UTC timezones where off by the zone offset hours (#1634)
+- [performance] avoid fetching the resource metadata twice in certain FHIR requests (#1511)
+- [performance] reduce allocated server memory requirement to 75Mb which allows runtime read servers to operate in low-memory environments (#1509)
+- [performance] improve performance of ECL refinement evaluation by 75% where the object model property used is the `Is a` concept (#1621)
+- [performance] removed an incorrect rateLimited configuration for JWKS identity providers that caused issues during higher load (0f909829daf0f93886b5a239805193400403e75b)
+- [packaging] update docker image labels to reflect organization and ownership changes (#1625)
+
+### Dependencies
+- Bump Spring Boot to 3.5.14
+- Bump Springdoc to 2.8.17
+- Bump Jetty to 12.1.10
+- Bump Swagger to 2.2.47
+- Bump Jackson libraries to 2.22.0
+- Bump ASM libraries to 9.10.1
+- Bump Netty to 4.1.135.Final
+- Bump Hibernate validator to 9.1.0.Final
+- Bump java-jwt to 4.5.2
+- Bump jwks-rsa to 0.24.1
+- Bump Tycho to 5.0.3
+- Bump testcontainers to 2.0.5
+- Bump Jacoco to 0.8.15
+
 ## 10.1.0
 
 ### Java Runtime
