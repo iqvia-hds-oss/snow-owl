@@ -41,7 +41,7 @@ import com.b2international.snowowl.snomed.core.tree.Trees;
 import com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator;
 
 /**
- * @since 10.2
+ * @since 10.2.0
  */
 @RunWith(Parameterized.class)
 public class SnomedEclEvaluationRequestRefinementIsaTest extends BaseSnomedEclEvaluationRequestTest {

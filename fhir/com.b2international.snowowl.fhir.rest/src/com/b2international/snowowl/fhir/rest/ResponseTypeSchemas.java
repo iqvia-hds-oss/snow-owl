@@ -18,7 +18,7 @@ package com.b2international.snowowl.fhir.rest;
 import java.util.List;
 
 /**
- * @since 10.2
+ * @since 10.2.0
  */
 public abstract class ResponseTypeSchemas {
 	
@@ -27,7 +27,7 @@ public abstract class ResponseTypeSchemas {
 	 * 
 	 * @see <a href="https://hl7.org/fhir/operationoutcome.html">FHIR documentation: OperationOutcome</a>
 	 * 
-	 * @since 10.2
+	 * @since 10.2.0
 	 */
 	public interface OperationOutcome {
 		public interface Details {
