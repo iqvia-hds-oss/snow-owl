@@ -228,8 +228,8 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			.setCode(OperationOutcome.IssueType.CODEINVALID)
 			.setDetails(new CodeableConcept()
 					.addCoding(new Coding()
-							.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-							.setCode("invalid-code"))
+						.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
+						.setCode("invalid-code"))
 					.setText(message))
 			.addLocation(location)
 			.addExpression(location);
