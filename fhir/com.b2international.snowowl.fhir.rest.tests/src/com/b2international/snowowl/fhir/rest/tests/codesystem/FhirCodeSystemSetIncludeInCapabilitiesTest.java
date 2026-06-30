@@ -416,4 +416,86 @@ public class FhirCodeSystemSetIncludeInCapabilitiesTest extends FhirRestTest {
 			BundleApiAssert.deleteBundle(bundleId);
 		}
 	}
+
+	@Test
+	public void GET_CodeSystem_$set_include_in_capabilities_GroupedByFhirUrl() throws Exception {
+		final String secondCodeSystemId = getTestCodeSystemId() + "-2";
+		createCodeSystem(secondCodeSystemId);
+
+		final String thirdCodeSystemId = getTestCodeSystemId() + "-3";
+		createCodeSystem(thirdCodeSystemId);
+
+		/*
+		 * Native URLs become version codes when fhirVersionProperty is "url".
+		 * Lexicographic order: firstNativeUrl < secondNativeUrl < thirdNativeUrl (base < base-2 < base-3).
+		 * 
+		 * These also look like SNOMED CT International Edition versioned URLs, but this
+		 * is only due to the way the test code systems are generated.
+		 */
+		final String firstUrl = CodeSystemRestRequests.getSnomedIntUrl(getTestCodeSystemId());
+		final String secondUrl = CodeSystemRestRequests.getSnomedIntUrl(secondCodeSystemId);
+		final String thirdUrl = CodeSystemRestRequests.getSnomedIntUrl(thirdCodeSystemId);
+
+		// Assign the same FHIR URL to all three code systems, using their native URL as the version property
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.queryParam("fhirVersionProperty", "url")
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", secondCodeSystemId)
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.queryParam("fhirVersionProperty", "url")
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", thirdCodeSystemId)
+			.queryParam("fhirUrl", TEST_FHIR_URL)
+			.queryParam("fhirVersionProperty", "url")
+			.when().get(CODESYSTEM_ID_ASSIGN_FHIR_URL)
+			.then().assertThat()
+			.statusCode(200);
+
+		// Enable inclusion in capabilities for all three code systems
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", getTestCodeSystemId())
+			.queryParam("includeInCapabilities", true)
+			.when().get(CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES)
+			.then().assertThat()
+			.statusCode(200);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", secondCodeSystemId)
+			.queryParam("includeInCapabilities", true)
+			.when().get(CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES)
+			.then().assertThat()
+			.statusCode(200);
+
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.pathParam("id", thirdCodeSystemId)
+			.queryParam("includeInCapabilities", true)
+			.when().get(CODESYSTEM_ID_SET_INCLUDE_IN_CAPABILITIES)
+			.then().assertThat()
+			.statusCode(200);
+
+		// Verify grouping and auto-default selection in the TerminologyCapabilities response
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("mode", "terminology")
+			.when().get(METADATA)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("TerminologyCapabilities"))
+			// All three code systems are grouped under the single shared FHIR URL entry
+			.body("codeSystem.uri", hasItem(TEST_FHIR_URL))
+			.body("codeSystem.find { it.uri == '" + TEST_FHIR_URL + "' }.version.code",
+				containsInAnyOrder(firstUrl, secondUrl, thirdUrl))
+			// The version whose code is the lexicographically largest native URL is automatically set as default
+			.body("codeSystem.find { it.uri == '" + TEST_FHIR_URL + "' }.version.find { it.isDefault }.code",
+				equalTo(thirdUrl));
+	}
 }
