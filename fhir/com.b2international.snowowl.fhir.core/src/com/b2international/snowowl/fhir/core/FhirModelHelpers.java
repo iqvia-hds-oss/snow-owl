@@ -54,10 +54,6 @@ import com.google.common.cache.LoadingCache;
  */
 public class FhirModelHelpers {
 	
-	public enum ValidateCodeInputType {
-		CODE, CODING, CODEABLE_CONCEPT
-	}
-
 	public static final String OID_PREFIX = "urn:oid:";
 	
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
