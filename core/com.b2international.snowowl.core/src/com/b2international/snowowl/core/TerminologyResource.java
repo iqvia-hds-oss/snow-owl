@@ -118,6 +118,12 @@ public abstract class TerminologyResource extends Resource {
 		 */ 
 		public static final String LOCALES = "locales";
 		
+		/**
+		 * The visibility of this resource, expected values include <code>"public"</code>,
+		 * <code>"private"</code> and <code>"internal"</code> (string type).
+		 */
+		public static final String VISIBILITY = "visibility";
+		
 		/** 
 		 * The FHIR URL of the resource if it is different from Snow Owl's native resource URL. Note that while native
 		 * URLs are required to be unique, for FHIR only the URL-version combination needs to be unambiguous. 
