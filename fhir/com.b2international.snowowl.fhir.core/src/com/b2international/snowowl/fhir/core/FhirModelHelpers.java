@@ -53,7 +53,7 @@ import com.google.common.cache.LoadingCache;
  * @since 9.4.0
  */
 public class FhirModelHelpers {
-
+	
 	public static final String OID_PREFIX = "urn:oid:";
 	
 	public static final String SNOMED_BASE_URI_STRING = "http://snomed.info/sct";
@@ -364,5 +364,4 @@ public class FhirModelHelpers {
 	public static String computeEffectiveVersion(final Version version, final String fhirVersionProperty) {
 		return computeEffectiveVersion(fhirVersionProperty, version::getUrl, version::getVersion);
 	}
-	
 }

@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
 
 /**
  * @since 10.1.0
@@ -41,16 +42,28 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void snomedImplicitValueSet_ValidateCode() throws Exception {
+	public void snomedImplicitValueSet_ValidateCode_NoSystemParameter() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
 			.queryParam("code", "103335007")
 			.when().get(VALUESET_VALIDATE_CODE)
 			.then()
+			.statusCode(400);
+	}
+	
+	@Test
+	public void snomedImplicitValueSet_ValidateCode() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
+			.queryParam("code", "103335007")
+			.queryParam("system", SnomedTerminologyComponentConstants.SNOMED_URI_SCT)
+			.when().get(VALUESET_VALIDATE_CODE)
+			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
-			.body("parameter.find { it.name == 'message' }.valueString", equalTo("OK"));
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 	@Test
@@ -58,12 +71,16 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs=isa/105590001")
 			.queryParam("code", Concepts.ROOT_CONCEPT) // root is no child of others, so this should not be available
+			.queryParam("system", SnomedTerminologyComponentConstants.SNOMED_URI_SCT)
 			.when().get(VALUESET_VALIDATE_CODE)
 			.then()
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
-			.body("parameter.find { it.name == 'message' }.valueString", containsString("The requested code '138875005' is not part of the given Value Set"));
+			// System and version were inferred from the implicit url
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("The provided code 'http://snomed.info/sct#138875005' was not found in the value set 'http://snomed.info/sct/900000000000207008?fhir_vs=isa/105590001'"));
 	}
 	
 }

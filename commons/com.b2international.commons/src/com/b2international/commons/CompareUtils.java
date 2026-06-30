@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2022 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,11 @@ public class CompareUtils {
 		if (object instanceof Enum<?>) {
 			return false;
 		}
-
-		if (object instanceof String) {
-			return StringUtils.isEmpty((String) object);
-		}
 		
+		if (object instanceof CharSequence o) {
+			return StringUtils.isEmpty(o.toString());
+		}
+
 		if (object instanceof Collection) {
 			return ((Collection<?>) object).size() == 0;
 		}
