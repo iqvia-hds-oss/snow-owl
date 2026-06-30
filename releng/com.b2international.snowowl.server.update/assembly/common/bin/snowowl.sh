@@ -64,6 +64,7 @@ SO_JAVA_OPTS="-Xms6g \
                 --add-opens java.base/java.text=ALL-UNNAMED \
                 --add-opens java.desktop/java.awt.font=ALL-UNNAMED \
                 -Djdk.security.defaultKeySize=DSA:1024 \
+                -Duser.timezone=UTC \
                 $SO_JAVA_OPTS"
 
 pushd "$KERNEL_HOME"
