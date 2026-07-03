@@ -16,6 +16,18 @@ updates:
     ignore:
       - dependency-name: '*'
         update-types: ['version-update:semver-major']
+    groups:
+      spring:
+        applies-to: version-updates
+        patterns:
+          - 'io.swagger.core.v3:*'
+          - 'org.springdoc:*'
+          - 'org.springframework:*'
+          - 'org.springframework.security:*'
+          - 'org.springframework.boot:*'
+        update-types:
+          - 'minor'
+          - 'patch'
 
   - package-ecosystem: maven
     directories:
