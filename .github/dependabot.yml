@@ -31,6 +31,8 @@ updates:
           - 'patch'
     labels:
        - 'requires-manifest-update'
+       - 'dependencies'
+       - 'java'
 
   - package-ecosystem: maven
     directories:
