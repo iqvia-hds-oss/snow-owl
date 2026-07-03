@@ -29,6 +29,12 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+      elastic-client:
+        applies-to: version-updates
+        patterns:
+          - 'co.elastic.clients:*'
+          - 'org.elasticsearch.client:*'
+          - 'jakarta.json:*'
     labels:
        - 'requires-manifest-update'
        - 'dependencies'
