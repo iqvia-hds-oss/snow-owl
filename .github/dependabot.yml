@@ -28,6 +28,8 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+    labels:
+       - 'requires-manifest-update'
 
   - package-ecosystem: maven
     directories:
