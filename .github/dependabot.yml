@@ -25,6 +25,7 @@ updates:
           - 'org.springframework:*'
           - 'org.springframework.security:*'
           - 'org.springframework.boot:*'
+          - 'io.micrometer:*'
         update-types:
           - 'minor'
           - 'patch'
