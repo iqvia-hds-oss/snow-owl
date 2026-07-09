@@ -209,7 +209,7 @@
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-codec-http</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.2.16.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
