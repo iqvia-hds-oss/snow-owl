@@ -160,7 +160,7 @@ public abstract class AbstractSnomedApiTest extends AbstractApiTest {
 	}
 	
 	protected final ValidatableResponse assertUpdateRelationship(final String path, final String relationshipId, Map<String, Object> update) {
-		return SnomedComponentRestRequests.updateComponent(branchPath, SnomedComponentType.RELATIONSHIP, relationshipId, update);
+		return SnomedComponentRestRequests.updateComponent(path, SnomedComponentType.RELATIONSHIP, relationshipId, update);
 	}
 	
 	protected final String createConcept(CodeSystemURI codeSystemURI, Map<String, Object> body) {

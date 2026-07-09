@@ -63,6 +63,7 @@ import com.b2international.snowowl.core.codesystem.CodeSystems;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.Dates;
 import com.b2international.snowowl.core.date.EffectiveTimes;
+import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.merge.Merge;
 import com.b2international.snowowl.core.request.RepositoryRequest;
 import com.b2international.snowowl.core.setup.Environment;
@@ -1788,7 +1789,80 @@ public class SnomedExtensionUpgradeTest extends AbstractSnomedExtensionApiTest {
 		CodeSystemURI upgradeVersion = CodeSystemURI.branch(SNOMEDCT, effectiveDate2);
 		createExtensionUpgrade(extension.getCodeSystemURI(), upgradeVersion); 
 	}
-	
+
+	@Test
+	public void upgrade34_UpgradeAndSyncOverInactivatedInferredRelationship() throws Exception {
+		// create a new SI parent concept which points to the ROOT and version it
+		String intParentConceptId = createConcept(new CodeSystemURI(SNOMEDCT), createConceptRequestBody(Concepts.ROOT_CONCEPT, Concepts.MODULE_SCT_CORE));
+		// also create the inferred relationship, which will be inactivated
+		String intRelationshipIdToInactivate = createRelationship(new CodeSystemURI(SNOMEDCT), createRelationshipRequestBody(intParentConceptId, Concepts.IS_A, Concepts.ROOT_CONCEPT, Concepts.INFERRED_RELATIONSHIP));
+		
+		String firstSIVersion = getNextAvailableEffectiveDateAsString(SNOMEDCT);
+		createVersion(SNOMEDCT, firstSIVersion, firstSIVersion);
+
+		// create extension, a concept pointing to the INT parent concept and a version
+		CodeSystem extension = createExtension(CodeSystemURI.branch(SNOMEDCT, firstSIVersion.toString()), branchPath.lastSegment());
+		String extensionModuleId = createModule(extension);
+		
+		String extensionConceptId = createConcept(extension.getCodeSystemURI(), createConceptRequestBody(intParentConceptId, extensionModuleId));
+		String extensionInferredRelationshipId = createRelationship(extension.getCodeSystemURI(), createRelationshipRequestBody(extensionConceptId, Concepts.IS_A, intParentConceptId, extensionModuleId, Concepts.INFERRED_RELATIONSHIP));
+		
+		// verify that extension concept has correct parent/ancestor arrays
+		SnomedConcept extensionConceptAfterFirstVersion = getConcept(extension.getCodeSystemURI(), extensionConceptId);
+		assertThat(extensionConceptAfterFirstVersion.getParentIdsAsString())
+			.containsOnly(intParentConceptId);
+		assertThat(extensionConceptAfterFirstVersion.getAncestorIdsAsString())
+			.containsOnly(IComponent.ROOT_ID, Concepts.ROOT_CONCEPT);
+		
+		// inactivate INT inferred relationship
+		updateRelationship(new CodeSystemURI(SNOMEDCT), intRelationshipIdToInactivate, Json.object(
+			SnomedRf2Headers.FIELD_ACTIVE, false,
+			"commitComment", "Inactivate INT inferred relationship"
+		));
+		
+		String secondSIVersion = getNextAvailableEffectiveDateAsString(SNOMEDCT);
+		createVersion(SNOMEDCT, secondSIVersion, secondSIVersion);
+		
+		CodeSystem upgradeCodeSystem = createExtensionUpgrade(extension.getCodeSystemURI(), CodeSystemURI.branch(SNOMEDCT, secondSIVersion));
+		
+		// verify that extension concept on upgrade branch, does not have parent info of inactivated things
+		SnomedConcept extensionConceptOnUpgrade = getConcept(upgradeCodeSystem.getCodeSystemURI(), extensionConceptId);
+		assertThat(extensionConceptOnUpgrade.getParentIdsAsString())
+			.containsOnly(intParentConceptId);
+		assertThat(extensionConceptOnUpgrade.getAncestorIdsAsString())
+			.containsOnly(IComponent.ROOT_ID);
+		assertThat(extensionConceptOnUpgrade.getEffectiveTime())
+			.isNull();
+		assertThat(extensionConceptOnUpgrade.isReleased())
+			.isFalse();
+
+		// version the extension and sync the upgrade branch
+		String firstExtensionVersion = getNextAvailableEffectiveDateAsString(extension.getShortName());
+		createVersion(extension.getShortName(), firstExtensionVersion, firstExtensionVersion);
+
+		Boolean result = CodeSystemRequests.prepareUpgradeSynchronization(upgradeCodeSystem.getCodeSystemURI(), CodeSystemURI.branch(extension.getShortName(), firstExtensionVersion))
+			.build(upgradeCodeSystem.getRepositoryId())
+			.execute(getBus())
+			.getSync(3, TimeUnit.MINUTES);
+		
+		assertTrue(result);
+		
+		// verify that after sync everything looks normal
+		SnomedConcept extensionConceptOnUpgradeAfterSync = getConcept(upgradeCodeSystem.getCodeSystemURI(), extensionConceptId);
+		
+		// same as before sync, the inactivated relationship should not show up as an ancestor on this concept
+		assertThat(extensionConceptOnUpgradeAfterSync.getParentIdsAsString())
+			.containsOnly(intParentConceptId);
+		assertThat(extensionConceptOnUpgradeAfterSync.getAncestorIdsAsString())
+			.containsOnly(IComponent.ROOT_ID);
+		
+		// these properties were synced from the extension's working branch
+		assertThat(extensionConceptOnUpgradeAfterSync.getEffectiveTime())
+			.isEqualTo(EffectiveTimes.parse(firstExtensionVersion, DateFormats.SHORT));
+		assertThat(extensionConceptOnUpgradeAfterSync.isReleased())
+			.isTrue();
+	}
+
 	private void assertState(String branchPath, String compareWith, BranchState expectedState) {
 		BaseRevisionBranching branching = ApplicationContext.getServiceForClass(RepositoryManager.class).get(SnomedDatastoreActivator.REPOSITORY_UUID).service(BaseRevisionBranching.class);
 		assertEquals(expectedState, branching.getBranchState(branchPath, compareWith));
