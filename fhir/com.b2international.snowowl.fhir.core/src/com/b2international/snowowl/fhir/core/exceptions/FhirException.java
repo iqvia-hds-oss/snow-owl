@@ -139,6 +139,9 @@ public class FhirException extends ApiException {
 					)
 					.setText(operationOutcomeCodeDisplay);
 	}
-
 	
+	public static CodeableConcept toDetails(String message) {
+		return new CodeableConcept()
+					.setText(message);
+	}
 }
