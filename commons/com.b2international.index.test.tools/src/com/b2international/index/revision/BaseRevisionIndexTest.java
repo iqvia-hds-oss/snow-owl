@@ -29,6 +29,7 @@ import org.junit.Rule;
 import com.b2international.commons.options.MetadataImpl;
 import com.b2international.index.*;
 import com.b2international.index.query.Query;
+import com.b2international.index.revision.RevisionBranch.BranchState;
 import com.b2international.index.util.Reflections;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -201,7 +202,7 @@ public abstract class BaseRevisionIndexTest {
 		return rawIndex().read(index -> index.search(query));
 	}
 	
-	protected void assertDocEquals(Object expected, Object actual) {
+	protected final void assertDocEquals(Object expected, Object actual) {
 		assertNotNull("Actual document is missing from index", actual);
 		for (Field f : index.getIndex().admin().getIndexMapping().getMapping(expected.getClass()).getFields()) {
 			if (Revision.Fields.CREATED.equals(f.getName()) 
@@ -213,6 +214,10 @@ public abstract class BaseRevisionIndexTest {
 			}
 			assertEquals(String.format("Field '%s' should be equal", f.getName()), Reflections.getValue(expected, f), Reflections.getValue(actual, f));
 		}
+	}
+	
+	protected final void assertBranchState(String branchPath, String compareWith, BranchState expectedState) {
+		assertEquals(expectedState, branching().getBranchState(branchPath, compareWith));
 	}
 	
 }

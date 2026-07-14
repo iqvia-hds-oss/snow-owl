@@ -842,11 +842,23 @@ public final class StagingArea {
 		if (stagedObjects.containsKey(id)) {
 			StagedObject currentObject = stagedObjects.get(id);
 			if (!currentObject.isCommit() && commit && isMerge()) {
+				// before doing anything check whether the proposed new changes would actually generate a diff or not compared to the state already present in the system
+				// if not return early, otherwise proceed as usual
+				// this is required to NOT generate unnecessary fake change objects when a hook would stage the object again for any reason but without any change
+				// see https://snowowl.atlassian.net/browse/SO-6635
+				var newDiff = new RevisionDiff((Revision) currentObject.object, changedRevision);
+				if (!newDiff.hasChanges()) {
+					return this;
+				}
 				injectChangedEntryToMergeCommit(changedRevision.getContainerId(), id);
 			}
 			stagedObjects.put(id, currentObject.withObject(changedRevision, commit));
 		} else {
-			stagedObjects.put(id, changed(changedRevision, new RevisionDiff(oldRevision, changedRevision), commit));
+			// register changed objects only if there is an actual diff
+			var diff = new RevisionDiff(oldRevision, changedRevision);
+			if (diff.hasChanges()) {
+				stagedObjects.put(id, changed(changedRevision, diff, commit));
+			}
 		}
 		return this;
 	}

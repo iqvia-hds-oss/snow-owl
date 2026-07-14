@@ -216,7 +216,7 @@ public class RevisionBranchMergeDerivedDataTest extends BaseRevisionIndexTest {
 		Edge e2 = new Edge(n3, n2);
 		indexRevision(a, n3, e2);
 		
-		branching().prepareMerge(MAIN, a).merge();
+		merge(MAIN, a);
 		
 		// verify derived data presence
 		Node updatedN1 = getRevision(a, Node.class, n1.getId());
