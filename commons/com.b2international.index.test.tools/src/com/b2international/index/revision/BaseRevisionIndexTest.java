@@ -185,6 +185,14 @@ public abstract class BaseRevisionIndexTest {
 		staging.commit(commitTimestamp, USER_ID, "Commit");
 	}
 	
+	public final Commit squashMerge(String from, String to) {
+		return branching().prepareMerge(from, to).squash(true).merge();
+	}
+	
+	public final Commit merge(String from, String to) {
+		return branching().prepareMerge(from, to).squash(false).merge();
+	}
+	
 	protected final <T> Hits<T> search(final String branchPath, final Query<T> query) {
 		return index().read(branchPath, index -> index.search(query));
 	}
