@@ -187,7 +187,7 @@
         <setEntry value="org.osgi.util.promise@default:default"/>
         <setEntry value="org.osgi.util.pushstream@default:default"/>
         <setEntry value="org.osgi.util.xml@default:default"/>
-        <setEntry value="org.reactivestreams.reactive-streams@default:default"/>
+        <setEntry value="reactive-streams@default:default"/>
         <setEntry value="org.semanticweb.owl.owlapi@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
