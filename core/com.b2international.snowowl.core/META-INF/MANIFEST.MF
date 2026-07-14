@@ -9,7 +9,6 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  org.eclipse.core.expressions;bundle-version="3.4.300",
  org.eclipse.emf.ecore;bundle-version="2.21.0",
  io.reactivex.rxjava2.rxjava;bundle-version="2.0.7";visibility:=reexport,
- org.reactivestreams.reactive-streams;bundle-version="1.0.0";visibility:=reexport,
  net.jodah.typetools;bundle-version="0.6.3",
  de.svenkubiak.jBCrypt;bundle-version="0.4.1",
  dev.failsafe;bundle-version="3.3.2",
@@ -24,7 +23,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  com.b2international.snomed.ecl;bundle-version="[2.2.0,2.3.0)";visibility:=reexport,
  com.github.f4b6a3.uuid;bundle-version="5.3.7";visibility:=reexport,
  com.bucket4j.core;bundle-version="8.17.0",
- bcprov;bundle-version="1.83.0"
+ bcprov;bundle-version="1.83.0",
+ reactive-streams;bundle-version="1.0.4"
 Bundle-RequiredExecutionEnvironment: JavaSE-25
 Bundle-ActivationPolicy: lazy
 Export-Package: com.auth0.jwt,
