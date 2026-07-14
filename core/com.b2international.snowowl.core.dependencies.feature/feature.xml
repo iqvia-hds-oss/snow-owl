@@ -211,10 +211,6 @@ Visit us at https://b2ihealthcare.com
          version="0.0.0"/>
 
    <plugin
-         id="org.reactivestreams.reactive-streams"
-         version="0.0.0"/>
-
-   <plugin
          id="com.fasterxml.jackson.dataformat.jackson-dataformat-smile"
          version="0.0.0"/>
 
@@ -704,6 +700,10 @@ Visit us at https://b2ihealthcare.com
 
    <plugin
          id="org.apache.commons.commons-compress"
+         version="0.0.0"/>
+
+   <plugin
+         id="reactive-streams"
          version="0.0.0"/>
 
 </feature>
