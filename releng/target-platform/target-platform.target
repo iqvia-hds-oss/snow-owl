@@ -779,7 +779,7 @@
 			<dependency>
 				<groupId>org.reactivestreams</groupId>
 				<artifactId>reactive-streams</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.4</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Kotlin OSGi bundle required by mapdb wrapper -->
