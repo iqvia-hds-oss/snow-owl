@@ -272,7 +272,7 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	@ExceptionHandler
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	public @ResponseBody ResponseEntity<byte[]> handle(final BadRequestException ex, final WebRequest request) {
-		return toResponseEntity(HttpStatus.BAD_REQUEST, ex.toOperationOutcome(), request);
+		return toResponseEntity(HttpStatus.BAD_REQUEST, ex.toSimpleOperationOutcome(), request);
 	}
 	
 	@ExceptionHandler
