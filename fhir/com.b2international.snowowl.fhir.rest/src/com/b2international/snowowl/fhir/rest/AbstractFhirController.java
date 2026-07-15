@@ -338,7 +338,7 @@ public abstract class AbstractFhirController extends AbstractRestService {
 						.setCode(IssueType.NOTFOUND)
 						.setDetails(FhirException.toDetails(ex.getMessage()))
 						.setDiagnostics(ex.getMessage())
-				), null, null, true);
+				), request);
 	}
 
 	/**
