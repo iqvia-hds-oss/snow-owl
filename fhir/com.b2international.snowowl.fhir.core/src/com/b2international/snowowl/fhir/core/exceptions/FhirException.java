@@ -64,6 +64,15 @@ public class FhirException extends ApiException {
 		return new OperationOutcome.OperationOutcomeIssueComponent()
 			.setSeverity(issueSeverity)
 			.setCode(issueType)
+			.setDetails(toDetails(operationOutcomeCode, location))
+			.setDiagnostics(message)
+			.addLocation(location);
+	}
+	
+	protected final OperationOutcomeIssueComponent buildIssue(IssueSeverity issueSeverity, IssueType issueType, String message) {
+		return new OperationOutcome.OperationOutcomeIssueComponent()
+			.setSeverity(issueSeverity)
+			.setCode(issueType)
 			.setDetails(toDetails(message))
 			.setDiagnostics(message)
 			.addLocation(location);
@@ -107,6 +116,35 @@ public class FhirException extends ApiException {
 				Object value = getAdditionalInfo().get(key);
 				if (value instanceof String) {
 					operationOutcome.addIssue(buildIssue(IssueSeverity.ERROR, IssueType.INFORMATIONAL, (String) value, operationOutcomeCode, null));
+				}
+			}
+		}
+		
+		// attach any additional custom issues from subclasses
+		getAdditionalIssues().forEach(operationOutcome::addIssue);
+		
+		return operationOutcome;
+	}
+	
+	/**
+	 * Creates a simple OperationOutcome representation which only contains an error message from this exception. Useful when the exception must be propagated through protocols where Java serialization
+	 * cannot be used (eg. HTTP), or the possible receiver cannot understand serialized Java class and object byte sequences.
+	 * 
+	 * @return {@link OperationOutcome} representation of this {@link FhirException}, never <code>null</code>.
+	 */
+	public final OperationOutcome toSimpleOperationOutcome() {
+		
+		var operationOutcome = new OperationOutcome();
+		
+		// attach this exception as a simple issue
+		operationOutcome.addIssue(buildIssue(issueSeverity, issueType, getMessage()));
+		
+		// attach additional info as issues separately
+		if (getAdditionalInfo() != null) {
+			for (String key : ImmutableSortedSet.copyOf(getAdditionalInfo().keySet())) {
+				Object value = getAdditionalInfo().get(key);
+				if (value instanceof String) {
+					operationOutcome.addIssue(buildIssue(IssueSeverity.ERROR, IssueType.INFORMATIONAL, (String) value));
 				}
 			}
 		}
