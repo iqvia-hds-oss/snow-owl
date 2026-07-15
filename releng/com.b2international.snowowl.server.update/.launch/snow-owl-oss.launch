@@ -210,7 +210,7 @@
         <setEntry value="org.protege.common@default:default"/>
         <setEntry value="org.protege.editor.core.application@default:default"/>
         <setEntry value="org.protege.editor.owl@default:default"/>
-        <setEntry value="org.reactivestreams.reactive-streams@default:default"/>
+        <setEntry value="reactive-streams@default:default"/>
         <setEntry value="org.semanticweb.elk@default:default"/>
         <setEntry value="org.semanticweb.owl.owlapi@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>

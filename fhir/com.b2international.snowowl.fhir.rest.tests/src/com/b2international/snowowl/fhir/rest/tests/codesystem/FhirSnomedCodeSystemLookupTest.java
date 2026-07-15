@@ -60,7 +60,23 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("not-found"))
-			.body("issue.diagnostics", hasItem("CodeSystem with identifier 'unknown' could not be found."));
+			.body("issue.diagnostics", hasItem("A usable CodeSystem with URL 'unknown' could not be resolved."));
+	}
+	
+	@Test
+	public void GET_CodeSystem_$lookup_NonExisitingVersion() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("system", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", "unknown")
+			.queryParam("code", "12345")
+			.queryParam("_format", "json")
+			.when().get(CODESYSTEM_LOOKUP)
+			.then().assertThat()
+			.statusCode(404)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("not-found"))
+			.body("issue.diagnostics", hasItem("A usable CodeSystem with URL 'http://snomed.info/sct|unknown' could not be resolved."));
 	}
 	
 	@Test

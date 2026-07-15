@@ -47,25 +47,25 @@
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcpg-jdk18on</artifactId>
-				<version>1.84</version>
+				<version>1.85</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcpkix-jdk18on</artifactId>
-				<version>1.84</version>
+				<version>1.85</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcprov-jdk18on</artifactId>
-				<version>1.84</version>
+				<version>1.85</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
 				<artifactId>bcutil-jdk18on</artifactId>
-				<version>1.84</version>
+				<version>1.85</version>
 				<type>jar</type>
 			</dependency>
 			<!-- SLF4J Logging and Logback -->
@@ -203,49 +203,49 @@
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-buffer</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-codec-http</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-codec</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-common</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-handler</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-resolver</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-transport</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.netty</groupId>
 				<artifactId>netty-transport-native-unix-common</artifactId>
-				<version>4.1.135.Final</version>
+				<version>4.1.136.Final</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Swagger OpenAPI Spec -->
@@ -265,7 +265,6 @@
 			<dependency>
 				<groupId>io.swagger.core.v3</groupId>
 				<artifactId>swagger-core-jakarta</artifactId>
-				<version>2.2.30</version>
 				<type>jar</type>
 			</dependency>
 			-->
@@ -273,7 +272,7 @@
 			<dependency>
 			    <groupId>jakarta.servlet</groupId>
 			    <artifactId>jakarta.servlet-api</artifactId>
-			    <version>6.0.0</version>
+			    <version>6.1.0</version>
 			    <type>jar</type>
 			</dependency>
 			<dependency>
@@ -285,7 +284,7 @@
 			<dependency>
 				<groupId>jakarta.interceptor</groupId>
 				<artifactId>jakarta.interceptor-api</artifactId>
-				<version>2.1.0</version>
+				<version>2.2.0</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -606,7 +605,7 @@
 			<dependency>
 				<groupId>it.unimi.dsi</groupId>
 				<artifactId>fastutil</artifactId>
-				<version>8.5.16</version>
+				<version>8.5.18</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Objectweb ASM required for Xtext and Elasticsearch (when upgrading make sure the version is supported by Xtext or it does not get duplicated from that repository) -->
@@ -644,25 +643,25 @@
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>json-path</artifactId>
-				<version>6.0.0</version>
+				<version>6.0.1</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>rest-assured-common</artifactId>
-				<version>6.0.0</version>
+				<version>6.0.1</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>rest-assured</artifactId>
-				<version>6.0.0</version>
+				<version>6.0.1</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>xml-path</artifactId>
-				<version>6.0.0</version>
+				<version>6.0.1</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -687,7 +686,7 @@
 			<dependency>
 				<groupId>org.mockito</groupId>
 				<artifactId>mockito-core</artifactId>
-				<version>5.21.0</version>
+				<version>5.23.0</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -712,7 +711,7 @@
 			<dependency>
 				<groupId>com.fasterxml</groupId>
 				<artifactId>classmate</artifactId>
-				<version>1.5.1</version>
+				<version>1.7.3</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -760,7 +759,7 @@
 			<dependency>
 	  			<groupId>com.bucket4j</groupId>
 	  			<artifactId>bucket4j_jdk17-core</artifactId>
-	  			<version>8.17.0</version>
+	  			<version>8.19.0</version>
 	  			<type>jar</type>
 			</dependency>
 			<!-- Type tools, mostly for type argument resolution -->
@@ -780,7 +779,7 @@
 			<dependency>
 				<groupId>org.reactivestreams</groupId>
 				<artifactId>reactive-streams</artifactId>
-				<version>1.0.0</version>
+				<version>1.0.4</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Kotlin OSGi bundle required by mapdb wrapper -->
@@ -801,7 +800,7 @@
 			<dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-compress</artifactId>
-				<version>1.26.0</version>
+				<version>1.28.0</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Commons Compress required by fhir-core and other ext plugins -->
@@ -829,7 +828,7 @@
 			<dependency>
 			    <groupId>at.yawk.lz4</groupId>
 			    <artifactId>lz4-java</artifactId>
-			    <version>1.10.2</version>
+			    <version>1.11.1</version>
 			    <type>jar</type>
 			</dependency>
 		</dependencies>
