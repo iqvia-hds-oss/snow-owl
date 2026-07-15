@@ -48,6 +48,7 @@ import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.core.rest.RestApiError;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.exceptions.FhirException;
+import com.b2international.snowowl.fhir.core.exceptions.FhirResourceNotResolvableException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -318,6 +319,26 @@ public abstract class AbstractFhirController extends AbstractRestService {
 						.addLocation(ex.getKey())
 						.setDetails(FhirException.toDetails(org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGNOEXIST, ex.getKey()))
 				), null, null, true);
+	}
+	
+	/**
+	 * <b>Not resolvable</b> exception handler. {@link FhirResourceNotResolvableException not resolvable exception}s are mapped to {@link HttpStatus#NOT_FOUND
+	 * <em>404 Not Found</em>} in case of the absence of an instance resource.
+	 * 
+	 * @param ex
+	 * @return {@link RestApiError} instance with detailed messages
+	 */
+	@ExceptionHandler
+	@ResponseStatus(HttpStatus.NOT_FOUND)
+	public @ResponseBody ResponseEntity<byte[]> handle(final FhirResourceNotResolvableException ex, final WebRequest request) {
+		return toResponseEntity(HttpStatus.NOT_FOUND, new OperationOutcome()
+				.addIssue(
+					new OperationOutcome.OperationOutcomeIssueComponent()
+						.setSeverity(IssueSeverity.ERROR)
+						.setCode(IssueType.NOTFOUND)
+						.setDetails(FhirException.toDetails(ex.getMessage()))
+						.setDiagnostics(ex.getMessage())
+				), request);
 	}
 
 	/**

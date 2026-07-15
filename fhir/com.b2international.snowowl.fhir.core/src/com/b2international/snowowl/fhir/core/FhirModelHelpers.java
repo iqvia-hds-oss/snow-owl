@@ -111,6 +111,27 @@ public class FhirModelHelpers {
 		}
 	}
 	
+	public static CanonicalType toCanonicalType(
+			final ResourceURI resourceUri, 
+			final Function<ResourceURI, SystemAndVersion> mapperFunction
+		) {
+			final CanonicalType canonicalType = new CanonicalType();
+			setSystemAndVersion(resourceUri, mapperFunction, canonicalType::setValue, canonicalType::addVersion);
+			return canonicalType;
+		}
+	
+
+	public static CanonicalType toCanonicalType(final String system, final String version) {
+		final CanonicalType canonicalType = new CanonicalType();
+		canonicalType.setValue(system);
+		
+		if (!StringUtils.isEmpty(version)) {
+			canonicalType.addVersion(version);
+		}
+	
+		return canonicalType;
+	}
+
 	public static boolean isOid(CanonicalType system) {
 		return system != null & isOid(system.getValue());
 	}
@@ -263,15 +284,6 @@ public class FhirModelHelpers {
 		final SystemAndVersion systemAndVersion = mapperFunction.apply(resourceUri);
 		systemConsumer.accept(systemAndVersion.system());
 		versionConsumer.accept(systemAndVersion.version());
-	}
-
-	public static CanonicalType toCanonicalType(
-		final ResourceURI resourceUri, 
-		final Function<ResourceURI, SystemAndVersion> mapperFunction
-	) {
-		final CanonicalType canonicalType = new CanonicalType();
-		setSystemAndVersion(resourceUri, mapperFunction, canonicalType::setValue, canonicalType::addVersion);
-		return canonicalType;
 	}
 
 	/**

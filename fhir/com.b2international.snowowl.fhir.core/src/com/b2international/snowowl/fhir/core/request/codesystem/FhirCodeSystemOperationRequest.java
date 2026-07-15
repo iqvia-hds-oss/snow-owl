@@ -25,17 +25,19 @@ import java.util.stream.Collectors;
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
+import org.hl7.fhir.r5.model.ResourceType;
 
 import com.b2international.commons.StringUtils;
-import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.version.VersionDocument;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.exceptions.FhirResourceNotResolvableException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.google.common.base.Splitter;
 
@@ -123,7 +125,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		final CodeSystem codeSystem = Optional.<CodeSystem>empty()
 			.or(() -> fetchByUrlAndVersion(context))
 			.or(() -> fetchByIdAndVersion(context))
-			.orElseThrow(() -> new NotFoundException("CodeSystem", system));
+			.orElseThrow(() -> new FhirResourceNotResolvableException(ResourceType.CodeSystem, FhirModelHelpers.toCanonicalType(system, version)));
 		
 		return doExecute(context, codeSystem);
 	}
