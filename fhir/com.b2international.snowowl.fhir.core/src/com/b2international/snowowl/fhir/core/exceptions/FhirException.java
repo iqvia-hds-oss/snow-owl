@@ -140,6 +140,12 @@ public class FhirException extends ApiException {
 					.setText(operationOutcomeCodeDisplay);
 	}
 	
+	/**
+	 * Returns a CodeableConcept with only the given message in the text field. This is used when an error message does not have to contain a full {@link Coding}
+	 * 
+	 * @param message
+	 * @return {@link CodeableConcept} with the given message in the text field.
+	 */
 	public static CodeableConcept toDetails(String message) {
 		return new CodeableConcept()
 					.setText(message);
