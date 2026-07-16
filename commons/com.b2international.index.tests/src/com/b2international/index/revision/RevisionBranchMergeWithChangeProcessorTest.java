@@ -56,34 +56,34 @@ public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionInde
 	@Test
 	public void rebase_single_empty_changeprocessors_add() throws Exception {
 		registerRestageChangeProcessor();
-		String a = createBranch(MAIN, "a");
+		String branchA = createBranch(MAIN, "a");
 		// create a revision on MAIN branch
 		indexRevision(MAIN, NEW_DATA);
 		// after commit on parent branch state becomes BEHIND
-		assertBranchState(a, MAIN, BranchState.BEHIND);
+		assertBranchState(branchA, MAIN, BranchState.BEHIND);
 		// do non-squash sync merge
-		var commit = merge(MAIN, a);
+		var commit = merge(MAIN, branchA);
 		// commit should NOT contain commit detail information about the new revision (since there were no conflicts or anything between the two branches)
 		assertThat(commit.getDetails()).isEmpty();
-		// after rebase revision should be visible from branch branch
-		assertNotNull(getRevision(a, RevisionData.class, STORAGE_KEY1));
+		// after rebase revision should be visible from branch A
+		assertNotNull(getRevision(branchA, RevisionData.class, STORAGE_KEY1));
 		// and state should be UP_TO_DATE
-		assertBranchState(a, MAIN, BranchState.UP_TO_DATE);
+		assertBranchState(branchA, MAIN, BranchState.UP_TO_DATE);
 	}
 	
 	@Test
 	public void rebase_single_empty_changeprocessors_change() throws Exception {
 		registerRestageChangeProcessor();
 		indexRevision(MAIN, NEW_DATA);
-		String branch = createBranch(MAIN, "a");
+		String branchA = createBranch(MAIN, "a");
 		// create a revision on branch branch
 		indexChange(MAIN, NEW_DATA, CHANGED_DATA);
 		// do non-squash sync merge
-		var commit = merge(MAIN, branch);
+		var commit = merge(MAIN, branchA);
 		// commit should NOT contain commit detail information about the changed revision (since there were no conflicts or anything between the two branches)
 		assertThat(commit.getDetails()).isEmpty();
-		// after merge revision should be visible from MAIN branch
-		RevisionData afterRebase = getRevision(branch, RevisionData.class, STORAGE_KEY1);
+		// after merge revision should be visible from branch A
+		RevisionData afterRebase = getRevision(branchA, RevisionData.class, STORAGE_KEY1);
 		assertDocEquals(CHANGED_DATA, afterRebase);
 	}
 	
@@ -92,29 +92,30 @@ public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionInde
 		registerRestageChangeProcessor();
 		indexRevision(MAIN, NEW_DATA);
 		
-		String branch = createBranch(MAIN, "a");
+		String branchA = createBranch(MAIN, "a");
 		indexRemove(MAIN, NEW_DATA);
 		// do non-squash sync merge
-		var commit = merge(MAIN, branch);
+		var commit = merge(MAIN, branchA);
 		// commit should NOT contain commit detail information about the deleted revision (since there were no conflicts or anything between the two branches)
 		assertThat(commit.getDetails()).isEmpty();
-		
-		assertNull(getRevision(branch, RevisionData.class, STORAGE_KEY1));
+
+		// after merge revision should NOT be visible from branch A
+		assertNull(getRevision(branchA, RevisionData.class, STORAGE_KEY1));
 	}
 	
 	@Test
 	public void rebase_single_notempty_changeprocessors_add() throws Exception {
 		registerRestageChangeProcessor();
-		String branch = createBranch(MAIN, "a");
-		indexRevision(branch, NEW_DATA2);
+		String branchA = createBranch(MAIN, "a");
+		indexRevision(branchA, NEW_DATA2);
 		// create a revision on MAIN branch
 		indexRevision(MAIN, NEW_DATA);
 		// do non-squash sync merge
-		var commit = merge(MAIN, branch);
+		var commit = merge(MAIN, branchA);
 		// commit should NOT contain commit detail information about the new revision (since there were no conflicts or anything between the two branches)
 		assertThat(commit.getDetails()).isEmpty();
-		// after rebase revision should be visible from branch branch
-		assertNotNull(getRevision(branch, RevisionData.class, STORAGE_KEY1));
+		// after rebase revision should be visible from branch A
+		assertNotNull(getRevision(branchA, RevisionData.class, STORAGE_KEY1));
 	}
 	
 	@Test
@@ -122,19 +123,19 @@ public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionInde
 		registerRestageChangeProcessor();
 		indexRevision(MAIN, NEW_DATA);
 		
-		String branch = createBranch(MAIN, "a");
+		String branchA = createBranch(MAIN, "a");
 		// make sure branch branch has a change, so merge is to fast-forward
-		indexRevision(branch, NEW_DATA2);
+		indexRevision(branchA, NEW_DATA2);
 		
 		// update revision on main
 		indexChange(MAIN, NEW_DATA, CHANGED_DATA);
 		// do non-squash sync merge
-		var commit = merge(MAIN, branch);
+		var commit = merge(MAIN, branchA);
 		// XXX commit should NOT contain commit detail information about the changed revision (since there were no conflicts or anything between the two branches)
 		assertThat(commit.getDetails()).isEmpty();
 		
-		// after merge revision should be visible from MAIN branch
-		RevisionData afterRebase = getRevision(branch, RevisionData.class, STORAGE_KEY1);
+		// after merge revision should be visible from branch A
+		RevisionData afterRebase = getRevision(branchA, RevisionData.class, STORAGE_KEY1);
 		assertDocEquals(CHANGED_DATA, afterRebase);
 	}
 	
@@ -143,17 +144,18 @@ public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionInde
 		registerRestageChangeProcessor();
 		indexRevision(MAIN, NEW_DATA);
 		
-		String branch = createBranch(MAIN, "a");
-		indexRevision(branch, NEW_DATA2);
+		String branchA = createBranch(MAIN, "a");
+		indexRevision(branchA, NEW_DATA2);
 		
 		// perform remove
 		indexRemove(MAIN, NEW_DATA);
 		// do non-squash sync merge
-		var commit = merge(MAIN, branch);
+		var commit = merge(MAIN, branchA);
 		// commit should NOT contain commit detail information about the deleted revision (since there were no conflicts or anything between the two branches)
 		assertThat(commit.getDetails()).isEmpty();
 		
-		assertNull(getRevision(branch, RevisionData.class, STORAGE_KEY1));
+		// after merge revision should NOT be visible from branch A
+		assertNull(getRevision(branchA, RevisionData.class, STORAGE_KEY1));
 	}
 	
 	@Test
@@ -172,11 +174,11 @@ public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionInde
 		indexRevision(branchA, doc1Update);
 		
 		// then before merging it, apply separate unrelated changes to doc2 and doc3 on two separate branches
-		var branchB = createBranch(MAIN, "c");
+		var branchB = createBranch(MAIN, "b");
 		var doc2Update = new RevisionData(STORAGE_KEY2, "doc2_field1_firstUpdate", "doc2_field2_firstUpdate");
 		indexRevision(branchB, doc2Update);
 		
-		var branchC = createBranch(MAIN, "d");
+		var branchC = createBranch(MAIN, "c");
 		var doc3Update = new RevisionData(STORAGE_KEY3, "doc3_field1_firstUpdate", "doc3_field2_firstUpdate");
 		indexRevision(branchC, doc3Update);
 		
@@ -184,28 +186,28 @@ public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionInde
 		
 		// promote branchA into MAIN
 		squashMerge(branchA, MAIN);
-		assertSingleRevisionVisible(MAIN, STORAGE_KEY1);
+		assertSingleRevisionVisible(MAIN, STORAGE_KEY1, doc1Update);
 
 		// synchronize branch C new changes and make sure we did not get any duplication
 		merge(MAIN, branchC);
-		assertSingleRevisionVisible(branchC, STORAGE_KEY1);
-		assertSingleRevisionVisible(branchC, STORAGE_KEY3);
+		assertSingleRevisionVisible(branchC, STORAGE_KEY1, doc1Update);
+		assertSingleRevisionVisible(branchC, STORAGE_KEY3, doc3Update);
 		
 		// synchronize branch B new changes and make sure we did not get any duplication
 		merge(MAIN, branchB);
-		assertSingleRevisionVisible(branchB, STORAGE_KEY1);
-		assertSingleRevisionVisible(branchB, STORAGE_KEY2);
+		assertSingleRevisionVisible(branchB, STORAGE_KEY1, doc1Update);
+		assertSingleRevisionVisible(branchB, STORAGE_KEY2, doc2Update);
 		
 		// promote B changes
 		squashMerge(branchB, MAIN);
-		assertSingleRevisionVisible(MAIN, STORAGE_KEY1);
-		assertSingleRevisionVisible(MAIN, STORAGE_KEY2);
+		assertSingleRevisionVisible(MAIN, STORAGE_KEY1, doc1Update);
+		assertSingleRevisionVisible(MAIN, STORAGE_KEY2, doc2Update);
 		
 		// sync branch C (this generates a state where revision duplication can be observed for doc1)
 		merge(MAIN, branchC);
-		assertSingleRevisionVisible(branchC, STORAGE_KEY1);
-		assertSingleRevisionVisible(branchC, STORAGE_KEY2);
-		assertSingleRevisionVisible(branchC, STORAGE_KEY3);
+		assertSingleRevisionVisible(branchC, STORAGE_KEY1, doc1Update);
+		assertSingleRevisionVisible(branchC, STORAGE_KEY2, doc2Update);
+		assertSingleRevisionVisible(branchC, STORAGE_KEY3, doc3Update);
 	}
 	
 	@Test
@@ -237,9 +239,10 @@ public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionInde
 		});
 	}
 	
-	private void assertSingleRevisionVisible(String branch, String id) {
+	private void assertSingleRevisionVisible(String branch, String id, RevisionData expectedState) {
 		var hits = search(branch, Query.select(RevisionData.class).where(Revision.Expressions.id(id)).limit(2).build());
 		assertThat(hits).hasSize(1);
+		assertDocEquals(expectedState, hits.first());
 	}
 	
 }
