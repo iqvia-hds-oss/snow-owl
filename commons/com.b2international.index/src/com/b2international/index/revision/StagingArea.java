@@ -75,6 +75,7 @@ public final class StagingArea {
 	private boolean squashMerge;
 	private SetMultimap<Class<?>, String> revisionsToReviseOnMergeSource;
 	private SetMultimap<Class<?>, String> externalRevisionsToReviseOnMergeSource;
+	private SetMultimap<Class<?>, String> resolvedRevisionsToReCommit;
 	
 	/*
 	 * XXX: Components that require a commit detail entry in a merge commit document
@@ -416,6 +417,8 @@ public final class StagingArea {
 			writer.remove(type, deletedDocIds);
 			if (isMerge()) {
 				revisionsToReviseOnMergeSource.putAll(type, deletedDocIds);
+				// remove the object if it were registered for deletion by commit hooks
+				deletedDocIds.forEach(deletedId -> resolvedRevisionsToReCommit.remove(type, deletedId));
 			}
 		}
 		
@@ -429,7 +432,11 @@ public final class StagingArea {
 				if (document instanceof Revision rev) {
 					newComponentsByContainer.put(checkNotNull(rev.getContainerId(), "Missing containerId for revision: %s", rev), rev.getObjectId());
 					if (isMerge()) {
-						revisionsToReviseOnMergeSource.put(document.getClass(), key.id());
+						final String revisionId = rev.getId();
+						revisionsToReviseOnMergeSource.put(document.getClass(), revisionId);
+						
+						// remove the object if it were registered for revision force commit, but processed and staged by commit hooks as well
+						resolvedRevisionsToReCommit.remove(document.getClass(), revisionId);
 					}
 					if (rev instanceof CommitSubject subject) {
 						subjects.add(subject.extractSubjectId());
@@ -446,8 +453,8 @@ public final class StagingArea {
 			ObjectId key = entry.getKey();
 			StagedObject value = entry.getValue();
 			if (value.isChanged() && value.isCommit()) {
-				Object object = value.getObject();
-				if (object instanceof Revision) {
+				Object document = value.getObject();
+				if (document instanceof Revision) {
 					final RevisionDiff revisionDiff = value.getDiff();
 					final Revision rev = revisionDiff.newRevision;
 					final ObjectId containerId = checkNotNull(rev.getContainerId(), "Missing containerId for revision: %s", rev);
@@ -455,6 +462,9 @@ public final class StagingArea {
 
 					if (isMerge()) {
 						revisionsToReviseOnMergeSource.put(rev.getClass(), rev.getId());
+						
+						// remove the object if it were registered for revision force commit, but processed and staged by commit hooks as well
+						resolvedRevisionsToReCommit.remove(rev.getClass(), rev.getId());
 					}
 					
 					if (rev instanceof CommitSubject subject) {
@@ -478,16 +488,25 @@ public final class StagingArea {
 					}
 					
 				} else {
-					writer.put(object);
-					changedComponentsByContainer.put(ObjectId.rootOf(DocumentMapping.getDocType(object.getClass())), key);
+					writer.put(document);
+					changedComponentsByContainer.put(ObjectId.rootOf(DocumentMapping.getDocType(document.getClass())), key);
 				}
 			}
 		});
-		
-		// apply revised flag on merge source branch
+
+		// in case of merging content, apply extra changes
 		if (isMerge()) {
+			// apply revised flag on merge source branch
 			for (Class<?> type : revisionsToReviseOnMergeSource.keySet()) {
 				writer.setRevised(type, ImmutableSet.copyOf(revisionsToReviseOnMergeSource.get(type)), mergeSourceRef);
+			}
+			// fetch and recommit revisions for certain conflicting but resolved objects
+			for (Class<?> type : resolvedRevisionsToReCommit.keySet()) {
+				var revisionIds = resolvedRevisionsToReCommit.get(type);
+				for (List<String> revisionIdsBatch : Iterables.partition(revisionIds, maxTermsCount)) {
+					index.read(branchPath, searcher -> searcher.get(type, revisionIdsBatch))
+						.forEach(writer::put);
+				}
 			}
 		}
 		
@@ -748,6 +767,7 @@ public final class StagingArea {
 		externalRevisionsToReviseOnMergeSource = HashMultimap.create();
 		deletedComponentsInMerge = HashMultimap.create();
 		changedComponentsInMerge = HashMultimap.create();
+		resolvedRevisionsToReCommit = HashMultimap.create();
 	}
 
 	/**
@@ -842,11 +862,23 @@ public final class StagingArea {
 		if (stagedObjects.containsKey(id)) {
 			StagedObject currentObject = stagedObjects.get(id);
 			if (!currentObject.isCommit() && commit && isMerge()) {
+				// before doing anything check whether the proposed new changes would actually generate a diff or not compared to the state already present in the system
+				// if not return early, otherwise proceed as usual
+				// this is required to NOT generate unnecessary fake change objects when a hook would stage the object again for any reason but without any change
+				// see https://snowowl.atlassian.net/browse/SO-6635
+				var newDiff = new RevisionDiff((Revision) currentObject.object, changedRevision);
+				if (!newDiff.hasChanges()) {
+					return this;
+				}
 				injectChangedEntryToMergeCommit(changedRevision.getContainerId(), id);
 			}
 			stagedObjects.put(id, currentObject.withObject(changedRevision, commit));
 		} else {
-			stagedObjects.put(id, changed(changedRevision, new RevisionDiff(oldRevision, changedRevision), commit));
+			// register changed objects only if there is an actual diff
+			var diff = new RevisionDiff(oldRevision, changedRevision);
+			if (diff.hasChanges()) {
+				stagedObjects.put(id, changed(changedRevision, diff, commit));
+			}
 		}
 		return this;
 	}
@@ -1187,6 +1219,12 @@ public final class StagingArea {
 							}
 						}
 					} else {
+						// if there are no target property changes either, then this component either just marked as a container or has cascading changes
+						// either way we need to commit it into the index to ensure we have a successfully resolved conflict
+						if (targetPropertyChanges == null) {
+							resolvedRevisionsToReCommit.put(type, changedInSourceAndTargetId);
+						}
+						// remove in all cases from the changeset, as we handled it here
 						fromChangeSet.removeChanged(type, changedInSourceAndTargetId);
 					}
 					
