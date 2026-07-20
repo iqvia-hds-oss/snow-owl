@@ -132,14 +132,15 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.queryParam("version", SNOMEDCT_URL)
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
-			.statusCode(400)
 			
+			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
+			.body("issue.details.text", hasItem("An invalid code was supplied, codeA: \"invalid\"."))
 			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeA: \"invalid\"."));
 	}
-	
+
 	@Test
 	public void GET_CodeSystem_$susbsumes_codeB_Invalid() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
@@ -149,14 +150,15 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.queryParam("version", SNOMEDCT_URL)
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
-			.statusCode(400)
 			
+			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
+			.body("issue.details.text", hasItem("An invalid code was supplied, codeB: \"invalid\"."))
 			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeB: \"invalid\"."));
 	}
-	
+
 	@Test
 	public void GET_CodeSystem_$susbsumes_Invalid_Same_Codes() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
@@ -166,11 +168,12 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.queryParam("version", SNOMEDCT_URL)
 			.when().get(CODESYSTEM_SUBSUMES)
 			.then().assertThat()
-			.statusCode(400)
 			
+			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
+			.body("issue.details.text", hasItem("Invalid codes were supplied, codeA: \"invalid\", codeB: \"invalid\"."))
 			.body("issue.diagnostics", hasItem("Invalid codes were supplied, codeA: \"invalid\", codeB: \"invalid\"."));
 	}
 }
