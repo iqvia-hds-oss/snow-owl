@@ -48,6 +48,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 	
 	// Resource types
 	FhirCodeSystemApiTest.class,
+	FhirCodeSystemHistoryTest.class,
 	FhirValueSetApiTest.class,
 //	FhirConceptMapApiTest.class,
 	
