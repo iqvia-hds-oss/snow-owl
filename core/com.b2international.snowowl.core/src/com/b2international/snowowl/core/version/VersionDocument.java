@@ -104,6 +104,8 @@ public final class VersionDocument implements CommitSubject, Serializable {
 		public static final String RESOURCE = "resource";
 		public static final String BRANCH_PATH = "branchPath";
 		public static final String CREATED_AT = "createdAt";
+		public static final String UPDATED_AT = "updatedAt";
+		public static final String OID = "oid";
 		public static final String TOOLING_ID = "toolingId";
 		public static final String URL = "url";
 		public static final String AUTHOR = "author";
@@ -123,14 +125,16 @@ public final class VersionDocument implements CommitSubject, Serializable {
 			RESOURCE, 
 			BRANCH_PATH,
 			CREATED_AT,
+			UPDATED_AT,
 			TOOLING_ID,
 			URL,
-			AUTHOR
+			AUTHOR,
+			OID
 		);
 	}
 
 	public static class Expressions {
-
+		
 		public static Expression ids(Iterable<String> ids) {
 			return matchAny(Fields.ID, ids);
 		}
