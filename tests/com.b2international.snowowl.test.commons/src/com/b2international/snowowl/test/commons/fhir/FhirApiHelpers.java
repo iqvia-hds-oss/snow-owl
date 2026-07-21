@@ -32,6 +32,8 @@ public final class FhirApiHelpers {
 	
 	public static final String CODESYSTEM = "/CodeSystem";
 	public static final String CODESYSTEM_ID = "/CodeSystem/{id}";
+	public static final String CODESYSTEM_ID_HISTORY = "/CodeSystem/{id}/_history";
+	public static final String CODESYSTEM_ID_HISTORY_VERSION = "/CodeSystem/{id}/_history/{version}";
 	
 	public static final String CODESYSTEM_LOOKUP = "/CodeSystem/$lookup";
 	public static final String CODESYSTEM_SUBSUMES = "/CodeSystem/$subsumes";
