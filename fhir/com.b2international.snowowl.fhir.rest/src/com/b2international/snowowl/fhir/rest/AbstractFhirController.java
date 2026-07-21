@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
@@ -206,6 +207,17 @@ public abstract class AbstractFhirController extends AbstractRestService {
 		final String _format,
 		final Boolean _pretty
 	) {
+		return toResponseEntity(bundle, fullUrlBuilder, accept, _format, _pretty, r -> Map.of("id", r.getId()));
+	}
+	
+	protected final ResponseEntity<byte[]> toResponseEntity(
+			final Bundle bundle, 
+			final UriComponentsBuilder fullUrlBuilder, 
+			final String accept,
+			final String _format,
+			final Boolean _pretty,
+			final Function<Resource, Map<String, String>> expand
+	) {
 		// FIXME: Temporary measure to add "fullUrl" to returned bundle entries
 		final var entries = bundle.getEntry();
 		
@@ -213,9 +225,7 @@ public abstract class AbstractFhirController extends AbstractRestService {
 			// Add "fullUrl" to original entries, add to builder
 			for (var entry : entries) {
 				if (entry.getResource() != null) {
-					final String resourceId = entry.getResource().getId();
-					final String fullUrl = fullUrlBuilder.buildAndExpand(Map.of("id", resourceId)).toString();
-					entry.setFullUrl(fullUrl);
+					entry.setFullUrl(fullUrlBuilder.buildAndExpand(expand.apply(entry.getResource())).toString());
 				}
 			}
 		}

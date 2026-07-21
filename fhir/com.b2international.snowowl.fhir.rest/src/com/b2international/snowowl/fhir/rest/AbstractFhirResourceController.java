@@ -17,7 +17,10 @@ package com.b2international.snowowl.fhir.rest;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueSeverity;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
@@ -83,5 +86,19 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 					.setCode(IssueType.BUSINESSRULE)
 					.setDiagnostics(result.getMessage())
 			);
+	}
+	
+	
+	private static final Pattern SNOMED_URL_VERSION = Pattern.compile("/version/(?<year>\\d{4})(?<month>\\d{2})(?<day>\\d{2})$");
+	
+	
+	protected Map<String, String> expandVersion(CanonicalResource resource) {
+		// XXX: in case of SNOMED url based version this will be incorrect!
+		String version = resource.getVersion();
+		Matcher matcher = SNOMED_URL_VERSION.matcher(version);
+		if (matcher.find()) {
+			version = String.format("%s-%s-%s", matcher.group("year"), matcher.group("month"), matcher.group("day"));
+		}
+		return Map.of("version", version);
 	}
 }
