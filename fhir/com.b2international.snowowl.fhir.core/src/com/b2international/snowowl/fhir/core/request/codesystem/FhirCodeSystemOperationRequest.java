@@ -15,10 +15,7 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
-import java.util.IllformedLocaleException;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -152,6 +149,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	 */
 	public static String compactLocale(final CodeType localeAsCode) {
 		final String locale = (localeAsCode != null) ? localeAsCode.getCode() : null;
+		
 		if (StringUtils.isEmpty(locale)) {
 			return AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER;
 		}
@@ -160,10 +158,26 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	}
 
 	public static String compactLocale(final String locale) {
+		
+		String[] localeItems = locale.contains(",") ? locale.split(",") : new String[]{locale};
+		
+		return Arrays.stream(localeItems)
+				.map(String::trim)
+				.map(FhirCodeSystemOperationRequest::compactSingleLocale)
+				.collect(Collectors.joining(","));
+	}
+	
+	private static String compactSingleLocale(final String localeItem) {
+		
+		// '*' is a wildcard that is not covered by BCP-47, but needs to be handled regardless since FHIR allows it
+		if (localeItem.equals("*")) {
+			return localeItem;
+		}
+		
 		// Parse the input in accordance with BCP-47 grammar (it should be valid)
 		final Locale.Builder builder = new Locale.Builder();
 		try {
-			builder.setLanguageTag(locale);
+			builder.setLanguageTag(localeItem);
 		} catch (final IllformedLocaleException ex) {
 			throw new BadRequestException(ex.getMessage());
 		}
@@ -172,7 +186,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		final Locale parsedLocale = builder.build();
 		final String privateUseExtension = parsedLocale.getExtension(Locale.PRIVATE_USE_EXTENSION);
 		if (StringUtils.isEmpty(privateUseExtension)) {
-			return locale;
+			return localeItem;
 		}
 		
 		/*
@@ -181,7 +195,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		 * language tag)
 		 */
 		final String separatorsRemovedExtension = privateUseExtension.replace("-", "");
-		return locale.replace("-x-" + privateUseExtension, "-x-" + separatorsRemovedExtension);
+		return localeItem.replace("-x-" + privateUseExtension, "-x-" + separatorsRemovedExtension);
 	}
 	
 	/**
@@ -193,10 +207,26 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	 * @return
 	 */
 	public static String expandLocale(final String locale) {
+		
 		if (StringUtils.isEmpty(locale)) {
 			return null;
 		}
 		
+		String[] localeItems = locale.contains(",") ? locale.split(",") : new String[]{locale};
+	
+		return Arrays.stream(localeItems)
+			.map(String::trim)
+			.map(FhirCodeSystemOperationRequest::expandSingleLocale)
+			.collect(Collectors.joining(","));
+	}
+
+	private static String expandSingleLocale(final String localeItem) {
+		
+		// '*' is a wildcard that is not covered by BCP-47, but needs to be handled regardless since FHIR allows it
+		if ("*".equals(localeItem)) {
+			return localeItem;
+		}
+
 		/*
 		 * XXX: Assuming locales returned by Snow Owl are in the form of eg. "en-US" or
 		 * "en-x-1234567890123456789" (We can not use Java's built-in parser as at this
@@ -204,20 +234,19 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		 * 
 		 * See FhirLocaleTest#expandSplitPrivateUseExtension for an example.
 		 */
-		final int privateUseIdx = locale.lastIndexOf("-x-");
-		if (privateUseIdx < 0 || privateUseIdx + 3 >= locale.length()) {
-			return locale;
+		final int privateUseIdx = localeItem.lastIndexOf("-x-");
+		if (privateUseIdx < 0 || privateUseIdx + 3 >= localeItem.length()) {
+			return localeItem;
 		}
 		
-		final String separatorsRemovedExtension = locale.substring(privateUseIdx + 3);
+		final String separatorsRemovedExtension = localeItem.substring(privateUseIdx + 3);
 		final String privateUseExtension = Splitter.fixedLength(8) // split private use portion into 8 character segments
 			.splitToStream(separatorsRemovedExtension)
 			.collect(Collectors.joining("-")); // combine again with hyphens
 		
 		// Replace the old private use extension
-		return locale.replace("-x-" + separatorsRemovedExtension, "-x-" + privateUseExtension);
+		return localeItem.replace("-x-" + separatorsRemovedExtension, "-x-" + privateUseExtension);
 	}
-
+	
 	protected abstract R doExecute(ServiceProvider context, CodeSystem codeSystem);
-
 }
