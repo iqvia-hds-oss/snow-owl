@@ -50,8 +50,8 @@ public class FhirValueSetRequests {
 		return new ResourceDeleteRequestBuilder(ResourceURI.of(RESOURCE_TYPE, valueSetId));
 	}
 	
-	public FhirValueSetHistoryGetRequestBuilder prepareGetHistory(String id) {
-		return new FhirValueSetHistoryGetRequestBuilder(id);
+	public FhirValueSetHistoryGetRequestBuilder prepareGetHistory() {
+		return new FhirValueSetHistoryGetRequestBuilder();
 	}
 	
 	public FhirValueSetHistoryVersionGetRequestBuilder prepareGetVersion(String id, String version) {

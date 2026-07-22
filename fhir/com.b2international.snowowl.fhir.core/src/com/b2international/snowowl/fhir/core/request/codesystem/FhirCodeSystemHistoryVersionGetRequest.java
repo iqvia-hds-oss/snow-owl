@@ -36,7 +36,7 @@ final class FhirCodeSystemHistoryVersionGetRequest extends FhirResourceHistoryVe
 	}
 	
 	@Override
-	protected FhirCodeSystemHistoryGetRequestBuilder prepareHistoryGet(String id) {
-		return new FhirCodeSystemHistoryGetRequestBuilder(id);
+	protected FhirCodeSystemHistoryGetRequestBuilder prepareHistoryGet() {
+		return new FhirCodeSystemHistoryGetRequestBuilder();
 	}
 }

@@ -36,7 +36,7 @@ final class FhirConceptMapHistoryVersionGetRequest extends FhirResourceHistoryVe
 	}
 	
 	@Override
-	protected FhirConceptMapHistoryGetRequestBuilder prepareHistoryGet(String id) {
-		return new FhirConceptMapHistoryGetRequestBuilder(id);
+	protected FhirConceptMapHistoryGetRequestBuilder prepareHistoryGet() {
+		return new FhirConceptMapHistoryGetRequestBuilder();
 	}
 }

@@ -75,8 +75,8 @@ public final class FhirCodeSystemRequests {
 		return new FhirCodeSystemGetComponentsRequestBuilder();
 	}
 	
-	public FhirCodeSystemHistoryGetRequestBuilder prepareGetHistory(String id) {
-		return new FhirCodeSystemHistoryGetRequestBuilder(id);
+	public FhirCodeSystemHistoryGetRequestBuilder prepareGetHistory() {
+		return new FhirCodeSystemHistoryGetRequestBuilder();
 	}
 	
 	public FhirCodeSystemHistoryVersionGetRequestBuilder prepareGetVersion(String id, String version) {

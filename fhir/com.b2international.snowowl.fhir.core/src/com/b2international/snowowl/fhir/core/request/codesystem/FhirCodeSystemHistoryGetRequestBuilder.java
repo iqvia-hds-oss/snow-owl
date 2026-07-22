@@ -28,14 +28,10 @@ import com.b2international.snowowl.fhir.core.request.FhirResourceHistoryGetReque
  * @since 10.3
  */
 public final class FhirCodeSystemHistoryGetRequestBuilder extends FhirResourceHistoryGetRequestBuilder<FhirCodeSystemHistoryGetRequestBuilder> {
-
-	public FhirCodeSystemHistoryGetRequestBuilder(String id) {
-		super(id);
-	}
 	
 	@Override
 	protected SearchResourceRequest<RepositoryContext, Bundle> createSearch() {
-		return new FhirCodeSystemHistoryGetRequest(getResourceId());
+		return new FhirCodeSystemHistoryGetRequest();
 	}
 	
 	@Override

@@ -21,7 +21,6 @@ import org.hl7.fhir.r5.model.ValueSet;
 
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceFragment;
-import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.FhirResourceHistoryGetRequest;
@@ -33,8 +32,8 @@ final class FhirValueSetHistoryGetRequest extends FhirResourceHistoryGetRequest<
 
 	private static final long serialVersionUID = 1L;
 	
-	public FhirValueSetHistoryGetRequest(String id) {
-		super(ResourceURI.of("valuesets", id));
+	protected String getResourceType( ) {
+		return "valuesets";
 	}
 
 	@Override

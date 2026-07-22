@@ -55,8 +55,8 @@ final class FhirCodeSystemHistoryGetRequest extends FhirResourceHistoryGetReques
 	// URI (URN) prefix for OIDs
 	private static final String OID_PREFIX = "urn:oid:";
 	
-	FhirCodeSystemHistoryGetRequest(String id) {
-		super(com.b2international.snowowl.core.codesystem.CodeSystem.uri(id));
+	protected String getResourceType( ) {
+		return com.b2international.snowowl.core.codesystem.CodeSystem.RESOURCE_TYPE;
 	}
 	
 	@Override

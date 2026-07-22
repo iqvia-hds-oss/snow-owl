@@ -52,6 +52,7 @@ import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.Iterables;
 
 import net.jodah.typetools.TypeResolver;
 
@@ -78,11 +79,7 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 		AT,
 	}
 	
-	private final ResourceURI resourceUri;
-	
-	public FhirResourceHistoryGetRequest(ResourceURI resourceUri) {
-		this.resourceUri = resourceUri;
-	}
+	protected abstract String getResourceType();
 	
 	private Bundle prepareBundle() {
 		final Meta meta = new Meta();
@@ -116,6 +113,16 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 		}
 		
 		query.filter(VersionDocument.Expressions.versions(uniqueVersions));
+	}
+	
+	private void addResourceFilter(final ExpressionBuilder query) {
+		if (componentIds() == null) {
+			return;
+		}
+		Set<String> resources = componentIds().stream()
+			.map(componentId -> ResourceURI.of(getResourceType(), componentId).toString())
+			.collect(Collectors.toSet());
+		query.filter(VersionDocument.Expressions.resources(resources));
 	}
 	
 	private void addSinceFilter(final ExpressionBuilder query) {
@@ -241,7 +248,7 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 
 	@JsonIgnore
 	@SuppressWarnings("unchecked")
-	private Class<T> getResourceType() {
+	private Class<T> getResourceTypeClass() {
 		final Class<?>[] types = TypeResolver.resolveRawArguments(FhirResourceHistoryGetRequest.class, getClass());
 		checkState(TypeResolver.Unknown.class != types[0], "Couldn't resolve return type parameter for class %s", getClass().getSimpleName());
 		return (Class<T>) types[0];
@@ -412,8 +419,9 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 	protected final Bundle doExecute(final RepositoryContext context) throws IOException {
 		// Match version documents with the given resource identifier
 		final ExpressionBuilder query = Expressions.bool()
-			.filter(VersionDocument.Expressions.resource(resourceUri.toString()));
+			.filter(VersionDocument.Expressions.resourceType(getResourceType()));
 		
+		addResourceFilter(query);
 		addVersionFilter(query);
 		addSinceFilter(query);
 		addAtFilter(query);
@@ -433,16 +441,17 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 				.sortBy(querySortBy(context))
 				.build());
 			
-		if (internalResources.isEmpty()) {
+		if (internalResources.isEmpty() && componentIds() != null && componentIds().size() == 1) {
+			String componentId = Iterables.getOnlyElement(componentIds());
 			// No versions were found, check if we have just filtered the versions or the ID does not even exist.
 			final Hits<ResourceFragment> existingResources = context.service(RevisionSearcher.class)
 				.search(Query.select(ResourceFragment.class)
 				.from(ResourceDocument.class)
-				.where(ResourceDocument.Expressions.id(resourceUri.getResourceId()))
+				.where(ResourceDocument.Expressions.id(componentId))
 				.limit(0)
 				.build());
 			if (existingResources.getTotal() == 0) {
-				 throw new NotFoundException(StringUtils.splitCamelCaseAndCapitalize(getResourceType().getSimpleName()), resourceUri.getResourceId());
+				 throw new NotFoundException(StringUtils.splitCamelCaseAndCapitalize(getResourceTypeClass().getSimpleName()), componentId);
 			 }	
 		}
 		

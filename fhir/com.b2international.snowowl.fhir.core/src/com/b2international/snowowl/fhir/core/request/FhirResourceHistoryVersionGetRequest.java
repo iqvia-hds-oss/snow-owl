@@ -56,7 +56,7 @@ public abstract class FhirResourceHistoryVersionGetRequest<R extends MetadataRes
 
 	protected abstract GB prepareGet(String id);
 	
-	protected abstract HB prepareHistoryGet(String id);
+	protected abstract HB prepareHistoryGet();
 	
 	@Override
 	public R execute(final RepositoryContext context) {
@@ -68,7 +68,8 @@ public abstract class FhirResourceHistoryVersionGetRequest<R extends MetadataRes
 				.buildAsync()
 				.execute(context);
 		} else {
-			HB builder = prepareHistoryGet(id);
+			HB builder = prepareHistoryGet()
+					.filterById(id);
 	
 			if (ResourceURI.LATEST.equals(version)) {
 				builder = builder.sortHistoryBy(HistorySort.LAST_UPDATED_DESCENDING);

@@ -28,14 +28,10 @@ import com.b2international.snowowl.fhir.core.request.FhirResourceHistoryGetReque
  * @since 10.3
  */
 public final class FhirConceptMapHistoryGetRequestBuilder extends FhirResourceHistoryGetRequestBuilder<FhirConceptMapHistoryGetRequestBuilder> {
-
-	public FhirConceptMapHistoryGetRequestBuilder(String id) {
-		super(id);
-	}
 	
 	@Override
 	protected SearchResourceRequest<RepositoryContext, Bundle> createSearch() {
-		return new FhirConceptMapHistoryGetRequest(getResourceId());
+		return new FhirConceptMapHistoryGetRequest();
 	}
 	
 	@Override

@@ -41,16 +41,8 @@ public abstract class FhirResourceHistoryGetRequestBuilder<B extends FhirResourc
 		extends SearchResourceRequestBuilder<B, RepositoryContext, Bundle>
 		implements ResourceRepositoryRequestBuilder<Bundle> {
 	
-	protected final String resourceId;
-	
-	public FhirResourceHistoryGetRequestBuilder(String resourceId) {
-		this.resourceId = resourceId;
-		// Set default sorting
+	public FhirResourceHistoryGetRequestBuilder() {
 		sortHistoryBy(HistorySort.LAST_UPDATED_DESCENDING);
-	}
-	
-	protected String getResourceId() {
-		return resourceId;
 	}
 	
 	public final B filterByVersion(String version) {
