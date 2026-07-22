@@ -751,10 +751,11 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 			acceptLanguage);
 		
 		return FhirRequests.codeSystems()
-			.prepareGetHistory(id)
-			.setSummary(Summary.TRUE)  // XXX: we only return the SUMMARY fields
+			.prepareGetHistory()
+			.filterById(id)
 			.filterBySince(params.get_since())
 			.filterByAt(params.get_at())
+			.setSummary(Summary.TRUE)  // XXX: we only return the SUMMARY fields
 			.setSearchAfter(params.get_after())
 			.setCount(params.get_count())
 			.sortHistoryBy(params.get_sort())
