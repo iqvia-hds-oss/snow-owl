@@ -155,6 +155,10 @@ public final class VersionDocument implements CommitSubject, Serializable {
 			return matchAny(Fields.RESOURCE, resourceUris);
 		}
 		
+		public static Expression resourceType(String resourceType) {
+			return exactMatch(Fields.RESOURCE_TYPE, resourceType);
+		}
+		
 		public static Expression resourceTypes(Iterable<String> resourceTypes) {
 			return matchAny(Fields.RESOURCE_TYPE, resourceTypes);
 		}
