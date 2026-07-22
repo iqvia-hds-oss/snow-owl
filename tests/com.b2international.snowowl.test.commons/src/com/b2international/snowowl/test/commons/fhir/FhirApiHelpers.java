@@ -47,6 +47,8 @@ public final class FhirApiHelpers {
 	
 	public static final String VALUESET = "/ValueSet";
 	public static final String VALUESET_ID = "/ValueSet/{id}";
+	public static final String VALUESET_ID_HISTORY = "/ValueSet/{id}/_history";
+	public static final String VALUESET_ID_HISTORY_VERSION = "/ValueSet/{id}/_history/{version}";
 	
 	public static final String VALUESET_EXPAND = "/ValueSet/$expand";
 	public static final String VALUESET_ID_EXPAND = "/ValueSet/{id}/$expand";
