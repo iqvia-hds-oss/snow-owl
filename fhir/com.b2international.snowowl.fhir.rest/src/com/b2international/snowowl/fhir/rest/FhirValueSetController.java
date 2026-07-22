@@ -21,6 +21,7 @@ import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 import java.io.InputStream;
 import java.time.LocalDate;
 
+import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.ValueSet;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -38,6 +39,7 @@ import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
+import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
@@ -245,7 +247,7 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 	@ApiResponse(responseCode = "200", description = "Value set updated", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
 	@ApiResponse(responseCode = "201", description = "Value set created", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
 	@ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = OperationOutcome.class)))
-	@PutMapping(value = "/{id:**}", consumes = {
+	@PutMapping(value = "/{id}", consumes = {
 		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
 		APPLICATION_FHIR_JSON_4_3_VALUE,
@@ -548,7 +550,7 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 	@ApiResponse(responseCode = "200", description = "OK")
 	@ApiResponse(responseCode = "400", description = "Bad request")
 	@ApiResponse(responseCode = "404", description = "Value set not found")
-	@GetMapping(value = "/{id:**}", produces = {
+	@GetMapping(value = "/{id}", produces = {
 		APPLICATION_FHIR_JSON_5_0_VALUE,
 		APPLICATION_FHIR_JSON_5_0_0_VALUE,
 		APPLICATION_FHIR_JSON_4_3_VALUE,
@@ -649,7 +651,7 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 	@ApiResponse(responseCode = "204", description = "Deletion successful")
 	@ApiResponse(responseCode = "404", description = "Not found")
 	@ApiResponse(responseCode = "409", description = "Value set cannot be deleted")
-	@DeleteMapping(value = "/{id:**}")
+	@DeleteMapping(value = "/{id}")
 	public ResponseEntity<Void> deleteValueSet(
 			
 		@Parameter(description = """
@@ -684,5 +686,216 @@ public class FhirValueSetController extends AbstractFhirResourceController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).build();
 		}
+	}
+	
+	/**
+	 * <code><b>GET /ValueSet/{id}/_history</b></code>
+	 * <p>
+	 * Retrieves a single value set's history by its logical identifier,
+	 *  where only versioned resources are returned, meaning the head revision is not returned.
+	 * 
+	 * @param id
+	 * @param params
+	 * @param accept
+	 * @param _format
+	 * @param _pretty
+	 * @param acceptLanguage
+	 * @return
+	 */
+	@Operation(
+		summary = "Retrieve the value set history by id",
+		description = "Retrieves the value set history specified by its logical id.",
+		extensions = {
+			@Extension(name = B2I_OPENAPI_X_INTERACTION, properties = {
+				@ExtensionProperty(name = B2I_OPENAPI_INTERACTION_READ, value = "Read the current state of value sets"),
+			}),
+		}
+	)
+	@ApiResponse(responseCode = "200", description = "OK")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@ApiResponse(responseCode = "404", description = "Value set not found")
+	@GetMapping(value = "/{id}/_history", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
+		APPLICATION_FHIR_JSON_VALUE,
+		APPLICATION_JSON_VALUE,
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
+	})
+	public Promise<ResponseEntity<byte[]>> getValueSetHistory(
+			
+		@Parameter(description = """
+			The identifier of the Value Set resource""")
+		@PathVariable(value = "id") 
+		final String id,
+		
+		@ParameterObject 
+		FhirValueSetHistoryParameters params,
+		
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+		
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage
+		
+	) {
+
+		// XXX: We are using "{version}" as the placeholder for the "version" path parameter and expand it later
+		final UriComponentsBuilder fullUrlBuilder = MvcUriComponentsBuilder.fromMethodName(FhirValueSetController.class, "getValueSetVersion", 
+			id,
+			"{version}",
+			accept,
+			_format, 
+			_pretty, 
+			acceptLanguage);
+		
+		return FhirRequests.valueSets()
+			.prepareGetHistory(id)
+			.setSummary(Summary.TRUE)  // XXX: we only return the SUMMARY fields
+			.filterBySince(params.get_since())
+			.filterByAt(params.get_at())
+			.setSearchAfter(params.get_after())
+			.setCount(params.get_count())
+			.sortHistoryBy(params.get_sort())
+			.setLocales(acceptLanguage)
+			.buildAsync()
+			.execute(getBus())
+			.then(soBundle -> toResponseEntity(soBundle,
+					fullUrlBuilder,
+					accept,
+					_format,
+					_pretty,
+					resource -> expandVersion((CanonicalResource) resource)));
+	}
+	
+	
+	/**
+	 * <code><b>GET /ValueSet/{id}/_history/{version}</b></code>
+	 * <p>
+	 * Retrieves a single value set by its logical identifier and version.
+	 * For the version the following values are accepted:
+	 * <ul>
+	 * 	<li><b>{version}</b>: The specified revision should be returned.
+	 * 	<li><b>LATEST</b>: The last revision should be returned.
+	 * 	<li><b>HEAD</b>: The head revision should be returned.
+	 * </ul>
+	 * 
+	 * @param id
+	 * @param version
+	 * @param accept
+	 * @param _format
+	 * @param _pretty
+	 * @param acceptLanguage
+	 * @return
+	 */
+	@Operation(
+		summary = "Retrieve the value set by id and version",
+		description = "Retrieves the value set specified by its logical id and version.",
+		extensions = {
+			@Extension(name = B2I_OPENAPI_X_INTERACTION, properties = {
+				@ExtensionProperty(name = B2I_OPENAPI_INTERACTION_READ, value = "Read the current state of value sets"),
+			}),
+		}
+	)
+	@ApiResponse(responseCode = "200", description = "OK")
+	@ApiResponse(responseCode = "400", description = "Bad request")
+	@ApiResponse(responseCode = "404", description = "Value set not found")
+	@GetMapping(value = "/{id}/_history/{version}", produces = {
+		APPLICATION_FHIR_JSON_5_0_0_VALUE,
+		APPLICATION_FHIR_JSON_4_3_0_VALUE,
+		APPLICATION_FHIR_JSON_4_0_1_VALUE,
+		APPLICATION_FHIR_JSON_VALUE,
+		APPLICATION_JSON_VALUE,
+		TEXT_JSON_VALUE,
+		
+		APPLICATION_FHIR_XML_5_0_0_VALUE,
+		APPLICATION_FHIR_XML_4_3_0_VALUE,
+		APPLICATION_FHIR_XML_4_0_1_VALUE,
+		APPLICATION_FHIR_XML_VALUE,
+		APPLICATION_XML_VALUE,
+		TEXT_XML_VALUE
+	})
+	public Promise<ResponseEntity<byte[]>> getValueSetVersion(
+	
+		@Parameter(description = """
+			The identifier of the Value Set resource""")
+		@PathVariable(value = "id") 
+		final String id,
+		
+		@Parameter(description = """
+			The version of the Value Set resource""")
+		@PathVariable(value = "version") 
+		final String version,
+			
+		@Parameter(hidden = true)
+		@RequestHeader(value = HttpHeaders.ACCEPT)
+		final String accept,
+
+		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
+			APPLICATION_FHIR_JSON_5_0_0_VALUE,
+			APPLICATION_FHIR_JSON_4_3_0_VALUE,
+			APPLICATION_FHIR_JSON_4_0_1_VALUE,
+			APPLICATION_FHIR_JSON_VALUE,
+			APPLICATION_JSON_VALUE,
+			TEXT_JSON_VALUE,
+			
+			APPLICATION_FHIR_XML_5_0_0_VALUE,
+			APPLICATION_FHIR_XML_4_3_0_VALUE,
+			APPLICATION_FHIR_XML_4_0_1_VALUE,
+			APPLICATION_FHIR_XML_VALUE,
+			APPLICATION_XML_VALUE,
+			TEXT_XML_VALUE
+		}))
+		@RequestParam(value = "_format", required = false)
+		final String _format,
+		
+		@Parameter(description = "Controls pretty-printing of response")
+		@RequestParam(value = "_pretty", required = false)
+		final Boolean _pretty,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage
+		
+	) {
+		return FhirRequests.valueSets()
+			.prepareGetVersion(id, version)
+			.setSummary(Summary.TRUE)
+			.buildAsync()
+			.execute(getBus())
+			.then(valueSet -> {
+				return toResponseEntity(valueSet, accept, _format, _pretty);
+			});
 	}
 }
