@@ -45,4 +45,12 @@ public class FhirConceptMapRequests {
 	public ResourceDeleteRequestBuilder prepareDelete(final String conceptMapId) {
 		return new ResourceDeleteRequestBuilder(ResourceURI.of(RESOURCE_TYPE, conceptMapId));
 	}
+	
+	public FhirConceptMapHistoryGetRequestBuilder prepareGetHistory(String id) {
+		return new FhirConceptMapHistoryGetRequestBuilder(id);
+	}
+	
+	public FhirConceptMapHistoryVersionGetRequestBuilder prepareGetVersion(String id, String version) {
+		return new FhirConceptMapHistoryVersionGetRequestBuilder(id, version);
+	}
 }
