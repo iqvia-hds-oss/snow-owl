@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.fhir.core.request;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
@@ -32,6 +34,7 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
+import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.fhir.FhirCodeSystems;
 import com.b2international.index.Hits;
 import com.b2international.index.query.Expressions;
@@ -43,10 +46,14 @@ import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.id.IDs;
+import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import net.jodah.typetools.TypeResolver;
 
 /**
  * @since 10.3
@@ -232,6 +239,14 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 		return internalFields;
 	}
 
+	@JsonIgnore
+	@SuppressWarnings("unchecked")
+	private Class<T> getResourceType() {
+		final Class<?>[] types = TypeResolver.resolveRawArguments(FhirResourceHistoryGetRequest.class, getClass());
+		checkState(TypeResolver.Unknown.class != types[0], "Couldn't resolve return type parameter for class %s", getClass().getSimpleName());
+		return (Class<T>) types[0];
+	}
+	
 	protected abstract T createResource();
 
 	private PublicationStatus toPublicationStatus(final String status) {
@@ -409,15 +424,28 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 		// Execute the search query across both resource and version documents, mapping them to a common ResourceFragment representation
 		final Hits<ResourceFragment> internalResources = context.service(RevisionSearcher.class)
 			.search(Query.select(ResourceFragment.class)
-			.from(VersionDocument.class)
-			.fields(internalFields)
-			.where(query.build())
-			.searchAfter(searchAfter())
-			.limit(limit())
-			.minScore(minScore())
-			.sortBy(querySortBy(context))
-			.build());
+				.from(VersionDocument.class)
+				.fields(internalFields)
+				.where(query.build())
+				.searchAfter(searchAfter())
+				.limit(limit())
+				.minScore(minScore())
+				.sortBy(querySortBy(context))
+				.build());
 			
+		if (internalResources.isEmpty()) {
+			// No versions were found, check if we have just filtered the versions or the ID does not even exist.
+			final Hits<ResourceFragment> existingResources = context.service(RevisionSearcher.class)
+				.search(Query.select(ResourceFragment.class)
+				.from(ResourceDocument.class)
+				.where(ResourceDocument.Expressions.id(resourceUri.getResourceId()))
+				.limit(0)
+				.build());
+			if (existingResources.getTotal() == 0) {
+				 throw new NotFoundException(StringUtils.splitCamelCaseAndCapitalize(getResourceType().getSimpleName()), resourceUri.getResourceId());
+			 }	
+		}
+		
 		final List<BundleEntryComponent> entries = internalResources.stream()
 			.map(fragment -> toFhirResourceEntry(context, fragment))
 			.collect(Collectors.toList());
