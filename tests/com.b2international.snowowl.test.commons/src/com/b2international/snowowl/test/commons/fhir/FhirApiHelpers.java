@@ -55,6 +55,8 @@ public final class FhirApiHelpers {
 	
 	public static final String CONCEPTMAP = "/ConceptMap";
 	public static final String CONCEPTMAP_ID = "/ConceptMap/{id}";
+	public static final String CONCEPTMAP_ID_HISTORY = "/ConceptMap/{id}/_history";
+	public static final String CONCEPTMAP_ID_HISTORY_VERSION = "/ConceptMap/{id}/_history/{version}";
 	
 	public static final String CONCEPTMAP_TRANSLATE = "/ConceptMap/$translate";
 	public static final String CONCEPTMAP_ID_TRANSLATE = "/ConceptMap/{id}/$translate";
