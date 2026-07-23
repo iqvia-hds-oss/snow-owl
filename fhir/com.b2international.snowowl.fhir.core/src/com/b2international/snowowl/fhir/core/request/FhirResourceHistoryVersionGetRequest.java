@@ -25,7 +25,7 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.events.Request;
-import com.b2international.snowowl.fhir.core.HistorySort;
+import com.b2international.snowowl.fhir.core.FhirHistorySort;
 
 /**
  * @since 10.3
@@ -72,7 +72,7 @@ public abstract class FhirResourceHistoryVersionGetRequest<R extends MetadataRes
 					.filterById(id);
 	
 			if (ResourceURI.LATEST.equals(version)) {
-				builder = builder.sortHistoryBy(HistorySort.LAST_UPDATED_DESCENDING);
+				builder = builder.sortHistoryBy(FhirHistorySort.LAST_UPDATED_DESCENDING);
 			} else {
 				builder = builder.filterByVersion(version);
 			}

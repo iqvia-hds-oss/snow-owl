@@ -28,7 +28,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.b2international.snowowl.fhir.core.HistorySort;
+import com.b2international.snowowl.fhir.core.FhirHistorySort;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 
 import io.restassured.response.ValidatableResponse;
@@ -107,7 +107,7 @@ public class FhirCodeSystemHistoryTest extends FhirRestTest {
 	
 	@Test
 	public void GET_History_Sort_Descending() throws Exception {
-		assertGetHistory("SNOMEDCT", Map.of("_sort", HistorySort.LAST_UPDATED_DESCENDING))
+		assertGetHistory("SNOMEDCT", Map.of("_sort", FhirHistorySort.LAST_UPDATED_DESCENDING))
 			.statusCode(200)
 			.body("entry.resource.version", contains(
 				equalTo(SNOMEDCT_URL + "/version/20200131"),
@@ -125,7 +125,7 @@ public class FhirCodeSystemHistoryTest extends FhirRestTest {
 	
 	@Test
 	public void GET_History_Sort_Ascending() throws Exception {
-		assertGetHistory("SNOMEDCT", Map.of("_sort", HistorySort.LAST_UPDATED_ASCENDING))
+		assertGetHistory("SNOMEDCT", Map.of("_sort", FhirHistorySort.LAST_UPDATED_ASCENDING))
 			.statusCode(200)
 			.body("entry.resource.version", contains(
 				equalTo(SNOMEDCT_URL + "/version/20020131"),

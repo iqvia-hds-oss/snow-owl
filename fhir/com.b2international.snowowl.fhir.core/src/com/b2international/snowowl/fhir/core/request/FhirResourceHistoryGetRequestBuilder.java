@@ -27,7 +27,7 @@ import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequestBuilder;
 import com.b2international.snowowl.core.version.VersionDocument;
-import com.b2international.snowowl.fhir.core.HistorySort;
+import com.b2international.snowowl.fhir.core.FhirHistorySort;
 import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirResourceHistoryGetRequest.OptionKey;
@@ -42,7 +42,7 @@ public abstract class FhirResourceHistoryGetRequestBuilder<B extends FhirResourc
 		implements ResourceRepositoryRequestBuilder<Bundle> {
 	
 	public FhirResourceHistoryGetRequestBuilder() {
-		sortHistoryBy(HistorySort.LAST_UPDATED_DESCENDING);
+		sortHistoryBy(FhirHistorySort.LAST_UPDATED_DESCENDING);
 	}
 	
 	public final B filterByVersion(String version) {
@@ -87,15 +87,15 @@ public abstract class FhirResourceHistoryGetRequestBuilder<B extends FhirResourc
 	
 	public final B sortHistoryBy(String sort) {
 		if (sort != null) {
-			if (HistorySort.LAST_UPDATED_DESCENDING.equalsIgnoreCase(sort))
+			if (FhirHistorySort.LAST_UPDATED_DESCENDING.equalsIgnoreCase(sort))
 				return sortBy(SearchResourceRequest.SortField.of(VersionDocument.Fields.UPDATED_AT, false));
-			else if (HistorySort.LAST_UPDATED_ASCENDING.equalsIgnoreCase(sort)) {
+			else if (FhirHistorySort.LAST_UPDATED_ASCENDING.equalsIgnoreCase(sort)) {
 				return sortBy(SearchResourceRequest.SortField.of(VersionDocument.Fields.UPDATED_AT, true));
-			} else if (HistorySort.NONE.equalsIgnoreCase(sort)) {
+			} else if (FhirHistorySort.NONE.equalsIgnoreCase(sort)) {
 				// This will not take effect due to the default sorting applied
 				return getSelf(); 
 			} else {
-				throw new BadRequestException(String.format("'%s' is unrecognized or not yet supported _sort value. Supported values are: '%s'", sort, HistorySort.VALUES));
+				throw new BadRequestException(String.format("'%s' is unrecognized or not yet supported _sort value. Supported values are: '%s'", sort, FhirHistorySort.VALUES));
 			}
 		} else {
 			return getSelf();

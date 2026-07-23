@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableSet;
 /**
  * @since 10.3
  */
-public interface HistorySort {
+public interface FhirHistorySort {
 
 	String LAST_UPDATED_DESCENDING = "-_lastUpdated";
 	String LAST_UPDATED_ASCENDING = "_lastUpdated";
