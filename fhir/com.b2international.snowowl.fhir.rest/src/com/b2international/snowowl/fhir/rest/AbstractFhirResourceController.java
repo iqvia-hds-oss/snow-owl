@@ -15,11 +15,11 @@
  */
 package com.b2international.snowowl.fhir.rest;
 
-import java.net.URI;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.elasticsearch.common.Strings;
 import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueSeverity;
@@ -29,6 +29,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 
@@ -44,19 +45,14 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 			final Boolean _pretty
 	) {
 		if (result.isCreated() || result.isUpdated()) {
-			final URI locationUri = MvcUriComponentsBuilder.fromController(getClass())
-				.pathSegment(result.getId())
-				.build()
-				.toUri();
-			
-		return toResponseEntity(
-				successStatus,
-				Map.of(HttpHeaders.LOCATION, locationUri.toString()),
-				asSuccessOperationOutcome(result),
-				accept,
-				_format,
-				_pretty
-			);
+			return toResponseEntity(
+					successStatus,
+					Map.of(HttpHeaders.LOCATION, toLocation(result.getId(), result.getVersion())),
+					asSuccessOperationOutcome(result),
+					accept,
+					_format,
+					_pretty
+				);
 		} else {
 			return toResponseEntity(
 				HttpStatus.BAD_REQUEST,
@@ -66,6 +62,18 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 				_pretty
 			);
 		}
+	}
+	
+	private String toLocation(String id, String version) {
+		UriComponentsBuilder builder = MvcUriComponentsBuilder.fromController(getClass())
+				.pathSegment(id);
+
+		if (!Strings.isNullOrEmpty(version)) {
+			builder
+				.pathSegment("_history")
+				.pathSegment(version);
+		}
+		return builder.build().toUri().toString();
 	}
 	
 	private Resource asSuccessOperationOutcome(FhirResourceUpdateResult result) {
@@ -87,7 +95,6 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 					.setDiagnostics(result.getMessage())
 			);
 	}
-	
 	
 	private static final Pattern SNOMED_URL_VERSION = Pattern.compile("/version/(?<year>\\d{4})(?<month>\\d{2})(?<day>\\d{2})$");
 	
