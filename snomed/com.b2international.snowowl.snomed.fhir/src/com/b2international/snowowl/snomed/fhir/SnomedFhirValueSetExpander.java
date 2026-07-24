@@ -51,7 +51,7 @@ import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSupport implements FhirValueSetExpander {
 
 	@Override
-	public ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters) {
+	public ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters, String preferredDisplay) {
 		// XXX since this is an implicit VS, and resource stored in the VS here is a CodeSystem referring to the proper SNOMED CT Edition
 		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(valueSet);
 		ResourceURI codeSystemUri = resource.getResourceURI();
@@ -70,7 +70,7 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, parameters.getCount() == null ? 10 : parameters.getCount().getValue())
 				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, parameters.getAfter() == null ? null : parameters.getAfter().getValue())
 				// SNOMED only preferred display support (VS should always use FSN)
-				.put(ConceptSearchRequestEvaluator.OptionKey.DISPLAY, "FSN")
+				.put(ConceptSearchRequestEvaluator.OptionKey.DISPLAY, preferredDisplay)
 				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirCodeSystemOperationRequest.compactLocale(parameters.getDisplayLanguage())))
 				// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
 				.put(SearchResourceRequest.OptionKey.SORT_BY, !CompareUtils.isEmpty(term) ? SearchIndexResourceRequest.SCORE : SearchResourceRequest.Sort.fieldAsc("id"));

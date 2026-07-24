@@ -496,8 +496,11 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		final String _format,
 		final Boolean _pretty
 	) {
+		
 		return FhirRequests.valueSets().prepareExpand()
 			.setParameters(parameters)
+			// Following FHIR specifications, the preferred display has to be the PT
+			.setPreferredDisplay("PT")
 			.buildAsync()
 			.execute(getBus())
 			.then(valueSet -> {

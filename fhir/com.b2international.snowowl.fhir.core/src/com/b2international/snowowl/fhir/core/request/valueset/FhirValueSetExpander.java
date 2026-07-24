@@ -26,7 +26,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 @FunctionalInterface
 public interface FhirValueSetExpander {
 
-	FhirValueSetExpander NOOP = (_, valueSet, _) -> valueSet;
+	FhirValueSetExpander NOOP = (_, valueSet, _, _) -> valueSet;
 	
 	/**
 	 * An URL to use to access/set the after value from an expanded ValueSet resource response. 
@@ -41,6 +41,6 @@ public interface FhirValueSetExpander {
 	 * @param parameters
 	 * @return the expanded {@link ValueSet}, never <code>null</code>.
 	 */
-	ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters);
+	ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters, String preferredDisplay);
 	
 }

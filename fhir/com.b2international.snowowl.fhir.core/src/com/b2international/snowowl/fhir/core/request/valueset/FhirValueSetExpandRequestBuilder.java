@@ -32,6 +32,7 @@ public final class FhirValueSetExpandRequestBuilder
 		implements SystemRequestBuilder<ValueSet> {
 
 	private ValueSetExpandParameters parameters;
+	private String preferredDisplay;
 
 	public FhirValueSetExpandRequestBuilder setParameters(Parameters parameters) {
 		return setParameters(new ValueSetExpandParameters(parameters));
@@ -42,9 +43,14 @@ public final class FhirValueSetExpandRequestBuilder
 		return getSelf();
 	}
 	
+	public FhirValueSetExpandRequestBuilder setPreferredDisplay(String preferredDisplay) {
+		this.preferredDisplay = preferredDisplay;
+		return getSelf();
+	}
+	
 	@Override
 	protected Request<ServiceProvider, ValueSet> doBuild() {
-		return new FhirValueSetExpandRequest(parameters);
+		return new FhirValueSetExpandRequest(parameters, preferredDisplay);
 	}
 
 }
