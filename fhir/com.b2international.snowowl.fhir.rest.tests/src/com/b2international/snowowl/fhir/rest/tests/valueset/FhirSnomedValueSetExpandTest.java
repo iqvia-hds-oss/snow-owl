@@ -54,7 +54,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("103335007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Duration (attribute)"));
+			.body("expansion.contains[0].display", equalTo("Duration"));
 	}
 	
 	@Test
@@ -79,7 +79,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("103335007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING)) // expanded resource has proper full system value
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Duration (attribute)"));
+			.body("expansion.contains[0].display", equalTo("Duration"));
 	}
 	
 	@Test
@@ -95,7 +95,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("103335007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Duration (attribute)"));
+			.body("expansion.contains[0].display", equalTo("Duration"));
 	}
 	
 	@Test
@@ -111,7 +111,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("312412007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Substance categorized functionally (substance)"));
+			.body("expansion.contains[0].display", equalTo("Substance categorized functionally"));
 	}
 	
 	@Test
@@ -127,7 +127,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("105590001"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Substance (substance)"));
+			.body("expansion.contains[0].display", equalTo("Substance"));
 	}
 	
 	@Test
@@ -144,7 +144,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("105590001"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Substance (substance)"))
+			.body("expansion.contains[0].display", equalTo("Substance"))
 			.body("expansion.contains[0].designation[0].value", equalTo("Substance"))
 			.body("expansion.contains[0].designation[0].language", equalTo("en"))
 			.body("expansion.contains[0].designation[1].value", equalTo("Substance (substance)"))
@@ -187,7 +187,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("105590001"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Substance (substance)"))
+			.body("expansion.contains[0].display", equalTo("Substance"))
 			.body("expansion.next", endsWith(FHIR_ROOT_CONTEXT 
 				+ VALUESET_EXPAND
 				+ "?url=http://snomed.info/sct/900000000000207008?fhir_vs=ecl/<!138875005"
@@ -263,6 +263,23 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("expansion.contains[0].code", equalTo("410942007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
-			.body("expansion.contains[0].display", equalTo("Drug or medicament (substance)"));
+			.body("expansion.contains[0].display", equalTo("Drug or medicament"));
+	}
+	
+	@Test
+	public void expandWithMultipleDisplayLanguageParams() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", RestExtensions.encodeQueryParameter(SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=ecl/<!138875005"))
+			.queryParam("displayLanguage", "en-us,en-gb")
+			.when().get(VALUESET_EXPAND)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("ValueSet"))
+			.body("id", notNullValue())
+			.rootPath("expansion.contains[0]")
+				.body("code", equalTo("105590001"))
+				.body("system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+				.body("version", equalTo(SNOMEDCT_URL))
+				.body("display", equalTo("Substance"));
 	}
 }
