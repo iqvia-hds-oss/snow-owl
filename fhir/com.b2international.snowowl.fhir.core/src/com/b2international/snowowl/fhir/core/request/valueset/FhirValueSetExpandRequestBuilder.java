@@ -32,7 +32,7 @@ public final class FhirValueSetExpandRequestBuilder
 		implements SystemRequestBuilder<ValueSet> {
 
 	private ValueSetExpandParameters parameters;
-	private String preferredDisplay;
+	private String preferredDisplay = "PT";
 
 	public FhirValueSetExpandRequestBuilder setParameters(Parameters parameters) {
 		return setParameters(new ValueSetExpandParameters(parameters));
