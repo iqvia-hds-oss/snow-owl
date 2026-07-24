@@ -150,21 +150,20 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	public static String compactLocale(final CodeType localeAsCode) {
 		final String locale = (localeAsCode != null) ? localeAsCode.getCode() : null;
 		
-		if (StringUtils.isEmpty(locale)) {
-			return AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER;
-		}
-		
 		return compactLocale(locale);
 	}
 
 	public static String compactLocale(final String locale) {
 		
-		String[] localeItems = locale.contains(",") ? locale.split(",") : new String[]{locale};
+		if (StringUtils.isEmpty(locale)) {
+			return AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER;
+		}
 		
-		return Arrays.stream(localeItems)
-				.map(String::trim)
-				.map(FhirCodeSystemOperationRequest::compactSingleLocale)
-				.collect(Collectors.joining(","));
+		return Arrays.stream(locale.split(","))
+			.map(String::trim)
+			.filter(localeItem -> !localeItem.isEmpty())
+			.map(FhirCodeSystemOperationRequest::compactSingleLocale)
+			.collect(Collectors.joining(","));
 	}
 	
 	private static String compactSingleLocale(final String localeItem) {
@@ -212,10 +211,9 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 			return null;
 		}
 		
-		String[] localeItems = locale.contains(",") ? locale.split(",") : new String[]{locale};
-	
-		return Arrays.stream(localeItems)
+		return Arrays.stream(locale.split(","))
 			.map(String::trim)
+			.filter(localeItem -> !localeItem.isEmpty())
 			.map(FhirCodeSystemOperationRequest::expandSingleLocale)
 			.collect(Collectors.joining(","));
 	}
