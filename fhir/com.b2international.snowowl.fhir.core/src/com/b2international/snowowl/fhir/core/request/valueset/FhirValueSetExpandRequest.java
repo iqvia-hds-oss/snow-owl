@@ -33,6 +33,7 @@ final class FhirValueSetExpandRequest extends FhirValueSetOperationRequest<Value
 	@JsonProperty
 	private final ValueSetExpandParameters parameters;
 	
+	@JsonProperty
 	private final String preferredDisplay;
 
 	public FhirValueSetExpandRequest(ValueSetExpandParameters parameters, String preferredDisplay) {
