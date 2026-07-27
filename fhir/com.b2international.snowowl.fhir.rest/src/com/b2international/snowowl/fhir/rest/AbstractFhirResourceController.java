@@ -16,8 +16,6 @@
 package com.b2international.snowowl.fhir.rest;
 
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.elasticsearch.common.Strings;
 import org.hl7.fhir.r5.model.CanonicalResource;
@@ -31,6 +29,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.b2international.snowowl.core.ResourceFragment;
+import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 
 /**
@@ -96,16 +96,17 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 			);
 	}
 	
-	private static final Pattern SNOMED_URL_VERSION = Pattern.compile("/version/(?<year>\\d{4})(?<month>\\d{2})(?<day>\\d{2})$");
-	
-	
 	protected Map<String, String> expandVersion(CanonicalResource resource) {
-		// XXX: in case of SNOMED url based version this will be incorrect!
 		String version = resource.getVersion();
-		Matcher matcher = SNOMED_URL_VERSION.matcher(version);
-		if (matcher.find()) {
-			version = String.format("%s-%s-%s", matcher.group("year"), matcher.group("month"), matcher.group("day"));
+		
+		// SNOMED version can return overwrite the real version, so look for user data containing original version
+		if (resource.hasUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE)) {
+			Object userData = resource.getUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE);
+			if (userData instanceof ResourceFragment fragment) {
+				version = fragment.getVersion();
+			}
 		}
+		
 		return Map.of("version", version);
 	}
 }
