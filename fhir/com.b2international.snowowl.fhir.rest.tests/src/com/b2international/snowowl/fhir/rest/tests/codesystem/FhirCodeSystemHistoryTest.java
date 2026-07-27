@@ -68,6 +68,7 @@ public class FhirCodeSystemHistoryTest extends FhirRestTest {
 		assertGetHistory("SNOMEDCT")
 			.statusCode(200)
 			.body("resourceType", equalTo("Bundle"))
+			.body("type", equalTo("history"))
 			.body("entry.resource.version", contains(
 				equalTo(SNOMEDCT_URL + "/version/20200131"),
 				equalTo(SNOMEDCT_URL + "/version/20190731"),
