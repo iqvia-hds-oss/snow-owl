@@ -15,19 +15,20 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.conceptmap;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.APPLICATION_FHIR_JSON;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CONCEPTMAP_TRANSLATE;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.hamcrest.Matchers.*;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.b2international.commons.json.Json;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.fhir.rest.tests.FhirTestConcepts;
@@ -45,6 +46,49 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 	@BeforeClass
 	public static void setupMaps() {
 		refSetIds = FhirSnomedConceptMapGenerator.createReferenceSets();
+	}
+	
+	private static Json translateCodingBody(final String url, final String sourceCode, final String targetCode) {
+		final List<Json> params = newArrayList();
+		
+		params.add(Json.object("name", "url", "valueUri", url));
+		
+		if (sourceCode != null) { params.add(Json.object("name", "sourceCoding", "valueCoding", Json.object("code", sourceCode))); }		
+		if (targetCode != null) { params.add(Json.object("name", "targetCoding", "valueCoding", Json.object("code", targetCode))); }
+		
+		return Json.object(
+			"resourceType", "Parameters",
+			"parameter", params
+		);
+	}
+	
+	private static Json translateCodeableConceptBody(final String url, final String sourceCode, final String targetCode) {
+		final List<Json> params = newArrayList();
+		
+		params.add(Json.object("name", "url", "valueUri", url));
+		
+		if (sourceCode != null) { params.add(Json.object("name", "sourceCodeableConcept", "valueCodeableConcept", Json.object("coding", Json.array(Json.object("code", sourceCode))))); }		
+		if (targetCode != null) { params.add(Json.object("name", "targetCodeableConcept", "valueCodeableConcept", Json.object("coding", Json.array(Json.object("code", targetCode))))); }
+		
+		return Json.object(
+			"resourceType", "Parameters",
+			"parameter", params
+		);
+	}
+	
+	@Test
+	public void translateInvalidReferenceSet() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", SNOMEDCT_URL + "?fhir_cm=INVALID")
+			.queryParam("sourceCode", FhirTestConcepts.MICROORGANISM)
+			.queryParam("system",  SnomedTerminologyComponentConstants.SNOMED_URI_SCT)
+			.when().get(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(400)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("Reference set could not be found: INVALID"));
 	}
 	
 	@Test
@@ -274,6 +318,86 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("114244009"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", equalTo("Class Scotobacteria"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"));
+	}
+	
+	@Test
+	public void translateSimpleMapUsingCoding() throws Exception {
+		final String refSetId = refSetIds.get(FhirSnomedConceptMapGenerator.SIMPLE_MAP_TEST_REF_SET);
+		final String url = FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_cm=" + refSetId;
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(translateCodingBody(url, FhirTestConcepts.MICROORGANISM, null))
+			.post(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(200)
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("1 member(s) from concept map: " + url))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+	}
+	
+	@Test
+	public void translateSimpleMapUsingCodingReversed() throws Exception {
+		final String refSetId = refSetIds.get(FhirSnomedConceptMapGenerator.SIMPLE_MAP_TEST_REF_SET);
+		final String url = FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_cm=" + refSetId;
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(translateCodingBody(url, null, "MO"))
+			.post(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(200)
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("1 member(s) from concept map: " + url))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo(FhirTestConcepts.MICROORGANISM))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", equalTo("Microorganism"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+	}
+	
+	@Test
+	public void translateSimpleMapUsingCodeableConcept() throws Exception {
+		final String refSetId = refSetIds.get(FhirSnomedConceptMapGenerator.SIMPLE_MAP_TEST_REF_SET);
+		final String url = FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_cm=" + refSetId;
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(translateCodeableConceptBody(url, FhirTestConcepts.MICROORGANISM, null))
+			.post(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(200)
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("1 member(s) from concept map: " + url))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+	}
+	
+	@Test
+	public void translateSimpleMapUsingCodeableConceptReversed() throws Exception {
+		final String refSetId = refSetIds.get(FhirSnomedConceptMapGenerator.SIMPLE_MAP_TEST_REF_SET);
+		final String url = FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_cm=" + refSetId;
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(translateCodeableConceptBody(url, null, "MO"))
+			.post(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(200)
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("1 member(s) from concept map: " + url))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo(FhirTestConcepts.MICROORGANISM))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", equalTo("Microorganism"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
 	}
 	
 }
