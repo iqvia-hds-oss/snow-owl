@@ -15,6 +15,7 @@
  */
 package com.b2international.snowowl.fhir.core.request.conceptmap;
 
+import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.ConceptMap;
 
 import com.b2international.fhir.r5.operations.ConceptMapTranslateParameters;
@@ -37,4 +38,33 @@ public interface FhirConceptMapTranslator {
 	 */
 	ConceptMapTranslateResultParameters translate(ServiceProvider context, ConceptMap conceptMap, ConceptMapTranslateParameters parameters);
 	
+	default Coding getSourceCoding(ConceptMapTranslateParameters parameters) {
+		if (parameters.getSourceCode() != null) {
+			return new Coding()
+				.setSystemElement(parameters.getSystem())
+				.setVersionElement(parameters.getVersion())
+				.setCodeElement(parameters.getSourceCode());
+		} else if (parameters.getSourceCoding() != null) {
+			return parameters.getSourceCoding();
+		} else if (parameters.getSourceCodeableConcept() != null && parameters.getSourceCodeableConcept().getCodingFirstRep() != null) {
+			return parameters.getSourceCodeableConcept().getCodingFirstRep();
+		} else {
+			return new Coding();
+		}
+	}
+	
+	default Coding getTargetCoding(ConceptMapTranslateParameters parameters) {
+		if (parameters.getTargetCode() != null) {
+			// XXX: there is no targetVersion
+			return new Coding()
+				.setSystemElement(parameters.getTargetSystem())
+				.setCodeElement(parameters.getTargetCode());
+		} else if (parameters.getTargetCoding() != null) {
+			return parameters.getTargetCoding();
+		} else if (parameters.getTargetCodeableConcept() != null && parameters.getTargetCodeableConcept().getCodingFirstRep() != null) {
+			return parameters.getTargetCodeableConcept().getCodingFirstRep();
+		} else {
+			return new Coding();
+		}
+	}
 }
