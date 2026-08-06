@@ -72,7 +72,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		ValueSet valueSet = null;
 		
 		// check if url is an implicit URL
-		if (FhirModelHelpers.isImplicitValueSetURL(url)) {
+		if (FhirModelHelpers.isImplicitValueSetUrl(url)) {
 			valueSet = expandImplicitValueSet(context, url);
 		} else {
 			valueSet = FhirRequests.valueSets().prepareGet(url)
