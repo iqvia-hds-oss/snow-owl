@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 
-import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.IllegalQueryParameterException;
 import com.b2international.commons.options.Options;
 import com.b2international.index.Hits;
@@ -227,12 +226,6 @@ public final class SnomedRefSetMemberSearchRequest extends SnomedSearchRequest<S
 			return new SnomedReferenceSetMemberConverter(context, expand(), locales()).convert(hits);
 		}
 	}
-
-	private static void checkRangeValue(final Collection<Object> attributeValues) {
-		if (attributeValues.size() != 1) {
-			throw new BadRequestException("Exactly one attribute value is required for range queries");
-		}
-	}
 	
 	private void addComponentClause(ExpressionBuilder builder) {
 		if (containsKey(OptionKey.COMPONENT)) {
@@ -242,6 +235,7 @@ public final class SnomedRefSetMemberSearchRequest extends SnomedSearchRequest<S
 					.should(referencedComponentIds(componentIds))
 					.should(mapTargets(componentIds))
 					.should(mapSources(componentIds))
+					.should(targetComponentIds(componentIds))
 				.build()
 			);
 		}
