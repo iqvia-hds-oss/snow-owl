@@ -33,42 +33,42 @@ public class FhirImplicitValueSetUrlTest {
 
 	@Test
 	public void isImplicitValueSetURL_null_returnsFalse() {
-		assertFalse(FhirModelHelpers.isImplicitValueSetURL(null));
+		assertFalse(FhirModelHelpers.isImplicitValueSetUrl(null));
 	}
 
 	@Test
 	public void isImplicitValueSetURL_empty_returnsFalse() {
-		assertFalse(FhirModelHelpers.isImplicitValueSetURL(""));
+		assertFalse(FhirModelHelpers.isImplicitValueSetUrl(""));
 	}
 
 	@Test
 	public void isImplicitValueSetURL_snomed_returnsTrue() {
-		assertTrue(FhirModelHelpers.isImplicitValueSetURL("http://snomed.info/sct?fhir_vs"));
+		assertTrue(FhirModelHelpers.isImplicitValueSetUrl("http://snomed.info/sct?fhir_vs"));
 	}
 
 	@Test
 	public void isImplicitValueSetURL_snomedWithIsaQuery_returnsTrue() {
-		assertTrue(FhirModelHelpers.isImplicitValueSetURL("http://snomed.info/sct?fhir_vs=isa/138875005"));
+		assertTrue(FhirModelHelpers.isImplicitValueSetUrl("http://snomed.info/sct?fhir_vs=isa/138875005"));
 	}
 
 	@Test
 	public void isImplicitValueSetURL_loinc_returnsTrue() {
-		assertTrue(FhirModelHelpers.isImplicitValueSetURL("http://loinc.org/vs"));
+		assertTrue(FhirModelHelpers.isImplicitValueSetUrl("http://loinc.org/vs"));
 	}
 
 	@Test
 	public void isImplicitValueSetURL_loincWithCode_returnsTrue() {
-		assertTrue(FhirModelHelpers.isImplicitValueSetURL("http://loinc.org/vs/LP12345-6"));
+		assertTrue(FhirModelHelpers.isImplicitValueSetUrl("http://loinc.org/vs/LP12345-6"));
 	}
 
 	@Test
 	public void isImplicitValueSetURL_genericVsSuffix_returnsTrue() {
-		assertTrue(FhirModelHelpers.isImplicitValueSetURL("http://example.com/codesystem/vs"));
+		assertTrue(FhirModelHelpers.isImplicitValueSetUrl("http://example.com/codesystem/vs"));
 	}
 
 	@Test
 	public void isImplicitValueSetURL_unrelatedUrl_returnsFalse() {
-		assertFalse(FhirModelHelpers.isImplicitValueSetURL("http://example.com/codesystem"));
+		assertFalse(FhirModelHelpers.isImplicitValueSetUrl("http://example.com/codesystem"));
 	}
 
 	// -------------------------------------------------------------------------
