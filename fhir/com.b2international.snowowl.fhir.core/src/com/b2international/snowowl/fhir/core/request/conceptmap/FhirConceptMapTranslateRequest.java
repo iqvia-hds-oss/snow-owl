@@ -15,28 +15,41 @@
  */
 package com.b2international.snowowl.fhir.core.request.conceptmap;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
+import org.hl7.fhir.r5.model.CanonicalType;
+import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ConceptMap;
+import org.hl7.fhir.r5.model.ConceptMap.ConceptMapGroupComponent;
+import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 
 import com.b2international.fhir.r5.operations.ConceptMapTranslateParameters;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateResultParameters;
 import com.b2international.snowowl.core.RepositoryManager;
+import com.b2international.snowowl.core.ResourceFragment;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.TerminologyResource;
-import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.request.ResourceRequest;
+import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
+import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers.SystemAndVersion;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
+import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.hash.Hashing;
 
 /**
  * @since 8.0
  */
-final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, ConceptMapTranslateResultParameters> {
+final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvider, ConceptMapTranslateResultParameters> {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -65,6 +78,11 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 		if (nonNullInputs != 1L) {
 			throw new BadRequestException("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated.");
 		}
+		
+// XXX: according to the fhir specification system is required if sourceCode was provided		
+//		if (parameters.getSourceCode() != null && parameters.getSystem() == null) {
+//			throw new BadRequestException("'system' is required when using 'sourceCode'");
+//		}
 	}
 	
 	@Override
@@ -84,19 +102,91 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 
 	// TODO make this consider source/target scopes to find appropriate ConceptMaps when URL is not defined, for now we basically need the URL parameter to be able to translate using a dedicated map
 	private ConceptMap lookupConceptMaps(ServiceProvider context) {
-		return FhirRequests.conceptMaps().prepareSearch()
-				.filterById(parameters.getUrl().getValue())
-				.setElements(List.copyOf(R5ObjectFields.ConceptMap.MANDATORY))
-				.setCount(1)
-				.buildAsync()
-				.execute(context)
-				.getEntry()
-				.stream()
-				.map(BundleEntryComponent::getResource)
-				.filter(ConceptMap.class::isInstance)
-				.map(ConceptMap.class::cast)
-				.findFirst()
-				.orElse(null);
+		if (FhirModelHelpers.isImplicitConceptMapUrl(parameters.getUrl().getValue())) {
+			return expandImplicitConceptMap(context, parameters.getUrl().getValue());
+		} else {
+			return FhirRequests.conceptMaps().prepareSearch()
+					.filterById(parameters.getUrl().getValue())
+					.setElements(List.copyOf(R5ObjectFields.ConceptMap.MANDATORY))
+					.setCount(1)
+					.buildAsync()
+					.execute(context)
+					.getEntry()
+					.stream()
+					.map(BundleEntryComponent::getResource)
+					.filter(ConceptMap.class::isInstance)
+					.map(ConceptMap.class::cast)
+					.findFirst()
+					.orElse(null);
+		}
 	}
 
+	private ConceptMap expandImplicitConceptMap(ServiceProvider context, String urlValue) {
+		// only URLs with query parts are supported, every other case is rejected for now
+		if (urlValue.contains("#")) {
+			throw new BadRequestException("Unsupported implicit Concept Map URL with fragment '#' character: " + urlValue, urlValue);
+		}
+		
+		String codeSystemUrl = null;
+		String version = null;
+		
+		if (FhirModelHelpers.isSnomedImplicitConceptMapUrl(urlValue)) {
+			codeSystemUrl = FhirModelHelpers.SNOMED_BASE_URI_STRING;
+			// extract the non-query part from the URL value
+			version = urlValue.substring(0, urlValue.indexOf("?"));
+			
+			// if this is the SNOMED CT base URI string then append the core module to represent the International Edition
+			if (FhirModelHelpers.SNOMED_BASE_URI_STRING.equals(version)) {
+				version = version.concat("/900000000000207008");
+			}
+		} else {
+			throw new BadRequestException("Unsupported implicit Concept Map URL " + urlValue, urlValue);
+		}
+		
+		// try to lookup the CodeSystem using the baseUrl and version (to get the proper edition)
+		CodeSystem codeSystem = FhirRequests.codeSystems().prepareSearch()
+			.one()
+			.filterByUrl(codeSystemUrl)
+			.filterByVersion(version)
+			.setElements(FhirCodeSystemOperationRequest.MINIMAL_CODESYSTEM_FIELD_SELECTION, false)
+			.sortBy(Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME)) // Use latest version if "filterByVersion" is left unused
+			.buildAsync()
+			.execute(context)
+			.getEntry()
+			.stream()
+			.findFirst()
+			.map(Bundle.BundleEntryComponent::getResource)
+			.map(CodeSystem.class::cast)
+			.orElse(null);
+		
+		// if no CodeSystem stored to use as Concept Map source, return bad request response
+		if (codeSystem == null) {
+			throw new BadRequestException("Supported implicit Concept Map URL but no underlying CodeSystem is available at " + codeSystemUrl, urlValue);
+		}
+		
+		// return the content of the CodeSystem as Concept Map
+		String id = Hashing.goodFastHash(8).hashString(urlValue, StandardCharsets.UTF_8).toString();
+		
+		ConceptMap conceptMap = (ConceptMap) new ConceptMap()
+			.setUrl(urlValue)
+			// according to https://terminology.hl7.org/en/SNOMEDCT.html#snomed-ct-implicit-concept-maps publication status is always ACTIVE
+			.setStatus(PublicationStatus.ACTIVE)
+			.setId(id);
+		
+		// since an implicit Concept Map does not have an internal resource representation, use the CodeSystem's fragment instead
+		ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
+		conceptMap.setUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE, resource);
+		// TODO: this could be added the translator in parameter as `displayLangauge` similarly to the value set expand operation
+		conceptMap.setUserData(R5ObjectFields.ConceptMap.UserData.LOCALE, locales());
+		
+		final Function<ResourceURI, SystemAndVersion> urlByResourceUri = FhirModelHelpers.createResourceUriToUrlFunction(context);
+		CanonicalType canonicalUrl = FhirModelHelpers.toCanonicalType(resource.getResourceURI(), urlByResourceUri);
+		final ConceptMapGroupComponent group = new ConceptMapGroupComponent()
+			.setSourceElement(canonicalUrl)
+			.setTargetElement(canonicalUrl);
+		
+		conceptMap.addGroup(group);
+		
+		return conceptMap;
+	}
 }
