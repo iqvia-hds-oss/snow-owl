@@ -291,7 +291,7 @@ public class FhirModelHelpers {
 	 * @param url
 	 * @return
 	 */
-	public static boolean isImplicitValueSetURL(String url) {
+	public static boolean isImplicitValueSetUrl(String url) {
 		return isSnomedImplicitValueSetUrl(url)
 			|| isLoincImplicitValueSetUrl(url)
 			|| isGenericImplicitValueSetUrl(url);
@@ -328,6 +328,14 @@ public class FhirModelHelpers {
 	public static String toGenericCodeSystemUrl(String genericImplicitValueSetUrl) {
 		Preconditions.checkArgument(isGenericImplicitValueSetUrl(genericImplicitValueSetUrl), "'url' is not a generic implicit Value Set URL");
 		return genericImplicitValueSetUrl.replace(GENERIC_IMPLICIT_VALUESET_SUFFIX, ""); 
+	}
+	
+	public static boolean isImplicitConceptMapUrl(String url) {
+		return isSnomedImplicitConceptMapUrl(url);
+	}
+	
+	public static boolean isSnomedImplicitConceptMapUrl(String url) {
+		return url != null && url.startsWith(SNOMED_BASE_URI_STRING) && url.substring(url.indexOf("?") + 1, url.indexOf("?") + "fhir_cm".length() + 1).equals("fhir_cm");
 	}
 
 	// Methods related to FHIR-specific settings
