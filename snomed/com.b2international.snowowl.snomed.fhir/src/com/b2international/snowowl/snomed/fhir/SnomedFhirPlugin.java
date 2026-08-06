@@ -23,6 +23,7 @@ import com.b2international.snowowl.core.setup.Environment;
 import com.b2international.snowowl.core.setup.Plugin;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemLookupConverter;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemResourceConverter;
+import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapTranslator;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetCodeValidator;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
@@ -47,7 +48,8 @@ public class SnomedFhirPlugin extends Plugin implements TerminologyRepositoryCon
 			FhirCodeSystemLookupConverter.class, new SnomedFhirCodeSystemLookupConverter(),
 			// handle SNOMED implicit Value Set via dedicated expander and validator implementation 
 			FhirValueSetExpander.class, new SnomedFhirValueSetExpander(),
-			FhirValueSetCodeValidator.class, new SnomedFhirValueSetCodeValidator()
+			FhirValueSetCodeValidator.class, new SnomedFhirValueSetCodeValidator(),
+			FhirConceptMapTranslator.class, new SnomedFhirConceptMapTranslator()
 		);
 	}
 
