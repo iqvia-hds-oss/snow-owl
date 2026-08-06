@@ -161,7 +161,17 @@ public final class R5ObjectFields {
 				.add(GROUP)
 				.build();
 
-		
+		/**
+		 * @since 10.3.0
+		 */
+		public static final class UserData extends MetadataResource.UserData {
+			
+			/**
+			 * userData key to access the locale used for the translate operation when using implicit SNOMED CT reference sets.
+			 */
+			public static final String LOCALE = "locale";
+			
+		}
 	}
 	
 	public static final class ValueSet extends MetadataResource {
