@@ -13,7 +13,6 @@ import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 
-import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateParameters;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateResultParameters;
@@ -23,6 +22,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
+import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapTranslator;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
@@ -90,7 +90,7 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 				.execute(context);
 			
 		if (referenceSets.getTotal() < 1) {
-			throw new BadRequestException(String.format("Reference set could not be found: %s", conceptMap.getUrl()));
+			throw new BadRequestException(String.format("Reference set could not be found: %s", refSetId), conceptMap.getUrl());
 		}
 		
 		final List<ConceptMapTranslateResultParameters.Match> matches = SnomedRequests.prepareSearchMember()
@@ -192,7 +192,7 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 					return target;
 				}
 			}
-			throw new BadRequestException("Failed to find target code!");
+			throw new BadRequestException("Failed to find target code");
 		}
 	}
 	
