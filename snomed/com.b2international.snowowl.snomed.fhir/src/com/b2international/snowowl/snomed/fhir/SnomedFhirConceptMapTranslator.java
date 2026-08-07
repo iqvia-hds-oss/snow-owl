@@ -6,9 +6,11 @@ package com.b2international.snowowl.snomed.fhir;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.elasticsearch.common.Strings;
+import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
@@ -21,6 +23,7 @@ import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers.SystemAndVersion;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapTranslator;
@@ -86,10 +89,6 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 			componentId = targetCoding.getCode();
 		}
 		
-		// Source and Target should be the same
-		final String implicitSystem = conceptMap.getGroupFirstRep().getSourceElement().baseUrl();
-		final String implicitVersion = conceptMap.getGroupFirstRep().getSourceElement().version();
-		
 		final SnomedReferenceSets referenceSets = SnomedRequests.prepareSearchRefSet()
 				.filterByActive(true)
 				.filterById(refSetId)
@@ -101,6 +100,9 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 			throw new BadRequestException(String.format("Reference set could not be found: %s", refSetId), conceptMap.getUrl());
 		}
 		
+		final Function<ResourceURI, SystemAndVersion> urlByResourceUri = FhirModelHelpers.createResourceUriToUrlFunction(context);
+		CanonicalType codeSystemCanonicalUrl = FhirModelHelpers.toCanonicalType(implicitCodeSystemUri, urlByResourceUri);
+		
 		final List<ConceptMapTranslateResultParameters.Match> matches = SnomedRequests.prepareSearchMember()
 			.filterByActive(true)
 			.filterByRefSet(refSetId)
@@ -111,8 +113,8 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 			.setLimit(context.getPageSize())
 			.streamAsync(context, req -> req.build(implicitCodeSystemUri))
 			.flatMap(SnomedReferenceSetMembers::stream)
-			.filter(member -> keepMember(member, reverse, componentId))
-			.map(member -> createMatch(member, reverse, conceptMap.getUrl(), implicitSystem, implicitVersion))
+			.filter(member -> keepMember(member, componentId, reverse))
+			.map(member -> createMatch(member, conceptMap.getUrl(), codeSystemCanonicalUrl, reverse))
 			.collect(Collectors.toList());
 		
 		if (!matches.isEmpty()) {
@@ -132,7 +134,7 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 		return (List<ExtendedLocale>) conceptMap.getUserData(R5ObjectFields.ConceptMap.UserData.LOCALE);
 	}
 	
-	private static boolean keepMember(SnomedReferenceSetMember member, boolean reverse, String componentId) {
+	private static boolean keepMember(SnomedReferenceSetMember member, String componentId, boolean reverse) {
 		if (hasCorrelationId(member)) {
 			if (Concepts.MAP_CORRELATION_NOT_MAPPABLE.equals(member.getPropertyValue(SnomedRf2Headers.FIELD_CORRELATION_ID))) {
 				// NOT MAPPABLE should not be translatable
@@ -148,12 +150,17 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 		}
 	}
 	
-	private static ConceptMapTranslateResultParameters.Match createMatch(SnomedReferenceSetMember member, boolean reverse, String url, String system, String version) {
+	private static ConceptMapTranslateResultParameters.Match createMatch(SnomedReferenceSetMember member, String url, CanonicalType codeSystemCanonicalUrl, boolean reverse) {
 		final Coding conceptCoding = new Coding()
 			.setCode(getCode(member, reverse))
-			.setDisplay(getDisplay(member, reverse))
-			.setSystem(system)
-			.setVersion(version);
+			.setDisplay(getDisplay(member, reverse));
+		
+		if (isTargetingSnomed(member, reverse)) {
+			// XXX: we do not know what is the target code system, so we will only set system and version if we no for sure that the translate operation targets SNOMED CT.
+			conceptCoding
+				.setSystem(codeSystemCanonicalUrl.baseUrl())
+				.setVersion(codeSystemCanonicalUrl.version());
+		}
 
 		return new ConceptMapTranslateResultParameters.Match()
 			.setOriginMap(url)
@@ -172,6 +179,14 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 	private static boolean hasCorrelationId(SnomedReferenceSetMember member) {
 		// Both Simple or Complex maps can have correlationId
 		return member.getProperties() != null && member.getProperties().containsKey(SnomedRf2Headers.FIELD_CORRELATION_ID);
+	}
+	
+	private static boolean isTargetingSnomed(SnomedReferenceSetMember member, boolean reverse) {
+		if (reverse) {
+			return !isReverseMap(member);
+		} else {
+			return isReverseMap(member) || isAssociationMap(member);
+		}
 	}
 	
 	private static String getCode(SnomedReferenceSetMember member, boolean reverse) {
