@@ -188,8 +188,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", nullValue());
 	}
 	
 	@Test
@@ -254,8 +254,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", nullValue());
 	}
 	
 	@Test
@@ -276,8 +276,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("equivalent"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", nullValue());
 	}
 	
 	@Test
@@ -321,6 +321,29 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", nullValue());
+	}
+	
+	@Test
+	public void translateSimpleMapVersionedReversed() throws Exception {
+		final String refSetId = refSetIds.get(FhirSnomedConceptMapGenerator.VERSIONED_SIMPLE_MAP_TEST_REF_SET);
+		final String version = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008/version/" + FhirSnomedConceptMapGenerator.VERSION_2026_01_01;
+		final String url = version + "?fhir_cm=" + refSetId;
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.param("targetCode", "MO") 
+			.param("targetSystem", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.param("url", url)
+			.when()
+			.get(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(200)
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("1 member(s) from concept map: " + url))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo(FhirTestConcepts.MICROORGANISM))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", equalTo("Microorganism"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(version));
 	}
@@ -344,8 +367,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'relationship' }.valueCode", contains("related-to", "related-to"))
 			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.code", containsInAnyOrder("MO", "MO2"))  // XXX: flaky test, but other values are the same so just ignore order
 			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.display", contains(null, null))
-			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.system", contains(FhirModelHelpers.SNOMED_BASE_URI_STRING, FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.version", contains(version, version));
+			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.system", contains(null, null))
+			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.version", contains(null, null));
 	}
 	
 	@Test
@@ -362,7 +385,9 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("272394005"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", equalTo("Technique"))
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("equivalent"));
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("equivalent"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
 	}
 	
 	@Test
@@ -370,6 +395,9 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 		/*
 		 * Use real association map loaded from RF2
 		 */
+		final String system = FhirModelHelpers.SNOMED_BASE_URI_STRING;
+		final String version = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008";
+		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_cm=" + SnomedConstants.Concepts.REFSET_POSSIBLY_EQUIVALENT_TO_ASSOCIATION)
 			.queryParam("sourceCode", "114244009")
@@ -379,7 +407,9 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.code", contains("413864003", "409853001", "413858005"))
 			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.display", contains("Gammaproteobacteria", "Betaproteobacteria", "Alphaproteobacteria"))
-			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'relationship' }.valueCode", contains("related-to", "related-to", "related-to"));
+			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'relationship' }.valueCode", contains("related-to", "related-to", "related-to"))
+			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.system", contains(system, system, system))
+			.body("parameter.findAll { it.name == 'match' }.part.flatten().findAll { it.name == 'concept' }.valueCoding.version", contains(version, version, version));
 	}
 	
 	@Test
@@ -396,7 +426,9 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.statusCode(200)
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("114244009"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", equalTo("Class Scotobacteria"))
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"));
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
 	}
 	
 	@Test
@@ -415,8 +447,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", nullValue());
 	}
 	
 	@Test
@@ -455,8 +487,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'relationship' }.valueCode", equalTo("related-to"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.code", equalTo("MO"))
 			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.display", nullValue())
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008"));
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.system", nullValue())
+			.body("parameter.find { it.name == 'match' }.part.find { it.name == 'concept' }.valueCoding.version", nullValue());
 	}
 	
 	@Test
