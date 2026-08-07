@@ -72,8 +72,8 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 			throw new BadRequestException(String.format("'url' contains an invalid reference set id: %s", refSetId), conceptMap.getUrl());
 		}
 
-		final Coding sourceCoding = getSourceCoding(parameters);
-		final Coding targetCoding = getTargetCoding(parameters);
+		final Coding sourceCoding = FhirConceptMapTranslator.getSourceCoding(parameters);
+		final Coding targetCoding = FhirConceptMapTranslator.getTargetCoding(parameters);
 		
 		final boolean reverse;
 		final String componentId;
