@@ -59,7 +59,7 @@ final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvid
 	public FhirConceptMapTranslateRequest(ConceptMapTranslateParameters parameters) {
 		this.parameters = parameters;
 
-		if (parameters.getUrl() == null) {
+		if (parameters.getUrl() == null || parameters.getUrl().getValue() == null) {
 			throw new BadRequestException("'url' is required to reduce the scope of the translate operation to a single ConceptMap");
 		}
 		
@@ -78,6 +78,11 @@ final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvid
 		if (nonNullInputs != 1L) {
 			throw new BadRequestException("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated.");
 		}
+		
+		// Check that an actual sourceCode and targetCode was provided as the value itself can still be null
+		if (FhirConceptMapTranslator.getSourceCoding(parameters).getCode() == null && FhirConceptMapTranslator.getTargetCoding(parameters).getCode() == null) {
+			throw new BadRequestException("Either sourceCode or targetCode must be provided to identify the code that is to be translated");
+		};
 		
 // XXX: according to the fhir specification system is required if sourceCode was provided		
 //		if (parameters.getSourceCode() != null && parameters.getSystem() == null) {

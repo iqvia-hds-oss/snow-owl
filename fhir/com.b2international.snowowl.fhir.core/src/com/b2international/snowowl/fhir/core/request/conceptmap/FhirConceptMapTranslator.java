@@ -38,7 +38,7 @@ public interface FhirConceptMapTranslator {
 	 */
 	ConceptMapTranslateResultParameters translate(ServiceProvider context, ConceptMap conceptMap, ConceptMapTranslateParameters parameters);
 	
-	default Coding getSourceCoding(ConceptMapTranslateParameters parameters) {
+	public static Coding getSourceCoding(ConceptMapTranslateParameters parameters) {
 		if (parameters.getSourceCode() != null) {
 			return new Coding()
 				.setSystemElement(parameters.getSystem())
@@ -53,7 +53,7 @@ public interface FhirConceptMapTranslator {
 		}
 	}
 	
-	default Coding getTargetCoding(ConceptMapTranslateParameters parameters) {
+	public static Coding getTargetCoding(ConceptMapTranslateParameters parameters) {
 		if (parameters.getTargetCode() != null) {
 			// XXX: there is no targetVersion
 			return new Coding()
