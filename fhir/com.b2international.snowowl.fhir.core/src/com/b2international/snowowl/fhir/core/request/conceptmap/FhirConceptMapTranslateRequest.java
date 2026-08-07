@@ -103,7 +103,7 @@ final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvid
 	// TODO make this consider source/target scopes to find appropriate ConceptMaps when URL is not defined, for now we basically need the URL parameter to be able to translate using a dedicated map
 	private ConceptMap lookupConceptMaps(ServiceProvider context) {
 		if (FhirModelHelpers.isImplicitConceptMapUrl(parameters.getUrl().getValue())) {
-			return expandImplicitConceptMap(context, parameters.getUrl().getValue());
+			return buildImplicitConceptMap(context, parameters.getUrl().getValue());
 		} else {
 			return FhirRequests.conceptMaps().prepareSearch()
 					.filterById(parameters.getUrl().getValue())
@@ -121,7 +121,7 @@ final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvid
 		}
 	}
 
-	private ConceptMap expandImplicitConceptMap(ServiceProvider context, String urlValue) {
+	private ConceptMap buildImplicitConceptMap(ServiceProvider context, String urlValue) {
 		// only URLs with query parts are supported, every other case is rejected for now
 		if (urlValue.contains("#")) {
 			throw new BadRequestException("Unsupported implicit Concept Map URL with fragment '#' character: " + urlValue, urlValue);
