@@ -17,28 +17,23 @@ package com.b2international.snowowl.fhir.core.request.conceptmap;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
-import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.ConceptMap;
-import org.hl7.fhir.r5.model.ConceptMap.ConceptMapGroupComponent;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 
 import com.b2international.fhir.r5.operations.ConceptMapTranslateParameters;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateResultParameters;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceFragment;
-import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.ResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.FhirModelHelpers.SystemAndVersion;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
@@ -184,13 +179,7 @@ final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvid
 		// TODO: this could be added the translator in parameter as `displayLangauge` similarly to the value set expand operation
 		conceptMap.setUserData(R5ObjectFields.ConceptMap.UserData.LOCALE, locales());
 		
-		final Function<ResourceURI, SystemAndVersion> urlByResourceUri = FhirModelHelpers.createResourceUriToUrlFunction(context);
-		CanonicalType canonicalUrl = FhirModelHelpers.toCanonicalType(resource.getResourceURI(), urlByResourceUri);
-		final ConceptMapGroupComponent group = new ConceptMapGroupComponent()
-			.setSourceElement(canonicalUrl)
-			.setTargetElement(canonicalUrl);
-		
-		conceptMap.addGroup(group);
+		// XXX: We do not create a default group as we do not know yet what is the reference set's source and target
 		
 		return conceptMap;
 	}
