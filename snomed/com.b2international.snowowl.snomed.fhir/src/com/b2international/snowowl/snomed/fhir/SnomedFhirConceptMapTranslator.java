@@ -24,6 +24,7 @@ import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapTranslator;
+import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
@@ -32,6 +33,7 @@ import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetM
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSets;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.b2international.snowowl.snomed.fhir.SnomedUri.QueryPart;
 
 /**
  * @since 10.3
@@ -61,7 +63,14 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 		final List<ExtendedLocale> locales = getLocale(conceptMap);
 		
 		// Extract reference set id
-		final String refSetId = conceptMap.getUrl().substring(conceptMap.getUrl().indexOf("?fhir_cm=") + 9);
+		QueryPart queryPart = SnomedUri.fromUriString(conceptMap.getUrl(), conceptMap.getUrl()).getQueryPart();
+		if (!queryPart.isConceptMapQuery()) {
+			throw new BadRequestException(String.format("'url' is not an implicit concept map query: %s", conceptMap.getUrl()), conceptMap.getUrl());
+		}
+		final String refSetId = queryPart.getQueryValue();
+		if (!SnomedIdentifiers.isValid(refSetId)) {
+			throw new BadRequestException(String.format("'url' contains an invalid reference set id: %s", refSetId), conceptMap.getUrl());
+		}
 
 		final Coding sourceCoding = getSourceCoding(parameters);
 		final Coding targetCoding = getTargetCoding(parameters);
