@@ -77,6 +77,70 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 	}
 	
 	@Test
+	public void translateGetMissingUrl() throws Exception {
+		// XXX: fhir specification would allow this
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("sourceCode", FhirTestConcepts.MICROORGANISM)
+			.queryParam("system",  SnomedTerminologyComponentConstants.SNOMED_URI_SCT)
+			.when().get(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(400)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("exception"))
+			.body("issue.diagnostics", hasItem("Required request parameter 'url' for method parameter type String is not present"));
+	}
+	
+	@Test
+	public void translatePostMissingUrl() throws Exception {
+		// XXX: fhir specification would allow this
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(translateCodingBody(null, FhirTestConcepts.MICROORGANISM, null))
+			.post(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(400)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("'url' is required to reduce the scope of the translate operation to a single ConceptMap"));
+	}
+	
+	@Test
+	public void translateGetMissingSourceOrTargetCode() throws Exception {
+		final String refSetId = refSetIds.get(FhirSnomedConceptMapGenerator.SIMPLE_MAP_TEST_REF_SET);
+		final String url = FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_cm=" + refSetId;
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.param("url", url)
+			.when()
+			.get(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(400)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated."));
+	}
+	
+	@Test
+	public void translatePostMissingSourceOrTargetCode() throws Exception {
+		final String refSetId = refSetIds.get(FhirSnomedConceptMapGenerator.SIMPLE_MAP_TEST_REF_SET);
+		final String url = FhirModelHelpers.SNOMED_BASE_URI_STRING + "?fhir_cm=" + refSetId;
+		 
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(translateCodingBody(url, null, null))
+			.post(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(400)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated."));
+	}
+	
+	@Test
 	public void translateInvalidReferenceSet() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_cm=INVALID")
@@ -88,7 +152,22 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem("Reference set could not be found: INVALID"));
+			.body("issue.diagnostics", hasItem("'url' contains an invalid reference set id: INVALID"));
+	}
+	
+	@Test
+	public void translateMissingReferenceSet() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", SNOMEDCT_URL + "?fhir_cm=1204364002")
+			.queryParam("sourceCode", FhirTestConcepts.MICROORGANISM)
+			.queryParam("system",  SnomedTerminologyComponentConstants.SNOMED_URI_SCT)
+			.when().get(CONCEPTMAP_TRANSLATE)
+			.then()
+			.statusCode(400)
+			.body("resourceType", equalTo("OperationOutcome"))
+			.body("issue.severity", hasItem("error"))
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.diagnostics", hasItem("Reference set could not be found: 1204364002"));
 	}
 	
 	@Test
