@@ -46,7 +46,7 @@ public interface FhirConceptMapTranslator {
 				.setCodeElement(parameters.getSourceCode());
 		} else if (parameters.getSourceCoding() != null) {
 			return parameters.getSourceCoding();
-		} else if (parameters.getSourceCodeableConcept() != null && parameters.getSourceCodeableConcept().getCodingFirstRep() != null) {
+		} else if (parameters.getSourceCodeableConcept() != null && parameters.getSourceCodeableConcept().hasCoding()) {
 			return parameters.getSourceCodeableConcept().getCodingFirstRep();
 		} else {
 			return new Coding();
@@ -61,7 +61,7 @@ public interface FhirConceptMapTranslator {
 				.setCodeElement(parameters.getTargetCode());
 		} else if (parameters.getTargetCoding() != null) {
 			return parameters.getTargetCoding();
-		} else if (parameters.getTargetCodeableConcept() != null && parameters.getTargetCodeableConcept().getCodingFirstRep() != null) {
+		} else if (parameters.getTargetCodeableConcept() != null && parameters.getTargetCodeableConcept().hasCoding()) {
 			return parameters.getTargetCodeableConcept().getCodingFirstRep();
 		} else {
 			return new Coding();
