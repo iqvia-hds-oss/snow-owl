@@ -68,14 +68,13 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 		
 		final boolean reverse;
 		final String componentId;
+		// The request has already validated that either a source or target code must be provided
 		if (sourceCoding.getCode() != null) {
 			reverse = false;
 			componentId = sourceCoding.getCode();
-		} else if (targetCoding.getCode() != null) {
+		} else {
 			reverse = true;
 			componentId = targetCoding.getCode();
-		} else {
-			throw new BadRequestException("Either 'sourceCode' or 'targetCode' must be provided");
 		}
 		
 		// Source and Target should be the same
