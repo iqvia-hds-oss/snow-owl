@@ -20,6 +20,7 @@ import org.hl7.fhir.r5.model.Parameters;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateParameters;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateResultParameters;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.request.ResourceRequest;
 import com.b2international.snowowl.core.request.ResourceRequestBuilder;
 import com.b2international.snowowl.core.request.SystemRequestBuilder;
 
@@ -41,9 +42,8 @@ public final class FhirConceptMapTranslateRequestBuilder
 		return getSelf();
 	}
 
-	
 	@Override
-	protected FhirConceptMapTranslateRequest create() {
+	protected ResourceRequest<ServiceProvider, ConceptMapTranslateResultParameters> create() {
 		return new FhirConceptMapTranslateRequest(parameters);
 	}
 }
