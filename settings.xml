@@ -10,5 +10,42 @@
 			<password>nexus_deployment_pass</password>
 		</server>
 	</servers>
+	
+	<!--
+		The private registry repositories are declared here (not in pom.xml) so that the Maven build
+		can resolve the zipped update sites referenced with mvn: URLs in the target platform (ECL, ETL
+		and SCG features), while Dependabot - which reads pom.xml but not this settings.xml - does not
+		reach the private registry through its TLS-terminating proxy (that connection is reset by the Nexus
+		WAF, causing "Cannot read TLS response from mitm'd server EOF"). The CI build activates this by
+		passing `-s settings.xml` (see .github/workflows/maven.yml).
+	-->
+	<profiles>
+		<profile>
+			<id>b2i-repositories</id>
+			<repositories>
+				<repository>
+					<id>maven-b2i-releases</id>
+					<url>https://artifacts.b2ihealthcare.com/repository/maven-releases</url>
+					<releases>
+						<enabled>true</enabled>
+					</releases>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+				<repository>
+					<id>maven-b2i-snapshots</id>
+					<url>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>
+					<releases>
+						<enabled>false</enabled>
+					</releases>
+					<snapshots>
+						<enabled>true</enabled>
+						<updatePolicy>always</updatePolicy>
+					</snapshots>
+				</repository>
+			</repositories>
+		</profile>
+	</profiles>
 
 </settings>
