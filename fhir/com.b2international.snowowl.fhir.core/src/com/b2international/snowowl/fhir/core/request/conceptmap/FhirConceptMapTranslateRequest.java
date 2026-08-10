@@ -133,11 +133,16 @@ final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvid
 		if (FhirModelHelpers.isSnomedImplicitConceptMapUrl(urlValue)) {
 			codeSystemUrl = FhirModelHelpers.SNOMED_BASE_URI_STRING;
 			// extract the non-query part from the URL value
-			version = urlValue.substring(0, urlValue.indexOf("?"));
+			String[] parts = urlValue.split("\\?");
+			version = parts[0];
+			final String query = parts[1];
 			
 			// if this is the SNOMED CT base URI string then append the core module to represent the International Edition
 			if (FhirModelHelpers.SNOMED_BASE_URI_STRING.equals(version)) {
 				version = version.concat("/900000000000207008");
+			}
+			if (!query.startsWith("fhir_cm=")) {
+				throw new BadRequestException("Unsupported implicit Concept Map URL query type: " + urlValue, urlValue);
 			}
 		} else {
 			throw new BadRequestException("Unsupported implicit Concept Map URL " + urlValue, urlValue);
