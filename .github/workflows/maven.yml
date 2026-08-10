@@ -65,6 +65,8 @@ jobs:
           --no-transfer-progress
           --update-snapshots
           --batch-mode
+          --settings settings.xml
+          -P b2i-repositories
 
     # Upload Code Coverage
     #- name: Upload Codecov

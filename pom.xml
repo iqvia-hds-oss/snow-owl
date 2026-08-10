@@ -398,32 +398,16 @@
       	  	  <enabled>false</enabled>
 	      </snapshots>
     	</repository>
-		<!-- 
-			B2i repositories defined here should allow resolving zipped update sites with an mvn: URL in the
-			target platform definition, ie. the ECL, ETL and SCG features. All other sources are now 
-			referenced directly in the TP file. 
+    	<!--
+			NOTE: Private registry repositories (maven-b2i-releases / maven-b2i-snapshots,
+			https://artifacts.b2ihealthcare.com) are intentionally NOT declared here. They are provided
+			to the build via settings.xml (see the CI build's `-s settings.xml` switch) so that
+			Dependabot, which reads pom.xml but not settings.xml, does not attempt to reach the private
+			registry through its TLS-terminating proxy (that connection is reset by the B2i WAF, causing
+			"Cannot read TLS response from mitm'd server EOF"). The build still resolves the zipped update
+			sites referenced with mvn: URLs in the target platform (ECL, ETL and SCG features) from the
+			B2i repositories declared in settings.xml.
 		-->
-		<repository>
-			<id>maven-b2i-releases</id>
-			<url>https://artifacts.b2ihealthcare.com/repository/maven-releases</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-		<repository>
-			<id>maven-b2i-snapshots</id>
-			<url>https://artifacts.b2ihealthcare.com/repository/maven-snapshots</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-		</repository>
 	</repositories>
 			
 	<distributionManagement>
