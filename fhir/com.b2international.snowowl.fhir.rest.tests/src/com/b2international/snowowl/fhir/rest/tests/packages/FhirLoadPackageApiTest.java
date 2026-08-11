@@ -139,7 +139,7 @@ public class FhirLoadPackageApiTest extends FhirRestTest implements FhirCodeSyst
 	public FhirResourceUpdateResult update(ServiceProvider context, CodeSystem fhirCodeSystem, String author, String owner, String ownerProfileName,
 			LocalDate defaultEffectiveDate, String bundleId) {
 		visitedResources.add(fhirCodeSystem.getId());
-		return FhirResourceUpdateResult.created(bundleId, "");
+		return FhirResourceUpdateResult.created(bundleId, "", "");
 	}
 	
 }

@@ -15,9 +15,10 @@
  */
 package com.b2international.snowowl.fhir.rest;
 
-import java.net.URI;
 import java.util.Map;
 
+import org.elasticsearch.common.Strings;
+import org.hl7.fhir.r5.model.CanonicalResource;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueSeverity;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
@@ -26,7 +27,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import com.b2international.snowowl.core.ResourceFragment;
+import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 
 /**
@@ -41,19 +45,14 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 			final Boolean _pretty
 	) {
 		if (result.isCreated() || result.isUpdated()) {
-			final URI locationUri = MvcUriComponentsBuilder.fromController(getClass())
-				.pathSegment(result.getId())
-				.build()
-				.toUri();
-			
-		return toResponseEntity(
-				successStatus,
-				Map.of(HttpHeaders.LOCATION, locationUri.toString()),
-				asSuccessOperationOutcome(result),
-				accept,
-				_format,
-				_pretty
-			);
+			return toResponseEntity(
+					successStatus,
+					Map.of(HttpHeaders.LOCATION, toLocation(result.getId(), result.getVersion())),
+					asSuccessOperationOutcome(result),
+					accept,
+					_format,
+					_pretty
+				);
 		} else {
 			return toResponseEntity(
 				HttpStatus.BAD_REQUEST,
@@ -63,6 +62,18 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 				_pretty
 			);
 		}
+	}
+	
+	private String toLocation(String id, String version) {
+		UriComponentsBuilder builder = MvcUriComponentsBuilder.fromController(getClass())
+				.pathSegment(id);
+
+		if (!Strings.isNullOrEmpty(version)) {
+			builder
+				.pathSegment("_history")
+				.pathSegment(version);
+		}
+		return builder.build().toUri().toString();
 	}
 	
 	private Resource asSuccessOperationOutcome(FhirResourceUpdateResult result) {
@@ -83,5 +94,19 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 					.setCode(IssueType.BUSINESSRULE)
 					.setDiagnostics(result.getMessage())
 			);
+	}
+	
+	protected Map<String, String> expandVersion(CanonicalResource resource) {
+		String version = resource.getVersion();
+		
+		// SNOMED version can return overwrite the real version, so look for user data containing original version
+		if (resource.hasUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE)) {
+			Object userData = resource.getUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE);
+			if (userData instanceof ResourceFragment fragment) {
+				version = fragment.getVersion();
+			}
+		}
+		
+		return Map.of("version", version);
 	}
 }
