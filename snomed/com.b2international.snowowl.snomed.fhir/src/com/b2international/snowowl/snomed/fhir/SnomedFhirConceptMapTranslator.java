@@ -15,6 +15,7 @@ import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.ConceptMap;
 import org.hl7.fhir.r5.model.Enumerations.ConceptMapRelationship;
 
+import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateParameters;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateResultParameters;
@@ -24,8 +25,8 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers.SystemAndVersion;
-import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapTranslator;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -63,7 +64,7 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 		// XXX since this is an implicit CM, and resource stored in the CM here is a CodeSystem referring to the proper SNOMED CT Edition
 		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(conceptMap);
 		final ResourceURI implicitCodeSystemUri = resource.getResourceURI();
-		final List<ExtendedLocale> locales = getLocale(conceptMap);
+		final List<ExtendedLocale> locales = getLocale(parameters);
 		
 		// Extract reference set id
 		QueryPart queryPart = SnomedUri.fromUriString(conceptMap.getUrl(), conceptMap.getUrl()).getQueryPart();
@@ -129,9 +130,8 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
-	private static List<ExtendedLocale> getLocale(ConceptMap conceptMap) {
-		return (List<ExtendedLocale>) conceptMap.getUserData(R5ObjectFields.ConceptMap.UserData.LOCALE);
+	private static List<ExtendedLocale> getLocale(ConceptMapTranslateParameters parameters) {
+		return AcceptLanguageHeader.parseHeader(FhirCodeSystemOperationRequest.compactLocale(parameters.getDisplayLanguage()));
 	}
 	
 	private static boolean keepMember(SnomedReferenceSetMember member, String componentId, boolean reverse) {
