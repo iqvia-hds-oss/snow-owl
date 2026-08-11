@@ -2,14 +2,16 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
                       http://maven.apache.org/xsd/settings-1.0.0.xsd">
+	<!-- Example deployment user and pass, replace with your deployment user and pass, see Nexus OSS guide for more information -->
+	<!--
 	<servers>
-		<!-- Example deployment user and pass, replace with your deployment user and pass, see Nexus OSS guide for more information -->
 		<server>
 			<id>nexus_deployment</id>
 			<username>nexus_deployment_user</username>
 			<password>nexus_deployment_pass</password>
 		</server>
 	</servers>
+	-->
 	
 	<!--
 		The private registry repositories are declared here (not in pom.xml) so that the Maven build
