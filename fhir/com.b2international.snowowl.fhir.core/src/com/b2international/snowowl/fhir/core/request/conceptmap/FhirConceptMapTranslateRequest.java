@@ -30,7 +30,7 @@ import com.b2international.fhir.r5.operations.ConceptMapTranslateResultParameter
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.request.ResourceRequest;
+import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
@@ -44,7 +44,7 @@ import com.google.common.hash.Hashing;
 /**
  * @since 8.0
  */
-final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvider, ConceptMapTranslateResultParameters> {
+final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, ConceptMapTranslateResultParameters> {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -181,11 +181,8 @@ final class FhirConceptMapTranslateRequest extends ResourceRequest<ServiceProvid
 		// since an implicit Concept Map does not have an internal resource representation, use the CodeSystem's fragment instead
 		ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
 		conceptMap.setUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE, resource);
-		// TODO: this could be added the translator in parameter as `displayLangauge` similarly to the value set expand operation
-		conceptMap.setUserData(R5ObjectFields.ConceptMap.UserData.LOCALE, locales());
 		
 		// XXX: We do not create a default group as we do not know yet what is the reference set's source and target
-		
 		return conceptMap;
 	}
 }
