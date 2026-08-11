@@ -618,9 +618,12 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		final Boolean _pretty,
 		String acceptLanguage
 	) {
+		if (parameters.getDisplayLanguage() == null || parameters.getDisplayLanguage().getCode() == null) {
+			parameters.setDisplayLanguage(acceptLanguage);
+		}
+		
 		return FhirRequests.conceptMaps().prepareTranslate()
 			.setParameters(parameters)
-			.setLocales(acceptLanguage)
 			.buildAsync()
 			.execute(getBus())
 			.then(result -> {
