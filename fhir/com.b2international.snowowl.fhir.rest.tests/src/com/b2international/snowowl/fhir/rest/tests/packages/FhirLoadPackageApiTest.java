@@ -27,10 +27,10 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.elasticsearch.core.List;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.junit.Test;
 
