@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.core.request.codesystem;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.Bundle;
@@ -162,21 +163,21 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		return Arrays.stream(locale.split(","))
 			.map(String::trim)
 			.filter(localeItem -> !localeItem.isEmpty())
-			.map(FhirCodeSystemOperationRequest::compactSingleLocale)
+			.map(localeItem -> callWithoutQuality(localeItem, FhirCodeSystemOperationRequest::compactSingleLocale))
 			.collect(Collectors.joining(","));
 	}
 	
-	private static String compactSingleLocale(final String localeItem) {
+	private static String compactSingleLocale(final String locale) {
 		
 		// '*' is a wildcard that is not covered by BCP-47, but needs to be handled regardless since FHIR allows it
-		if (localeItem.equals("*")) {
-			return localeItem;
+		if (locale.equals("*")) {
+			return locale;
 		}
 		
 		// Parse the input in accordance with BCP-47 grammar (it should be valid)
 		final Locale.Builder builder = new Locale.Builder();
 		try {
-			builder.setLanguageTag(localeItem);
+			builder.setLanguageTag(locale);
 		} catch (final IllformedLocaleException ex) {
 			throw new BadRequestException(ex.getMessage());
 		}
@@ -185,7 +186,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		final Locale parsedLocale = builder.build();
 		final String privateUseExtension = parsedLocale.getExtension(Locale.PRIVATE_USE_EXTENSION);
 		if (StringUtils.isEmpty(privateUseExtension)) {
-			return localeItem;
+			return locale;
 		}
 		
 		/*
@@ -194,7 +195,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		 * language tag)
 		 */
 		final String separatorsRemovedExtension = privateUseExtension.replace("-", "");
-		return localeItem.replace("-x-" + privateUseExtension, "-x-" + separatorsRemovedExtension);
+		return locale.replace("-x-" + privateUseExtension, "-x-" + separatorsRemovedExtension);
 	}
 	
 	/**
@@ -214,15 +215,15 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		return Arrays.stream(locale.split(","))
 			.map(String::trim)
 			.filter(localeItem -> !localeItem.isEmpty())
-			.map(FhirCodeSystemOperationRequest::expandSingleLocale)
+			.map(localeItem -> callWithoutQuality(localeItem, FhirCodeSystemOperationRequest::expandSingleLocale))
 			.collect(Collectors.joining(","));
 	}
-
-	private static String expandSingleLocale(final String localeItem) {
+	
+	private static String expandSingleLocale(final String locale) {
 		
 		// '*' is a wildcard that is not covered by BCP-47, but needs to be handled regardless since FHIR allows it
-		if ("*".equals(localeItem)) {
-			return localeItem;
+		if ("*".equals(locale)) {
+			return locale;
 		}
 
 		/*
@@ -232,18 +233,32 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		 * 
 		 * See FhirLocaleTest#expandSplitPrivateUseExtension for an example.
 		 */
-		final int privateUseIdx = localeItem.lastIndexOf("-x-");
-		if (privateUseIdx < 0 || privateUseIdx + 3 >= localeItem.length()) {
-			return localeItem;
+		final int privateUseIdx = locale.lastIndexOf("-x-");
+		if (privateUseIdx < 0 || privateUseIdx + 3 >= locale.length()) {
+			return locale;
 		}
 		
-		final String separatorsRemovedExtension = localeItem.substring(privateUseIdx + 3);
+		final String separatorsRemovedExtension = locale.substring(privateUseIdx + 3);
 		final String privateUseExtension = Splitter.fixedLength(8) // split private use portion into 8 character segments
 			.splitToStream(separatorsRemovedExtension)
 			.collect(Collectors.joining("-")); // combine again with hyphens
 		
 		// Replace the old private use extension
-		return localeItem.replace("-x-" + separatorsRemovedExtension, "-x-" + privateUseExtension);
+		return locale.replace("-x-" + separatorsRemovedExtension, "-x-" + privateUseExtension);
+	}
+	
+	private static String callWithoutQuality(String locale, Function<String, String> modifier) {
+		// locale might contain quality modifier, remove then re-attach after modification
+		final String[] parts = locale.split(";");
+		if (parts.length > 2) {
+			throw new BadRequestException(String.format("Invalid locale quality format: %s", locale));
+		}
+		final String modifiedLocale = modifier.apply(parts[0]);
+		if (parts.length > 1) {
+			return String.format("%s;%s", modifiedLocale, parts[1]);
+		} else {
+			return modifiedLocale;
+		}
 	}
 	
 	protected abstract R doExecute(ServiceProvider context, CodeSystem codeSystem);
