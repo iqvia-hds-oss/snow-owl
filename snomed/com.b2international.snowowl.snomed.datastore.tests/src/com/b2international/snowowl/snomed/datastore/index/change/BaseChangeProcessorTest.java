@@ -20,13 +20,8 @@ import static com.b2international.snowowl.test.commons.snomed.RandomSnomedIdenti
 import static com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator.generateRelationshipId;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
-import org.elasticsearch.core.List;
 import org.junit.Before;
 
 import com.b2international.collections.PrimitiveCollectionModule;

@@ -32,6 +32,8 @@ public final class FhirApiHelpers {
 	
 	public static final String CODESYSTEM = "/CodeSystem";
 	public static final String CODESYSTEM_ID = "/CodeSystem/{id}";
+	public static final String CODESYSTEM_ID_HISTORY = "/CodeSystem/{id}/_history";
+	public static final String CODESYSTEM_ID_HISTORY_VERSION = "/CodeSystem/{id}/_history/{version}";
 	
 	public static final String CODESYSTEM_LOOKUP = "/CodeSystem/$lookup";
 	public static final String CODESYSTEM_SUBSUMES = "/CodeSystem/$subsumes";
@@ -45,6 +47,8 @@ public final class FhirApiHelpers {
 	
 	public static final String VALUESET = "/ValueSet";
 	public static final String VALUESET_ID = "/ValueSet/{id}";
+	public static final String VALUESET_ID_HISTORY = "/ValueSet/{id}/_history";
+	public static final String VALUESET_ID_HISTORY_VERSION = "/ValueSet/{id}/_history/{version}";
 	
 	public static final String VALUESET_EXPAND = "/ValueSet/$expand";
 	public static final String VALUESET_ID_EXPAND = "/ValueSet/{id}/$expand";
@@ -53,6 +57,8 @@ public final class FhirApiHelpers {
 	
 	public static final String CONCEPTMAP = "/ConceptMap";
 	public static final String CONCEPTMAP_ID = "/ConceptMap/{id}";
+	public static final String CONCEPTMAP_ID_HISTORY = "/ConceptMap/{id}/_history";
+	public static final String CONCEPTMAP_ID_HISTORY_VERSION = "/ConceptMap/{id}/_history/{version}";
 	
 	public static final String CONCEPTMAP_TRANSLATE = "/ConceptMap/$translate";
 	public static final String CONCEPTMAP_ID_TRANSLATE = "/ConceptMap/{id}/$translate";

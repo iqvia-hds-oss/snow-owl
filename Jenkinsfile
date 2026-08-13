@@ -59,7 +59,7 @@ try {
 		stage('Build') {
 
 			withMaven(jdk: 'OpenJDK_25', globalMavenSettingsConfig: custom_maven_global_settings, publisherStrategy: 'EXPLICIT', traceability: true) {
-				sh "./mvnw clean ${mavenPhase} -Dmaven.test.skip=${skipTests} -Dmaven.install.skip=true"
+				sh "./mvnw clean ${mavenPhase} -Dmaven.test.skip=${skipTests} -Dmaven.install.skip=true --show-version --no-transfer-progress --update-snapshots --batch-mode --settings settings.xml -P b2i-repositories"
 			}
 
 		}
