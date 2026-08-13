@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeParameters;
 import com.b2international.snowowl.core.events.util.Promise;
@@ -140,6 +141,10 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -182,7 +187,7 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		isAbstract.ifPresent(parameters::setAbstract);
 		date.ifPresent(parameters::setDate);
 				
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 	
 	/**
@@ -280,6 +285,10 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
+		
 		@Parameter(description = "Prefer header", schema = @Schema(
 			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
 			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
@@ -318,7 +327,7 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 	) {
 		final ValueSetValidateCodeParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.ValueSetValidateCodeParametersFactory.INSTANCE);
 		
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 
 	
@@ -416,6 +425,10 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -460,7 +473,7 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		isAbstract.ifPresent(parameters::setAbstract);
 		date.ifPresent(parameters::setDate);
 		
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 	
 	/**
@@ -564,6 +577,10 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Prefer header", schema = @Schema(
 			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
@@ -607,15 +624,20 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		// Before execution set the URI to match the path variable
 		parameters.setUrl(valueSetId);
 		
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 
 	private Promise<ResponseEntity<byte[]>> validateCode(
 		final ValueSetValidateCodeParameters parameters,
 		final String accept,
 		final String _format,
-		final Boolean _pretty
+		final Boolean _pretty,
+		final String acceptLanguage
 	) {
+		if (parameters.getDisplayLanguage() == null || parameters.getDisplayLanguage().getCode() == null) {
+			parameters.setDisplayLanguage(acceptLanguage);
+		}
+		
 		return FhirRequests.valueSets().prepareValidateCode()
 			.setParameters(parameters)
 			.buildAsync()
