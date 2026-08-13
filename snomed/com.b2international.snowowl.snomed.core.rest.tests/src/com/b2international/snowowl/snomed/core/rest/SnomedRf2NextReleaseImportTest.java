@@ -15,10 +15,12 @@
  */
 package com.b2international.snowowl.snomed.core.rest;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.FixMethodOrder;
@@ -26,21 +28,26 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 import com.b2international.snowowl.core.attachments.Attachment;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.jobs.JobRequests;
 import com.b2international.snowowl.core.jobs.RemoteJobEntry;
+import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.request.io.ImportRequests;
 import com.b2international.snowowl.core.request.io.ImportResponse;
 import com.b2international.snowowl.core.util.PlatformUtil;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.snomed.common.SnomedConstants;
+import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants.Settings;
 import com.b2international.snowowl.snomed.core.domain.Rf2ReleaseType;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.b2international.snowowl.test.commons.Resources;
 import com.b2international.snowowl.test.commons.Services;
 import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests;
+import com.b2international.snowowl.test.commons.rest.RestExtensions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -51,7 +58,58 @@ public class SnomedRf2NextReleaseImportTest extends AbstractSnomedApiTest {
 
 	@Test
 	public void import01_CurrentReleaseAgain_NoChanges() throws Exception {
+		// while this tests that the import does not make any serious changes, it can still update (correct) the metadata if identifies something that should be there but not present
+		// so we need to remove entries that we want to test first
+		ResourceRequests.prepareUpdate(SnomedContentRule.SNOMEDCT_ID)
+			.setSettings(
+				// keep one entry to see if the system throws it out or keeps it (it should keep it)
+				Map.of(
+					Settings.LANGUAGES, List.of(
+						Map.of(
+							"languageTag", "en",
+							"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_US)
+						)
+					)
+				)
+			)
+			.build(RestExtensions.USER, "Remove dialects that will be automatically adjusted with the import")
+			.execute(getBus())
+			.getSync();
+		
+		Map<String, Object> settings = CodeSystemRequests.prepareGetCodeSystem(SnomedContentRule.SNOMEDCT_ID)
+				.buildAsync()
+				.execute(getBus())
+				.getSync(1, TimeUnit.MINUTES)
+				.getSettings();
+		
+		System.err.println(settings);
+		
+		// perform the import
 		doImport(Resources.Snomed.MINI_RF2_INT_20210731, "20210131");
+		
+		// then verify that the dialects got updated properly
+		settings = CodeSystemRequests.prepareGetCodeSystem(SnomedContentRule.SNOMEDCT_ID)
+			.buildAsync()
+			.execute(getBus())
+			.getSync(1, TimeUnit.MINUTES)
+			.getSettings();
+		assertThat(settings)
+			.containsEntry(Settings.LANGUAGES, List.of(
+				// this entry is pre-configured, should be kept after import
+				Map.of(
+					"languageTag", "en",
+					"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_US)
+				),
+				// these two entries come from the default dialect configuration map, should be appended by the import process
+				Map.of(
+					"languageTag", "en-gb", 
+					"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_UK)
+				),
+				Map.of(
+					"languageTag", "en-us", 
+					"languageRefSetIds", List.of(Concepts.REFSET_LANGUAGE_TYPE_US)
+				)
+			));
 	}
 
 	@Test

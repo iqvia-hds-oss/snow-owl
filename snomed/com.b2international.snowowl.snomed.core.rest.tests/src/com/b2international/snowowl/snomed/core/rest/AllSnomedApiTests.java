@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,10 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 	// Core API test cases requiring actual terminology data, make sure it is the first test class to run
 	ResourceURITildeSupportTest.class,
 	// RF2 release handling, imported content verification
+	// XXX important: the next two belong together in this order, next release import test ensures, we import the next final delta of the SNOMED release we have
+	// while the content test performs imported content vs exported content verification available at that point in the system
 	SnomedRf2NextReleaseImportTest.class,
-	SnomedRf2ContentImportTest.class,
+	SnomedRf2ContentImportExportTest.class,
 	// High-level issue test cases, Java API test cases
 	IssueSO2503RemoteJobDynamicMappingFix.class,
 	Issue3019FixDeletionOfReferringMembersTest.class,
