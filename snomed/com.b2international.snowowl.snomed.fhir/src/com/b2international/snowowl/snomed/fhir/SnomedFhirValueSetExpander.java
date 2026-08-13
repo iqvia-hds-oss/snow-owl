@@ -69,7 +69,6 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 				.put(ConceptSearchRequestEvaluator.OptionKey.TERM, termFilter)
 				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, parameters.getCount() == null ? 10 : parameters.getCount().getValue())
 				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, parameters.getAfter() == null ? null : parameters.getAfter().getValue())
-				// SNOMED only preferred display support (VS should always use FSN)
 				.put(ConceptSearchRequestEvaluator.OptionKey.DISPLAY, preferredDisplay)
 				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(FhirCodeSystemOperationRequest.compactLocale(parameters.getDisplayLanguage())))
 				// always return sorted results for consistency, in case of term filtering return by score otherwise by ID
