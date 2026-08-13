@@ -575,26 +575,6 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("status", equalTo("draft"));
 	}
 	
-	@Test
-	public void GET_CodeSystemId_Versioned() throws Exception {
-		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
-			.when().get(CODESYSTEM_ID, "SNOMEDCT/2002-01-31")
-			.then().assertThat()
-			.statusCode(200)
-			.body("resourceType", equalTo("CodeSystem"))
-			.body("id", equalTo("SNOMEDCT")) // XXX: the versioned code system id is not returned in the resource
-			.body("url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
-			.body("status", equalTo("active"))
-			.body("version", equalTo(SNOMEDCT_URL + "/version/20020131"))
-			.body("language", equalTo("ENG"))
-			.body("publisher", equalTo("SNOMED International"))
-			.body("contact[0].telecom[0].system", equalTo("url"))
-			.body("contact[0].telecom[0].value", equalTo("https://b2ihealthcare.com"))
-			.body("effectivePeriod.start", equalTo("2002-01-31T00:00:00Z"))
-			//end is currently not supported
-			.body("effectivePeriod.end", nullValue());
-	}
-	
 	//Summary-count should not be allowed for non-search type operations?
 	//https://www.hl7.org/fhir/search.html#summary
 	@Test

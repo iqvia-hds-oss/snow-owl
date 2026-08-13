@@ -33,7 +33,7 @@ jobs:
 
     # Setup the Java environment required for the build
     - name: Set up JDK 25
-      uses: actions/setup-java@v5.6.0
+      uses: actions/setup-java@v5.7.0
       with:
         distribution: temurin
         java-version: 25
@@ -65,6 +65,8 @@ jobs:
           --no-transfer-progress
           --update-snapshots
           --batch-mode
+          --settings settings.xml
+          -P b2i-repositories
 
     # Upload Code Coverage
     #- name: Upload Codecov
