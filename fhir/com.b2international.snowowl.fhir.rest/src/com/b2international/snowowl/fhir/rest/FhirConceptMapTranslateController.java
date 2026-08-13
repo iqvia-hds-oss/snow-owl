@@ -128,6 +128,10 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		@RequestParam(value = "targetScope") 
 		final Optional<String> targetScope,
 		
+		@Parameter(description = "Specify the display language for the returned codes") 
+		@RequestParam(value = "displayLanguage", required = false)
+		final Optional<String> displayLanguage,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
@@ -179,6 +183,8 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		targetCode.ifPresent(parameters::setTargetCode);
 		targetSystem.ifPresent(parameters::setTargetSystem);
 		targetScope.ifPresent(parameters::setTargetScope);
+		
+		displayLanguage.ifPresent(parameters::setDisplayLanguage);
 		
 		return translate(parameters, accept, _format, _pretty, acceptLanguage);
 	}
@@ -404,6 +410,10 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		@RequestParam(value = "targetScope") 
 		final Optional<String> targetScope,
 		
+		@Parameter(description = "Specify the display language for the returned codes") 
+		@RequestParam(value = "displayLanguage", required = false)
+		final Optional<String> displayLanguage,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
@@ -455,6 +465,8 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		targetCode.ifPresent(parameters::setTargetCode);
 		targetSystem.ifPresent(parameters::setTargetSystem);
 		targetScope.ifPresent(parameters::setTargetScope);
+		
+		displayLanguage.ifPresent(parameters::setDisplayLanguage);
 		
 		return translate(parameters, accept, _format, _pretty, acceptLanguage);
 	}
