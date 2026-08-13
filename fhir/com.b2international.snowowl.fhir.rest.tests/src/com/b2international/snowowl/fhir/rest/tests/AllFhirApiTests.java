@@ -45,6 +45,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 	SnomedUriParsingTest.class,
 	FhirImplicitValueSetUrlTest.class,
 	FhirImplicitConceptMapUrlTest.class,
+	FhirLocaleTest.class,
 	
 	// CapabilityStatement
 	CapabilityStatementApiTest.class,
