@@ -77,6 +77,16 @@ public class FhirLocaleTest {
 	}
 	
 	@Test
+	public void compactValidLanguages() {
+		assertEquals("en,it,de", FhirCodeSystemOperationRequest.compactLocale("en,it,de"));
+	}
+	
+	@Test
+	public void compactValidLanguagesWildcard() {
+		assertEquals("en,it,*", FhirCodeSystemOperationRequest.compactLocale("en,it,*"));
+	}
+	
+	@Test
 	public void expandNull() {
 		assertNull(FhirCodeSystemOperationRequest.expandLocale(null));
 	}
@@ -117,4 +127,24 @@ public class FhirLocaleTest {
 		assertEquals("en-US-x-12345678-90123456-789", FhirCodeSystemOperationRequest.expandLocale("en-US-x-1234567890123456789"));
 	}
 	
+
+	@Test
+	public void expandMultipleLocalesWithoutPrivateUseExtensions() {
+		assertEquals("en-US,hu-HU", FhirCodeSystemOperationRequest.expandLocale("en-US,hu-HU"));
+	}
+
+	@Test
+	public void expandMultipleLocalesWithOnePrivateUseExtension() {
+		assertEquals("en-US-x-12345678-9,hu-HU", FhirCodeSystemOperationRequest.expandLocale("en-US-x-123456789,hu-HU"));
+	}
+
+	@Test
+	public void expandMultipleLocalesWithPrivateUseExtensions() {
+		assertEquals("en-US-x-12345678-9,hu-HU-x-abcdefgh-ij", FhirCodeSystemOperationRequest.expandLocale("en-US-x-123456789,hu-HU-x-abcdefghij"));
+	}
+
+	@Test
+	public void expandMultipleLocalesIncludingWildcard() {
+		assertEquals("en-US-x-12345678-9,*,hu-HU", FhirCodeSystemOperationRequest.expandLocale("en-US-x-123456789,*,hu-HU"));
+	}
 }

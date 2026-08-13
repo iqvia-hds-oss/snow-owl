@@ -32,10 +32,14 @@ final class FhirValueSetExpandRequest extends FhirValueSetOperationRequest<Value
 	
 	@JsonProperty
 	private final ValueSetExpandParameters parameters;
+	
+	@JsonProperty
+	private final String preferredDisplay;
 
-	public FhirValueSetExpandRequest(ValueSetExpandParameters parameters) {
+	public FhirValueSetExpandRequest(ValueSetExpandParameters parameters, String preferredDisplay) {
 		super(parameters.getUrl() == null ? null : parameters.getUrl().asStringValue());
 		this.parameters = parameters;
+		this.preferredDisplay = preferredDisplay;
 	}
 	
 	@Override
@@ -44,7 +48,7 @@ final class FhirValueSetExpandRequest extends FhirValueSetOperationRequest<Value
 			.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
 			.optionalService(FhirValueSetExpander.class)
 			.orElse(FhirValueSetExpander.NOOP)
-			.expand(context, valueSet, parameters);
+			.expand(context, valueSet, parameters, preferredDisplay);
 
 	}
 

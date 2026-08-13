@@ -168,6 +168,15 @@ public class SnomedContentRule extends ExternalResource {
 					Map.of(
 						"languageTag", "en",
 						"languageRefSetIds", Lists.newArrayList(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_US)
+					),
+					// XXX adding the dialects here is normal initialization of resource metadata, if certain tests require empty dialects, they need to clear it out first, then update/restore it after the test
+					Map.of(
+						"languageTag", "en-us",
+						"languageRefSetIds", Lists.newArrayList(Concepts.REFSET_LANGUAGE_TYPE_US)
+					),
+					Map.of(
+						"languageTag", "en-gb",
+						"languageRefSetIds", Lists.newArrayList(Concepts.REFSET_LANGUAGE_TYPE_UK)
 					)
 				)
 			))
