@@ -21,14 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
@@ -60,14 +54,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 
 /**
  * CIS (IHTSDO) based implementation of the identifier service.
@@ -460,7 +447,7 @@ public class CisSnomedIdentifierService extends AbstractSnomedIdentifierService 
 				for (final Collection<String> ids : Iterables.partition(componentIds, requestBulkLimit)) {
 					final String idsAsString = Joiner.on(',').join(ids);
 					final ObjectNode idsAsJson = mapper.createObjectNode().put("sctids", idsAsString);
-					bulkRequest = client.httpPost(String.format("sct/bulk/ids/?token=%s", getToken()), idsAsJson);
+					bulkRequest = client.httpPost(String.format("sct/bulk/ids?token=%s", getToken()), idsAsJson);
 					final String response = execute(bulkRequest);
 					
 					final SctId[] sctIds = mapper.readValue(response, SctId[].class);
