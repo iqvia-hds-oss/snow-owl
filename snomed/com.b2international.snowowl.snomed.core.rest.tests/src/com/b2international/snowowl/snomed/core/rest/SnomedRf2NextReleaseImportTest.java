@@ -76,19 +76,11 @@ public class SnomedRf2NextReleaseImportTest extends AbstractSnomedApiTest {
 			.execute(getBus())
 			.getSync();
 		
-		Map<String, Object> settings = CodeSystemRequests.prepareGetCodeSystem(SnomedContentRule.SNOMEDCT_ID)
-				.buildAsync()
-				.execute(getBus())
-				.getSync(1, TimeUnit.MINUTES)
-				.getSettings();
-		
-		System.err.println(settings);
-		
 		// perform the import
 		doImport(Resources.Snomed.MINI_RF2_INT_20210731, "20210131");
 		
 		// then verify that the dialects got updated properly
-		settings = CodeSystemRequests.prepareGetCodeSystem(SnomedContentRule.SNOMEDCT_ID)
+		var settings = CodeSystemRequests.prepareGetCodeSystem(SnomedContentRule.SNOMEDCT_ID)
 			.buildAsync()
 			.execute(getBus())
 			.getSync(1, TimeUnit.MINUTES)
