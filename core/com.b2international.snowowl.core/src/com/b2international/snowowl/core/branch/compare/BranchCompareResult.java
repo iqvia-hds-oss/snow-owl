@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2017-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ public final class BranchCompareResult implements Serializable {
 		private final ImmutableSet.Builder<ComponentIdentifier> newComponents = ImmutableSet.builder();
 		private final ImmutableSet.Builder<ComponentIdentifier> changedComponents = ImmutableSet.builder();
 		private final ImmutableSet.Builder<ComponentIdentifier> deletedComponents = ImmutableSet.builder();
+		private int newComponentCount = 0;
+		private int changedComponentCount = 0;
+		private int deletedComponentCount = 0;
 		
 		private List<BranchCompareChangeStatistic> stats;
 		
@@ -66,6 +69,21 @@ public final class BranchCompareResult implements Serializable {
 			return this;
 		}
 		
+		public Builder newComponentCount(int newComponentCount) {
+			this.newComponentCount = newComponentCount;
+			return this;
+		}
+		
+		public Builder changedComponentCount(int changedComponentCount) {
+			this.changedComponentCount = changedComponentCount;
+			return this;
+		}
+		
+		public Builder deletedComponentCount(int deletedComponentCount) {
+			this.deletedComponentCount = deletedComponentCount;
+			return this;
+		}
+
 		public Builder addStats(BranchCompareChangeStatistic stats) {
 			if (this.stats == null) {
 				this.stats = new ArrayList<>();
@@ -92,9 +110,9 @@ public final class BranchCompareResult implements Serializable {
 					changedComponents, 
 					deletedComponents,
 					stats,
-					newComponents.size(),
-					changedComponents.size(),
-					deletedComponents.size());
+					newComponentCount,
+					changedComponentCount,
+					deletedComponentCount);
 		}
 
 	}

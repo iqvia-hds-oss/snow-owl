@@ -18,10 +18,6 @@ package com.b2international.snowowl.core.branch.compare;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import jakarta.validation.constraints.Min;
-
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.index.revision.*;
 import com.b2international.snowowl.core.ComponentIdentifier;
 import com.b2international.snowowl.core.authorization.AccessControl;
@@ -34,6 +30,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @since 5.9
@@ -178,7 +177,10 @@ final class BranchCompareRequest implements Request<RepositoryContext, BranchCom
 		}
 		
 		return result
-				.build(changedContainers);
+			.newComponentCount(compareResult.getTotalAdded())
+			.changedComponentCount(compareResult.getTotalChanged())
+			.deletedComponentCount(compareResult.getTotalRemoved())
+			.build(changedContainers);
 	}
 	
 	@Override
