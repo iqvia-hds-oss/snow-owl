@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * @since 10.3.0
+ * @since 10.2.1
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RevisionBranchMergeWithChangeProcessorTest extends BaseRevisionIndexTest {
