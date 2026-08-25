@@ -286,7 +286,7 @@ public final class SnomedRepositoryPreCommitHook extends BaseRepositoryPreCommit
 	protected void postUpdateDocuments(StagingArea staging, RevisionSearcher index) throws IOException {
 		final RepositoryContext context = ClassUtils.checkAndCast(staging.getContext(), RepositoryContext.class);
 		
-		if (canRestoreEffectiveTime(context) && !staging.isMerge()) {
+		if (canRestoreEffectiveTime(context) && (!staging.isMerge() || !staging.isSquashMerge())) {
 			// XXX effective time restore should be the last processing unit before we send the changes to commit
 			doProcess(Collections.singleton(new ComponentEffectiveTimeRestoreChangeProcessor(log)), staging, index);
 		}
