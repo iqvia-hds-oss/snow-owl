@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2023-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,72 +15,241 @@
  */
 package com.b2international.snowowl.core.repository;
 
+import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+
+import com.b2international.commons.ClassUtils;
+import com.b2international.index.revision.RevisionIndex;
+import com.b2international.index.revision.RevisionSearcher;
+import com.b2international.index.revision.StagingArea;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
+import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.uri.ResourceURIPathResolver;
-import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.VersionDocument;
-import com.google.common.collect.Lists;
+import com.google.common.collect.*;
 
 /**
  * @since 8.10.1
  */
-public abstract class EffectiveTimeChangeProcessorBase extends ChangeSetProcessorBase {
+public abstract class EffectiveTimeChangeProcessorBase<T extends RevisionDocument> extends ChangeSetProcessorBase {
 
-	protected EffectiveTimeChangeProcessorBase(String description) {
+	private final Class<T> documentClass;
+	private final Logger log;
+
+	protected EffectiveTimeChangeProcessorBase(final String description, final Class<T> documentClass, final Logger log) {
 		super(description);
+		this.documentClass = documentClass;
+		this.log = log;
+	}
+	
+	@Override
+	public void process(final StagingArea staging, final RevisionSearcher searcher) throws IOException {
+		final boolean restoreUnsetEffectiveTime = staging.isMerge() && !staging.isSquashMerge();
+
+		/*
+		 * Include all released components regardless of effective time for non-squash
+		 * merge operations; collect released components with unset effective
+		 * time only otherwise (squash merge and regular commits)
+		 */
+		final Multimap<Class<?>, T> componentsByType = ArrayListMultimap.create();
+		
+		staging.getChangedObjects()
+			.filter(documentClass::isInstance)
+			.map(documentClass::cast)
+			.filter(doc -> isReleased(doc) && (restoreUnsetEffectiveTime || EffectiveTimes.isUnset(getEffectiveTime(doc))))
+			.forEach(doc -> componentsByType.put(doc.getClass(), doc));
+
+		if (componentsByType.isEmpty())	{
+			return;
+		}
+		
+		final List<String> availableVersionPaths = getAvailableVersionPaths(staging);
+		if (availableVersionPaths.isEmpty()) {
+			return;
+		}
+
+		final Set<Class<?>> componentTypes = ImmutableSet.copyOf(componentsByType.keySet());
+
+		for (final String versionPath : availableVersionPaths) {
+			for (final Class<?> componentType : componentTypes) {
+				final Set<String> componentIdsForType = componentsByType.get(componentType)
+					.stream()
+					.map(T::getId)
+					.collect(Collectors.toSet());
+				
+				final Map<String, T> previousComponentsById = Maps.uniqueIndex(
+					fetchPreviousComponentRevisions(
+						staging.getIndex(), 
+						versionPath, 
+						componentType, 
+						componentIdsForType), 
+					T::getId
+				);
+				
+				// Guaranteed to be non-empty as componentTypes was derived from componentsByType.keySet()
+				final List<? extends T> changedRevisions = ImmutableList.copyOf(componentsByType.get(componentType));
+				
+				for (final T changedRevision : changedRevisions) {
+					final T previousVersion = previousComponentsById.get(changedRevision.getId());
+					
+					if (previousVersion != null) {
+						// A previous version exists, no need to issue a warning for this component
+						componentsByType.remove(componentType, changedRevision);
+					} else {
+						// No previous version found, component will be reported as released content without previous version at the end of this method
+						continue;
+					}
+					
+					final boolean canRestore = canRestoreEffectiveTime(changedRevision, previousVersion);
+					
+					if (canRestore 
+						&& getEffectiveTime(changedRevision) < getEffectiveTime(previousVersion)
+					) {
+						/*
+						 * Current component state matches versioned state, but effective time is
+						 * smaller or unset. "Roll forward" to match value stored in versioned state.
+						 */
+						final T restoredRevision = copyWithEffectiveTime(changedRevision, getEffectiveTime(previousVersion));
+						stageChange(changedRevision, restoredRevision);
+						continue;
+					}
+					
+					if (restoreUnsetEffectiveTime 
+						&& !canRestore 
+						&& !EffectiveTimes.isUnset(getEffectiveTime(changedRevision)) 
+						&& getEffectiveTime(changedRevision) <= getEffectiveTime(previousVersion)
+					) {
+						/*
+						 * Current component state diverges from the most recent versioned state, but
+						 * effective time is smaller than or equal to the most recent versioned state
+						 * (forward-dating is allowed). Force the effective time to be unset.
+						 */
+						final T unsetRevision = copyWithEffectiveTime(changedRevision, EffectiveTimes.UNSET_EFFECTIVE_TIME);
+						stageChange(changedRevision, unsetRevision);
+						continue;
+					}
+				}
+			}
+		}
+
+		if (!componentsByType.isEmpty()) {
+			log.warn("Released components found which do not have a previous version: {}.", componentsByType.values()
+				.stream()
+				.map(T::getId)
+				.sorted()
+				.collect(Collectors.toList()));
+		}
 	}
 
-	protected List<String> getAvailableVersionPaths(RepositoryContext context, String branchPath) {
-		final List<ResourceURI> codeSystemsToCheck = Lists.newArrayList();
+	protected abstract boolean isReleased(T doc);
+
+	protected abstract Long getEffectiveTime(T doc);
+
+	@SuppressWarnings("unchecked")
+	private Iterable<T> fetchPreviousComponentRevisions(
+		RevisionIndex index, 
+		String versionPath,
+		Class<?> componentType, 
+		Set<String> componentIdsForType
+	) {
+		return (Iterable<T>) index.read(versionPath, searcher -> searcher.get(componentType, componentIdsForType));
+	}
+	
+	protected abstract boolean canRestoreEffectiveTime(T changedRevision, T previousVersion);
+	
+	protected abstract T copyWithEffectiveTime(T changedRevision, long effectiveTime);
+
+	protected List<String> getAvailableVersionPaths(final StagingArea staging) {
+		/*
+		 * Version / resource URIs and corresponding branch paths we are interested in:
+		 * 
+		 * - the latest version of the "extensionOf" CodeSystem
+		 * - the "upgradeOf" CodeSystem itself
+		 * - the latest version of the current CodeSystem, only if we are not on an upgrade CodeSystem
+		 * 
+		 * Some examples:
+		 * 
+		 * 1. SNOMEDCT-EXP -> extensionOf: SNOMEDCT 
+		 *    - check latest* version of SNOMEDCT (SNOMEDCT/2026-08-01)
+		 *    - check latest* version of SNOMEDCT-EXP
+		 * 2. SNOMEDCT-US -> extensionOf: SNOMEDCT/2025-09-01 
+		 *    - check the version indicated by extensionOf (SNOMEDCT/2025-09-01)
+		 *    - check latest* version of SNOMEDCT-US
+		 * 3. SNOMEDCT-US-UPL -> extensionOf: SNOMEDCT/2026-08-01, upgradeOf: SNOMEDCT-US/2025-09-01
+		 *    - check the version indicated by extensionOf (SNOMEDCT/2026-08-01)
+		 *    - check the version indicated by upgradeOf (SNOMEDCT-US/2025-09-01)
+		 *    - don't check latest* version of SNOMEDCT-US nor SNOMEDCT-US-UPL because this is an upgrade CodeSystem
+		 *    
+		 * A more precise definition of "latest" would mean the latest version entry that is visible from 
+		 * the current branch, taking all merge sources (not just branch bases) into account. This is not 
+		 * trivial to determine however. Tasks will also need to be synchronized to the most recent state 
+		 * before merging so there shouldn't be any issue with taking the latest version overall, but this
+		 * is something to keep in mind for future improvements.
+		 */
+		final String branchPath = staging.getBranchPath();
+
+		final Object stagingContext = staging.getContext();
+		final RepositoryContext repositoryContext = ClassUtils.checkAndCast(stagingContext, RepositoryContext.class);
+		final String toolingId = repositoryContext.info().id();
 		
-		TerminologyResource relativeCodeSystem = context.service(TerminologyResource.class);
+		// As this change processor now gets called during merges, we need an alternate way to resolve the current CodeSystem
+		final TerminologyResource currentCodeSystem = repositoryContext.optionalService(TerminologyResource.class)
+			.orElseGet(() -> repositoryContext.service(PathTerminologyResourceResolver.class).resolve(repositoryContext, toolingId, branchPath));
+
+		final List<ResourceURI> resourceUrisToCheck = Lists.newArrayList();
 		
-		// based on the relative CodeSystem, we might need to check up to two CodeSystems
-		// in case of upgrade, we need to check the original CodeSystem branch 
-		// in case of regular extension or no-extension CodeSystem, we need to check the extensionOf
-		
-		// always check the direct extensionOf (aka parent) CodeSystem
-		if (relativeCodeSystem.getExtensionOf() != null) {
-			if (relativeCodeSystem.getExtensionOf().isHead()) {
-				// in case of regular CodeSystem check the latest available version if available, if not, then skip
-				getLatestCodeSystemVersion(context, relativeCodeSystem.getExtensionOf().withoutPath()).ifPresent(latestVersion -> {
-					codeSystemsToCheck.add(relativeCodeSystem.getExtensionOf().asLatest());
-				});
+		final ResourceURI extensionOf = currentCodeSystem.getExtensionOf();
+		if (extensionOf != null) {
+			if (extensionOf.isHead()) {
+				checkLatestVersion(resourceUrisToCheck, repositoryContext, extensionOf.withoutPath());
 			} else {
-				codeSystemsToCheck.add(relativeCodeSystem.getExtensionOf());
+				resourceUrisToCheck.add(extensionOf);
 			}
 		}
 		
-		// in case of an upgrade CodeSystem check the original CodeSystem as well
-		if (relativeCodeSystem.getUpgradeOf() != null) {
-			// TODO, it would be great to know that sync point between the Upgrade and the UpdradeOf and use that timestamp as reference, for now, fall back to the HEAD 
-			codeSystemsToCheck.add(relativeCodeSystem.getUpgradeOf());
-		} else {
-			// in case of regular CodeSystem check the latest available version if available, if not, then skip
-			getLatestCodeSystemVersion(context, relativeCodeSystem.getResourceURI().withoutPath()).ifPresent(latestVersion -> {
-				codeSystemsToCheck.add(latestVersion.getVersionResourceURI());
-			});
+		final ResourceURI upgradeOf = currentCodeSystem.getUpgradeOf();
+		if (upgradeOf != null) {
+			// final long lastSyncTimestamp = ...? 
+			//
+			// if (upgradeOf.isHead()) {
+			//     checkLatestVersion(resourceUrisToCheck, context, extensionOf.withoutPath(), lastSyncTimestamp); 
+			// } else {
+			//     resourceUrisToCheck.add(upgradeOf);
+			// }
+			
+			resourceUrisToCheck.add(upgradeOf);
+		}
+
+		final ResourceURI codeSystemUri = currentCodeSystem.getResourceURI();
+		if (upgradeOf == null) {
+			checkLatestVersion(resourceUrisToCheck, repositoryContext, codeSystemUri.withoutPath());
 		}
 		
-		return context.service(ResourceURIPathResolver.class).resolve(context, codeSystemsToCheck);
+		return repositoryContext.service(ResourceURIPathResolver.class).resolve(repositoryContext, resourceUrisToCheck);
 	}
 
-	private Optional<Version> getLatestCodeSystemVersion(RepositoryContext context, ResourceURI codeSystemUri) {
-		return ResourceRequests.prepareSearchVersion()
-				.one()
-				.filterByResource(codeSystemUri)
-				.sortBy(SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME))
-				.buildAsync()
-				.get(context)
-				.stream()
-				.findFirst();
+	private void checkLatestVersion(
+		final List<ResourceURI> codeSystemsToCheck, 
+		final RepositoryContext context, 
+		final ResourceURI resourceUri
+	) {
+		ResourceRequests.prepareSearchVersion()
+			.one()
+			.filterByResource(resourceUri)
+			.sortBy(SearchResourceRequest.Sort.fieldDesc(VersionDocument.Fields.EFFECTIVE_TIME))
+			.buildAsync()
+			.get(context)
+			.stream()
+			.findFirst()
+			.ifPresent(v -> codeSystemsToCheck.add(v.getVersionResourceURI()));
 	}
-	
 }
