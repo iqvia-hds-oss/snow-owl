@@ -24,8 +24,9 @@ import org.hl7.fhir.r5.model.OperationOutcome.IssueSeverity;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
 import org.hl7.fhir.r5.model.OperationOutcome.OperationOutcomeIssueComponent;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.ApiException;
-import com.google.common.base.Strings;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSortedSet;
 
 /**
@@ -164,20 +165,73 @@ public class FhirException extends ApiException {
 	
 	public static CodeableConcept toDetails(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode, String location) {
 		String operationOutcomeCodeDisplay = operationOutcomeCode.getDisplay();
-		// TODO should we raise IAE when location is empty but the display is a template?
-		if (operationOutcomeCodeDisplay.contains("%s") && !Strings.isNullOrEmpty(location)) {
+		
+		// A single placeholder will split the original input in two, so we need to subtract 1 from the count
+		final long placeholderCount = Splitter.on("%s")
+			.limit(3)
+			.splitToStream(operationOutcomeCodeDisplay)
+			.count() - 1L;
+		
+		if (placeholderCount == 1 && !StringUtils.isEmpty(location)) {
 			operationOutcomeCodeDisplay = String.format(operationOutcomeCodeDisplay, location);
+		} else {
+			operationOutcomeCodeDisplay = getDisplayWithoutPlaceholders(operationOutcomeCode);
 		}
+		
 		return new CodeableConcept()
-					.addCoding(
-						new Coding()
-							.setCode(operationOutcomeCode.toCode())
-							.setSystem(operationOutcomeCode.getSystem())
-							.setDisplay(operationOutcomeCodeDisplay)
-					)
-					.setText(operationOutcomeCodeDisplay);
+			.addCoding(new Coding()
+				.setCode(operationOutcomeCode.toCode())
+				.setSystem(operationOutcomeCode.getSystem())
+				// XXX: The display for the outcome code should _not_ be interpolated, as that is not the original label
+				// .setDisplay(operationOutcomeCodeDisplay) 
+			)
+			.setText(operationOutcomeCodeDisplay);
 	}
 	
+	/**
+	 * Returns a display string for the given {@link org.hl7.fhir.r4.model.codesystems.OperationOutcome} 
+	 * code with any <code>%s</code> placeholders removed, producing correct English for those literals
+	 * that originally contained format arguments. For the rest of the codes the original display is 
+	 * preserved.
+	 *
+	 * @param operationOutcomeCode the code whose placeholder-free display is requested
+	 * @return a display string without placeholders, never <code>null</code>
+	 */
+	public static String getDisplayWithoutPlaceholders(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode) {
+		switch (operationOutcomeCode) {
+			case MSGBADFORMAT:              return "Bad Format";
+			case MSGBADSYNTAX:              return "Bad Syntax";
+			case MSGCANTPARSECONTENT:       return "Unable to parse content type of feed";
+			case MSGCANTPARSEROOT:          return "Unable to parse element root of feed";
+			case MSGDATEFORMAT:             return "The Date value is not in the correct format (XML Date Format required)";
+			case MSGDELETEDID:              return "The resource has been deleted";
+			case MSGDUPLICATEID:            return "Duplicate ID for resource type";
+			case MSGERRORPARSING:           return "Error parsing resource XML";
+			case MSGIDINVALID:              return "ID has an invalid character";
+			case MSGIDTOOLONG:              return "ID is too long (length limit 36)";
+			case MSGLOCALFAIL:              return "Unable to resolve local reference to resource";
+			case MSGNOEXIST:                return "Resource ID does not exist";
+			case MSGNOMATCH:                return "No Resource found matching the query";
+			case MSGNOMODULE:               return "No module could be found to handle the request";
+			case MSGOPNOTALLOWED:           return "Operation not allowed for resource (due to local configuration)";
+			case MSGPARAMCHAINED:           return "Unknown chained parameter name";
+			case MSGPARAMINVALID:           return "Parameter content is invalid";
+			case MSGPARAMMODIFIERINVALID:   return "Parameter modifier is invalid";
+			case MSGPARAMNOREPEAT:          return "Parameter is not allowed to repeat";
+			case MSGPARAMUNKNOWN:           return "Parameter not understood";
+			case MSGSORTUNKNOWN:            return "Unknown sort parameter name";
+			case MSGTRANSACTIONDUPLICATEID: return "Duplicate Identifier in transaction";
+			case MSGUNHANDLEDNODETYPE:      return "Unhandled xml node type";
+			case MSGUNKNOWNCONTENT:         return "Unknown Content";
+			case MSGUNKNOWNTYPE:            return "Resource Type not recognised";
+			case MSGVERSIONAWARECONFLICT:   return "Update Conflict";
+			case MSGWRONGNS:                return "This does not appear to be a FHIR element or resource (wrong namespace)";
+			case SEARCHMULTIPLE:            return "Error: Multiple matches exist for search parameters";
+			case SEARCHNONE:                return "Error: no processable search found for search parameters";
+			default:                        return operationOutcomeCode.getDisplay();
+		}
+	}
+
 	/**
 	 * Returns a CodeableConcept with only the given message in the text field. This is used when an error message does not have to contain a full {@link Coding}
 	 * 
@@ -186,6 +240,6 @@ public class FhirException extends ApiException {
 	 */
 	public static CodeableConcept toDetails(String message) {
 		return new CodeableConcept()
-					.setText(message);
+			.setText(message);
 	}
 }
