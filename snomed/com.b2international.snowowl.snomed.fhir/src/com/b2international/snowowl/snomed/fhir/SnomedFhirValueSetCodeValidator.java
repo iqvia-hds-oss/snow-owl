@@ -53,8 +53,15 @@ public final class SnomedFhirValueSetCodeValidator extends SnomedFhirImplicitVal
 		
 		configureValueSetQuery(valueSet, conceptSearchOptions);
 		
-		// seed already fetched resource information to prevent refetching the metadata
-		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		// seed already fetched resource information to prevent refetching the metadata, but only if no date parameter is provided
+		final ServiceProvider searchContext;
+		
+		if (parameters.getDate() == null) {
+			searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		} else {
+			searchContext = context;
+		}
+		
 		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
 		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
 				.evaluate(codeSystemUri, searchContext, conceptSearchOptions.build())
