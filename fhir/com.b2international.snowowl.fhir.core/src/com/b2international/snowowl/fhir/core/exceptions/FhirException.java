@@ -221,7 +221,7 @@ public class FhirException extends ApiException {
 			case MSGPARAMUNKNOWN:           return "Parameter not understood";
 			case MSGSORTUNKNOWN:            return "Unknown sort parameter name";
 			case MSGTRANSACTIONDUPLICATEID: return "Duplicate Identifier in transaction";
-			case MSGUNHANDLEDNODETYPE:      return "Unhandled xml node type";
+			case MSGUNHANDLEDNODETYPE:      return "Unhandled XML node type";
 			case MSGUNKNOWNCONTENT:         return "Unknown Content";
 			case MSGUNKNOWNTYPE:            return "Resource Type not recognised";
 			case MSGVERSIONAWARECONFLICT:   return "Update Conflict";
