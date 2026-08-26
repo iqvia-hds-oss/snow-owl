@@ -15,15 +15,20 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.OperationOutcome;
+import org.hl7.fhir.r5.model.OperationOutcome.OperationOutcomeIssueComponent;
 
 import com.b2international.commons.CompareUtils;
+import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
@@ -99,14 +104,19 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			throw new IllegalStateException("Should not happen");
 		}
 		
-		final Map<String, Concept> conceptsById = fetchCodes(context, codeSystem, codings);
+		final boolean[] invalidDate = { false };
+		final Map<String, Concept> conceptsById = fetchCodes(context, codeSystem, codings, invalidDate);
 		
 		final String system = codeSystem.getUrl();
 		final String version = codeSystem.getVersion();
 		
 		Concept conceptToDisplayInResult = null;
-		final StringJoiner messages = new StringJoiner("; ");
 		final List<OperationOutcome.OperationOutcomeIssueComponent> issues = new ArrayList<>(1);
+		
+		if (invalidDate[0]) {
+			final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidDateIssue(system);
+			issues.add(issue);
+		}
 		
 		for (int i = 0; i < codings.size(); i++) {
 			
@@ -122,7 +132,6 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			if (concept == null) {
 				final String location = String.format(propertyTemplate, i);
 				final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidCodeIssue(code, system, version, location);
-				messages.add(issue.getDetails().getText());
 				issues.add(issue);
 			} else {
 				// Display information about the first valid concept that the system has found
@@ -139,7 +148,6 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 					if (expectedDisplay != null && !expectedDisplay.equals(actualDisplay)) {
 						
 						final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidDisplayIssue(code, expectedDisplay, actualDisplay);
-						messages.add(issue.getDetails().getText());
 						issues.add(issue);
 						
 					} else {
@@ -166,26 +174,27 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 		}
 		
 		if (!CompareUtils.isEmpty(issues)) {
+			final String message = issues.stream()
+				.map(issue -> issue.getDetails().getText())
+				.filter(s -> !Strings.isNullOrEmpty(s))
+				.collect(Collectors.joining("; "));
+			
 			result
 				// if at least one code is found in case of a codeableConcept request, then regardless of the issues this should be marked true
 				.setResult(conceptToDisplayInResult != null && hasCodeableConcept)
-				.setIssues(new OperationOutcome().setIssue(issues));
+				.setIssues(new OperationOutcome().setIssue(issues))
+				.setMessage(message);
+		
 		} else {
-			// if there are not issues the result if always true
+			// if there are no issues the result is always true
 			result
 				.setResult(true);
 		}
-		
-		final String message = messages.toString();
-		if (!CompareUtils.isEmpty(message)) {
-			result.setMessage(message);
-		}
 	
 		return result;
-
 	}
 
-	private Map<String, Concept> fetchCodes(ServiceProvider context, CodeSystem codeSystem, final List<Coding> codings) {
+	private Map<String, Concept> fetchCodes(ServiceProvider context, CodeSystem codeSystem, final List<Coding> codings, final boolean[] invalidDate) {
 		final Set<String> codes = codings.stream()
 			.map(Coding::getCode)
 			.filter(code -> !Strings.isNullOrEmpty(code))
@@ -207,13 +216,43 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
 			.build();
 		
-		// seed already fetched resource information to prevent refetching the metadata
-		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		// seed already fetched resource information, but only if no point-in-time parameter is specified
+		final ServiceProvider searchContext;
 		
-		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-			.evaluate(codeSystemUri, searchContext, conceptSearchOptions)
-			.stream()
-			.collect(Collectors.toMap(Concept::getId, c -> c));
+		if (parameters.getDate() == null) {
+			searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		} else {
+			searchContext = context;
+		}
+
+		try {
+			
+			return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
+				.evaluate(codeSystemUri, searchContext, conceptSearchOptions)
+				.stream()
+				.collect(Collectors.toMap(Concept::getId, c -> c));
+		
+		} catch (final NotFoundException e) {
+			// We know that the code system exists, in general. If it goes missing at this stage, the date parameter is invalid.
+			invalidDate[0] = true;
+			return Map.of();
+		}
+	}
+
+	private OperationOutcomeIssueComponent buildInvalidDateIssue(final String system) {
+		final String message = String.format("CodeSystem '%s' does not exist at the specified date '%s'", 
+			system, 
+			parameters.getDate().toHumanDisplay()
+		);
+		
+		return new OperationOutcome.OperationOutcomeIssueComponent()
+			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
+			.setCode(OperationOutcome.IssueType.NOTFOUND)
+			.setDetails(new CodeableConcept()
+				.addCoding(new Coding()
+					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
+					.setCode("not-found"))
+				.setText(message));
 	}
 
 	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidCodeIssue(String code, String system, String version, String location) {
