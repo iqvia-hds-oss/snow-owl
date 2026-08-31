@@ -79,7 +79,8 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 			throw new BadRequestException("Either sourceCode or targetCode must be provided to identify the code that is to be translated");
 		};
 		
-// XXX: according to the fhir specification system is required if sourceCode was provided		
+// XXX: according to the fhir specification system is required if sourceCode was provided, 
+//	however, currently we must use the url to select a specific concept map which should already define the source system
 //		if (parameters.getSourceCode() != null && parameters.getSystem() == null) {
 //			throw new BadRequestException("'system' is required when using 'sourceCode'");
 //		}
