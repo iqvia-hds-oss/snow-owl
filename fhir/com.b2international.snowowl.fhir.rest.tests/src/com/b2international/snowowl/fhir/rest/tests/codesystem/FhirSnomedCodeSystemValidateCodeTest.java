@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.rest.tests.codesystem;
 
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.hl7.fhir.r5.model.CodeableConcept;
@@ -102,6 +103,22 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 		.body("parameter.find { it.name == 'version' }.valueString", equalTo("http://snomed.info/sct/900000000000207008/version/20200131"));
 	}
 	
+	@Test
+	public void GET_CodeSystem_$validate_code_ExistingCode_PastDate() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.queryParam("version", SNOMEDCT_URL)
+			.queryParam("code", Concepts.ROOT_CONCEPT)
+			.queryParam("date", "1990-01-01")
+			.when().get(CODESYSTEM_VALIDATE_CODE)
+			.then().assertThat()
+			.statusCode(200)
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("does not exist at the specified date"));
+	}
+
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R4() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()

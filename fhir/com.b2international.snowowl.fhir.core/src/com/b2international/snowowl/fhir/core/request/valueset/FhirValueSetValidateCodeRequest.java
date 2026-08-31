@@ -17,14 +17,16 @@ package com.b2international.snowowl.fhir.core.request.valueset;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.OperationOutcome;
+import org.hl7.fhir.r5.model.OperationOutcome.OperationOutcomeIssueComponent;
 import org.hl7.fhir.r5.model.ValueSet;
 
 import com.b2international.commons.CompareUtils;
+import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeParameters;
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeResultParameters;
 import com.b2international.snowowl.core.RepositoryManager;
@@ -108,16 +110,32 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			throw new BadRequestException("$validate-code must supply a 'system'");
 		}
 		
-		final ValueSet.ValueSetExpansionContainsComponent valueSetExpansionContainsComponent = context.service(RepositoryManager.class)
+		boolean invalidDate;
+		ValueSet.ValueSetExpansionContainsComponent valueSetExpansionContainsComponent;
+		
+		try {
+			
+			valueSetExpansionContainsComponent = context.service(RepositoryManager.class)
 				.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
 				.optionalService(FhirValueSetCodeValidator.class)
 				.orElseThrow(() -> new BadRequestException("No validate-code implementation is available to handle valueSet: " + getUrl()))
 				.validateCode(context, valueSet, code, parameters);
+			
+			invalidDate = false;
+			
+		} catch (final NotFoundException e) {
+			valueSetExpansionContainsComponent = null;
+			invalidDate = true;
+		}
 		
 		String conceptCodeToDisplayInResult = null;
 		String conceptDisplay = null;
-		final StringJoiner messages = new StringJoiner("; ");
 		final List<OperationOutcome.OperationOutcomeIssueComponent> issues = new ArrayList<>(1);
+		
+		if (invalidDate) {
+			final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidDateIssue(system);
+			issues.add(issue);
+		}
 		
 		if (valueSetExpansionContainsComponent == null) {
 			
@@ -131,7 +149,6 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			final String location = String.format(propertyTemplate, 0);
 			final OperationOutcome.OperationOutcomeIssueComponent issue = buildNotInVsIssue(code, system, location, valueSet.getUrl());
 			// TODO validate and add issue if the provided code is not from the supplied system
-			messages.add(issue.getDetails().getText());
 			issues.add(issue);
 
 		} else {
@@ -156,7 +173,6 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				if (expectedDisplay != null && !expectedDisplay.equals(conceptDisplay)) {
 					
 					final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidDisplayIssue(code, expectedDisplay, conceptDisplay);
-					messages.add(issue.getDetails().getText());
 					issues.add(issue);
 					
 				} else {
@@ -182,23 +198,41 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		}
 		
 		if (!CompareUtils.isEmpty(issues)) {
+			final String message = issues.stream()
+				.map(issue -> issue.getDetails().getText())
+				.filter(s -> !Strings.isNullOrEmpty(s))
+				.collect(Collectors.joining("; "));
+			
 			result
 				// if at least one code is found in case of a codeableConcept request, then regardless of the issues this should be marked true
 				.setResult(conceptCodeToDisplayInResult != null && hasCodeableConcept)
-				.setIssues(new OperationOutcome().setIssue(issues));
+				.setIssues(new OperationOutcome().setIssue(issues))
+				.setMessage(message);
+			
 		} else {
-			// if there are no issues the result if always true
+			// if there are no issues the result is always true
 			result
 				.setResult(true);
-		}
-		
-		final String message = messages.toString();
-		if (!CompareUtils.isEmpty(message)) {
-			result.setMessage(message);
 		}
 	
 		return result;
 	}
+	
+	private OperationOutcomeIssueComponent buildInvalidDateIssue(final String system) {
+		final String message = String.format("ValueSet or referenced CodeSystem '%s' does not exist at the specified date '%s'", 
+			system, 
+			parameters.getDate().toHumanDisplay()
+		);
+		
+		return new OperationOutcome.OperationOutcomeIssueComponent()
+			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
+			.setCode(OperationOutcome.IssueType.NOTFOUND)
+			.setDetails(new CodeableConcept()
+				.addCoding(new Coding()
+					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
+					.setCode("not-found"))
+				.setText(message));
+	}	
 	
 	private OperationOutcome.OperationOutcomeIssueComponent buildNotInVsIssue(String code, String system, String location, String valueSetUrl) {
 		final String message = String.format("The provided code '%s#%s' was not found in the value set '%s'",
