@@ -255,7 +255,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		}
 		final String modifiedLocale = modifier.apply(parts[0]);
 		if (parts.length > 1) {
-			return String.format("%s;%s", modifiedLocale, parts[1]);
+			return String.join(";", modifiedLocale, parts[1]);
 		} else {
 			return modifiedLocale;
 		}
