@@ -23,6 +23,8 @@ import org.hl7.fhir.r5.model.Meta;
 import org.hl7.fhir.r5.model.MetadataResource;
 
 import com.b2international.commons.StringUtils;
+import com.b2international.commons.exceptions.BadRequestException;
+import com.b2international.index.revision.RevisionBranch.BranchNameValidator;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.ResourceRequests;
@@ -56,7 +58,16 @@ public interface FhirWriteSupport {
 	 * IDs, versioned resource IDs and FHIR identifiers).
 	 */
 	char SAFE_ID_CHARACTER = '_';
-
+	
+	default boolean isValidVersion(final ServiceProvider context, String version) {
+		try {
+			context.service(BranchNameValidator.class).checkName(version);
+			return true;
+		} catch (BadRequestException e) {
+			return false;
+		}
+	}
+	
 	default LocalDate getEffectiveDate(final MetadataResource resource, final LocalDate defaultEffectiveDate) {
 		return Optional.ofNullable(resource.getDate())
 			.or(() -> Optional.ofNullable(resource.getMeta()).map(Meta::getLastUpdated))
