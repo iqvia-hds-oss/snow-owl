@@ -53,19 +53,13 @@ public abstract class EffectiveTimeChangeProcessorBase<T extends RevisionDocumen
 	
 	@Override
 	public void process(final StagingArea staging, final RevisionSearcher searcher) throws IOException {
-		final boolean restoreUnsetEffectiveTime = staging.isMerge() && !staging.isSquashMerge();
-
-		/*
-		 * Include all released components regardless of effective time for non-squash
-		 * merge operations; collect released components with unset effective
-		 * time only otherwise (squash merge and regular commits)
-		 */
+		// Collect released components with an unset effective time
 		final Multimap<Class<?>, T> componentsByType = ArrayListMultimap.create();
 		
 		staging.getChangedObjects()
 			.filter(documentClass::isInstance)
 			.map(documentClass::cast)
-			.filter(doc -> isReleased(doc) && (restoreUnsetEffectiveTime || EffectiveTimes.isUnset(getEffectiveTime(doc))))
+			.filter(doc -> isReleased(doc) && EffectiveTimes.isUnset(getEffectiveTime(doc)))
 			.forEach(doc -> componentsByType.put(doc.getClass(), doc));
 
 		if (componentsByType.isEmpty())	{
@@ -110,31 +104,14 @@ public abstract class EffectiveTimeChangeProcessorBase<T extends RevisionDocumen
 					}
 					
 					final boolean canRestore = canRestoreEffectiveTime(changedRevision, previousVersion);
-					
-					if (canRestore 
-						&& getEffectiveTime(changedRevision) < getEffectiveTime(previousVersion)
-					) {
+					if (canRestore && getEffectiveTime(changedRevision) < getEffectiveTime(previousVersion)) {
 						/*
 						 * Current component state matches versioned state, but effective time is
-						 * smaller or unset. "Roll forward" to match value stored in versioned state.
+						 * smaller or unset (-1 is smaller than any valid effective time). "Roll forward" to 
+						 * match the value stored in versioned state.
 						 */
 						final T restoredRevision = copyWithEffectiveTime(changedRevision, getEffectiveTime(previousVersion));
 						stageChange(changedRevision, restoredRevision);
-						continue;
-					}
-					
-					if (restoreUnsetEffectiveTime 
-						&& !canRestore 
-						&& !EffectiveTimes.isUnset(getEffectiveTime(changedRevision)) 
-						&& getEffectiveTime(changedRevision) <= getEffectiveTime(previousVersion)
-					) {
-						/*
-						 * Current component state diverges from the most recent versioned state, but
-						 * effective time is smaller than or equal to the most recent versioned state
-						 * (forward-dating is allowed). Force the effective time to be unset.
-						 */
-						final T unsetRevision = copyWithEffectiveTime(changedRevision, EffectiveTimes.UNSET_EFFECTIVE_TIME);
-						stageChange(changedRevision, unsetRevision);
 						continue;
 					}
 				}
@@ -203,7 +180,8 @@ public abstract class EffectiveTimeChangeProcessorBase<T extends RevisionDocumen
 		
 		// As this change processor now gets called during merges, we need an alternate way to resolve the current CodeSystem
 		final TerminologyResource currentCodeSystem = repositoryContext.optionalService(TerminologyResource.class)
-			.orElseGet(() -> repositoryContext.service(PathTerminologyResourceResolver.class).resolve(repositoryContext, toolingId, branchPath));
+			.orElseGet(() -> repositoryContext.service(PathTerminologyResourceResolver.class)
+				.resolve(repositoryContext, toolingId, branchPath));
 
 		final List<ResourceURI> resourceUrisToCheck = Lists.newArrayList();
 		

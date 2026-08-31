@@ -752,11 +752,6 @@ public final class StagingArea {
 		return mergeSourceRef.path();
 	}
 	
-	public boolean isSquashMerge() {
-		Preconditions.checkState(isMerge(), "Cannot get squash merge state in non-merge scenarios. Start a merge() before calling this method.");
-		return squashMerge;
-	}
-	
 	/**
 	 * Roll back staging area to an empty state, removing all staged changes, merge states, everything.
 	 */
