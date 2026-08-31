@@ -18,6 +18,7 @@ package com.b2international.snowowl.core.jobs;
 import static org.junit.Assert.*;
 
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CyclicBarrier;
@@ -109,7 +110,7 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 	
 	@Test
 	public void scheduleAndWaitDone() throws Exception {
-		final String jobId = schedule("scheduleAndWaitDone", context -> RESULT);
+		final String jobId = schedule("scheduleAndWaitDone", _ -> RESULT);
 		final RemoteJobEntry entry = waitDone(jobId);
 		assertEquals(RemoteJobState.FINISHED, entry.getState());
 		assertEquals(RESULT, entry.getResult(mapper).get("value"));
@@ -159,7 +160,7 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 		
 		CyclicBarrier barrier = new CyclicBarrier(2);
 		
-		final String deletedJobId = schedule("scheduleAndDelete", context -> {
+		final String deletedJobId = schedule("scheduleAndDelete", _ -> {
 			// wait until barrier is ready (main thread initiated delete request), return the result
 			try {
 				barrier.await(10, TimeUnit.SECONDS);
@@ -201,7 +202,7 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 		assertEquals(1, tracker.getJobCounter());
 		
 		// schedule another job to trigger the purge (purge threshold is 2) 
-		final String anotherJobId = schedule("anotherjob", context -> RESULT);
+		final String anotherJobId = schedule("anotherjob", _ -> RESULT);
 		waitDone(anotherJobId);
 		
 		// we need to wait for the purge to finish and there is no real notification for it :(
@@ -229,7 +230,7 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 		assertEquals(0, tracker.getJobCounter());
 		
 		// this is a regular job, not marked for auto clean up
-		final String jobId = schedule("scheduleAndCleanupStale", context -> RESULT);
+		final String jobId = schedule("scheduleAndCleanupStale", _ -> RESULT);
 		waitDone(jobId);
 		
 		// assert the job still exist
@@ -246,7 +247,7 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 		Thread.sleep(DEFAULT_STALE_JOB_AGE + 1); // make sure the job becomes stale
 		
 		// schedule second job
-		final String secondJobId = schedule("secondjob", context -> RESULT);
+		final String secondJobId = schedule("secondjob", _ -> RESULT);
 		waitDone(secondJobId);
 		
 		// need to wait for the remove notification because the second job becomes 'done' before the purge finishes 
@@ -315,9 +316,37 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 		verifyJobEvents(jobId, 1, 12, 0);
 	}
 	
+	@Test
+	public void scheduleWithRestart() throws Exception {
+		final String key = "scheduleWithRestart";
+
+		// schedule the first run with a fixed key and restart enabled
+		final String firstJobId = scheduleWithRestart(key, "scheduleWithRestart 1", _ -> "first");
+
+		final RemoteJobEntry firstEntry = waitDone(firstJobId);
+		assertEquals(RemoteJobState.FINISHED, firstEntry.getState());
+		assertEquals("first", firstEntry.getResult(mapper).get("value"));
+
+		// schedule the second run with the same key and restart enabled
+		final String secondJobId = scheduleWithRestart(key, "scheduleWithRestart 2", _ -> "second");
+
+		// both runs share the same derived job ID
+		assertEquals(firstJobId, secondJobId);
+
+		final RemoteJobEntry secondEntry = waitDone(secondJobId);
+		assertEquals(RemoteJobState.FINISHED, secondEntry.getState());
+		assertEquals("second", secondEntry.getResult(mapper).get("value"));
+
+		// verify job events for both runs combined:
+		// 2 added   (one for each run)
+		// 4 changed (two state change for each run)
+		// 0 removed (the first run is _not_ canceled or deleted)
+		verifyJobEvents(firstJobId, 2, 4, 0);
+	}
+
 	@Test(expected = NotFoundException.class)
 	public void scheduleAndClean() throws Exception {
-		final String jobId = schedule("scheduleAndClean", true, context -> RESULT);
+		final String jobId = scheduleWithAutoClean("scheduleAndClean", _ -> RESULT);
 		waitDone(jobId);
 	}
 	
@@ -379,19 +408,29 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 	}
 	
 	private String schedule(String description, Request<ServiceProvider, ?> request) {
-		return schedule(description, false, request);
+		return schedule(UUID.randomUUID().toString(), description, false, false, request);
 	}
 	
-	private String schedule(String description, boolean autoClean, Request<ServiceProvider, ?> request) {
+	private String scheduleWithAutoClean(String description, Request<ServiceProvider, ?> request) {
+		return schedule(UUID.randomUUID().toString(), description, true, false, request);
+	}
+	
+	private String scheduleWithRestart(String key, String description, Request<ServiceProvider, ?> request) {
+		return schedule(key, description, false, true, request);
+	}
+
+	private String schedule(String key, String description, boolean autoClean, boolean restart, Request<ServiceProvider, ?> request) {
 		return JobRequests.prepareSchedule()
-				.setUser(USER)
-				.setDescription(description)
-				.setRequest(request)
-				.setAutoClean(autoClean)
-				.build()
-				.execute(context);
+			.setKey(key)
+			.setUser(USER)
+			.setDescription(description)
+			.setRequest(request)
+			.setAutoClean(autoClean)
+			.setRestart(restart)
+			.build()
+			.execute(context);
 	}
-	
+
 	private void cancel(String jobId) {
 		JobRequests.prepareCancel(jobId).build().execute(context);
 	}
