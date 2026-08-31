@@ -99,7 +99,7 @@ final class ClassificationCreateRequest implements Request<BranchContext, String
 				.setReasonerId(reasonerId)
 				.setParentLockContext(parentLockContext)
 				.addAllConcepts(additionalConcepts)
-				.build(branch);
+				.build(branch); //XXX: Temporary solution until job parameters automatically store absolute path needed for result handling
 		
 		final ClassificationSchedulingRule rule = ClassificationSchedulingRule.create(
 				config.getMaxReasonerCount(), 
