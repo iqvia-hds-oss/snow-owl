@@ -15,10 +15,7 @@
  */
 package com.b2international.snowowl.fhir.core.request.codesystem;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -202,9 +199,13 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 	
 		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
 		ResourceURI codeSystemUri = resource.getResourceURI();
-		
-		if (parameters.getDate() != null) {
-			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
+
+		final OptionalLong parameterTimestamp = (parameters.getDate() == null) 
+			? OptionalLong.empty()
+			: OptionalLong.of(parameters.getDate().getValue().getTime());
+
+		if (parameterTimestamp.isPresent()) {
+			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameterTimestamp.getAsLong()));
 		}
 		
 		final String displayLanguage = compactLocale(parameters.getDisplayLanguage());
@@ -216,10 +217,14 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, AcceptLanguageHeader.parseHeader(displayLanguage))
 			.build();
 		
-		// seed already fetched resource information, but only if no point-in-time parameter is specified
+		/* 
+		 * seed already fetched resource information, but only if the point-in-time parameter 
+		 * is set before the already fetched (most recent) resource's creation time
+		 */
 		final ServiceProvider searchContext;
-		
-		if (parameters.getDate() == null) {
+		final long createdTimestamp = resource.getCreatedAt();
+
+		if (parameterTimestamp.isEmpty() || parameterTimestamp.getAsLong() >= createdTimestamp) {
 			searchContext = context.inject().bind(ResourceFragment.class, resource).build();
 		} else {
 			searchContext = context;

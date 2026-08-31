@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.snomed.fhir;
 
+import java.util.OptionalLong;
+
 import org.hl7.fhir.r5.model.ValueSet;
 
 import com.b2international.commons.http.AcceptLanguageHeader;
@@ -39,8 +41,12 @@ public final class SnomedFhirValueSetCodeValidator extends SnomedFhirImplicitVal
 		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(valueSet);
 		ResourceURI codeSystemUri = resource.getResourceURI();
 		
-		if (parameters.getDate() != null) {
-			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
+		final OptionalLong parameterTimestamp = (parameters.getDate() == null) 
+			? OptionalLong.empty()
+			: OptionalLong.of(parameters.getDate().getValue().getTime());
+
+		if (parameterTimestamp.isPresent()) {
+			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameterTimestamp.getAsLong()));
 		}
 		
 		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
@@ -53,10 +59,14 @@ public final class SnomedFhirValueSetCodeValidator extends SnomedFhirImplicitVal
 		
 		configureValueSetQuery(valueSet, conceptSearchOptions);
 		
-		// seed already fetched resource information to prevent refetching the metadata, but only if no date parameter is provided
+		/* 
+		 * seed already fetched resource information, but only if the point-in-time parameter 
+		 * is set before the already fetched (most recent) resource's creation time
+		 */
 		final ServiceProvider searchContext;
-		
-		if (parameters.getDate() == null) {
+		final long createdTimestamp = resource.getCreatedAt();
+
+		if (parameterTimestamp.isEmpty() || parameterTimestamp.getAsLong() >= createdTimestamp) {
 			searchContext = context.inject().bind(ResourceFragment.class, resource).build();
 		} else {
 			searchContext = context;
