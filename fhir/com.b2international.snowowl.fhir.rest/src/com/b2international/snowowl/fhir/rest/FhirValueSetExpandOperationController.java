@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.events.util.Promise;
@@ -132,6 +133,10 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -173,6 +178,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			count, 
 			after,
 			accept,
+			acceptLanguage,
 			_format,
 			_pretty);
 		
@@ -186,7 +192,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			.setWithHistorySupplements(withHistorySupplements)
 			.setIncludeDesignations(includeDesignations);
 		
-		return expand(parameters, nextUriBuilder, accept, _format, _pretty);
+		return expand(parameters, nextUriBuilder, accept, _format, _pretty, acceptLanguage);
 	}
 	
 	/**
@@ -278,6 +284,10 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
+		
 		@Parameter(description = "Prefer header", schema = @Schema(
 			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
 			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
@@ -343,11 +353,12 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			parameters.getWithHistorySupplements() == null ? null : parameters.getWithHistorySupplements().getValue(), 
 			parameters.getCount() == null ? null : parameters.getCount().getValue(), 
 			parameters.getAfter() == null ? null : parameters.getAfter().getValue(),
+			acceptLanguage,
 			accept,
 			_format,
 			_pretty);
 
-		return expand(parameters, nextUriBuilder, accept, _format, _pretty);
+		return expand(parameters, nextUriBuilder, accept, _format, _pretty, acceptLanguage);
 	}
 
 	/**
@@ -431,6 +442,10 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -472,6 +487,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			count, 
 			after,
 			accept,
+			acceptLanguage,
 			_format,
 			_pretty);
 		
@@ -486,7 +502,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			.setWithHistorySupplements(withHistorySupplements)
 			.setIncludeDesignations(includeDesignations);
 		
-		return expand(expandRequest, nextUriBuilder, accept, _format, _pretty);
+		return expand(expandRequest, nextUriBuilder, accept, _format, _pretty, acceptLanguage);
 	}
 
 	private Promise<ResponseEntity<byte[]>> expand(
@@ -494,8 +510,12 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		final UriComponentsBuilder nextUriBuilder,
 		final String accept,
 		final String _format,
-		final Boolean _pretty
+		final Boolean _pretty,
+		final String acceptLanguage
 	) {
+		if (parameters.getDisplayLanguage() == null || parameters.getDisplayLanguage().getCode() == null) {
+			parameters.setDisplayLanguage(acceptLanguage);
+		}
 		
 		return FhirRequests.valueSets().prepareExpand()
 			.setParameters(parameters)

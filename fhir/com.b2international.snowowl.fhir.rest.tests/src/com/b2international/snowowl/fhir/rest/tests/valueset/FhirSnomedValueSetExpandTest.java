@@ -26,6 +26,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.hasSize;
 
 import org.junit.Test;
+import org.springframework.http.HttpHeaders;
 
 import com.b2international.commons.json.Json;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
@@ -271,6 +272,23 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", RestExtensions.encodeQueryParameter(SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=ecl/<!138875005"))
 			.queryParam("displayLanguage", "en-us,en-gb")
+			.when().get(VALUESET_EXPAND)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("ValueSet"))
+			.body("id", notNullValue())
+			.rootPath("expansion.contains[0]")
+				.body("code", equalTo("105590001"))
+				.body("system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+				.body("version", equalTo(SNOMEDCT_URL))
+				.body("display", equalTo("Substance"));
+	}
+	
+	@Test
+	public void expandWithMultipleAcceptLanguageHeader() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", RestExtensions.encodeQueryParameter(SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=ecl/<!138875005"))
+			.header(HttpHeaders.ACCEPT_LANGUAGE, "en-us,en-gb")
 			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)

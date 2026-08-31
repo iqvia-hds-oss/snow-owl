@@ -26,6 +26,9 @@ import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 
+/**
+ * @since 9.5.0
+ */
 public class FhirLocaleTest {
 
 	@Test
@@ -87,6 +90,37 @@ public class FhirLocaleTest {
 	}
 	
 	@Test
+	public void compactValidLanguageWithQuality() {
+		assertEquals("en;q=0.8", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en;q=0.8")));
+	}
+	
+	@Test
+	public void compactValidCountryWithQuality() {
+		assertEquals("en-US;q=0.8", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US;q=0.8")));
+	}
+	
+	@Test
+	public void compactValidPrivateUseExtensionWithQuality() {
+		assertEquals("en-US-x-compact;q=0.8", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US-x-compact;q=0.8")));
+	}
+	
+	@Test
+	public void compactLongPrivateUseExtensionWithQuality() {
+		// 19 digits represent the SCTID of a language reference set
+		assertEquals("en-US-x-1234567890123456789;q=0.8", FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US-x-12345678-90123456-789;q=0.8")));
+	}
+	
+	@Test
+	public void compactValidLanguagesWithQuality() {
+		assertEquals("en;q=0.8,it;q=0.6,de;q=0.4", FhirCodeSystemOperationRequest.compactLocale("en;q=0.8,it;q=0.6,de;q=0.4"));
+	}
+	
+	@Test
+	public void compactValidLanguagesWildcardWithQuality() {
+		assertEquals("en;q=0.8,it;q=0.6,*;q=0.4", FhirCodeSystemOperationRequest.compactLocale("en;q=0.8,it;q=0.6,*;q=0.4"));
+	}
+	
+	@Test
 	public void expandNull() {
 		assertNull(FhirCodeSystemOperationRequest.expandLocale(null));
 	}
@@ -126,7 +160,6 @@ public class FhirLocaleTest {
 		// 19 digits should be broken up into at most 8 character segments 
 		assertEquals("en-US-x-12345678-90123456-789", FhirCodeSystemOperationRequest.expandLocale("en-US-x-1234567890123456789"));
 	}
-	
 
 	@Test
 	public void expandMultipleLocalesWithoutPrivateUseExtensions() {
@@ -146,5 +179,56 @@ public class FhirLocaleTest {
 	@Test
 	public void expandMultipleLocalesIncludingWildcard() {
 		assertEquals("en-US-x-12345678-9,*,hu-HU", FhirCodeSystemOperationRequest.expandLocale("en-US-x-123456789,*,hu-HU"));
+	}
+	
+	@Test
+	public void expandValidLanguageWithQuality() {
+		assertEquals("en;q=0.8", FhirCodeSystemOperationRequest.expandLocale("en;q=0.8"));
+	}
+	
+	@Test
+	public void expandValidCountryWithQuality() {
+		assertEquals("en-US;q=0.8", FhirCodeSystemOperationRequest.expandLocale("en-US;q=0.8"));
+	}
+	
+	@Test
+	public void expandShortPrivateUseExtensionWithQuality() {
+		// Short private use extensions will work but are not supported
+		assertEquals("en-US-x-expand;q=0.8", FhirCodeSystemOperationRequest.expandLocale("en-US-x-expand;q=0.8"));
+	}
+	
+	@Test
+	public void expandSplitPrivateUseExtensionWithQuality() {
+		/*
+		 * Extensions that are already broken up into shorter segments may get split
+		 * further when passed through this method.
+		 */
+		assertEquals("en-US-x-expanded--priv-us-e;q=0.8", FhirCodeSystemOperationRequest.expandLocale("en-US-x-expanded-priv-use;q=0.8"));
+	}
+	
+	@Test
+	public void expandInvalidPrivateUseExtensionWithQuality() {
+		// 19 digits should be broken up into at most 8 character segments 
+		assertEquals("en-US-x-12345678-90123456-789;q=0.8", FhirCodeSystemOperationRequest.expandLocale("en-US-x-1234567890123456789;q=0.8"));
+	}
+
+	@Test
+	public void expandMultipleLocalesWithoutPrivateUseExtensionsWithQuality() {
+		assertEquals("en-US;q=0.8,hu-HU;q=0.6", FhirCodeSystemOperationRequest.expandLocale("en-US;q=0.8,hu-HU;q=0.6"));
+	}
+
+	@Test
+	public void expandMultipleLocalesWithOnePrivateUseExtensionWithQuality() {
+		assertEquals("en-US-x-12345678-9;q=0.8,hu-HU;q=0.6", FhirCodeSystemOperationRequest.expandLocale("en-US-x-123456789;q=0.8,hu-HU;q=0.6"));
+	}
+
+	@Test
+	public void expandMultipleLocalesWithPrivateUseExtensionsWithQuality() {
+		assertEquals("en-US-x-12345678-9;q=0.8,hu-HU-x-abcdefgh-ij;q=0.6", FhirCodeSystemOperationRequest.expandLocale("en-US-x-123456789;q=0.8,hu-HU-x-abcdefghij;q=0.6"));
+	}
+
+	@Test
+	public void expandMultipleLocalesIncludingWildcardWithQuality() {
+		assertEquals("en-US-x-12345678-9;q=0.8,*;q=0.6,hu-HU;q=0.4", FhirCodeSystemOperationRequest.expandLocale("en-US-x-123456789;q=0.8,*;q=0.6,hu-HU;q=0.4"));
 	}
 }

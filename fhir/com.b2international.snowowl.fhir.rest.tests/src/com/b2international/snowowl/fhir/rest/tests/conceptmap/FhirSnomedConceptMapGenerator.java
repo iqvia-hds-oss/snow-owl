@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import static com.b2international.snowowl.snomed.common.SnomedConstants.Concepts
 import static com.b2international.snowowl.snomed.common.SnomedConstants.Concepts.IS_A;
 import static com.b2international.snowowl.snomed.common.SnomedConstants.Concepts.SYNONYM;
 
-import java.time.LocalDate;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.b2international.snowowl.core.api.IBranchPath;
+import com.b2international.snowowl.core.date.DateFormats;
+import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.fhir.rest.tests.FhirTestConcepts;
 import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
@@ -42,209 +43,165 @@ import com.b2international.snowowl.test.commons.SnomedContentRule;
 import com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests;
 import com.b2international.snowowl.test.commons.rest.RestExtensions;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 /**
- * @since 7.0
+ * @since 10.3
  */
 public class FhirSnomedConceptMapGenerator {
 	
-	public static List<String> createSimpleMapTypeReferenceSets(String branchPath, 
-			String simpleMapName, 
-			String complexMapName, 
-			String complexBlockMapName, 
-			String extendedMapName, 
-			String version) {
+	public static final String SIMPLE_MAP_TEST_REF_SET = "SIMPLE_MAP_TEST_REF_SET";
+	public static final String SIMPLE_MAP_TO_TEST_REF_SET = "SIMPLE_MAP_TO_TEST_REF_SET";
+	public static final String COMPLEX_MAP_TEST_REF_SET = "COMPLEX_MAP_TEST_REF_SET";
+	public static final String VERSIONED_SIMPLE_MAP_TEST_REF_SET = "VERSIONED_SIMPLE_MAP_TEST_REF_SET";
 	
-		List<String> refsetIds = Lists.newArrayList();
+	public static final String VERSION_2026_01_01 = "20260101";
+	public static final String VERSION_2027_01_01 = "20270101";
+	
+	public static Map<String, String> createReferenceSets() {
+		// Look for existing refset
+		final String branchPath = IBranchPath.MAIN_BRANCH;
 		
-		Optional<SnomedDescription> refsetDescription = getRefsetConcept(branchPath, simpleMapName + " (foundation metadata concept)");
+		Optional<SnomedDescription> refSetDescription = getRefSetConcept(branchPath, SIMPLE_MAP_TEST_REF_SET);
 		
-		if (!refsetDescription.isPresent()) {
+		if (!refSetDescription.isPresent()) {
+			final String simpleRefSetId = createRefsetConcept(branchPath, SIMPLE_MAP_TEST_REF_SET, SnomedRefSetType.SIMPLE_MAP);
+			createSimpleMapping(branchPath, simpleRefSetId, FhirTestConcepts.MICROORGANISM, "MO");
 			
-			System.out.println("Creating simple map type reference set...");
-			String refsetId = createRefsetConcept(branchPath, simpleMapName, SnomedRefSetType.SIMPLE_MAP);
-			System.out.println("Creating reference set members for map type refset: " + simpleMapName);
-			createSimpleMapping(branchPath, refsetId, FhirTestConcepts.BACTERIA, "Bacteria Target");
-			createSimpleMapping(branchPath, refsetId, FhirTestConcepts.MICROORGANISM, "MO");
-			refsetIds.add(refsetId);
+			// Create missing Simple map from SNOMED CT type reference set
+			createSimpleToRefsetConcept(branchPath);
+				
+			final String simpleToRefSetId = createRefsetConcept(branchPath, SIMPLE_MAP_TO_TEST_REF_SET, SnomedRefSetType.SIMPLE_MAP_TO);
+			createSimpleToMapping(branchPath, simpleToRefSetId, "MO", FhirTestConcepts.MICROORGANISM);
 			
-			System.out.println("Creating complex map type reference set...");
-			refsetId = createRefsetConcept(branchPath, complexMapName, SnomedRefSetType.COMPLEX_MAP);
-			System.out.println("Creating reference set members for complex map type refset: " + complexMapName);
-			createComplexMapping(branchPath, refsetId, FhirTestConcepts.BACTERIA, "Bacteria Target");
-			createComplexMapping(branchPath, refsetId, FhirTestConcepts.MICROORGANISM, "MO");
-			refsetIds.add(refsetId);
+			final String complexRefSetId = createRefsetConcept(branchPath, COMPLEX_MAP_TEST_REF_SET, SnomedRefSetType.COMPLEX_MAP);
+			createComplexMapping(branchPath, complexRefSetId, FhirTestConcepts.MICROORGANISM, "MO");
 			
-			System.out.println("Creating complex map with map block type reference set...");
-			refsetId = createRefsetConcept(branchPath, complexBlockMapName, SnomedRefSetType.COMPLEX_BLOCK_MAP);
-			System.out.println("Creating reference set members for complex block map type refset: " + complexBlockMapName);
-			createComplexBlockMapping(branchPath, refsetId, FhirTestConcepts.BACTERIA, "Bacteria Target");
-			createComplexBlockMapping(branchPath, refsetId, FhirTestConcepts.MICROORGANISM, "MO");
-			refsetIds.add(refsetId);
+			final String versionedRefSetId = createRefsetConcept(branchPath, VERSIONED_SIMPLE_MAP_TEST_REF_SET, SnomedRefSetType.SIMPLE_MAP);
+			createSimpleMapping(branchPath, versionedRefSetId, FhirTestConcepts.MICROORGANISM, "MO");
 			
-			System.out.println("Creating extended map type reference set...");
-			refsetId = createRefsetConcept(branchPath, extendedMapName, SnomedRefSetType.EXTENDED_MAP);
-			System.out.println("Creating reference set members for extended map type refset: " + extendedMapName);
-			createExtendedMapping(branchPath, refsetId, FhirTestConcepts.BACTERIA, "Bacteria Target");
-			createExtendedMapping(branchPath, refsetId, FhirTestConcepts.MICROORGANISM, "MO");
-			refsetIds.add(refsetId);
 			
-			//version the created content
-			System.out.println("Versioning content...");
-			CodeSystemVersionRestRequests.createVersion(SnomedContentRule.SNOMEDCT_ID, LocalDate.parse(version));
-			return refsetIds;
-		} else {
-			System.out.println("Found existing test map type reference set...");
-			Optional<SnomedDescription> simpleConcept = getRefsetConcept(branchPath, simpleMapName);
-			refsetIds.add(simpleConcept.get().getConceptId());
-			Optional<SnomedDescription> complexConcept = getRefsetConcept(branchPath, complexMapName);
-			refsetIds.add(complexConcept.get().getConceptId());
-			Optional<SnomedDescription> complexBlockConcept = getRefsetConcept(branchPath, complexBlockMapName);
-			refsetIds.add(complexBlockConcept.get().getConceptId());
-			Optional<SnomedDescription> extendedConcept = getRefsetConcept(branchPath, extendedMapName);
-			refsetIds.add(extendedConcept.get().getConceptId());
-			return refsetIds;
+			CodeSystemVersionRestRequests.createVersion(SnomedContentRule.SNOMEDCT_ID, EffectiveTimes.parse(VERSION_2026_01_01, DateFormats.SHORT));
+			
+			// Create new version  
+			createSimpleMapping(branchPath, versionedRefSetId, FhirTestConcepts.MICROORGANISM, "MO2");
+			CodeSystemVersionRestRequests.createVersion(SnomedContentRule.SNOMEDCT_ID, EffectiveTimes.parse(VERSION_2027_01_01, DateFormats.SHORT));
+			return Map.of(
+					SIMPLE_MAP_TEST_REF_SET, simpleRefSetId,
+					SIMPLE_MAP_TO_TEST_REF_SET, simpleToRefSetId,
+					COMPLEX_MAP_TEST_REF_SET, complexRefSetId,
+					VERSIONED_SIMPLE_MAP_TEST_REF_SET, versionedRefSetId
+			);
+		} else {			
+			return Map.of(
+					SIMPLE_MAP_TEST_REF_SET, getRefSetConcept(branchPath, SIMPLE_MAP_TEST_REF_SET).get().getConceptId(),
+					SIMPLE_MAP_TO_TEST_REF_SET, getRefSetConcept(branchPath, SIMPLE_MAP_TO_TEST_REF_SET).get().getConceptId(),
+					COMPLEX_MAP_TEST_REF_SET, getRefSetConcept(branchPath, COMPLEX_MAP_TEST_REF_SET).get().getConceptId(),
+					VERSIONED_SIMPLE_MAP_TEST_REF_SET, getRefSetConcept(branchPath, VERSIONED_SIMPLE_MAP_TEST_REF_SET).get().getConceptId()
+			);
 		}
 	}
 	
-	private static void createSimpleMapping(String branchPath, String refsetId, String referencedConceptId, String mappingTarget) {
-		
+	private static void createSimpleMapping(String branchPath, String refSetId, String source, String target) {
 		Map<String, Object> properties = Maps.newHashMap();
-		properties.put(SnomedRf2Headers.FIELD_MAP_TARGET, mappingTarget);
+		properties.put(SnomedRf2Headers.FIELD_MAP_TARGET, target);
 		
 		SnomedRequests.prepareNewMember()
 			.setId(UUID.randomUUID().toString())
 			.setModuleId(Concepts.MODULE_SCT_CORE)
 			.setActive(true)
-			.setRefsetId(refsetId)
+			.setRefsetId(refSetId)
 			.setProperties(properties)
-			.setReferencedComponentId(referencedConceptId)
-			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Simple Map Type Refset Member")
+			.setReferencedComponentId(source)
+			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Refset Member")
+			.execute(Services.bus())
+			.getSync();
+	}
+	
+	private static void createSimpleToMapping(String branchPath, String refSetId, String source, String target) {
+		Map<String, Object> properties = Maps.newHashMap();
+		properties.put(SnomedRf2Headers.FIELD_MAP_SOURCE, source);
+		
+		SnomedRequests.prepareNewMember()
+			.setId(UUID.randomUUID().toString())
+			.setModuleId(Concepts.MODULE_SCT_CORE)
+			.setActive(true)
+			.setRefsetId(refSetId)
+			.setProperties(properties)
+			.setReferencedComponentId(target)
+			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Refset Member")
 			.execute(Services.bus())
 			.getSync();
 		
 	}
 	
-	private static void createComplexMapping(String branchPath, String refsetId, String referencedConceptId, String mappingTarget) {
-		
+	private static void createComplexMapping(String branchPath, String refSetId, String source, String target) {
 		Map<String, Object> properties = Maps.newHashMap();
-		properties.put(SnomedRf2Headers.FIELD_MAP_TARGET, mappingTarget);
+		properties.put(SnomedRf2Headers.FIELD_MAP_TARGET, target);
 		properties.put(SnomedRf2Headers.FIELD_MAP_ADVICE, "If microorganism then use something else");
 		properties.put(SnomedRf2Headers.FIELD_MAP_GROUP, 1);
 		properties.put(SnomedRf2Headers.FIELD_MAP_PRIORITY, 1);
 		properties.put(SnomedRf2Headers.FIELD_MAP_RULE, "OTHERWISE TRUE");
-		properties.put(SnomedRf2Headers.FIELD_CORRELATION_ID, "447561005"); //correlation not specified
+		properties.put(SnomedRf2Headers.FIELD_CORRELATION_ID, "447557004"); // exact
 		
 		SnomedRequests.prepareNewMember()
 			.setId(UUID.randomUUID().toString())
 			.setModuleId(Concepts.MODULE_SCT_CORE)
 			.setActive(true)
-			.setRefsetId(refsetId)
+			.setRefsetId(refSetId)
 			.setProperties(properties)
-			.setReferencedComponentId(referencedConceptId)
+			.setReferencedComponentId(source)
 			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Complex Map Type Refset Member")
 			.execute(Services.bus())
 			.getSync();
 		
 	}
 	
-	private static void createComplexBlockMapping(String branchPath, String refsetId, String referencedConceptId, String mappingTarget) {
-		
-		Map<String, Object> properties = Maps.newHashMap();
-		properties.put(SnomedRf2Headers.FIELD_MAP_TARGET, mappingTarget);
-		properties.put(SnomedRf2Headers.FIELD_MAP_ADVICE, "If microorganism then use something else");
-		properties.put(SnomedRf2Headers.FIELD_MAP_GROUP, 1);
-		properties.put(SnomedRf2Headers.FIELD_MAP_PRIORITY, 1);
-		properties.put(SnomedRf2Headers.FIELD_MAP_RULE, "OTHERWISE TRUE");
-		properties.put(SnomedRf2Headers.FIELD_CORRELATION_ID, "447561005"); //correlation not specified
-		properties.put(SnomedRf2Headers.FIELD_MAP_BLOCK, 1);
-		
-		SnomedRequests.prepareNewMember()
-			.setId(UUID.randomUUID().toString())
-			.setModuleId(Concepts.MODULE_SCT_CORE)
-			.setActive(true)
-			.setRefsetId(refsetId)
-			.setProperties(properties)
-			.setReferencedComponentId(referencedConceptId)
-			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Complex Block Map Type Refset Member")
-			.execute(Services.bus())
-			.getSync();
-		
-	}
-	
-	private static void createExtendedMapping(String branchPath, String refsetId, String referencedConceptId, String mappingTarget) {
-		
-		Map<String, Object> properties = Maps.newHashMap();
-		properties.put(SnomedRf2Headers.FIELD_MAP_TARGET, mappingTarget);
-		properties.put(SnomedRf2Headers.FIELD_MAP_ADVICE, "If microorganism then use something else");
-		properties.put(SnomedRf2Headers.FIELD_MAP_GROUP, 1);
-		properties.put(SnomedRf2Headers.FIELD_MAP_PRIORITY, 1);
-		properties.put(SnomedRf2Headers.FIELD_MAP_RULE, "OTHERWISE TRUE");
-		properties.put(SnomedRf2Headers.FIELD_CORRELATION_ID, "447561005"); //correlation not specified
-		properties.put(SnomedRf2Headers.FIELD_MAP_CATEGORY_ID, "447639009");
-		
-		SnomedRequests.prepareNewMember()
-			.setId(UUID.randomUUID().toString())
-			.setModuleId(Concepts.MODULE_SCT_CORE)
-			.setActive(true)
-			.setRefsetId(refsetId)
-			.setProperties(properties)
-			.setReferencedComponentId(referencedConceptId)
-			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Extended Map Type Refset Member")
-			.execute(Services.bus())
-			.getSync();
-		
-	}
-	
-	
-
-	private static Optional<SnomedDescription> getRefsetConcept(String branchPath, String refsetName) {
-		
+	private static Optional<SnomedDescription> getRefSetConcept(String branchPath, String refSetName) {
 		return SnomedRequests.prepareSearchDescription()
 			.one()
-			.filterByExactTerm(refsetName)
+			.filterByExactTerm(refSetName + " (foundation metadata concept)")
 			.build(branchPath)
 			.execute(Services.bus())
 			.getSync()
 			.first();
-		
-		/*
-		Optional<SnomedConcept> refsetConcept = SnomedRequests.prepareSearchConcept()
-				.filterByTerm(refsetName)
-				.all()
-				.build(SnomedDatastoreActivator.REPOSITORY_UUID, branchPath)
-				.execute(getEventBus())
-				.getSync()
-				.first();
-		
-		return refsetConcept;
-		*/
 	}
 	
-	private static String createRefsetConcept(String branchPath, String refsetName, SnomedRefSetType refsetType) {
-		
+	private static String createSimpleToRefsetConcept(String branchPath) {
+		return SnomedRequests.prepareNewConcept()
+			.setId(SnomedConstants.Concepts.REFSET_SIMPLE_MAP_TO_TYPE)
+			.setActive(true)
+			.setModuleId(Concepts.MODULE_SCT_CORE)
+			.addDescription(createDescription("Simple map to SNOMED CT type reference set (foundation metadata concept)", FULLY_SPECIFIED_NAME))
+			.addDescription(createDescription("Simple map to SNOMED CT type reference set", SYNONYM))
+			.addRelationship(createIsaRelationship(Concepts.STATED_RELATIONSHIP, SnomedConstants.Concepts.REFSET_ROOT_CONCEPT))
+			.addRelationship(createIsaRelationship(Concepts.INFERRED_RELATIONSHIP, SnomedConstants.Concepts.REFSET_ROOT_CONCEPT))
+			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Reference Set")
+			.execute(Services.bus())
+			.getSync()
+			.getResultAs(String.class);
+	}
+	
+	private static String createRefsetConcept(String branchPath, String refSetName, SnomedRefSetType refsetType) {
 		return SnomedRequests.prepareNewConcept()
 			.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 			.setActive(true)
 			.setModuleId(Concepts.MODULE_SCT_CORE)
-			.addDescription(createDescription(refsetName + " (foundation metadata concept)", FULLY_SPECIFIED_NAME))
-			.addDescription(createDescription(refsetName, SYNONYM))
+			.addDescription(createDescription(refSetName + " (foundation metadata concept)", FULLY_SPECIFIED_NAME))
+			.addDescription(createDescription(refSetName, SYNONYM))
 			.addRelationship(createIsaRelationship(Concepts.STATED_RELATIONSHIP, SnomedRefSetUtil.getParentConceptId(refsetType)))
 			.addRelationship(createIsaRelationship(Concepts.INFERRED_RELATIONSHIP, SnomedRefSetUtil.getParentConceptId(refsetType)))
 			.setRefSet(SnomedRequests.prepareNewRefSet()
 					.setReferencedComponentType(SnomedConcept.TYPE)
 					.setMapTargetComponentType(SnomedConcept.TYPE)
 					.setType(refsetType))
-			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Simple Type Reference Set")
+			.build(branchPath, RestExtensions.USER, "FHIR Automated Test Reference Set")
 			.execute(Services.bus())
 			.getSync()
 			.getResultAs(String.class);
 	}
 
 	private static SnomedDescriptionCreateRequestBuilder createDescription(final String term, final String type) {
-		
 		return SnomedRequests.prepareNewDescription()
 			.setIdFromNamespace(SnomedConstants.B2I_NAMESPACE)
 			.setActive(true)

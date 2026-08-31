@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.ConceptMapTranslateParameters;
 import com.b2international.snowowl.core.events.util.Promise;
@@ -101,11 +102,11 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 			
 		@Parameter(description = "The code that is to be translated.") 
 		@RequestParam(value = "sourceCode") 
-		final String sourceCode,
+		final Optional<String> sourceCode,
 		
 		@Parameter(description = "The system for the code that is to be translated.") 
 		@RequestParam(value = "system") 
-		final String system,
+		final Optional<String> system,
 		
 		@Parameter(description = "The code system's version, if null latest is used.") 
 		@RequestParam(value = "version") 
@@ -127,9 +128,17 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		@RequestParam(value = "targetScope") 
 		final Optional<String> targetScope,
 		
+		@Parameter(description = "Specify the display language for the returned codes") 
+		@RequestParam(value = "displayLanguage", required = false)
+		final Optional<String> displayLanguage,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -163,9 +172,10 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 
 		// XXX: "url" is required by the current translate request implementation but it is an optional parameter in the FHIR specification
 		var parameters = new ConceptMapTranslateParameters()
-			.setUrl(url)
-			.setSourceCode(sourceCode)
-			.setSystem(system);
+			.setUrl(url);
+		
+		sourceCode.ifPresent(parameters::setSourceCode);
+		system.ifPresent(parameters::setSystem);
 		
 		version.ifPresent(parameters::setVersion);
 		sourceScope.ifPresent(parameters::setSourceScope);
@@ -174,7 +184,9 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		targetSystem.ifPresent(parameters::setTargetSystem);
 		targetScope.ifPresent(parameters::setTargetScope);
 		
-		return translate(parameters, accept, _format, _pretty);
+		displayLanguage.ifPresent(parameters::setDisplayLanguage);
+		
+		return translate(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 
 	/**
@@ -274,6 +286,10 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
+		
 		@Parameter(description = "Prefer header", schema = @Schema(
 			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
 			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
@@ -313,7 +329,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		
 		// XXX: "url" is required by the current translate request implementation but it is an optional parameter in the FHIR specification
 		final ConceptMapTranslateParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.ConceptMapTranslateParametersFactory.INSTANCE);
-		return translate(parameters, accept, _format, _pretty);
+		return translate(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 
 	/**
@@ -368,11 +384,11 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		
 		@Parameter(description = "The code that is to be translated.") 
 		@RequestParam(value = "sourceCode") 
-		final String sourceCode,
+		final Optional<String> sourceCode,
 		
 		@Parameter(description = "The system for the code that is to be translated.") 
 		@RequestParam(value = "system") 
-		final String system,
+		final Optional<String> system,
 		
 		@Parameter(description = "The code system's version, if null latest is used.") 
 		@RequestParam(value = "version") 
@@ -394,9 +410,17 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		@RequestParam(value = "targetScope") 
 		final Optional<String> targetScope,
 		
+		@Parameter(description = "Specify the display language for the returned codes") 
+		@RequestParam(value = "displayLanguage", required = false)
+		final Optional<String> displayLanguage,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -429,10 +453,11 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 	) {
 		
 		var parameters = new ConceptMapTranslateParameters()
-			.setSourceCode(sourceCode)
-			.setSystem(system)
 			// XXX: Using a concept map ID as the URL here
 			.setUrl(conceptMapId);
+		
+		sourceCode.ifPresent(parameters::setSourceCode);
+		system.ifPresent(parameters::setSystem);
 		
 		version.ifPresent(parameters::setVersion);
 		sourceScope.ifPresent(parameters::setSourceScope);
@@ -441,7 +466,9 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		targetSystem.ifPresent(parameters::setTargetSystem);
 		targetScope.ifPresent(parameters::setTargetScope);
 		
-		return translate(parameters, accept, _format, _pretty);
+		displayLanguage.ifPresent(parameters::setDisplayLanguage);
+		
+		return translate(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 	
 	/**
@@ -547,6 +574,10 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
+		
 		@Parameter(description = "Prefer header", schema = @Schema(
 			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
 			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
@@ -589,15 +620,20 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		// Before execution set the URI to match the path variable
 		parameters.setUrl(conceptMapId);
 		
-		return translate(parameters, accept, _format, _pretty);
+		return translate(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 
 	private Promise<ResponseEntity<byte[]>> translate(
 		final ConceptMapTranslateParameters parameters, 
 		final String accept, 
 		final String _format, 
-		final Boolean _pretty
+		final Boolean _pretty,
+		String acceptLanguage
 	) {
+		if (parameters.getDisplayLanguage() == null || parameters.getDisplayLanguage().getCode() == null) {
+			parameters.setDisplayLanguage(acceptLanguage);
+		}
+		
 		return FhirRequests.conceptMaps().prepareTranslate()
 			.setParameters(parameters)
 			.buildAsync()

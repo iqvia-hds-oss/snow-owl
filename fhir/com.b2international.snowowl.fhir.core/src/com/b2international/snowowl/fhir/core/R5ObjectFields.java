@@ -161,7 +161,6 @@ public final class R5ObjectFields {
 				.add(GROUP)
 				.build();
 
-		
 	}
 	
 	public static final class ValueSet extends MetadataResource {

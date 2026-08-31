@@ -41,11 +41,9 @@ public final class FhirConceptMapTranslateRequestBuilder
 		this.parameters = parameters;
 		return getSelf();
 	}
-	
+
 	@Override
 	protected Request<ServiceProvider, ConceptMapTranslateResultParameters> doBuild() {
 		return new FhirConceptMapTranslateRequest(parameters);
 	}
-	
-	
 }
