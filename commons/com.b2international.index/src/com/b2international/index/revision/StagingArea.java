@@ -1183,6 +1183,9 @@ public final class StagingArea {
 					}
 					
 					if (sourcePropertyChanges != null) {
+						final Map<String, RevisionPropertyDiff> nonConflictingSourceDiffs = new HashMap<>();
+						final Map<String, RevisionPropertyDiff> allTargetDiffs = new HashMap<>();
+						
 						for (Entry<String, RevisionCompareDetail> sourceChange : sourcePropertyChanges.entrySet()) {
 							final String changedProperty = sourceChange.getKey();
 							final RevisionCompareDetail sourcePropertyChange = sourceChange.getValue();
@@ -1191,14 +1194,13 @@ public final class StagingArea {
 							final RevisionCompareDetail targetPropertyChange = targetPropertyChanges == null ? null : targetPropertyChanges.get(changedProperty);
 							
 							if (targetPropertyChange == null) {
-								// this property did not change in target, just apply directly on the target object via
-								if (!propertyUpdatesToApply.containsKey(type)) {
-									propertyUpdatesToApply.put(type, HashMultimap.create());
-								}
-								propertyUpdatesToApply.get(type).put(changedInSourceAndTargetId, sourceChangeDiff);
+								// this property did not change in target, register it as a non-conflicting change to be applied later
+								nonConflictingSourceDiffs.put(changedProperty, sourceChangeDiff);
 								fromChangeSet.removeChanged(type, changedInSourceAndTargetId);
 							} else {
 								RevisionPropertyDiff targetChangeDiff = new RevisionPropertyDiff(targetPropertyChange.getProperty(), targetPropertyChange.getFromValue(), targetPropertyChange.getValue());
+								allTargetDiffs.put(changedProperty, targetChangeDiff);
+								
 								// changed on both sides, ask conflict processor to resolve the issue or raise conflict error
 								RevisionPropertyDiff resolution = conflictProcessor.handleChangedInSourceAndTarget(
 									changedInSourceAndTargetId, 
@@ -1218,6 +1220,37 @@ public final class StagingArea {
 								fromChangeSet.removeChanged(type, changedInSourceAndTargetId);
 							}
 						}
+						
+						// Fill the rest of the target diffs that were not present in the source so this information can be passed to the conflict handler
+						if (!nonConflictingSourceDiffs.isEmpty() && targetPropertyChanges != null) {
+							final Set<String> missingTargetProperties = Sets.difference(targetPropertyChanges.keySet(), nonConflictingSourceDiffs.keySet());
+							for (String property : missingTargetProperties) {
+								RevisionCompareDetail targetPropertyChange = targetPropertyChanges.get(property);
+								RevisionPropertyDiff targetChangeDiff = new RevisionPropertyDiff(
+									targetPropertyChange.getProperty(), 
+									targetPropertyChange.getFromValue(), 
+									targetPropertyChange.getValue());
+								
+								allTargetDiffs.put(property, targetChangeDiff);
+							}
+						}
+						
+						// Let the conflict processor sort out which non-conflicting source changes can be applied to the target
+						if (!nonConflictingSourceDiffs.isEmpty()) {
+							final Map<String, RevisionPropertyDiff> sourceDiffsToApply = conflictProcessor.filterNonConflictingChanges(
+								type,
+								changedInSourceAndTargetId, 
+								nonConflictingSourceDiffs, 
+								allTargetDiffs);
+							
+							for (final RevisionPropertyDiff sourceDiff : sourceDiffsToApply.values()) {
+								if (!propertyUpdatesToApply.containsKey(type)) {
+									propertyUpdatesToApply.put(type, HashMultimap.create());
+								}
+								propertyUpdatesToApply.get(type).put(changedInSourceAndTargetId, sourceDiff);
+							}
+						}
+						
 					} else {
 						// if there are no target property changes either, then this component either just marked as a container or has cascading changes
 						// either way we need to commit it into the index to ensure we have a successfully resolved conflict

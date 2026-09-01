@@ -115,6 +115,23 @@ public interface RevisionConflictProcessor {
 	}
 	
 	/**
+	 * Filters out non-conflicting changes from the source revision that are not
+	 * applicable on the target branch, even if they do not conflict with existing
+	 * changes.
+	 * 
+	 * @param type - the affected revision type
+	 * @param revisionId - the affected revision identifier
+	 * @param nonConflictingSourceDiffs - property changes from the source that do not conflict with the target (on the property level)
+	 * @param allTargetDiffs - all property changes on the target branch
+	 * @return - a map of property changes from the source that are applicable on the target branch, never <code>null</code>.
+	 */
+	Map<String, RevisionPropertyDiff> filterNonConflictingChanges(
+		Class<? extends Revision> type, 
+		String revisionId,
+		Map<String, RevisionPropertyDiff> nonConflictingSourceDiffs,
+		Map<String, RevisionPropertyDiff> allTargetDiffs);
+
+	/**
 	 * @since 7.0
 	 */
 	class Default implements RevisionConflictProcessor {
@@ -306,7 +323,16 @@ public interface RevisionConflictProcessor {
 			return Collections.emptyList();
 		}
 		
+		@Override
+		public Map<String, RevisionPropertyDiff> filterNonConflictingChanges(
+			Class<? extends Revision> type,
+			String revisionId, 
+			Map<String, RevisionPropertyDiff> nonConflictingSourceDiffs, 
+			Map<String, RevisionPropertyDiff> allTargetDiffs
+		) {
+			// All non-conflicting changes are applicable on the target branch by default
+			return nonConflictingSourceDiffs;
+		}
 	}
-
 
 }
