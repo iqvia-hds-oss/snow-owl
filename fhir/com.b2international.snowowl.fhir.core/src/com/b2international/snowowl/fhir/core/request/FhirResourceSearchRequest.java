@@ -357,14 +357,14 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		return new Narrative(NarrativeStatus.EMPTY, div);
 	}
 
-	private String getName(final Map<String, Object> settings, final String id) {
+	private String getName(final Map<String, Object> settings, final String defaultValue) {
 		if (settings != null) {
 			String name = (String) settings.get(R5ObjectFields.MetadataResource.NAME);
 			if (!Strings.isNullOrEmpty(name)) {
 				return name;
 			}
 		}
-		return id;
+		return defaultValue;
 	}
 	
 	private String getPublisher(final Map<String, Object> settings) {
