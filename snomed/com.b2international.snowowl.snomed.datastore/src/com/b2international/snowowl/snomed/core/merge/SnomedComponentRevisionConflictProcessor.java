@@ -49,8 +49,19 @@ public final class SnomedComponentRevisionConflictProcessor extends ComponentRev
 	private static final String[] DESCRIPTION_FIELDS_TO_LOAD = {SnomedDocument.Fields.ID, SnomedDocument.Fields.MODULE_ID, SnomedDescriptionIndexEntry.Fields.CONCEPT_ID};
 	private static final String[] RELATIONSHIP_FIELDS_TO_LOAD = {SnomedDocument.Fields.ID, SnomedDocument.Fields.MODULE_ID, SnomedRelationshipIndexEntry.Fields.SOURCE_ID};
 	private static final String[] MEMBER_FIELDS_TO_LOAD = {SnomedDocument.Fields.ID, SnomedDocument.Fields.MODULE_ID, SnomedRefSetMemberIndexEntry.Fields.REFERENCED_COMPONENT_ID};
-	private static final Set<String> IGNORED_ADDED_PROPERTIES = Set.of(SnomedDocument.Fields.EFFECTIVE_TIME, SnomedRefSetMemberIndexEntry.Fields.SOURCE_EFFECTIVE_TIME, SnomedRefSetMemberIndexEntry.Fields.TARGET_EFFECTIVE_TIME);
 
+	private static final Set<String> IGNORED_ADDED_PROPERTIES = Set.of(
+		SnomedDocument.Fields.EFFECTIVE_TIME, 
+		SnomedRefSetMemberIndexEntry.Fields.SOURCE_EFFECTIVE_TIME, 
+		SnomedRefSetMemberIndexEntry.Fields.TARGET_EFFECTIVE_TIME
+	);
+
+	private static final Set<String> IGNORED_MEMBER_PROPERTIES = Set.of(
+		SnomedDocument.Fields.EFFECTIVE_TIME, 
+		SnomedDocument.Fields.RELEASED,
+		SnomedRefSetMemberIndexEntry.Fields.REFERENCED_COMPONENT_TYPE
+	);
+	
 	public SnomedComponentRevisionConflictProcessor() {
 		super(ImmutableList.<IMergeConflictRule>builder()
 				.add(new SnomedComponentReferencingDetachedConceptRule())
@@ -262,4 +273,89 @@ public final class SnomedComponentRevisionConflictProcessor extends ComponentRev
 		});
 	}
 
+	@Override
+	public Map<String, RevisionPropertyDiff> filterNonConflictingChanges(
+		final Class<? extends Revision> type,
+		final String revisionId,
+		final Map<String, RevisionPropertyDiff> nonConflictingSourceDiffs,
+		final Map<String, RevisionPropertyDiff> allTargetDiffs
+	) {
+		/*
+		 * If nonConflictingSourceDiffs contains EFFECTIVE_TIME, it means there is no
+		 * corresponding effective time change on the target. Such cases would have been
+		 * reported as a potential conflict and decided one way or the other in
+		 * handleChangedInSourceAndTarget above.
+		 */
+		if (!nonConflictingSourceDiffs.containsKey(SnomedDocument.Fields.EFFECTIVE_TIME)) {
+			return super.filterNonConflictingChanges(type, revisionId, nonConflictingSourceDiffs, allTargetDiffs);
+		}
+		
+		/*
+		 * If we find that at least one significant, effective time-unsetting change was
+		 * made on the target, we have to ignore the non-conflicting effective time
+		 * change arriving from the source.
+		 * 
+		 * Otherwise we would end up with a component whose current state does not match
+		 * the state of the component at the time of versioning, which is when this
+		 * particular effective time was assigned!
+		 */
+		switch (type.getSimpleName()) {
+
+			case "SnomedConceptDocument":
+				if (allTargetDiffs.containsKey(SnomedDocument.Fields.ACTIVE) 
+					|| allTargetDiffs.containsKey(SnomedDocument.Fields.MODULE_ID) 
+					|| allTargetDiffs.containsKey(SnomedConceptDocument.Fields.DEFINITION_STATUS_ID)
+				) {
+					return removeEffectiveTime(nonConflictingSourceDiffs);
+				}
+				break;
+
+			case "SnomedDescriptionIndexEntry":
+				if (allTargetDiffs.containsKey(SnomedDocument.Fields.ACTIVE) 
+					|| allTargetDiffs.containsKey(SnomedDocument.Fields.MODULE_ID) 
+					|| allTargetDiffs.containsKey(SnomedDescriptionIndexEntry.Fields.CASE_SIGNIFICANCE_ID)
+					|| allTargetDiffs.containsKey(SnomedDescriptionIndexEntry.Fields.TYPE_ID)
+					|| allTargetDiffs.containsKey(SnomedDescriptionIndexEntry.Fields.TERM)
+					|| allTargetDiffs.containsKey(SnomedDescriptionIndexEntry.Fields.LANGUAGE_CODE)
+				) {
+					return removeEffectiveTime(nonConflictingSourceDiffs);
+				}
+				break;
+
+			case "SnomedRelationshipIndexEntry":
+				if (allTargetDiffs.containsKey(SnomedDocument.Fields.ACTIVE) 
+					|| allTargetDiffs.containsKey(SnomedDocument.Fields.MODULE_ID) 
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.TYPE_ID)
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.DESTINATION_ID)
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.NUMERIC_VALUE)
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.STRING_VALUE)
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.RELATIONSHIP_GROUP)
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.UNION_GROUP)
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.CHARACTERISTIC_TYPE_ID)
+					|| allTargetDiffs.containsKey(SnomedRelationshipIndexEntry.Fields.MODIFIER_ID)
+				) {
+					return removeEffectiveTime(nonConflictingSourceDiffs);
+				}
+				break;
+
+			case "SnomedRefSetMemberIndexEntry":
+				/*
+				 * All member properties are considered significant except for the released
+				 * flag, the effective time itself and the referenced component type
+				 */
+				if (!Sets.difference(allTargetDiffs.keySet(), IGNORED_MEMBER_PROPERTIES).isEmpty()) {
+					return removeEffectiveTime(nonConflictingSourceDiffs);
+				}
+				break;
+		}
+		
+		return super.filterNonConflictingChanges(type, revisionId, nonConflictingSourceDiffs, allTargetDiffs);
+	}
+	
+	private Map<String, RevisionPropertyDiff> removeEffectiveTime(final Map<String, RevisionPropertyDiff> diffs) {
+		final Map<String, RevisionPropertyDiff> filteredDiffs = new HashMap<>(diffs);
+		filteredDiffs.remove(SnomedDocument.Fields.EFFECTIVE_TIME);
+		return filteredDiffs;
+	}
+	
 }
