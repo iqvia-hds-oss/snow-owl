@@ -22,6 +22,7 @@ import com.b2international.snowowl.core.ecl.EclLabelerRequestBuilder;
 import com.b2international.snowowl.core.request.ConceptSearchRequestBuilder;
 import com.b2international.snowowl.core.request.QueryOptimizeRequestBuilder;
 import com.b2international.snowowl.core.request.ValueSetMemberSearchRequestBuilder;
+import com.b2international.snowowl.core.request.resource.ResourceDeleteRequestBuilder;
 import com.b2international.snowowl.core.request.suggest.ConceptSuggestionBulkRequestBuilder;
 import com.b2international.snowowl.core.request.suggest.ConceptSuggestionRequestBuilder;
 
@@ -46,6 +47,10 @@ public class CodeSystemRequests {
 	
 	public static CodeSystemGetRequestBuilder prepareGetCodeSystem(final ResourceURI codeSystemUri) {
 		return new CodeSystemGetRequestBuilder(codeSystemUri);
+	}
+	
+	public static ResourceDeleteRequestBuilder prepareDeleteCodeSystem(String codeSystemId) {
+		return new ResourceDeleteRequestBuilder(CodeSystem.uri(codeSystemId));
 	}
 
 	public static CodeSystemSearchRequestBuilder prepareSearchCodeSystem() {
