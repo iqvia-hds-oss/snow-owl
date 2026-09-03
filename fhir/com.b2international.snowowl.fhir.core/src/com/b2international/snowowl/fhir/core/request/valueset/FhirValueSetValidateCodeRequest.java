@@ -241,6 +241,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		if ("valuesets".equals(resourceFragment.getResourceType())) {
 			return resourceFragment.getDependencies().stream()
+				.filter(document -> "domain".equals(document.getScope()))
 				.map(DependencyDocument::getUri)
 				.map(ResourceURIWithQuery::getResourceUri)
 				.filter(resourceUri -> CodeSystem.RESOURCE_TYPE.equals(resourceUri.getResourceType()))
