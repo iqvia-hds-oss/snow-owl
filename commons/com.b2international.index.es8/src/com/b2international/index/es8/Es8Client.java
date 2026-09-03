@@ -39,6 +39,9 @@ import com.google.common.cache.RemovalNotification;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch.nodes.NodesInfoRequest;
+import co.elastic.clients.elasticsearch.nodes.NodesInfoResponse;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.TransportOptions;
@@ -59,6 +62,9 @@ public class Es8Client implements Closeable {
 	 * Customize the HTTP response consumer factory to allow processing greater than the default 100 MB of data (currently 1 GB) as the input.
 	 */
 	private static final int BUFFER_LIMIT = 1024 * 1024 * 1024;
+	private static final int DEFAULT_MAX_HTTP_CONTENT_LENGTH = 100 * 1024 * 1024;
+	
+	private long maxContentLengthInBytes;
 	
 	private final HttpHost host;
 	
@@ -97,6 +103,13 @@ public class Es8Client implements Closeable {
 				.setHttpAsyncResponseConsumerFactory(new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(BUFFER_LIMIT)))
 				.build();
 		this.client = new ElasticsearchClient(transport, transportOptions);
+		try {
+			NodesInfoResponse response = client.nodes().info(NodesInfoRequest.of(b -> b.metric("http")));
+			maxContentLengthInBytes = response.nodes().values().iterator().next().http().maxContentLengthInBytes();
+		} catch (ElasticsearchException | IOException e) {
+			maxContentLengthInBytes = DEFAULT_MAX_HTTP_CONTENT_LENGTH;
+			LOG.error("Unable to extract http max content length from ES client, reverting to default", e);
+		}
 	}
 	
 	public ElasticsearchClient client() {
@@ -114,6 +127,10 @@ public class Es8Client implements Closeable {
 		return ClientPool.create(config);
 	}
 	
+	public long maxContentLengthInBytes() {
+		return maxContentLengthInBytes;
+	}
+
 	final class ClientPool {
 		
 		private static final LoadingCache<EsClientConfiguration, Es8Client> CLIENTS_BY_HOST = CacheBuilder.newBuilder()

@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
@@ -51,6 +52,7 @@ import com.flipkart.zjsonpatch.JsonPatch;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
+import com.google.common.io.CountingOutputStream;
 
 /**
  * A place that stores information about what will go into your next commit.
@@ -628,6 +630,17 @@ public final class StagingArea {
 				.mergeSource(!CompareUtils.isEmpty(mergeSources) ? mergeSources.last() : null)
 				.squashMerge(!CompareUtils.isEmpty(mergeSources) ? squashMerge : null)
 				.build();
+		
+		try (CountingOutputStream outputStream = new CountingOutputStream(OutputStream.nullOutputStream())) {
+			mapper.writeValue(outputStream, commitDoc);
+			index.admin().log().info("Commit document size is {} bytes.", outputStream.getCount());
+			
+			long maxContentLengthInBytes = index.admin().es8Client().maxContentLengthInBytes();
+			if (outputStream.getCount() > (maxContentLengthInBytes - 1024)) {
+				throw new IllegalArgumentException(String.format("Commit failed, commit document size approaches or exceeds maximum content length (%d bytes)", maxContentLengthInBytes));
+			}
+		}
+		
 		writer.put(commitDoc);
 		
 		// update branch document(s)
