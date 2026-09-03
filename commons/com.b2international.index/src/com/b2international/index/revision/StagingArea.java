@@ -35,7 +35,6 @@ import com.b2international.index.BulkUpdate;
 import com.b2international.index.IndexClientFactory;
 import com.b2international.index.IndexException;
 import com.b2international.index.es.admin.IndexMapping;
-import com.b2international.index.es8.Es8Client;
 import com.b2international.index.mapping.DocumentMapping;
 import com.b2international.index.query.Expressions;
 import com.b2international.index.query.Query;
@@ -54,9 +53,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.*;
 import com.google.common.io.CountingOutputStream;
-
-import co.elastic.clients.elasticsearch.nodes.NodesInfoRequest;
-import co.elastic.clients.elasticsearch.nodes.NodesInfoResponse;
 
 /**
  * A place that stores information about what will go into your next commit.
@@ -639,14 +635,9 @@ public final class StagingArea {
 			mapper.writeValue(outputStream, commitDoc);
 			index.admin().log().info("Commit document size is {} bytes.", outputStream.getCount());
 			
-			Es8Client client = index.admin().es8Client();
-			NodesInfoResponse response = client.client().nodes().info(
-				NodesInfoRequest.of(b -> b.metric("http"))
-			);
-			long maxContentLengthInBytes = response.nodes().values().iterator().next().http().maxContentLengthInBytes();
-			
+			long maxContentLengthInBytes = index.admin().es8Client().maxContentLengthInBytes();
 			if (outputStream.getCount() > (maxContentLengthInBytes - 1024)) {
-				throw new IllegalArgumentException("Commit failed, commit document size approaches or exceeds maximum content length (100 MB)");
+				throw new IllegalArgumentException(String.format("Commit failed, commit document size approaches or exceeds maximum content length (%d bytes)", maxContentLengthInBytes));
 			}
 		}
 		
