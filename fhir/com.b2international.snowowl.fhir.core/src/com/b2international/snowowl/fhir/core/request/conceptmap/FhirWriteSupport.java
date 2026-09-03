@@ -37,8 +37,7 @@ import com.google.common.base.CharMatcher;
  * @since 8.7.1
  */
 public interface FhirWriteSupport {
-
-	static final String OID_PREFIX = "urn:oid:";
+	String OID_PREFIX = "urn:oid:";
 	
 	/**
 	 * Pattern to match any character that is permitted in a resource ID without having to be encoded.
