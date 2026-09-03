@@ -17,10 +17,12 @@ package com.b2international.snowowl.fhir.core.request.conceptmap;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-import org.hl7.fhir.r5.model.Meta;
-import org.hl7.fhir.r5.model.MetadataResource;
+import org.hl7.fhir.r5.model.*;
+import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 
 import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.BadRequestException;
@@ -35,7 +37,8 @@ import com.google.common.base.CharMatcher;
  * @since 8.7.1
  */
 public interface FhirWriteSupport {
-
+	String OID_PREFIX = "urn:oid:";
+	
 	/**
 	 * Pattern to match any character that is permitted in a resource ID without having to be encoded.
 	 * <p>
@@ -107,11 +110,11 @@ public interface FhirWriteSupport {
 			.map(Version::getEffectiveTime);
 	}
 
-	static String safeId(final String id) {
+	default String safeId(final String id) {
 		return safeId(id, false);
 	}
 	
-	static String safeId(final String id, final boolean allowForwardSlash) {
+	default String safeId(final String id, final boolean allowForwardSlash) {
 		if (StringUtils.isEmpty(id)) {
 			return id;
 		}
@@ -137,5 +140,55 @@ public interface FhirWriteSupport {
 		
 		return safeIdBuilder.toString();
 	}
+	
+	default Optional<String> getFirstOidIdentifier(final Collection<Identifier> identifiers) {
+		return identifiers.stream()
+			.map(Identifier::getValue)
+			.filter(value -> value.startsWith(OID_PREFIX))
+			.map(value -> value.substring(OID_PREFIX.length()))
+			.findFirst();
+	}
 
+	default String getFirstContactWithUrlTelecom(final MetadataResource resource) {
+		return Optional.ofNullable(resource.getContact())
+			.flatMap(contacts -> getFirstContactWithUrlTelecom(contacts))
+			.orElse("");
+	}
+
+	default Optional<String> getFirstContactWithUrlTelecom(final Collection<ContactDetail> contactDetails) {
+		return contactDetails.stream()
+			.flatMap(detail -> getUrlTelecomsAsStream(detail))
+			.map(ContactPoint::getValue)
+			.findFirst();
+	}
+
+	default Stream<ContactPoint> getUrlTelecomsAsStream(final ContactDetail detail) {
+		return Optional.ofNullable(detail.getTelecom())
+			.map(props -> props.stream().filter(telecom -> ContactPointSystem.URL.equals(telecom.getSystem())))
+			.orElse(Stream.empty());
+	}
+
+	default String getUsageFromContexts(final ServiceProvider context, final MetadataResource resource) {
+		return Optional.ofNullable(resource.getUseContext())
+			.flatMap(useContext -> getFirstContextValue(context, useContext))
+			.orElse("");
+	}
+
+	default Optional<String> getFirstContextValue(final ServiceProvider context, final Collection<UsageContext> usageContexts) {
+		return usageContexts.stream()
+				// we can only map a single value to our internal metadata model
+				.findFirst()
+				.map(uc -> {
+					if (uc.getValue() instanceof StringType string) {
+						return string.getValue();
+					} else {
+						context.log().warn("Unable to convert usage context to String value from a non-String datatype '{}'. Skipping it.");
+						return null;
+					}
+				});
+	}
+
+	default String nonEmptyOrElse(final String value, final String defaultValue) {
+		return !StringUtils.isEmpty(value) ? value : defaultValue;
+	}
 }

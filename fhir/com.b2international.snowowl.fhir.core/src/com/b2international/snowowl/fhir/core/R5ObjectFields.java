@@ -64,6 +64,7 @@ public final class R5ObjectFields {
 		public static final String PURPOSE = "purpose";
 		public static final String COPYRIGHT = "copyright";
 		public static final String EFFECTIVE_PERIOD = "effectivePeriod";
+		public static final String IDENTIFIER = "identifier";
 		
 		public static final Set<String> MANDATORY = ImmutableSet.<String>builder()
 				.addAll(Resource.MANDATORY)
@@ -72,7 +73,7 @@ public final class R5ObjectFields {
 		
 		public static final Set<String> SUMMARY = ImmutableSet.<String>builder()
 				.addAll(Resource.SUMMARY)
-				.add(URL, VERSION, NAME, TITLE, DATE, PUBLISHER, CONTACT, EFFECTIVE_PERIOD)
+				.add(URL, VERSION, NAME, TITLE, DATE, PUBLISHER, CONTACT, EFFECTIVE_PERIOD, IDENTIFIER)
 				.build();
 		
 		/**
@@ -103,7 +104,6 @@ public final class R5ObjectFields {
 
 		
 		// complex properties
-		public static final String IDENTIFIER = "identifier";
 		public static final String FILTER = "filter";
 		public static final String PROPERTY = "property";
 		public static final String CONCEPT = "concept";
@@ -115,7 +115,7 @@ public final class R5ObjectFields {
 		
 		public static final Set<String> SUMMARY = ImmutableSet.<String>builder()
 				.addAll(MetadataResource.SUMMARY)
-				.add(COUNT, FILTER, PROPERTY, IDENTIFIER, CASE_SENSITIVE)
+				.add(COUNT, FILTER, PROPERTY, CASE_SENSITIVE)
 				.build();
 		
 		public static final Set<String> SUMMARY_TEXT = ImmutableSet.<String>builder()

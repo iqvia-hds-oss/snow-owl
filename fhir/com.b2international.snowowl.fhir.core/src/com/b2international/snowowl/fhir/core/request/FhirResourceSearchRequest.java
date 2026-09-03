@@ -49,6 +49,7 @@ import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
+import com.google.common.base.Strings;
 
 /**
  * Retrieves FHIR terminology resources (CodeSystem, ValueSet, ConceptMap) based
@@ -242,7 +243,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		}
 
 		// Replace identifier with internal OID field
-		if (internalFields.remove(R5ObjectFields.CodeSystem.IDENTIFIER)) {
+		if (internalFields.remove(R5ObjectFields.MetadataResource.IDENTIFIER)) {
 			internalFields.add(ResourceDocument.Fields.OID);
 		}
 		
@@ -252,14 +253,14 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		}
 		
 		// If the URL field is requested, retrieve settings as well
-		if (internalFields.remove(R5ObjectFields.CodeSystem.URL)) {
+		if (internalFields.remove(R5ObjectFields.MetadataResource.URL)) {
 			internalFields.add(ResourceDocument.Fields.URL);
 			// It would be better to add the FHIR URL override field specifically but this requires a schema change
 			internalFields.add(ResourceDocument.Fields.SETTINGS);
 		}
 		
 		// If the version field is requested, retrieve settings and URL as well
-		if (internalFields.remove(R5ObjectFields.CodeSystem.VERSION)) {
+		if (internalFields.remove(R5ObjectFields.MetadataResource.VERSION)) {
 			internalFields.add(ResourceDocument.Fields.URL);
 			// It would be better to add the FHIR version property field specifically, as in the above case
 			internalFields.add(ResourceDocument.Fields.SETTINGS);
@@ -356,11 +357,21 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		return new Narrative(NarrativeStatus.EMPTY, div);
 	}
 
+	private String getName(final Map<String, Object> settings, final String defaultValue) {
+		if (settings != null) {
+			String name = (String) settings.get(R5ObjectFields.MetadataResource.NAME);
+			if (!Strings.isNullOrEmpty(name)) {
+				return name;
+			}
+		}
+		return defaultValue;
+	}
+	
 	private String getPublisher(final Map<String, Object> settings) {
 		if (settings == null) {
 			return "";
 		} else {
-			return (String) settings.getOrDefault(R5ObjectFields.CodeSystem.PUBLISHER, "");
+			return (String) settings.getOrDefault(R5ObjectFields.MetadataResource.PUBLISHER, "");
 		}
 	}
 	
@@ -451,8 +462,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		// see FhirModelHelpers for easy accessors for specific fields, such as tooling ID and "native" resource URI
 		entry.setUserData(R5ObjectFields.MetadataResource.UserData.INTERNAL_RESOURCE, resource);
 		
-		// We are using the raw ID of the resource as machine readable name
-		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, resource::getId, entry::setName);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.NAME, () -> getName(resource.getSettings(), resource.getId()), entry::setName);
 		// We have a description field available both for the resource and the version, here the one for the resource is needed
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DESCRIPTION, resource::getResourceDescription, entry::setDescription);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.TITLE, resource::getTitle, entry::setTitle);
@@ -469,8 +479,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		// addContact(contact) is a no-op if contact is null so we can safely call it here
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.CONTACT, () -> toContactDetail(resource.getContact()), entry::addContact);
 
-		includeIfFieldSelected(R5ObjectFields.CodeSystem.URL, () -> getUrl(resource), entry::setUrl);
-		includeIfFieldSelected(R5ObjectFields.CodeSystem.VERSION, () -> getVersion(resource), entry::setVersion);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.URL, () -> getUrl(resource), entry::setUrl);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.VERSION, () -> getVersion(resource), entry::setVersion);
 		
 		expandResourceSpecificFields(context, entry, resource);
 
@@ -498,6 +508,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		 * not always line up with the regexp restrictions in the FHIR specification for
 		 * "name" but failing that test should only result in a validation warning.
 		 */
+		// XXX: This filter must be changed as we do store the actual name field in settings
 		addFilter(query, OptionKey.NAME, String.class, ResourceDocument.Expressions::ids);
 		
 		// Smart search for titles
@@ -519,9 +530,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				
 				// Without a name filter, the title filter will also try to match native IDs with a high boost
 				final Expression idMatchExpression = Expressions.matchAny(ResourceDocument.Fields.ID, 
-					List.of(titleFilterValue, titleFilterValue.toUpperCase()));
-				
-				query.must(Expressions.bool()
+				List.of(titleFilterValue, titleFilterValue.toUpperCase()));
+			
+			query.must(Expressions.bool()
 					.should(titleMatchExpression)
 					.should(Expressions.boost(idMatchExpression, 100.0f))
 					.build());
