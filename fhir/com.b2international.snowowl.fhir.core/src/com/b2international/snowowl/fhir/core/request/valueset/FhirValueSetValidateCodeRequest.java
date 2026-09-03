@@ -163,7 +163,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 					.execute(context)
 					.getTotal();
 				
-				if (total == 0); {
+				if (total == 0) {
 					final OperationOutcome.OperationOutcomeIssueComponent invalidCodeIssue = buildInvalidCodeIssue(code, system, version, location);
 					issues.add(invalidCodeIssue);
 				}
