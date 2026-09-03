@@ -29,8 +29,10 @@ import com.b2international.commons.CompareUtils;
 import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeParameters;
 import com.b2international.fhir.r5.operations.ValueSetValidateCodeResultParameters;
-import com.b2international.snowowl.core.RepositoryManager;
-import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.*;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
+import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
+import com.b2international.snowowl.core.internal.DependencyDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -148,8 +150,24 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			// TODO add iteration from FhirCodeSystemValidateCodeRequest once we support multi-valued codeableConcepts
 			final String location = String.format(propertyTemplate, 0);
 			final OperationOutcome.OperationOutcomeIssueComponent issue = buildNotInVsIssue(code, system, location, valueSet.getUrl());
-			// TODO validate and add issue if the provided code is not from the supplied system
 			issues.add(issue);
+			
+			ResourceURI codeSystemUri = getCodeSystemUri(valueSet);
+			
+			if (codeSystemUri != null) {
+				int total = CodeSystemRequests.prepareSearchConcepts()
+					.filterByCodeSystemUri(codeSystemUri)
+					.filterById(code)
+					.setLimit(0)
+					.build()
+					.execute(context)
+					.getTotal();
+				
+				if (total == 0) {
+					final OperationOutcome.OperationOutcomeIssueComponent invalidCodeIssue = buildInvalidCodeIssue(code, system, version, location);
+					issues.add(invalidCodeIssue);
+				}
+			}
 
 		} else {
 
@@ -218,6 +236,25 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		return result;
 	}
 	
+	private ResourceURI getCodeSystemUri(ValueSet valueSet) {
+		ResourceFragment resourceFragment = FhirModelHelpers.getResourceFragment(valueSet);
+		
+		if ("valuesets".equals(resourceFragment.getResourceType())) {
+			return resourceFragment.getDependencies().stream()
+				.filter(document -> "domain".equals(document.getScope()))
+				.map(DependencyDocument::getUri)
+				.map(ResourceURIWithQuery::getResourceUri)
+				.filter(resourceUri -> CodeSystem.RESOURCE_TYPE.equals(resourceUri.getResourceType()))
+				.findFirst()
+				.orElse(null);
+		} else if (CodeSystem.RESOURCE_TYPE.equals(resourceFragment.getResourceType())) {
+			return resourceFragment.getResourceURI();
+		} else {
+			// Failed to identify the source code system
+			return null;
+		}
+	}
+	
 	private OperationOutcomeIssueComponent buildInvalidDateIssue(final String system) {
 		final String message = String.format("ValueSet or referenced CodeSystem '%s' does not exist at the specified date '%s'", 
 			system, 
@@ -239,6 +276,25 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			system,
 			code,
 			valueSetUrl
+		);
+	
+		return new OperationOutcome.OperationOutcomeIssueComponent()
+			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
+			.setCode(OperationOutcome.IssueType.CODEINVALID)
+			.setDetails(new CodeableConcept()
+					.addCoding(new Coding()
+						.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
+						.setCode("not-in-vs"))
+					.setText(message))
+			.addLocation(location)
+			.addExpression(location);
+	}
+	
+	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidCodeIssue(String code, String system, String version, String location) {
+		final String message = String.format("Unknown code '%s' in the CodeSystem '%s' version '%s'",
+			code,
+			system,
+			version
 		);
 	
 		return new OperationOutcome.OperationOutcomeIssueComponent()
