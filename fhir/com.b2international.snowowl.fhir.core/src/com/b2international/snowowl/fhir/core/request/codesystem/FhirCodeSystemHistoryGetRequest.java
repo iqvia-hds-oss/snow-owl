@@ -45,8 +45,7 @@ final class FhirCodeSystemHistoryGetRequest extends FhirResourceHistoryGetReques
 		R5ObjectFields.CodeSystem.CONTENT,
 		R5ObjectFields.CodeSystem.CONCEPT,
 		R5ObjectFields.CodeSystem.FILTER,
-		R5ObjectFields.CodeSystem.PROPERTY,
-		R5ObjectFields.CodeSystem.IDENTIFIER
+		R5ObjectFields.CodeSystem.PROPERTY
 	);
 	
 	// Identifier system URI that indicates that the identifier value represents a URI
