@@ -31,7 +31,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * @since 10.3
  */
-public class FhirResourceHistoryParameters {
+public class FhirResourceHistoryParameters extends FhirResourceSelectors {
 
 	private static final String PARAM_COUNT = "_count";
 	private static final String PARAM_SINCE = "_since";
@@ -44,7 +44,9 @@ public class FhirResourceHistoryParameters {
 		PARAM_SINCE,
 		PARAM_AT,
 		PARAM_SORT,
-		PARAM_AFTER
+		PARAM_AFTER,
+		PARAM_SUMMARY,
+		PARAM_ELEMENTS
 	);
 
 	// paging
@@ -125,6 +127,8 @@ public class FhirResourceHistoryParameters {
 			.add(PARAM_AT, _at)
 			.add(PARAM_SORT, _sort)
 			.add(PARAM_AFTER, _after)
+			.add(PARAM_SUMMARY, get_summary())
+			.add(PARAM_ELEMENTS, get_elements())
 			.toString();
 	}
 	
