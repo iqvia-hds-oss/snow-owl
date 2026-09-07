@@ -39,7 +39,6 @@ import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
@@ -745,6 +744,7 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 		final UriComponentsBuilder fullUrlBuilder = MvcUriComponentsBuilder.fromMethodName(FhirCodeSystemController.class, "getCodeSystemVersion", 
 			id,
 			"{version}",
+			(FhirResourceSelectors) params,
 			accept,
 			_format, 
 			_pretty, 
@@ -755,7 +755,8 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 			.filterById(id)
 			.filterBySince(params.get_since())
 			.filterByAt(params.get_at())
-			.setSummary(Summary.TRUE)  // XXX: we only return the SUMMARY fields
+			.setSummary(params.get_summary())
+			.setElements(params.get_elements())
 			.setSearchAfter(params.get_after())
 			.setCount(params.get_count())
 			.sortHistoryBy(params.get_sort())
@@ -784,6 +785,7 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 	 * 
 	 * @param id
 	 * @param version
+	 * @param selectors
 	 * @param accept
 	 * @param _format
 	 * @param _pretty
@@ -828,7 +830,10 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 			The version of the Code System resource""")
 		@PathVariable(value = "version") 
 		final String version,
-			
+		
+		@ParameterObject
+		final FhirResourceSelectors selectors,
+		
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
@@ -862,7 +867,8 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 	) {
 		return FhirRequests.codeSystems()
 			.prepareGetVersion(id, version)
-			.setSummary(Summary.TRUE)
+			.setSummary(selectors.get_summary())
+			.setElements(selectors.get_elements())
 			.buildAsync()
 			.execute(getBus())
 			.then(codeSystem -> {

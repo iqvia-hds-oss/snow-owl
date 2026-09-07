@@ -26,6 +26,8 @@ import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.fhir.core.FhirHistorySort;
+import com.b2international.snowowl.fhir.core.Summary;
+import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 
 /**
  * @since 10.3
@@ -60,6 +62,10 @@ public abstract class FhirResourceHistoryVersionGetRequest<R extends MetadataRes
 	
 	@Override
 	public R execute(final RepositoryContext context) {
+		if (Summary.COUNT.equals(summary)) {
+			throw new BadRequestException(String.format("_summary=count is not supported on single resource operations"));
+		}
+		
 		if (ResourceURI.HEAD.equals(version)) {
 			// Fallback to regular GET to get HEAD version
 			return prepareGet(id)
