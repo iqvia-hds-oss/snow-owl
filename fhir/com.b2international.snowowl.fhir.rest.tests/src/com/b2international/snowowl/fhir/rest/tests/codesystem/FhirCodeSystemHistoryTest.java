@@ -186,7 +186,8 @@ public class FhirCodeSystemHistoryTest extends FhirRestTest {
 			.body("status", equalTo("active"))
 			.body("count", equalTo(1928))
 			.body("effectivePeriod.start", equalTo("2019-07-31T00:00:00Z"))
-			.body("concept", notNullValue());  // by default _summary=FALSE should be used
+			.body("identifier", notNullValue())
+			.body("language", notNullValue());  // by default _summary=FALSE should be used
 	}
 	
 	@Test
@@ -199,7 +200,8 @@ public class FhirCodeSystemHistoryTest extends FhirRestTest {
 			.body("status", equalTo("active"))
 			.body("count", equalTo(1928))
 			.body("effectivePeriod.start", equalTo("2019-07-31T00:00:00Z"))
-			.body("concept", nullValue());
+			.body("identifier", notNullValue())
+			.body("language", nullValue());
 	}
 	
 	@Test
