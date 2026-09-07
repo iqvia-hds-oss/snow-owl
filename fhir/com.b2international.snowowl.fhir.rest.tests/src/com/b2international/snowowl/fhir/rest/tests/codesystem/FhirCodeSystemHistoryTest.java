@@ -19,10 +19,7 @@ import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODES
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM_ID_HISTORY_VERSION;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.*;
 
 import java.util.Map;
 
@@ -57,8 +54,13 @@ public class FhirCodeSystemHistoryTest extends FhirRestTest {
 	}
 	
 	private ValidatableResponse assertGetVersion(String id, String version) {
+		return assertGetVersion(id, version, Map.of());
+	}
+	
+	private ValidatableResponse assertGetVersion(String id, String version, Map<String, String> params) {
 		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when()
+			.params(params)
 			.get(CODESYSTEM_ID_HISTORY_VERSION, id, version)
 			.then().assertThat();
 	}
@@ -183,7 +185,21 @@ public class FhirCodeSystemHistoryTest extends FhirRestTest {
 			.body("version", equalTo(SNOMEDCT_URL + "/version/20190731"))
 			.body("status", equalTo("active"))
 			.body("count", equalTo(1928))
-			.body("effectivePeriod.start", equalTo("2019-07-31T00:00:00Z"));
+			.body("effectivePeriod.start", equalTo("2019-07-31T00:00:00Z"))
+			.body("concept", notNullValue());  // by default _summary=FALSE should be used
+	}
+	
+	@Test
+	public void GET_VersionSummary() throws Exception {
+		assertGetVersion("SNOMEDCT", "2019-07-31", Map.of("_summary", "TRUE"))
+			.statusCode(200)
+			.body("resourceType", equalTo("CodeSystem"))
+			.body("id", equalTo("SNOMEDCT"))
+			.body("version", equalTo(SNOMEDCT_URL + "/version/20190731"))
+			.body("status", equalTo("active"))
+			.body("count", equalTo(1928))
+			.body("effectivePeriod.start", equalTo("2019-07-31T00:00:00Z"))
+			.body("concept", nullValue());
 	}
 	
 	@Test
