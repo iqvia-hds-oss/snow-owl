@@ -53,12 +53,8 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 	@Override
 	public ValueSet expand(ServiceProvider context, ValueSet valueSet, ValueSetExpandParameters parameters, String preferredDisplay) {
 		// XXX since this is an implicit VS, and resource stored in the VS here is a CodeSystem referring to the proper SNOMED CT Edition
-		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(valueSet);
-		ResourceURI codeSystemUri = resource.getResourceURI();
-		
-		if (parameters.getDate() != null) {
-			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameters.getDate().getValue().getTime()));
-		}
+		final ResourceFragment domainResource = FhirModelHelpers.getResourceFragment(valueSet);
+		final ResourceURI domainResourceUri = FhirModelHelpers.resourceUriFromWithDateAt(valueSet, parameters.getDate());
 		
 		final String term = parameters.getFilter() == null ? null : parameters.getFilter().getValue();
 		final TermFilter termFilter = term == null ? null : TermFilter.match().term(term).build();
@@ -82,12 +78,23 @@ public class SnomedFhirValueSetExpander extends SnomedFhirImplicitValueSetSuppor
 			conceptSearchOptions.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, ExpandParser.parse("descriptions(expand(type(expand(pt()))))"));
 		}
 		
-		// seed already fetched resource information to prevent refetching the metadata
-		final ServiceProvider searchContext = context.inject().bind(ResourceFragment.class, resource).build();
 		
-		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+		/* 
+		 * seed already fetched resource information, but only if the point-in-time parameter 
+		 * is set before the already fetched (most recent) resource's creation time
+		 */
+		final ServiceProvider searchContext;
+		final long createdTimestamp = domainResource.getCreatedAt();
+
+		if (!domainResourceUri.hasTimestampPart() || domainResourceUri.getTimestampValue() >= createdTimestamp) {
+			searchContext = context.inject().bind(ResourceFragment.class, domainResource).build();
+		} else {
+			searchContext = context;
+		}
+		
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(domainResource.getToolingId());
 		final Concepts concepts = codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(codeSystemUri, searchContext, conceptSearchOptions.build());
+				.evaluate(domainResourceUri, searchContext, conceptSearchOptions.build());
 		
 		final ValueSet.ValueSetExpansionComponent expansion = new ValueSet.ValueSetExpansionComponent()
 				.setIdentifier(valueSet.getId())

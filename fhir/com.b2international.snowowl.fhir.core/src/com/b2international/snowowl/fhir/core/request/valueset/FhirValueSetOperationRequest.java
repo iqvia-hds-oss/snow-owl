@@ -52,12 +52,14 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 	private static final long serialVersionUID = 1L;
 
 	private final String url;
+	private final String version;
 	
-	public FhirValueSetOperationRequest(String url) {
+	public FhirValueSetOperationRequest(String url, String version) {
 		if (Strings.isNullOrEmpty(url)) {
 			throw new BadRequestException("URL must be defined to identify a value set. 'valueSet' parameter is not available yet.", "url");
 		}
 		this.url = url;
+		this.version = version;
 	}
 	
 	protected final String getUrl() {
@@ -73,16 +75,25 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		
 		// check if url is an implicit URL
 		if (FhirModelHelpers.isImplicitValueSetUrl(url)) {
+			// ignore the supplied version for implicit URLs as they should contain the version in most cases
 			valueSet = expandImplicitValueSet(context, url);
 		} else {
-			valueSet = FhirRequests.valueSets().prepareGet(url)
+			valueSet = FhirRequests.valueSets().prepareSearch()
+					.filterByUrl(url)
+					.filterByVersion(version)
 					.setElements(ImmutableList.<String>builder()
 							.addAll(R5ObjectFields.ValueSet.SUMMARY)
 							.add(R5ObjectFields.ValueSet.STATUS)
 							.add(R5ObjectFields.ValueSet.COMPOSE)
 							.build())
 					.buildAsync()
-					.execute(context);
+					.execute(context)
+					.getEntry()
+					.stream()
+					.findFirst()
+					.map(Bundle.BundleEntryComponent::getResource)
+					.map(ValueSet.class::cast)
+					.orElseThrow(() -> new BadRequestException("Value Set couldn't be found with the specified request parameters"));
 		}
 		
 		return doExecute(context, valueSet);

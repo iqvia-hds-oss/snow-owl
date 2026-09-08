@@ -15,8 +15,6 @@
  */
 package com.b2international.snowowl.snomed.fhir;
 
-import java.util.OptionalLong;
-
 import org.hl7.fhir.r5.model.ValueSet;
 
 import com.b2international.commons.http.AcceptLanguageHeader;
@@ -38,16 +36,8 @@ public final class SnomedFhirValueSetCodeValidator extends SnomedFhirImplicitVal
 	@Override
 	public ValueSet.ValueSetExpansionContainsComponent validateCode(ServiceProvider context, ValueSet valueSet, String code, ValueSetValidateCodeParameters parameters) {
 		// XXX since this is an implicit VS, and resource stored in the VS here is a CodeSystem referring to the proper SNOMED CT Edition
-		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(valueSet);
-		ResourceURI codeSystemUri = resource.getResourceURI();
-		
-		final OptionalLong parameterTimestamp = (parameters.getDate() == null) 
-			? OptionalLong.empty()
-			: OptionalLong.of(parameters.getDate().getValue().getTime());
-
-		if (parameterTimestamp.isPresent()) {
-			codeSystemUri = codeSystemUri.withTimestampPart("@" + Long.toString(parameterTimestamp.getAsLong()));
-		}
+		final ResourceFragment domainResource = FhirModelHelpers.getResourceFragment(valueSet);
+		final ResourceURI domainResourceUri = FhirModelHelpers.resourceUriFromWithDateAt(valueSet, parameters.getDate());
 		
 		// for performance reasons, running the raw evaluator here as we already identified the CodeSystem to evaluate it on
 		OptionsBuilder conceptSearchOptions = Options.builder()
@@ -64,17 +54,17 @@ public final class SnomedFhirValueSetCodeValidator extends SnomedFhirImplicitVal
 		 * is set before the already fetched (most recent) resource's creation time
 		 */
 		final ServiceProvider searchContext;
-		final long createdTimestamp = resource.getCreatedAt();
+		final long createdTimestamp = domainResource.getCreatedAt();
 
-		if (parameterTimestamp.isEmpty() || parameterTimestamp.getAsLong() >= createdTimestamp) {
-			searchContext = context.inject().bind(ResourceFragment.class, resource).build();
+		if (!domainResourceUri.hasTimestampPart() || domainResourceUri.getTimestampValue() >= createdTimestamp) {
+			searchContext = context.inject().bind(ResourceFragment.class, domainResource).build();
 		} else {
 			searchContext = context;
 		}
 		
-		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
+		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(domainResource.getToolingId());
 		return codeSystemToolingRepository.service(ConceptSearchRequestEvaluator.class)
-				.evaluate(codeSystemUri, searchContext, conceptSearchOptions.build())
+				.evaluate(domainResourceUri, searchContext, conceptSearchOptions.build())
 				.first()
 				.map(concept -> {
 					final String version = valueSet.getUserString(R5ObjectFields.ValueSet.UserData.CODE_SYSTEM_VERSION);

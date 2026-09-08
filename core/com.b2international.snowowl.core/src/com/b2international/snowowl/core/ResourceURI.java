@@ -149,6 +149,14 @@ public final class ResourceURI implements Serializable, Comparable<ResourceURI> 
 		return timestampPart;
 	}
 	
+	public Long getTimestampValue() {
+		if (hasTimestampPart()) {
+			return Long.parseLong(timestampPart.substring(1));
+		} else {
+			return null;
+		}
+	}
+	
 	public boolean isLatest() {
 		return hasPath(LATEST) || LATEST.equals(getSpecialIdPart());
 	}

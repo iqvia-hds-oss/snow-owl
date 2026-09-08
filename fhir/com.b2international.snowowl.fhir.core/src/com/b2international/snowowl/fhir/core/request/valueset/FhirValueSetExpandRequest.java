@@ -22,6 +22,7 @@ import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 
 /**
  * @since 8.0
@@ -37,7 +38,9 @@ final class FhirValueSetExpandRequest extends FhirValueSetOperationRequest<Value
 	private final String preferredDisplay;
 
 	public FhirValueSetExpandRequest(ValueSetExpandParameters parameters, String preferredDisplay) {
-		super(parameters.getUrl() == null ? null : parameters.getUrl().asStringValue());
+		var url = parameters.getUrl() == null ? null : parameters.getUrl().asStringValue();
+		var version = Strings.emptyToNull(parameters.getValueSetVersion() == null ? null : parameters.getValueSetVersion().getValue());
+		super(url, version);
 		this.parameters = parameters;
 		this.preferredDisplay = preferredDisplay;
 	}

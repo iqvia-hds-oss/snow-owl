@@ -39,6 +39,7 @@ import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 import com.google.common.hash.Hashing;
 
 /**
@@ -103,11 +104,13 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 
 	// TODO make this consider source/target scopes to find appropriate ConceptMaps when URL is not defined, for now we basically need the URL parameter to be able to translate using a dedicated map
 	private ConceptMap lookupConceptMaps(ServiceProvider context) {
+		final String conceptMapVersion = Strings.emptyToNull(parameters.getConceptMapVersion() != null ? parameters.getConceptMapVersion().getValue() : null);
 		if (FhirModelHelpers.isImplicitConceptMapUrl(parameters.getUrl().getValue())) {
 			return buildImplicitConceptMap(context, parameters.getUrl().getValue());
 		} else {
 			return FhirRequests.conceptMaps().prepareSearch()
 					.filterById(parameters.getUrl().getValue())
+					.filterByVersion(conceptMapVersion)
 					.setElements(List.copyOf(R5ObjectFields.ConceptMap.MANDATORY))
 					.setCount(1)
 					.buildAsync()
