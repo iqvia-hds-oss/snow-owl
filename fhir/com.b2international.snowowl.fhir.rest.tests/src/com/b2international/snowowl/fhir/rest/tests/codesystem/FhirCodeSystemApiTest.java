@@ -18,7 +18,9 @@ package com.b2international.snowowl.fhir.rest.tests.codesystem;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.CODESYSTEM_ID;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.generateToken;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenRequestWithToken;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -33,6 +35,7 @@ import com.b2international.snowowl.core.commit.CommitInfos;
 import com.b2international.snowowl.core.context.ResourceRepositoryRequestBuilder;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.core.repository.RepositoryRequests;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
@@ -642,5 +645,105 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 		 	.first()
 		 	.extracting(CommitInfo::getAuthor)
 		 	.isEqualTo("snowowl");
+	}
+	
+	@Test
+	public void GET_CodeSystem_WithPermission() throws Exception {
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, getTestCodeSystemId())
+		);
+		
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.when().get(CODESYSTEM)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("type", equalTo("searchset"))
+			.body("total", equalTo(1))
+			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(getTestCodeSystemUrl()));
+		
+		final String blockedToken = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, "other-code-system")
+		);
+		
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, blockedToken)
+			.when().get(CODESYSTEM)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("type", equalTo("searchset"))
+			.body("total", equalTo(0))
+			.body("entry", nullValue());
+	}
+	
+	@Test
+	public void GET_CodeSystem_WithPermission_Version() throws Exception {
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, "SNOMEDCT")
+		);
+		
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.queryParam("_id", "SNOMEDCT/2002-01-31")
+			.when().get(CODESYSTEM)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("type", equalTo("searchset"))
+			.body("total", equalTo(1))
+			.body("entry[0].resource.id", equalTo("SNOMEDCT"))
+			.body("entry[0].resource.url", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("entry[0].resource.version", equalTo(SNOMEDCT_URL + "/version/20020131"));
+		
+		final String blockedToken = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, "other-code-system")
+		);
+		
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, blockedToken)
+			.queryParam("_id", "SNOMEDCT/2002-01-31")
+			.when().get(CODESYSTEM)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("type", equalTo("searchset"))
+			.body("total", equalTo(0))
+			.body("entry", nullValue());
+	}
+	
+	@Test
+	public void GET_CodeSystem_WithPermission_Status() throws Exception {
+		CodeSystemRestRequests.updateCodeSystem(getTestCodeSystemId(), Json.object("status", "mysterious"))
+			.statusCode(204);
+		
+		final String token = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, getTestCodeSystemId())
+		);
+		
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, token)
+			.queryParam("status", "mysterious")
+			.when().get(CODESYSTEM)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("type", equalTo("searchset"))
+			.body("total", equalTo(1))
+			.body("entry[0].resource.id", equalTo(getTestCodeSystemId()))
+			// This is the PublicationStatus code "mysterious" maps to
+			.body("entry[0].resource.status", equalTo("unknown"));
+		
+		final String blockedToken = generateToken(
+			Permission.requireAny(Permission.OPERATION_READ, "other-code-system")
+		);
+		
+		givenRequestWithToken(FHIR_ROOT_CONTEXT, blockedToken)
+			.queryParam("status", "mysterious")
+			.when().get(CODESYSTEM)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Bundle"))
+			.body("type", equalTo("searchset"))
+			.body("total", equalTo(0))
+			.body("entry", nullValue());
 	}
 }
