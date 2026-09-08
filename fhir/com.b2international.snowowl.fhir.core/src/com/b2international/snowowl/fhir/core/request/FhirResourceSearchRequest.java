@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.model.Bundle.BundleEntryComponent;
 import org.hl7.fhir.r5.model.Bundle.BundleType;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
+import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 import org.hl7.fhir.r5.model.Narrative.NarrativeStatus;
 import org.hl7.fhir.utilities.xhtml.NodeType;
 import org.hl7.fhir.utilities.xhtml.XhtmlNode;
@@ -74,6 +75,12 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		R5ObjectFields.MetadataResource.TEXT,
 		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD
 	);
+	
+	// Identifier system URI that indicates that the identifier value represents a URI
+	private static final String SYSTEM_GLOBALLY_UNIQUE_URI = "urn:ietf:rfc:3986";
+	
+	// URI (URN) prefix for OIDs
+	private static final String OID_PREFIX = "urn:oid:";
 	
 	/**
 	 * @since 8.0
@@ -433,6 +440,17 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		// If a FHIR version property override indicates that the URL should be used as the version, do so
 		return fragment.getUrl();
 	}
+	
+	private Identifier getIdentifier(final String oid) {
+		if (StringUtils.isEmpty(oid)) {
+			return null;
+		}
+		
+		return new Identifier()
+			.setUse(IdentifierUse.OFFICIAL)
+			.setSystem(SYSTEM_GLOBALLY_UNIQUE_URI)
+			.setValue(OID_PREFIX + oid);
+	}
 
 	/**
 	 * Subclasses may override this method to set additional properties on the
@@ -481,6 +499,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.URL, () -> getUrl(resource), entry::setUrl);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.VERSION, () -> getVersion(resource), entry::setVersion);
+		
+		// addIdentifier() is a no-op if the input is null so we can safely call it here
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.IDENTIFIER, () -> getIdentifier(resource.getOid()), entry::addIdentifier);
 		
 		expandResourceSpecificFields(context, entry, resource);
 

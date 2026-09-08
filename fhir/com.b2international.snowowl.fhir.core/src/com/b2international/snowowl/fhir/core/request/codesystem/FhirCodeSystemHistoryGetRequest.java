@@ -20,10 +20,7 @@ import java.util.Set;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
-import org.hl7.fhir.r5.model.Identifier;
-import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
 
-import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ResourceURI;
@@ -47,12 +44,6 @@ final class FhirCodeSystemHistoryGetRequest extends FhirResourceHistoryGetReques
 		R5ObjectFields.CodeSystem.FILTER,
 		R5ObjectFields.CodeSystem.PROPERTY
 	);
-	
-	// Identifier system URI that indicates that the identifier value represents a URI
-	private static final String SYSTEM_GLOBALLY_UNIQUE_URI = "urn:ietf:rfc:3986";
-	
-	// URI (URN) prefix for OIDs
-	private static final String OID_PREFIX = "urn:oid:";
 	
 	protected String getResourceType( ) {
 		return com.b2international.snowowl.core.codesystem.CodeSystem.RESOURCE_TYPE;
@@ -78,24 +69,11 @@ final class FhirCodeSystemHistoryGetRequest extends FhirResourceHistoryGetReques
 			fields.add(VersionDocument.Fields.SETTINGS);
 		}
 	}
-  
-	private Identifier getIdentifier(final String oid) {
-		if (StringUtils.isEmpty(oid)) {
-			return null;
-		}
-		
-		return new Identifier()
-			.setUse(IdentifierUse.OFFICIAL)
-			.setSystem(SYSTEM_GLOBALLY_UNIQUE_URI)
-			.setValue(OID_PREFIX + oid);
-	}
 
 	@Override
 	protected void expandResourceSpecificFields(final RepositoryContext context, final CodeSystem entry, final ResourceFragment resource) {
 		final ResourceURI resourceURI = resource.getResourceURI();
 		
-		// addIdentifier() is a no-op if the input is null so we can safely call it here
-		includeIfFieldSelected(R5ObjectFields.CodeSystem.IDENTIFIER, () -> getIdentifier(resource.getOid()), entry::addIdentifier);
 		includeIfFieldSelected(R5ObjectFields.CodeSystem.CASE_SENSITIVE, () -> (Boolean) resource.getSettings().getOrDefault(R5ObjectFields.CodeSystem.CASE_SENSITIVE, true), entry::setCaseSensitive);
     
 		// The rest of the field inclusions is specific to code system tooling, we need to obtain the appropriate converter for this purpose
