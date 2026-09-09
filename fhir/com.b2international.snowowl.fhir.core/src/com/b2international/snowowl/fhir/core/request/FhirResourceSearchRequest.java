@@ -33,6 +33,7 @@ import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
+import com.b2international.commons.exceptions.ForbiddenException;
 import com.b2international.fhir.FhirCodeSystems;
 import com.b2international.index.Hits;
 import com.b2international.index.query.Expression;
@@ -41,9 +42,13 @@ import com.b2international.index.query.Expressions.ExpressionBuilder;
 import com.b2international.index.query.Query;
 import com.b2international.index.revision.RevisionSearcher;
 import com.b2international.snowowl.core.ResourceFragment;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.TerminologyResource;
+import com.b2international.snowowl.core.authorization.AuthorizationService;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.id.IDs;
+import com.b2international.snowowl.core.identity.Permission;
+import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.internal.ResourceDocument;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.search.TermFilter;
@@ -51,6 +56,7 @@ import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 
 /**
  * Retrieves FHIR terminology resources (CodeSystem, ValueSet, ConceptMap) based
@@ -175,6 +181,87 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				.filter(VersionDocument.Expressions.versions(uniqueVersions))
 				.build())
 			.build());
+	}
+
+	// copied from BaseResourceSearchRequest#addSecurityFilter(RepositoryContext, ExpressionBuilder) with adjustments
+	private void addSecurityFilter(final RepositoryContext context, final ExpressionBuilder query) {
+		final User user = context.service(User.class);
+		if (user.hasReadAllAccess()) {
+			return;
+		}
+		
+		final AuthorizationService authz = context.optionalService(AuthorizationService.class).orElse(AuthorizationService.DEFAULT);
+		
+		// Fast path: if the user has read access to the provided resource (single ID), skip the rest of the security filtering steps
+		if (componentIds() != null && componentIds().size() == 1) {
+			try {
+
+				final String componentIdValue = Iterables.getOnlyElement(componentIds());
+				final String componentIdToCheck = ResourceURI.withoutSpecialResourceIdPart(componentIdValue);
+				authz.checkPermission(context, user, List.of(Permission.requireAll(Permission.OPERATION_READ, componentIdToCheck)));
+				return;
+				
+			} catch (final ForbiddenException e) {
+				// Fall-through; there are other ways this user may have access, FHIR search requests don't always use the native resource ID either
+			}
+		}
+		
+		final Set<String> accessibleResources = authz.getAccessibleResources(context, user);
+		final SortedSet<String> exactResourceIds = new TreeSet<>(); 
+		final SortedSet<String> resourceIdPrefixes = new TreeSet<>();
+		
+		accessibleResources.forEach(resource -> {
+			if (!resource.endsWith("*")) {
+				exactResourceIds.add(resource);
+				// XXX (added): since we also need to return version documents, construct a prefix from exact matches with a path separator at the end
+				if (!resource.contains("/")) {
+					resourceIdPrefixes.add(resource + "/");
+				}
+			} else {
+				resourceIdPrefixes.add(resource.substring(0, resource.length() - 1));
+			}
+		});
+
+		// XXX (removed): OptionKey.HIDDEN is unsupported in FHIR search requests so the check here is removed
+		
+		// If there is nothing to see for this user, exit early
+		if (exactResourceIds.isEmpty() && resourceIdPrefixes.isEmpty()) {
+			throw new NoResultException();
+		}
+		
+		context.log().trace("Restricting user '{}' to resources exact: '{}', prefix: '{}'.", user.getUserId(), exactResourceIds, resourceIdPrefixes);
+		final ExpressionBuilder bool = Expressions.bool();
+		
+		// the permissions give access to either
+		if (!exactResourceIds.isEmpty()) {
+			// explicit IDs
+			bool.should(ResourceDocument.Expressions.ids(exactResourceIds));
+			
+			if (authz.isDefault()) {
+				// or the permitted resources are bundles which give access to all resources within it (recursively) (perform only in default mode, let external authorization systems handle this)
+				bool.should(ResourceDocument.Expressions.bundleIds(exactResourceIds));
+				bool.should(ResourceDocument.Expressions.bundleAncestorIds(exactResourceIds));
+			}
+			
+			// allow backward compatibility with older authorization systems where repositoryId/toolingIds are being used in permissions
+			// XXX this needs to be removed in Snow Owl 9, once we completely eliminate reflective access and toolingId/branch support from the Java API
+			bool.should(ResourceDocument.Expressions.toolingIds(exactResourceIds));
+		}
+		
+		if (!resourceIdPrefixes.isEmpty()) {
+			// partial IDs, prefixes
+			Iterables.partition(resourceIdPrefixes, 1000).forEach(idPrefixes -> {
+				bool.should(ResourceDocument.Expressions.idPrefixes(idPrefixes));	
+			});
+			
+			if (authz.isDefault()) {
+				// or the permitted resources are bundle ID prefixes which give access to all resources within it (recursively) (perform only in default mode, let external authorization systems handle this)
+				bool.should(ResourceDocument.Expressions.bundleIdPrefixes(resourceIdPrefixes));
+				bool.should(ResourceDocument.Expressions.bundleAncestorIdPrefixes(resourceIdPrefixes));
+			}
+		}
+		
+		query.filter(bool.build());
 	}
 
 	/**
@@ -563,6 +650,9 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		// The rest of the filters (currently only "status") are applied without special handling
 		addFilter(query, OptionKey.STATUS, String.class, ResourceDocument.Expressions::statuses);
 
+		// Limit response to user-accessible resources only, based on the current user's permissions
+		addSecurityFilter(context, query);
+		
 		// Map requested fields to their internal counterpart; remove FHIR-specific fields that do not map to a document field 
 		final List<String> internalFields = replaceFieldsToLoad(fields());
 
