@@ -76,7 +76,11 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		
 		// check if url is an implicit URL
 		if (FhirModelHelpers.isImplicitValueSetUrl(url)) {
-			// ignore the supplied version for implicit URLs as they should contain the version in most cases
+			// raise an error if the version is specified through the valueSetVersion field
+			if (!Strings.isNullOrEmpty(version)) {
+				throw new BadRequestException("'valueSetVersion' parameter should not be used with implicit Value Set URLs.")
+					.withDeveloperMessage("Consult the guide of the implicit Value Set URL you are using on how to include the version in the value.");
+			}
 			valueSet = expandImplicitValueSet(context, url);
 		} else {
 			valueSet = FhirRequests.valueSets().prepareSearch()
