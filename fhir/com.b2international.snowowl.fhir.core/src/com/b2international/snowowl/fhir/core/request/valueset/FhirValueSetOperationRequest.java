@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.Enumerations.FilterOperator;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.ValueSet;
 
+import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
@@ -93,7 +94,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 					.findFirst()
 					.map(Bundle.BundleEntryComponent::getResource)
 					.map(ValueSet.class::cast)
-					.orElseThrow(() -> new BadRequestException("Value Set couldn't be found with the specified request parameters"));
+					.orElseThrow(() -> new NotFoundException("Value Set", url).withDeveloperMessage("If supplied and it has a too early value, the 'date' parameter can cause the resource to not be visible at that time. Check input values."));
 		}
 		
 		return doExecute(context, valueSet);
