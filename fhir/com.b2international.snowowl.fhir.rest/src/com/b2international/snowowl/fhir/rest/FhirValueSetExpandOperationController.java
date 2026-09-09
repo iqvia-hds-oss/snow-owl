@@ -352,7 +352,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		// The "next" parameter will re-use request parameters in query parameter form
 		final UriComponentsBuilder nextUriBuilder = MvcUriComponentsBuilder.fromMethodName(FhirValueSetExpandOperationController.class, "expandType", 
 			parameters.getUrl() == null ? null : parameters.getUrl().getValue(), 
-			parameters.getValueSetVersion() == null ? null : parameters.getUrl().getValue(),
+			parameters.getValueSetVersion() == null ? null : parameters.getValueSetVersion().getValue(),
 			parameters.getFilter() == null ? null : parameters.getFilter().getValue(), 
 			parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue(), 
 			parameters.getDisplayLanguage() == null ? null : parameters.getDisplayLanguage(), 
