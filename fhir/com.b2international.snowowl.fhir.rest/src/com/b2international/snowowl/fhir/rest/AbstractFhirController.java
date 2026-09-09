@@ -365,7 +365,7 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	}
 
 	/**
-	 * Exception handler to return <b>Bad Request</b> when an {@link BadRequestException} is thrown from the underlying system.
+	 * Exception handler to return <b>Conflict</b> when an {@link ConflictException} is thrown from the underlying system.
 	 * 
 	 * @param ex
 	 * @return {@link RestApiError} instance with detailed messages
