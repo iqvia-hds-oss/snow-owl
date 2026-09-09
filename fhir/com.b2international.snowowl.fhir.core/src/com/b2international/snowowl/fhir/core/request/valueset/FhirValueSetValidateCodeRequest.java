@@ -49,7 +49,9 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 	private final ValueSetValidateCodeParameters parameters;
 	
 	public FhirValueSetValidateCodeRequest(ValueSetValidateCodeParameters parameters) {
-		super(parameters.getUrl() == null ? null : parameters.getUrl().asStringValue());
+		var url = parameters.getUrl() == null ? null : parameters.getUrl().asStringValue();
+		var version = Strings.emptyToNull(parameters.getValueSetVersion() == null ? null : parameters.getValueSetVersion().getValue());
+		super(url, version);
 		this.parameters = parameters;
 	}
 	

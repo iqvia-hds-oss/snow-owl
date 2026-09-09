@@ -53,6 +53,8 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 	 * <p>
 	 * Translates a code that could belong to any {@link ConceptMap} in the system.
 	 * 
+	 * @param url
+	 * @param conceptMapVersion
 	 * @param code
 	 * @param system
 	 * @param version
@@ -96,9 +98,13 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 	})
 	public Promise<ResponseEntity<byte[]>> translateTypeGet(
 			
-		@Parameter(description = "The id or the canonical URL of the conceptMap to base the translation on")
+		@Parameter(description = "The id or the canonical URL of the Concept Map to base the translation on")
 		@RequestParam(value = "url")
 		final String url,
+		
+		@Parameter(description = "The version of the Concept Map to use")
+		@RequestParam(value = "conceptMapVersion")
+		final Optional<String> conceptMapVersion,
 			
 		@Parameter(description = "The code that is to be translated.") 
 		@RequestParam(value = "sourceCode") 
@@ -174,6 +180,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		var parameters = new ConceptMapTranslateParameters()
 			.setUrl(url);
 		
+		conceptMapVersion.ifPresent(parameters::setConceptMapVersion);
 		sourceCode.ifPresent(parameters::setSourceCode);
 		system.ifPresent(parameters::setSystem);
 		
@@ -335,7 +342,8 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 	/**
 	 * <code><b>GET /ConceptMap/{id}/$translate</b></code>
 	 * 
-	 * @param conceptMapId
+	 * @param id
+	 * @param conceptMapVersion
 	 * @param code
 	 * @param system
 	 * @param version
@@ -380,7 +388,11 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 			
 		@Parameter(description = "The id of the Concept Map to base the translation on") 
 		@PathVariable("id") 
-		String conceptMapId,
+		final String id,
+		
+		@Parameter(description = "The version of the Concept Map to use")
+		@RequestParam(value = "conceptMapVersion")
+		final Optional<String> conceptMapVersion,
 		
 		@Parameter(description = "The code that is to be translated.") 
 		@RequestParam(value = "sourceCode") 
@@ -454,8 +466,9 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		
 		var parameters = new ConceptMapTranslateParameters()
 			// XXX: Using a concept map ID as the URL here
-			.setUrl(conceptMapId);
+			.setUrl(id);
 		
+		conceptMapVersion.ifPresent(parameters::setConceptMapVersion);
 		sourceCode.ifPresent(parameters::setSourceCode);
 		system.ifPresent(parameters::setSystem);
 		
@@ -476,7 +489,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 	 * 
 	 * Translates a code that belongs to a {@link ConceptMap} specified by its ID.
 	 * 
-	 * @param conceptMapId
+	 * @param id
 	 * @param requestBody - an {@link InputStream} whose contents can be deserialized to FHIR parameters
 	 * @param contentType
 	 * @param accept
@@ -493,7 +506,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 	@ApiResponse(responseCode = "404", description = "Not found")
 	@ApiResponse(responseCode = "400", description = "Bad request")
 	@PostMapping(
-		value = "/{conceptMapId:**}/$translate", 
+		value = "/{id:**}/$translate", 
 		consumes = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
 			APPLICATION_FHIR_JSON_5_0_0_VALUE,
@@ -540,8 +553,8 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 	public Promise<ResponseEntity<byte[]>> translateInstancePost(
 			
 		@Parameter(description = "The id of the conceptMap to base the translation on") 
-		@PathVariable("conceptMapId") 
-		String conceptMapId,
+		@PathVariable("id") 
+		String id,
 		
 		@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The operation's input parameters", content = { 
 			@Content(mediaType = APPLICATION_FHIR_JSON_5_0_VALUE, schema = @Schema(type = "object")),
@@ -618,7 +631,7 @@ public class FhirConceptMapTranslateController extends AbstractFhirController {
 		final ConceptMapTranslateParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.ConceptMapTranslateParametersFactory.INSTANCE);
 		
 		// Before execution set the URI to match the path variable
-		parameters.setUrl(conceptMapId);
+		parameters.setUrl(id);
 		
 		return translate(parameters, accept, _format, _pretty, acceptLanguage);
 	}

@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.Enumerations.FilterOperator;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.ValueSet;
 
+import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
@@ -52,12 +53,14 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 	private static final long serialVersionUID = 1L;
 
 	private final String url;
+	private final String version;
 	
-	public FhirValueSetOperationRequest(String url) {
+	public FhirValueSetOperationRequest(String url, String version) {
 		if (Strings.isNullOrEmpty(url)) {
 			throw new BadRequestException("URL must be defined to identify a value set. 'valueSet' parameter is not available yet.", "url");
 		}
 		this.url = url;
+		this.version = version;
 	}
 	
 	protected final String getUrl() {
@@ -73,16 +76,29 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		
 		// check if url is an implicit URL
 		if (FhirModelHelpers.isImplicitValueSetUrl(url)) {
+			// raise an error if the version is specified through the valueSetVersion field
+			if (!Strings.isNullOrEmpty(version)) {
+				throw new BadRequestException("'valueSetVersion' parameter should not be used with implicit Value Set URLs.")
+					.withDeveloperMessage("Consult the guide of the implicit Value Set URL you are using on how to include the version in the value.");
+			}
 			valueSet = expandImplicitValueSet(context, url);
 		} else {
-			valueSet = FhirRequests.valueSets().prepareGet(url)
+			valueSet = FhirRequests.valueSets().prepareSearch()
+					.filterByUrl(url)
+					.filterByVersion(version)
 					.setElements(ImmutableList.<String>builder()
 							.addAll(R5ObjectFields.ValueSet.SUMMARY)
 							.add(R5ObjectFields.ValueSet.STATUS)
 							.add(R5ObjectFields.ValueSet.COMPOSE)
 							.build())
 					.buildAsync()
-					.execute(context);
+					.execute(context)
+					.getEntry()
+					.stream()
+					.findFirst()
+					.map(Bundle.BundleEntryComponent::getResource)
+					.map(ValueSet.class::cast)
+					.orElseThrow(() -> new NotFoundException("Value Set", url).withDeveloperMessage("If supplied and it has a too early value, the 'date' parameter can cause the resource to not be visible at that time. Check input values."));
 		}
 		
 		return doExecute(context, valueSet);

@@ -34,7 +34,6 @@ import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBui
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.b2international.commons.collections.Collections3;
-import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
@@ -669,21 +668,14 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 		
 	) {
 		
-		try {
-			
-			FhirRequests.conceptMaps()
-				.prepareDelete(id)
-				.force(force)
-				.build(author, String.format("Deleting concept map %s", id))
-				.execute(getBus())
-				.getSync();
-			
-			return ResponseEntity.noContent().build();
-		} catch (NotFoundException e) {
-			return ResponseEntity.notFound().build();
-		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.CONFLICT).build();
-		}
+		FhirRequests.conceptMaps()
+			.prepareDelete(id)
+			.force(force)
+			.build(author, String.format("Deleting concept map %s", id))
+			.execute(getBus())
+			.getSync();
+		
+		return ResponseEntity.noContent().build();
 	}
 	
 	/**

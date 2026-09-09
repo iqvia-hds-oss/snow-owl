@@ -15,20 +15,14 @@
  */
 package com.b2international.snowowl.fhir.core;
 
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.hl7.fhir.r5.model.CanonicalType;
-import org.hl7.fhir.r5.model.DateTimeType;
-import org.hl7.fhir.r5.model.InstantType;
-import org.hl7.fhir.r5.model.Resource;
+import org.hl7.fhir.r5.model.*;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
@@ -43,6 +37,7 @@ import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.VersionDocument;
+import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
@@ -80,6 +75,24 @@ public class FhirModelHelpers {
 			return res.getResourceURI();
 		} else {
 			return ResourceURI.of(resource.getResourceType().name().toLowerCase() + "s", resource.getId());
+		}
+	}
+	
+	public static ResourceURI resourceUriFromWithDateAt(final CanonicalResource resource, DateTimeType dateAt) {
+		final OptionalLong parameterTimestamp = (dateAt == null) 
+				? OptionalLong.empty()
+						: OptionalLong.of(dateAt.getValue().getTime());
+		
+		if (resource.hasVersion() && parameterTimestamp.isPresent()) {
+			// using both a versioned state and the date parameter together leads to inconsistencies and should not be used, report error
+			throw new BadRequestException("Using both a versioned canonical resource and the 'date' parameter is discouraged. Either specify the versioned state or just use the 'date' parameter with the non-versioned resource url.");
+		}
+
+		final ResourceURI resourceUri = resourceUriFrom(resource);
+		if (parameterTimestamp.isPresent()) {
+			return resourceUri.withTimestampPart("@" + Long.toString(parameterTimestamp.getAsLong()));
+		} else {
+			return resourceUri;
 		}
 	}
 	
@@ -384,4 +397,5 @@ public class FhirModelHelpers {
 	public static String computeEffectiveVersion(final Version version, final String fhirVersionProperty) {
 		return computeEffectiveVersion(fhirVersionProperty, version::getUrl, version::getVersion);
 	}
+
 }
