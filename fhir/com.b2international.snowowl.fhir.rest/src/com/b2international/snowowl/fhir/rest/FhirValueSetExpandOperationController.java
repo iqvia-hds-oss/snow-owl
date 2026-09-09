@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,10 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		@RequestParam(value = "url", required = true) 
 		final String url,
 		
+		@Parameter(description = "Version of the Value Set to select") 
+		@RequestParam(value = "valueSetVersion", required = false) 
+		final String valueSetVersion,
+		
 		@Parameter(description = "Textual filter value to use") 
 		@RequestParam(value = "filter", required = false)
 		final String filter,
@@ -170,6 +174,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		
 		final UriComponentsBuilder nextUriBuilder = MvcUriComponentsBuilder.fromMethodName(FhirValueSetExpandOperationController.class, "expandType", 
 			url, 
+			valueSetVersion,
 			filter, 
 			activeOnly, 
 			displayLanguage, 
@@ -184,6 +189,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		
 		final var parameters = new ValueSetExpandParameters()
 			.setUrl(url)
+			.setValueSetVersion(valueSetVersion)
 			.setFilter(filter)
 			.setAfter(after)
 			.setActiveOnly(activeOnly)
@@ -346,6 +352,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		// The "next" parameter will re-use request parameters in query parameter form
 		final UriComponentsBuilder nextUriBuilder = MvcUriComponentsBuilder.fromMethodName(FhirValueSetExpandOperationController.class, "expandType", 
 			parameters.getUrl() == null ? null : parameters.getUrl().getValue(), 
+			parameters.getValueSetVersion() == null ? null : parameters.getUrl().getValue(),
 			parameters.getFilter() == null ? null : parameters.getFilter().getValue(), 
 			parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue(), 
 			parameters.getDisplayLanguage() == null ? null : parameters.getDisplayLanguage(), 
@@ -407,9 +414,13 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 	})
 	public Promise<ResponseEntity<byte[]>> expandInstance(
 			
-		@Parameter(description = "The logical id of the value set to expand") 
+		@Parameter(description = "The logical id of the Value Set to expand") 
 		@PathVariable(value = "id", required = true) 
 		final String id,
+		
+		@Parameter(description = "Version of the Value Set to select") 
+		@RequestParam(value = "valueSetVersion", required = false) 
+		final String valueSetVersion,
 		
 		@Parameter(description = "Textual filter value to use") 
 		@RequestParam(value = "filter", required = false)
@@ -479,6 +490,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		
 		final UriComponentsBuilder nextUriBuilder = MvcUriComponentsBuilder.fromMethodName(FhirValueSetExpandOperationController.class, "expandInstance", 
 			id, 
+			valueSetVersion,
 			filter, 
 			activeOnly, 
 			displayLanguage, 
@@ -494,6 +506,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		var expandRequest = new ValueSetExpandParameters()
 			// XXX: We use the resource IDs as the URL here 
 			.setUrl(id)
+			.setValueSetVersion(valueSetVersion)
 			.setFilter(filter)
 			.setAfter(after)
 			.setActiveOnly(activeOnly)
