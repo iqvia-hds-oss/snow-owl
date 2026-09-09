@@ -84,7 +84,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 			valueSet = expandImplicitValueSet(context, url);
 		} else {
 			valueSet = FhirRequests.valueSets().prepareSearch()
-					.filterByUrl(url)
+					.filterById(url) // operations can use the resource ID in place of the URL parameter, filterById matches both
 					.filterByVersion(version)
 					.setElements(ImmutableList.<String>builder()
 							.addAll(R5ObjectFields.ValueSet.SUMMARY)
