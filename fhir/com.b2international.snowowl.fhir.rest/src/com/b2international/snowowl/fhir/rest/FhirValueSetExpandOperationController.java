@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.b2international.commons.StringUtils;
 import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
@@ -537,15 +538,17 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			.buildAsync()
 			.execute(getBus())
 			.then(valueSet -> {
-				
+				// update next variable with new after value if present
 				final ValueSet.ValueSetExpansionComponent expansion = valueSet.getExpansion();
-				
-				// update next variable with new after value
 				final String searchAfter = (String) expansion.getExtensionString(FhirValueSetExpander.EXTENSION_AFTER_PROPERTY_URL);
-				final String next = nextUriBuilder.replaceQueryParam("after", searchAfter)
+				
+				if (!StringUtils.isEmpty(searchAfter)) {
+					final String next = nextUriBuilder.replaceQueryParam("after", searchAfter)
 						.build()
 						.toString();
-				expansion.setNext(next);
+				
+					expansion.setNext(next);
+				}
 				
 				return toResponseEntity(valueSet, accept, _format, _pretty);
 			});
