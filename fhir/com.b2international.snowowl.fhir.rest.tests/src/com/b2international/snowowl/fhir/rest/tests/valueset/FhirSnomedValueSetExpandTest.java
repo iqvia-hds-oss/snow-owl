@@ -100,6 +100,34 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 	}
 	
 	@Test
+	public void expandSnomedCodeSystemURL_FhirVs_VersionedState() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008/version/20100131?fhir_vs")
+			.when().get(VALUESET_EXPAND)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("ValueSet"))
+			.body("id", notNullValue())
+			.body("expansion.total", equalTo(1613))
+			.body("expansion.contains[0].code", equalTo("103335007"))
+			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
+			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL + "/version/20100131"))
+			.body("expansion.contains[0].display", equalTo("Duration"));
+	}
+	
+	@Test
+	public void expandSnomedCodeSystemURL_FhirVs_ValueSetVersionParameter() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs")
+			.queryParam("valueSetVersion", "20100131") // try to use the valueSetVersion parameter as the SNOMED version we select, this should not be supported
+			.when().get(VALUESET_EXPAND)
+			.then()
+			.statusCode(400)
+			.body("issue[0].details.text", equalTo("'valueSetVersion' parameter should not be used with implicit Value Set URLs."))
+			.body("issue[0].diagnostics", equalTo("'valueSetVersion' parameter should not be used with implicit Value Set URLs."));
+	}
+	
+	@Test
 	public void expandSnomedCodeSystemURL_FhirVsIsaSubstance() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008?fhir_vs=isa/105590001")
