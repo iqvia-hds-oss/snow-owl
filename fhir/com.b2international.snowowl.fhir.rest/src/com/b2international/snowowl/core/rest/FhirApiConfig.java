@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2018-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,10 @@ public class FhirApiConfig extends BaseApiConfig {
 	public static final String CODESYSTEM = "CodeSystem";
 	public static final String CONCEPTMAP = "ConceptMap";
 	public static final String VALUESET = "ValueSet";
-	public static final String BUNDLE = "Bundle";
 	public static final String CAPABILITY_STATEMENT = "CapabilityStatement";
+	
+	// XXX currently unused, will need to be reintroduced once we reenable the support for these
+	public static final String BUNDLE = "Bundle";
 	public static final String STRUCTURE_DEFINITION = "StructureDefinition";
 	
 	@Override
@@ -56,7 +58,7 @@ public class FhirApiConfig extends BaseApiConfig {
 			B2I_SITE, 
 			"This describes the resources that make up the official Snow Owl® [FHIR® Terminology Service](https://hl7.org/fhir/R5/terminology-service.html) API.\r\n" + 
 			"Detailed documentation is available at the [official documentation site](https://docs.b2ihealthcare.com/snow-owl/rest-apis/fhir).",
-			List.of(CAPABILITY_STATEMENT, CODESYSTEM, VALUESET, CONCEPTMAP, BUNDLE, STRUCTURE_DEFINITION)
+			List.of(CAPABILITY_STATEMENT, CODESYSTEM, VALUESET, CONCEPTMAP)
 		);
 	}
 	
