@@ -18,7 +18,7 @@ Features include:
     * Independent work branches offer work-in-process isolation, external business workflow integration and team collaboration
 * SNOMED CT and others
     * SNOMED CT terminology support
-        * RF2 Release File Specification as of 2026-05-01
+        * RF2 Release File Specification as of 2026-09-01
         * Support for Relationships with concrete values
         * Official and Custom Reference Sets
         * Expression Constraint Language v2.2.0 [spec](https://confluence.ihtsdotools.org/download/attachments/33493263/doc_ExpressionConstraintLanguage_v2.2-en-US_INT_20231122.pdf?api=v2), [implementation](https://github.com/iqvia-hds-oss/snomed-ecl)

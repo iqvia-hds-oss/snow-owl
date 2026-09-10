@@ -1,6 +1,57 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 10.3.0
+
+### FHIR
+- Support for FHIR _history and vread interactions (#1679, #1730)
+  - Previous beta vread interactions have been replaced with the official routes, e.g. GET /fhir/CodeSystem/{id}/_history/{vid} where vid is the business version associated with a version entry for the selected resource.
+  - POST/PUT resource create/update operations now return Location headers with _history URLs when importing a versioned resource
+- Support implicit SNOMED CT Concept Map URLs in $translate operations (#1691)
+- Support valueSetVersion and conceptMapVersion parameters in $validate-code, $expand and $translate operations (#1735)
+
+### Bugs/Improvements
+- [index] fail fast when a commit would introduce an oversized commit document (#1721) 
+- [index] avoid revision duplication issues after rebasing/syncing branches multiple times with complex change sets (#1675)
+- [core] propagate total added/changed/removed counts from low level compare to branch compare result (#1419)
+- [ecl] update ECL syntax to 2.2.1, which fixes an issue with MIN, MAX concept IDs in non-SNOMED CT resources during Value Set evaluation (#1722)
+- [job] added a guard to remote job execution that prevents returning stale entries for jobs that are restarted (#1706)
+- [fhir] multiple improvements to how FHIR operation outcome responses are generated in case of an error (#1669, #1676, #1715, #1719)
+- [fhir] update Value Set interactions to select preferred terms by default from SNOMED (#1680)
+- [fhir] fixed an issue where $validate-code and other operations that accept date could fail if the date was earlier than the requested instance resource's createdAt date (#1714)
+- [fhir] fixed an issue where incorrectly represented FHIR Concept Maps with duplicate source-target mapping entries in group could not be imported (#1720)
+- [fhir] fixed an issue where importing a FHIR resource ignored the supplied name property of the resource (#1723)
+- [fhir] return both a "not-in-vs" and a "invalid-code" operation outcome issue in $validate-code operations when the code is available in the codesystem, but not in the value set (#1727)  
+- [fhir] fixed an issue where identifier property of ValueSet and ConceptMap resources were left out from the resource response (#1734)
+- [fhir] ensure that authorization is properly applied to FHIR API endpoints (#1736)
+- [fhir] ValueSet $expand operation's next page link property should be populated only when there is actually a next page available (#1738)
+- [releng] update OpenAPI contact information with IQVIA company and website data (e99679cdb06b795898a2c4230b8ab31d0530e218)
+
+### Dependencies
+- Bump Jetty to 12.1.13
+- Bump Spring to 6.5.19
+- Bump Spring Security to 6.5.11
+- Bump Spring Boot to 3.5.16
+- Bump Springdoc to 2.9.1
+- Bump Swagger to 2.2.55
+- Bump micrometer libraries to 1.17.1
+- Bump Jackson libraries to 2.22.2
+- Bump Hibernate validator to 9.1.2.Final
+- Bump bucket4j to 8.19.0
+- Bump commons-text to 1.15.0
+- Bump commons-collections4 to 4.6.0
+- Bump commons-codec to 1.22.1
+- Bump commons-compress to 1.28.0
+- Bump netty-bytebuddy to 1.18.13
+- Bump lz4-java to 1.11.2
+- Bump fastutil to 8.5.19
+- Bump classmate to 1.7.3
+- Bump bouncycastle to 1.85
+- Bump rest-assured to 6.0.1
+- Bump netty to 4.1.137.Final
+- Bump fhir-core to 0.7.1
+- Bump Tycho to 5.0.4
+
 ## 10.2.0
 
 ### FHIR
