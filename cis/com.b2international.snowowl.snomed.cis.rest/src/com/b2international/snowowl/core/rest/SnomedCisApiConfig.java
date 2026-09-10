@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,7 @@ public class SnomedCisApiConfig extends BaseApiConfig {
 			"cis", 
 			"1.0",
 			"SNOMED CT CIS API",
-			B2I_SITE,
-			"info@b2ihealthcare.com",
-			"API License",
-			B2I_SITE,
-			"This describes the resources that make up the official Snow Owl® SNOMED CT Component Identifier Service API.\n"+
+			"This describes the resources that make up the official Ontology Server SNOMED CT Component Identifier Service API.\n"+
 			"Detailed documentation is available at the [official documentation site](https://docs.b2ihealthcare.com/snow-owl)."
 		);
 	}

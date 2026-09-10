@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,6 @@ import io.swagger.v3.oas.models.tags.Tag;
  */
 public abstract class BaseApiConfig {
 
-	protected final static String B2I_SITE = "https://b2ihealthcare.com/";
-	
 	/**
 	 * @return the api base url for all services grouped by this configuration class
 	 */
@@ -78,12 +76,8 @@ public abstract class BaseApiConfig {
 			final String apiGroup,
 			final String apiVersion,
 			final String apiTitle,
-			final String apiTermsOfServiceUrl,
-			final String apiContact,
-			final String apiLicense,
-			final String apiLicenseUrl,
 			final String apiDescription) {
-		return docs(apiBaseUrl, apiGroup, apiVersion, apiTitle, apiTermsOfServiceUrl, apiContact, apiLicense, apiLicenseUrl, apiDescription, null);
+		return docs(apiBaseUrl, apiGroup, apiVersion, apiTitle, apiDescription, null);
 	}
 	
 	/**
@@ -95,10 +89,6 @@ public abstract class BaseApiConfig {
 			final String apiGroup,
 			final String apiVersion,
 			final String apiTitle,
-			final String apiTermsOfServiceUrl,
-			final String apiContact,
-			final String apiLicense,
-			final String apiLicenseUrl,
 			final String apiDescription,
 			final List<String> tags) {
 		return GroupedOpenApi.builder()
@@ -110,15 +100,15 @@ public abstract class BaseApiConfig {
 					apiInfo.setTitle(apiTitle);
 					apiInfo.setDescription(apiDescription);
 					apiInfo.setVersion(apiVersion);
-					apiInfo.setTermsOfService(apiTermsOfServiceUrl);
+					apiInfo.setTermsOfService(getCompanyUrl());
 					Contact contact = new Contact();
-					contact.setName("B2i Healthcare");
-					contact.setEmail(apiContact);
-					contact.setUrl(apiLicenseUrl);
+					contact.setName(getCompanyName());
+					contact.setEmail(getContactEmail());
+					contact.setUrl(getCompanyUrl());
 					apiInfo.setContact(contact);
 					License license = new License();
-					license.setName(apiLicense);
-					license.setUrl(apiLicenseUrl);
+					license.setName("API License");
+					license.setUrl(getCompanyUrl());
 					apiInfo.setLicense(license);
 
 					
@@ -135,10 +125,22 @@ public abstract class BaseApiConfig {
 						api.tags(tags.stream().map(tagName -> new Tag().name(tagName)).toList());
 					}
 				})
-				.addOperationCustomizer((operation, method) -> {
+				.addOperationCustomizer((operation, _) -> {
 					return operation.addSecurityItem(new SecurityRequirement().addList("basic").addList("bearer"));
 				})
 				.build();
+	}
+
+	protected String getCompanyName() {
+		return "IQVIA";
+	}
+
+	protected String getCompanyUrl() {
+		return "https://iqvia.com";
+	}
+
+	protected String getContactEmail() {
+		return "hds-support@iqvia.com";
 	}
 
 }

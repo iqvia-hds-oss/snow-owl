@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,11 +49,7 @@ public class CoreApiConfig extends BaseApiConfig {
 			"core",
 			"2.0",
 			"Core API",
-			B2I_SITE,
-			"info@b2ihealthcare.com",
-			"API License",
-			B2I_SITE,
-			"This describes the resources that make up the official Snow Owl® Core API. <br > Detailed documentation is available at the [official documentation site](https://docs.b2ihealthcare.com/snow-owl).",
+			"This describes the resources that make up the official Ontology Server Core API. <br > Detailed documentation is available at the [official documentation site](https://docs.b2ihealthcare.com/snow-owl).",
 			List.of(API_KEY, RESOURCES, CODESYSTEMS, CONCEPTS, BUNDLES, ADMINISTRATION, MISC)
 		);
 	}
