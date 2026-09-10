@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 public class FhirResourceHistoryParameters extends FhirResourceSelectors {
 

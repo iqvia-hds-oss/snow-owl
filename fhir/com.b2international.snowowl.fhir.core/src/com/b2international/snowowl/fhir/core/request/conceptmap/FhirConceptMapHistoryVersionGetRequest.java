@@ -20,7 +20,7 @@ import org.hl7.fhir.r5.model.ConceptMap;
 import com.b2international.snowowl.fhir.core.request.FhirResourceHistoryVersionGetRequest;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 final class FhirConceptMapHistoryVersionGetRequest extends FhirResourceHistoryVersionGetRequest<ConceptMap, FhirConceptMapGetRequestBuilder, FhirConceptMapHistoryGetRequestBuilder> {
 

@@ -24,7 +24,7 @@ import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.events.BaseRequestBuilder;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 public abstract class FhirResourceHistoryVersionGetRequestBuilder<R extends FhirResourceHistoryVersionGetRequest<T, ?, ?>, T extends MetadataResource>
 	extends BaseRequestBuilder<FhirResourceHistoryVersionGetRequestBuilder<R, T>, RepositoryContext, T>

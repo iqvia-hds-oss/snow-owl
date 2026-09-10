@@ -26,7 +26,7 @@ import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.FhirResourceHistoryGetRequest;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 final class FhirValueSetHistoryGetRequest extends FhirResourceHistoryGetRequest<ValueSet> {
 

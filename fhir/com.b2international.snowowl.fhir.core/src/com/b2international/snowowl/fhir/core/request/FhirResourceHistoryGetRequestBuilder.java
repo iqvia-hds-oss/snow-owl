@@ -35,7 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 public abstract class FhirResourceHistoryGetRequestBuilder<B extends FhirResourceHistoryGetRequestBuilder<B>> 
 		extends SearchResourceRequestBuilder<B, RepositoryContext, Bundle>

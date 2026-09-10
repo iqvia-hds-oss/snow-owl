@@ -20,7 +20,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 public interface FhirHistorySort {
 

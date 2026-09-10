@@ -59,7 +59,7 @@ import com.google.common.collect.Iterables;
 import net.jodah.typetools.TypeResolver;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> extends SearchResourceRequest<RepositoryContext, Bundle> {
 
@@ -79,7 +79,7 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 	private static final String OID_PREFIX = "urn:oid:";
 	
 	/**
-	 * @since 10.3
+	 * @since 10.3.0
 	 */
 	public enum OptionKey {
 		VERSION,

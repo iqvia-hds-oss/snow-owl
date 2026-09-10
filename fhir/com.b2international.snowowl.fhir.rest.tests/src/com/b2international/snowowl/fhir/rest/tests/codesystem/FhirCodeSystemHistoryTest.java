@@ -37,7 +37,7 @@ import io.restassured.response.ValidatableResponse;
  * 	<li>FHIR /CodeSystem/{id}/_history/{version}</li>
  * </ul>
  * 
- * @since 10.3
+ * @since 10.3.0
  */
 public class FhirCodeSystemHistoryTest extends FhirRestTest {
 	

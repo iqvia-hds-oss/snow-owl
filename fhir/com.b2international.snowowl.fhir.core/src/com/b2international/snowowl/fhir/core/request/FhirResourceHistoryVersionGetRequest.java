@@ -30,7 +30,7 @@ import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 public abstract class FhirResourceHistoryVersionGetRequest<R extends MetadataResource, GB extends FhirResourceGetRequestBuilder<GB, ?, R>, HB extends FhirResourceHistoryGetRequestBuilder<HB>>
 	implements Request<RepositoryContext, R> {

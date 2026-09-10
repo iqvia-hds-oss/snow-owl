@@ -40,7 +40,7 @@ import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
 import com.b2international.snowowl.snomed.fhir.SnomedUri.QueryPart;
 
 /**
- * @since 10.3
+ * @since 10.3.0
  */
 public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator {
 
