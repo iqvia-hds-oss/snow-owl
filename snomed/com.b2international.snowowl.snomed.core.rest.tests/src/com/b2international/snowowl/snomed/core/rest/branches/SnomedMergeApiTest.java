@@ -22,6 +22,8 @@ import static com.b2international.snowowl.snomed.core.rest.SnomedComponentRestRe
 import static com.b2international.snowowl.snomed.core.rest.SnomedRefSetRestRequests.updateRefSetComponent;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRefSetRestRequests.updateRefSetMemberEffectiveTime;
 import static com.b2international.snowowl.snomed.core.rest.SnomedRestFixtures.*;
+import static com.b2international.snowowl.test.commons.codesystem.CodeSystemRestRequests.createCodeSystem;
+import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.createVersion;
 import static com.b2international.snowowl.test.commons.codesystem.CodeSystemVersionRestRequests.getNextAvailableEffectiveDate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -873,7 +875,43 @@ public class SnomedMergeApiTest extends AbstractSnomedApiTest {
 		.body("effectiveTime", nullValue()) // Parent wins because of the effective time unset
 		.body("active", equalTo(false)); // Child didn't update the status, so inactivation on the parent is in effect
 	}
-	
+
+	@Test
+	public void issue_SO_6566_rebase_over_version_creation() {
+		final String codeSystemId = createCodeSystem(branchPath, "SNOMEDCT-MRG-1");
+
+		final String memberId = createNewRefSetMember(branchPath);
+
+		final IBranchPath a = BranchPathUtils.createPath(branchPath, "a");
+		branching.createBranch(a).statusCode(201);
+
+		final LocalDate effectiveDate = getNextAvailableEffectiveDate(codeSystemId);
+		createVersion(codeSystemId, "v1", effectiveDate).statusCode(201);
+
+		final Map<?, ?> childRequest = ImmutableMap.builder()
+			.put("moduleId", Concepts.MODULE_SCT_MODEL_COMPONENT)
+			.put("commitComment", "Updated module of reference set member on branch a")
+			.build();
+
+		updateRefSetComponent(a, SnomedComponentType.MEMBER, memberId, childRequest, false).statusCode(204);
+
+		merge(branchPath, a, "Rebased member module change over version creation")
+			.body("status", equalTo(Merge.Status.COMPLETED.name()));
+		
+		getComponent(branchPath, SnomedComponentType.MEMBER, memberId).statusCode(200)
+			.body("moduleId", equalTo(Concepts.MODULE_SCT_CORE))
+			.body("released", equalTo(true))
+			.body("effectiveTime", equalTo(EffectiveTimes.format(effectiveDate, DateFormats.SHORT)));
+		
+		getComponent(a, SnomedComponentType.MEMBER, memberId).statusCode(200)
+			// module should remain updated on the child branch
+			.body("moduleId", equalTo(Concepts.MODULE_SCT_MODEL_COMPONENT))
+			// member should be released on both branches, because the parent branch got versioned
+			.body("released", equalTo(true))
+			// effective time should remain unset on the child branch because it has a changed module
+			.body("effectiveTime", nullValue());
+	}
+
 	@Ignore
 	@Test
 	public void rebaseConceptDeletionOverNewOutboundRelationships() throws Exception {
