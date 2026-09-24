@@ -19,18 +19,21 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.options.Options;
-import com.b2international.snowowl.core.RepositoryManager;
-import com.b2international.snowowl.core.ResourceURI;
-import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.*;
+import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
-import com.b2international.snowowl.core.codesystem.CodeSystemSearchRequestBuilder;
+import com.b2international.snowowl.core.codesystem.CodeSystems;
+import com.b2international.snowowl.core.config.RepositoryConfiguration;
+import com.b2international.snowowl.core.config.SnowOwlConfiguration;
 import com.b2international.snowowl.core.domain.Concepts;
+import com.b2international.snowowl.core.events.util.Promise;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
 
 /**
  * A generic concept search request that can be executed in any code system using generic query expressions and filters to get back primary
@@ -60,33 +63,79 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 
 	@Override
 	protected Concepts doExecute(ServiceProvider context) throws IOException {
-		final CodeSystemSearchRequestBuilder codeSystemSearchReq = CodeSystemRequests.prepareSearchCodeSystem()
-				.all();
+		List<ResourceURI> codeSystemUris = null;
 		
-		final Map<ResourceURI, ResourceURI> codeSystemResourceFiltersByResource;
 		if (containsKey(OptionKey.CODESYSTEM)) {
-			// remove path so we can use the resource URI core part as key
-			// this also ensure we only perform a search per codesystem 
-			// TODO this will throw an error if a List is registered with multiple URIs pointing to the same CodeSystem
-			codeSystemResourceFiltersByResource = Maps.uniqueIndex(getCollection(OptionKey.CODESYSTEM, ResourceURI.class), uri -> uri.withoutPath()); 
-			// for filtering use the keys
-			codeSystemSearchReq.filterByIds(codeSystemResourceFiltersByResource.keySet().stream().map(ResourceURI::getResourceId).collect(Collectors.toSet())); 
-		} else {
-			codeSystemResourceFiltersByResource = Collections.emptyMap();
+			codeSystemUris = getCollection(OptionKey.CODESYSTEM, ResourceURI.class).stream()
+					.distinct()
+					.collect(Collectors.toList());
 		}
-//				.filterByToolingIds(toolingIds) TODO perform TOOLING filtering
-//				.filterByUrls(urls) TODO perform URL filtering
 		
-		List<Concepts> concepts = codeSystemSearchReq
+		if (codeSystemUris == null || codeSystemUris.isEmpty()) {
+			throw new BadRequestException("One or more code systems must be provided");
+		} else if (codeSystemUris.size() > 1 && searchAfter() != null) {
+			throw new BadRequestException("Using searchAfter is not supported with multiple code systems");
+		}
+		
+		final int maxThread = context.service(SnowOwlConfiguration.class).getModuleConfig(RepositoryConfiguration.class).getMaxThreadsGenericConceptSearch();
+		if (codeSystemUris.size() > maxThread) {
+			throw new BadRequestException("Too many code systems supplied, maximum allowed number is %d", maxThread);
+		}
+		
+		final Set<ResourceURI> codeSystemUrisWithoutPath = codeSystemUris.stream()
+				.map(ResourceURI::withoutPath)
+				.collect(Collectors.toSet());
+		
+		final Set<String> codeSystemIds = codeSystemUris.stream()
+			.map(ResourceURI::getResourceId)
+			.collect(Collectors.toSet());
+		
+		if (codeSystemUris.size() != codeSystemIds.size()) {
+			throw new BadRequestException("Searching multiple versions of the same code system is not supported");
+		}
+		
+		CodeSystems codeSystems = CodeSystemRequests.prepareSearchCodeSystem()
+			.filterByIds(codeSystemIds)
+//			.filterByToolingIds(toolingIds) TODO perform TOOLING filtering
+//			.filterByUrls(urls) TODO perform URL filtering
+			.setFields(List.of(TerminologyResource.Fields.ID, TerminologyResource.Fields.TOOLING_ID, "dependencies"))
+			.setLimit(codeSystemIds.size())
 			.buildAsync()
-			.execute(context)
+			.execute(context);
+		
+		// No code system was found
+		if (codeSystems.isEmpty()) {
+			return new Concepts(0, 0);
+		}
+		
+		// Validate that code systems are not dependent on each other
+		// so we can avoid cases where the same concept would be returned twice
+		Set<ResourceURI> dependencies = codeSystems
+				.stream()
+				.filter(codeSystem -> codeSystem.getDependencies() != null)
+				.flatMap(codeSystem -> codeSystem.getDependencies().stream())
+				.map(Dependency::getUri)
+				.map(ResourceURIWithQuery::getResourceUri)
+				.map(ResourceURI::withoutPath)
+				.collect(Collectors.toSet());
+		
+		if (!Collections.disjoint(codeSystemUrisWithoutPath, dependencies)) {
+			throw new BadRequestException("Searching dependent code systems is not supported");
+		}
+		
+		Map<String, String> toolingByCodeSystemId = codeSystems
+				.stream()
+				.collect(Collectors.toMap(CodeSystem::getId, CodeSystem::getToolingId));
+		
+		List<Promise<Concepts>> conceptPromises = codeSystemUris
 			.stream()
-			.map(codeSystem -> {
-				final ResourceURI uriToEvaluateOn = codeSystemResourceFiltersByResource.getOrDefault(codeSystem.getResourceURI(), codeSystem.getResourceURI());
-				return runConceptSearch(context, codeSystem.getToolingId(), uriToEvaluateOn);
-			})
-//			.sorted(comparator) // TODO perform Java SORT on Concept fields
-//			.limit(limit)
+			.map(codeSystemUri -> runConceptSearch(context, toolingByCodeSystemId.get(codeSystemUri.getResourceId()), codeSystemUri))
+			.collect(Collectors.toList());
+		
+		List<Concepts> concepts = Promise.all(conceptPromises)
+			.getSync(1, TimeUnit.MINUTES)
+			.stream()
+			.map(Concepts.class::cast)
 			.collect(Collectors.toList());
 		
 		// for single CodeSystem searches, sorting, paging works as it should
@@ -94,16 +143,10 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 			return Iterables.getOnlyElement(concepts);
 		}
 		
-		// otherwise, check if searchAfter was used, as it would return bogus results; it can not be applied across code systems
-		if (searchAfter() != null) {
-			throw new BadRequestException("searchAfter is not supported in Concept Search API for multiple code systems.");
-		}
-		
 		// calculate grand total
-		int total = 0;
-		for (Concepts conceptsToAdd : concepts) {
-			total += conceptsToAdd.getTotal();
-		}
+		int total = concepts.stream()
+				.mapToInt(Concepts::getTotal)
+				.sum();
 		
 		return new Concepts(
 			concepts.stream().flatMap(Concepts::stream).limit(limit()).collect(Collectors.toList()), // TODO add manual sorting here if multiple resources have been fetched 
@@ -113,7 +156,13 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 		);
 	}
 
-	private Concepts runConceptSearch(ServiceProvider context, final String toolingId, final ResourceURI codeSystemUri) {
+	private Promise<Concepts> runConceptSearch(ServiceProvider context, final String toolingId, final ResourceURI codeSystemUri) {
+		final Repository repository = context.service(RepositoryManager.class).get(toolingId);
+		if (repository == null) {
+			context.log().warn("Tooling module '{}' is missing from this deployment.", toolingId);
+			return Promise.immediate(new Concepts(0, 0));
+		}
+		
 		Options conceptSearchOptions = Options.builder()
 				.putAll(options())
 				.put(ConceptSearchRequestEvaluator.OptionKey.ID, componentIds())
@@ -125,7 +174,9 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 				.put(ConceptSearchRequestEvaluator.OptionKey.EXPAND, expand())
 				.put(SearchResourceRequest.OptionKey.SORT_BY, sortBy())
 				.build();
-		return context.service(RepositoryManager.class).get(toolingId).service(ConceptSearchRequestEvaluator.class).evaluate(codeSystemUri, context, conceptSearchOptions);
+		return context.service(RepositoryManager.class).get(toolingId)
+				.service(ConceptSearchRequestEvaluator.class)
+				.evaluateAsync(codeSystemUri, context, conceptSearchOptions);
 	}
 
 }

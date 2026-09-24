@@ -30,14 +30,18 @@ import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.domain.IComponent;
 import com.b2international.snowowl.core.ecl.EclParser;
+import com.b2international.snowowl.core.events.AsyncRequest;
+import com.b2international.snowowl.core.events.Request;
+import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.request.ecl.AbstractComponentSearchRequestBuilder;
 import com.b2international.snowowl.core.request.search.TermFilter;
 import com.b2international.snowowl.core.request.search.TermFilterSupport;
+import com.b2international.snowowl.eventbus.IEventBus;
 
 /**
  * @since 7.5
  */
-public interface ConceptSearchRequestEvaluator {
+public interface ConceptSearchRequestEvaluator<T> {
 
 	public enum OptionKey {
 
@@ -134,7 +138,14 @@ public interface ConceptSearchRequestEvaluator {
 		DESCRIPTION_KNN,
 		
 	}
-
+	
+	
+	AsyncRequest<T> createSearchRequest(ResourceURI uri, ServiceProvider context, Options search);
+	
+	
+	Concepts toConcepts(T matches, ResourceURI uri, ServiceProvider context, Options search);
+	
+	
 	/**
 	 * Evaluate the given search options on the given context and return generic {@link Concept} instances back in a {@link Concepts} pageable
 	 * resource.
@@ -147,7 +158,39 @@ public interface ConceptSearchRequestEvaluator {
 	 *            - the search filters and options to apply to the code system specific search
 	 * @return
 	 */
-	Concepts evaluate(ResourceURI uri, ServiceProvider context, Options search);
+	default Concepts evaluate(ResourceURI uri, ServiceProvider context, Options search) {
+		T matches = createSearchRequest(uri, context, search)
+				.execute(context);
+		return toConcepts(matches, uri, context, search);
+	}
+	
+	/**
+	 * Evaluate the given search options on the given context and return generic {@link Concept} instances back in a {@link Concepts} pageable
+	 * resource.
+	 * 
+	 * @param uri
+	 *            - the code system uri where the search is being evaluated
+	 * @param context
+	 *            - the context to perform the search on
+	 * @param search
+	 *            - the search filters and options to apply to the code system specific search
+	 * @return
+	 */
+	default Promise<Concepts> evaluateAsync(ResourceURI uri, ServiceProvider context, Options search) {
+		return createSearchRequest(uri, context, search)
+				.withContext(context)
+				.execute(context.service(IEventBus.class))
+				.then(matches -> toConcepts(matches, uri, context, search));
+	}
+	
+	default AsyncRequest<T> emptyResult(T empty) {
+		return new AsyncRequest<>(new Request<ServiceProvider, T>() {
+			@Override
+			public T execute(ServiceProvider context) {
+				return empty;
+			}
+		});
+	}
 
 	/**
 	 * Subclasses may optionally use this method to initialize the common concept model from their tooling specific model.
@@ -369,11 +412,28 @@ public interface ConceptSearchRequestEvaluator {
 	 * 
 	 * @since 7.5
 	 */
-	ConceptSearchRequestEvaluator NOOP = new ConceptSearchRequestEvaluator() {
-
+	ConceptSearchRequestEvaluator<Void> NOOP = new ConceptSearchRequestEvaluator<Void>() {
+		
+		@Override
+		public AsyncRequest<Void> createSearchRequest(ResourceURI uri, ServiceProvider context, Options search) {
+			// Unused stub
+			return null;
+		}
+		
+		@Override
+		public Concepts toConcepts(Void matches, ResourceURI uri, ServiceProvider context, Options search) {
+			// Unused stub
+			return null;
+		}
+		
 		@Override
 		public Concepts evaluate(ResourceURI uri, ServiceProvider context, Options search) {
 			return new Concepts(search.get(OptionKey.LIMIT, Integer.class), 0);
+		}
+		
+		@Override
+		public Promise<Concepts> evaluateAsync(ResourceURI uri, ServiceProvider context, Options search) {
+			return Promise.immediate(new Concepts(search.get(OptionKey.LIMIT, Integer.class), 0));
 		}
 
 	};
