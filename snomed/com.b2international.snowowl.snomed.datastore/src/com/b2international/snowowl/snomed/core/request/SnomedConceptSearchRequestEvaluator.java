@@ -26,10 +26,10 @@ import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.commons.options.Options;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
+import com.b2international.snowowl.core.context.TerminologyResourceContentRequestBuilder;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.domain.Description;
-import com.b2international.snowowl.core.events.AsyncRequest;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.core.request.ExpandParser;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
@@ -48,8 +48,7 @@ import com.google.common.collect.ImmutableSortedSet;
 public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchRequestEvaluator<SnomedConcepts> {
 
 	@Override
-	public AsyncRequest<SnomedConcepts> createSearchRequest(ResourceURI uri, ServiceProvider context, Options search) {
-		SnomedDisplayTermType displayTermType = getDisplayTermType(search);
+	public TerminologyResourceContentRequestBuilder<SnomedConcepts> prepareSearchRequest(ResourceURI uri, ServiceProvider context, Options search) {
 		
 		final SnomedConceptSearchRequestBuilder req = SnomedRequests.prepareSearchConcept();
 		
@@ -80,6 +79,8 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 		Options expand = ExpandParser.parse("preferredDescriptions()")
 				.merge(requestedExpand ? search.getOptions(OptionKey.EXPAND) : Options.empty());
 		
+		SnomedDisplayTermType displayTermType = getDisplayTermType(search);
+		
 		if (!Strings.isNullOrEmpty(displayTermType.getExpand())) {
 			expand = ExpandParser.parse(displayTermType.getExpand()).merge(expand);
 		}
@@ -94,8 +95,7 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 				.setMinScore(search.get(OptionKey.MIN_SCORE, Float.class))
 				.setFields(search.getList(OptionKey.FIELDS, String.class))
 				.setExpand(expand)
-				.sortBy(search.containsKey(SearchResourceRequest.OptionKey.SORT_BY) ? search.getList(SearchResourceRequest.OptionKey.SORT_BY, SearchResourceRequest.Sort.class) : null)
-				.build(uri);
+				.sortBy(search.containsKey(SearchResourceRequest.OptionKey.SORT_BY) ? search.getList(SearchResourceRequest.OptionKey.SORT_BY, SearchResourceRequest.Sort.class) : null);
 	}
 	
 	
