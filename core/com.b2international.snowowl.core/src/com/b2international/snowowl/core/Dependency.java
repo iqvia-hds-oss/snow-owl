@@ -19,7 +19,6 @@ import java.io.Serializable;
 import java.util.*;
 
 import com.b2international.commons.CompareUtils;
-import com.b2international.commons.collections.Collections3;
 import com.b2international.snowowl.core.internal.DependencyDocument;
 import com.b2international.snowowl.core.internal.DependencyEntry;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -200,23 +199,57 @@ public final class Dependency implements Serializable, DependencyEntry {
 	/**
 	 * Searches the given dependency array for the first dependency that has the matching scope.
 	 * 
-	 * @param scope - the scope to look for
-	 * @return an {@link Optional} value of a {@link Dependency} entry.
+	 * @param dependencies - the list of dependencies to search, may be {@code null}
+	 * @param scope - the scope to look for, may be {@code null}
+	 * @return an {@link Optional} value of a {@link Dependency} entry with the matching scope, 
+	 * or an empty {@link Optional} if no such dependency was found
 	 */
 	public static Optional<Dependency> find(List<Dependency> dependencies, String scope) {
-		return Collections3.toImmutableList(dependencies)
-				.stream()
-				.filter(dep -> Objects.equals(scope, dep.getScope()))
-				.findFirst();
-	}
-	
-	public static Optional<Dependency> find(List<Dependency> dependencies, Dependency query) {
-		return Collections3.toImmutableList(dependencies)
-				.stream()
-				.filter(dep -> dep.dependOnSameResource(query))
-				.findFirst();
+		if (CompareUtils.isEmpty(dependencies) || scope == null) {
+			return Optional.empty();
+		}
+		
+		return dependencies.stream()
+			.filter(dep -> Objects.equals(scope, dep.getScope()))
+			.findFirst();
 	}
 
+	/**
+	 * Searches the given dependency list for the first dependency that has the same resource URI 
+	 * and scope as the given query dependency.
+	 * 
+	 * @param dependencies - the list of dependencies to search, may be {@code null}
+	 * @param query - the dependency to look for, may be {@code null}
+	 * @return an {@link Optional} value of a {@link Dependency} entry with the matching resource URI and scope,
+	 * or an empty {@link Optional} if no such dependency was found
+	 */
+	public static Optional<Dependency> find(List<Dependency> dependencies, Dependency query) {
+		if (CompareUtils.isEmpty(dependencies) || query == null) {
+			return Optional.empty();
+		}
+		
+		return dependencies.stream()
+			.filter(dep -> dep.dependOnSameResource(query))
+			.findFirst();
+	}
+
+	/**
+	 * Searches the given dependency list for all dependencies that have the matching scope.
+	 *
+	 * @param dependencies - the dependencies to search, may be {@code null}
+	 * @param scope - the scope to look for
+	 * @return an immutable list of matching dependencies in their original order, never {@code null}
+	 */
+	public static List<Dependency> findAll(List<Dependency> dependencies, String scope) {
+		if (CompareUtils.isEmpty(dependencies) || scope == null) {
+			return List.of();
+		}
+		
+		return dependencies.stream()
+			.filter(dep -> Objects.equals(scope, dep.getScope()))
+			.toList();
+	}
+	
 	/**
 	 * Overrides dependencies in the first dependency list with any matching (scope + resourceId) dependency found in the override list. Appends any
 	 * leftover override as additional dependency.

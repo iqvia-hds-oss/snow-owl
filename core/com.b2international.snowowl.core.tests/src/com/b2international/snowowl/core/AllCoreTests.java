@@ -65,6 +65,7 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 	PermissionTest.class,
 	
 	// unit tests
+	DependencyTest.class,
 	ResourceURITest.class,
 	ResourceURIWithQueryTest.class,
 	ComponentURITest.class,

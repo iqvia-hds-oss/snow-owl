@@ -215,17 +215,30 @@ public abstract class TerminologyResource extends Resource {
 	/**
 	 * Searches the dependency array for the first dependency that has the matching scope.
 	 * 
-	 * @param scope
-	 * @return an {@link Optional} value of a {@link Dependency} entry.
+	 * @param scope - the dependency scope to look for
+	 * @return an {@link Optional} value of a {@link Dependency} entry, or {@link Optional#empty()} if no dependency with the given scope was found
 	 * @see Dependency#find(List, String)
 	 */
 	public Optional<Dependency> getDependency(String scope) {
 		return Dependency.find(getDependencies(), scope);
 	}
+
+	/**
+	 * Searches the dependency array for all dependencies that have the matching scope.
+	 * 
+	 * @param scope - the dependency scope to look for
+	 * @return all dependencies with the given scope in their original order, never {@code null}
+	 * @see Dependency#findAll(List, String)
+	 */
+	public List<Dependency> getDependencies(String scope) {
+		return Dependency.findAll(getDependencies(), scope);
+	}
 	
 	/**
+	 * Checks whether this resource has a dependency entry with the given scope.
+	 * 
 	 * @param scope - the dependency scope to look for
-	 * @return <code>true</code> if this resource has a dependency entry with the given scope, <code>false</code> otherwise.
+	 * @return <code>true</code> if this resource has a dependency entry with the given scope, <code>false</code> otherwise
 	 */
 	public boolean hasDependency(String scope) {
 		return getDependency(scope).isPresent();
@@ -251,6 +264,7 @@ public abstract class TerminologyResource extends Resource {
 			final ResourceURI dependencyUriWithoutQuery = dependencyUri.getResourceUri();
 			final Collection<String> replacementCandidates = params.get(scope);
 
+			boolean found = false;
 			for (final String candidate : replacementCandidates) {
 				final ResourceURIWithQuery candidateUri = new ResourceURIWithQuery(candidate);
 				final ResourceURI candidateUriWithoutQuery = candidateUri.getResourceUri();
@@ -258,12 +272,15 @@ public abstract class TerminologyResource extends Resource {
 					// Replace the dependency's URI-with-query for the duration of this request
 					replacementDependencies.add(Dependency.of(candidateUri, scope));
 					unusedParams.remove(scope, candidate);
+					found = true;
 					break;
 				}
 			}
 
-			// Use the original instead
-			replacementDependencies.add(dependency);
+			if (!found) {
+				// Use the original instead
+				replacementDependencies.add(dependency);
+			}
 		}
 		
 		// Append additional dependencies that were not used as replacements
