@@ -109,7 +109,10 @@ public class SnomedDependencyComparer implements DependencyComparer {
 			final List<AnalysisCompareResultItem> items = changeDetails
 				.entrySet()
 				.stream()
-				.map(e -> new AnalysisCompareResultItem(e.getKey(), e.getValue()))
+				.map(e -> AnalysisCompareResultItem.builder()
+					.id(e.getKey())
+					.changeKind(e.getValue())
+					.build())
 				.collect(Collectors.toList());
 			
 			result = new AnalysisCompareResult(items, fromUri, toUri);
