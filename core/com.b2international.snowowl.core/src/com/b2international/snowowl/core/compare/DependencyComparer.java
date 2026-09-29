@@ -93,7 +93,10 @@ public interface DependencyComparer {
 
 					// Record all relevant changed components as a generic "Component change"
 					final List<AnalysisCompareResultItem> items = changedComponents.stream()
-						.map(ci -> new AnalysisCompareResultItem(ci.getComponentId(), AnalysisCompareChangeKind.COMPONENT_CHANGE))
+						.map(ci -> AnalysisCompareResultItem.builder()
+							.id(ci.getComponentId())
+							.changeKind(AnalysisCompareChangeKind.COMPONENT_CHANGE)
+							.build())
 						.collect(Collectors.toList());
 
 					summary = new AnalysisCompareResult(items, fromUri, toUri);

@@ -35,7 +35,9 @@ import com.b2international.snowowl.core.uri.ResourceURIPathResolver;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
+import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Multiset;
 
 /**
  * @since 9.0.0
@@ -98,10 +100,8 @@ public class SnomedDependencyComparer implements DependencyComparer {
 		}
 
 		// count the number of different changes left after selecting the highest issue with a component
-		final Map<String, Integer> counters = new HashMap<>();
-		changeDetails.forEach((conceptId, changeKind) -> {
-			counters.merge(changeKind.name().toLowerCase(), 1, Integer::sum);
-		});
+		final Multiset<AnalysisCompareChangeKind> counters = HashMultiset.create();
+		counters.addAll(changeDetails.values());
 		
 		final AnalysisCompareResult result;
 		
@@ -109,7 +109,10 @@ public class SnomedDependencyComparer implements DependencyComparer {
 			final List<AnalysisCompareResultItem> items = changeDetails
 				.entrySet()
 				.stream()
-				.map(e -> new AnalysisCompareResultItem(e.getKey(), e.getValue()))
+				.map(e -> AnalysisCompareResultItem.builder()
+					.id(e.getKey())
+					.changeKind(e.getValue())
+					.build())
 				.collect(Collectors.toList());
 			
 			result = new AnalysisCompareResult(items, fromUri, toUri);
@@ -122,12 +125,17 @@ public class SnomedDependencyComparer implements DependencyComparer {
 		result.setChangedComponents(changeDetails.size());
 		result.setDeletedComponents(compareResult.getTotalDeleted());
 		
-		for (String counterName : counters.keySet()) {
+		for (Multiset.Entry<AnalysisCompareChangeKind> counterEntry : counters.entrySet()) {
+			final AnalysisCompareChangeKind changeKind = counterEntry.getElement();
+			final int count = counterEntry.getCount();
+			
 			// prevent registering added and deleted counter keys twice
-			if (AnalysisCompareChangeKind.ADDED.name().toLowerCase().equals(counterName) || AnalysisCompareChangeKind.DELETED.name().toLowerCase().equals(counterName)) {
+			if (AnalysisCompareChangeKind.ADDED.equals(changeKind) || AnalysisCompareChangeKind.DELETED.equals(changeKind)) {
 				continue;
 			}
-			result.setCounterValue(counterName, counters.get(counterName));
+			
+			final String counterName = changeKind.name().toLowerCase();
+			result.setCounterValue(counterName, count);
 		}
 		
 		return result;
