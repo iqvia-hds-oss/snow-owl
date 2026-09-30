@@ -29,7 +29,7 @@ public class ConceptRestSearch extends ObjectRestSearch {
 	@Parameter(description = "The concept status to match")
 	private Boolean active;
 	
-	@Parameter(description = "The code system(s) containing the concepts")
+	@Parameter(description = "The code system identifier(s) or versioned URI(s) containing the concepts")
 	private List<String> codeSystem;
 	
 	@Parameter(description = "The concept term to match")
