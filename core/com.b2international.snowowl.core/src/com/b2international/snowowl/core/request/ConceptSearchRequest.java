@@ -72,7 +72,7 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 		}
 		
 		if (codeSystemUris == null || codeSystemUris.isEmpty()) {
-			throw new BadRequestException("One or more code systems must be provided");
+			throw new BadRequestException("One or more code system identifiers or versioned URIs must be provided");
 		} else if (codeSystemUris.size() > 1 && searchAfter() != null) {
 			throw new BadRequestException("Using searchAfter is not supported with multiple code systems");
 		}
