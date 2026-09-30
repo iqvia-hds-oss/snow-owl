@@ -133,7 +133,7 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 			.collect(Collectors.toList());
 		
 		List<Concepts> concepts = Promise.all(conceptPromises)
-			.getSync(1, TimeUnit.MINUTES)
+			.getSync(3, TimeUnit.MINUTES)
 			.stream()
 			.map(Concepts.class::cast)
 			.collect(Collectors.toList());
