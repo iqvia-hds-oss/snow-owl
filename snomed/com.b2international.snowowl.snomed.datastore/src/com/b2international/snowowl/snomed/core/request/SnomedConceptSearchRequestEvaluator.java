@@ -26,11 +26,10 @@ import com.b2international.commons.http.ExtendedLocale;
 import com.b2international.commons.options.Options;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
-import com.b2international.snowowl.core.context.TerminologyResourceContentRequestBuilder;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.domain.Description;
-import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.core.request.AbstractConceptSearchRequestEvaluator;
 import com.b2international.snowowl.core.request.ExpandParser;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
@@ -45,10 +44,10 @@ import com.google.common.collect.ImmutableSortedSet;
 /**
  * @since 7.5
  */
-public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchRequestEvaluator<SnomedConcepts> {
+public final class SnomedConceptSearchRequestEvaluator extends AbstractConceptSearchRequestEvaluator<SnomedConceptSearchRequestBuilder, SnomedConcepts> {
 
 	@Override
-	public TerminologyResourceContentRequestBuilder<SnomedConcepts> prepareSearchRequest(ResourceURI uri, ServiceProvider context, Options search) {
+	public SnomedConceptSearchRequestBuilder prepareSearchConcept(ResourceURI uri, ServiceProvider context, Options search) {
 		
 		final SnomedConceptSearchRequestBuilder req = SnomedRequests.prepareSearchConcept();
 		
