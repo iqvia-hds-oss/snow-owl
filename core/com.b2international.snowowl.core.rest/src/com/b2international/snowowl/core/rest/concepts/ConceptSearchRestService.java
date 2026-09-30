@@ -15,7 +15,8 @@
  */
 package com.b2international.snowowl.core.rest.concepts;
 
-import org.elasticsearch.core.Set;
+import java.util.Set;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 
