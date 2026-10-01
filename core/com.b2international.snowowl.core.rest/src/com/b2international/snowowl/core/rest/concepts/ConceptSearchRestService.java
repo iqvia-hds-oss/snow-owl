@@ -18,14 +18,17 @@ package com.b2international.snowowl.core.rest.concepts;
 import java.util.Set;
 
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
+import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.AbstractRestService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -51,16 +54,31 @@ public class ConceptSearchRestService extends AbstractRestService {
 		@ApiResponse(responseCode = "400", description = "Invalid search config"), 
 	})
 	@GetMapping
-	public @ResponseBody Promise<Concepts> searchConcepts(@ParameterObject final ConceptRestSearch params) {
+	public @ResponseBody Promise<Concepts> searchConcepts(
+			
+		@ParameterObject
+		final ConceptRestSearch params,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value=HttpHeaders.ACCEPT_LANGUAGE, defaultValue=AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required=false) 
+		final String acceptLanguage
+		
+	) {
+		
 		return CodeSystemRequests.prepareSearchConcepts()
+				.filterByIds(params.getId())
 				.filterByActive(params.getActive())
 				.filterByTerm(params.getTerm())
 				.filterByCodeSystems(params.getCodeSystem())
 				.filterByQuery(params.getQuery())
+				.filterByParents(params.getParent())
+				.filterByAncestors(params.getAncestor())
 				.setFields(params.getField())
 				.setExpand(params.getExpand())
 				.setLimit(params.getLimit())
 				.setSearchAfter(params.getSearchAfter())
+				.setPreferredDisplay(params.getPreferredDisplay())
+				.setLocales(acceptLanguage)
 				.sortBy(extractSortFields(params.getSort()))
 				.buildAsync()
 				.execute(getBus());
@@ -75,8 +93,16 @@ public class ConceptSearchRestService extends AbstractRestService {
 		@ApiResponse(responseCode = "400", description = "Invalid search config"), 
 	})
 	@PostMapping(value = "/search")
-	public @ResponseBody Promise<Concepts> searchConceptsByPost(@RequestBody final ConceptRestSearch params) {
-		return searchConcepts(params);
+	public @ResponseBody Promise<Concepts> searchConceptsByPost(
+			
+		@RequestBody
+		final ConceptRestSearch params,
+
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value=HttpHeaders.ACCEPT_LANGUAGE, defaultValue=AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required=false) 
+		final String acceptLanguage
+	) {
+		return searchConcepts(params, acceptLanguage);
 	}
 	
 }
