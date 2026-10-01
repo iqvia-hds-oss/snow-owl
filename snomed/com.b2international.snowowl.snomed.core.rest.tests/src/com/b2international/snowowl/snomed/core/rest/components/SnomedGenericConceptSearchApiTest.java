@@ -51,28 +51,16 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 	private static final String CODESYSTEM_EXT = SnomedContentRule.SNOMEDCT_COMPLEX_MAP_BLOCK_EXT.toString();
 	
 	private static final String ID = "105590001";
+	private static final String PT = "Substance";
+	private static final String FSN = "Substance (substance)";
+	private static final String QUERY = "<105590001";
+	private static final List<String> SUBSTANCE_RECOGNIZED = List.of("312412007", "312413002", "312414008");
+	
 	
 	@Test
-	public void GET_Concepts_filterById() {
-		final List<String> conceptIds = assertGenericSearchConcepts(Json.object(
-				"id", Json.array(ID),
-				"codeSystem", Json.array(CODESYSTEM_2018_01_31)
-			)).statusCode(200)
-			.extract()
-			.as(Concepts.class)
-			.stream()
-			.map(Concept::getId)
-			.toList();
-		
-		assertThat(conceptIds)
-			.contains(ID);
-	}
-	
-	@Test
-	public void GET_Concepts_filterByQuery() {
+	public void GET_Concepts_hitCount() {
 		final Concepts concepts = assertGenericSearchConcepts(Json.object(
 				"limit", 0,
-				"query", "*",
 				"codeSystem", Json.array(CODESYSTEM_2018_01_31)
 			)).statusCode(200)
 			.extract()
@@ -83,10 +71,127 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 	}
 	
 	@Test
+	public void GET_Concepts_filterById() {
+		final List<String> conceptIds = assertGenericSearchConcepts(Json.object(
+				"id", ID,
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class)
+			.stream()
+			.map(Concept::getId)
+			.toList();
+		
+		assertThat(conceptIds)
+			.containsExactly(ID);
+	}
+	
+	@Test
+	public void GET_Concepts_filterByTerm() {
+		final List<String> conceptIds = assertGenericSearchConcepts(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"term", "substance categorized"
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class)
+			.stream()
+			.map(Concept::getId)
+			.toList();
+		
+		assertThat(conceptIds)
+			.containsExactlyInAnyOrderElementsOf(SUBSTANCE_RECOGNIZED);
+	}
+	
+	@Test
+	public void GET_Concepts_filterByInactive() {
+		final Concepts concepts = assertGenericSearchConcepts(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"active", false
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getItems())
+			.hasSize(48)
+			.allMatch(c -> !c.isActive());
+	}
+	
+	@Test
+	public void GET_Concepts_filterByQuery() {
+		final Concepts concepts = assertGenericSearchConcepts(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"query", QUERY
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getItems())
+			.hasSize(5)
+			.allMatch(c -> c.getParentIds().contains(ID)  || c.getAncestorIds().contains(ID));
+	}
+	
+	@Test
+	public void GET_Concepts_filterByParent() {
+		final Concepts concepts = assertGenericSearchConcepts(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"parent", Json.array(ID)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getItems())
+			.hasSize(4)
+			.allMatch(c -> c.getParentIds().contains(ID));
+	}
+	
+	@Test
+	public void GET_Concepts_filterByAncestor() {
+		final Concepts concepts = assertGenericSearchConcepts(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"ancestor", Json.array(ID)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getItems())
+			.hasSize(5)
+			.allMatch(c -> c.getParentIds().contains(ID)  || c.getAncestorIds().contains(ID));
+	}
+	
+	@Test
+	public void GET_Concepts_setPreferreDisplayToFsn() {
+		final Concepts concepts = assertGenericSearchConcepts(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"id", Json.array(ID),
+				"preferredDisplay", "FSN"
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getTotal()).isEqualTo(1);
+		final Concept concept = concepts.first().get();
+		assertThat(concept.getTerm()).isEqualTo(FSN);
+	}
+	
+	@Test
+	public void GET_Concepts_useDefaultDisplay() {
+		final Concepts concepts = assertGenericSearchConcepts(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"id", Json.array(ID)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getTotal()).isEqualTo(1);
+		final Concept concept = concepts.first().get();
+		assertThat(concept.getTerm()).isEqualTo(PT);
+	}
+	
+	@Test
 	public void GET_Concepts_withoutCodeSystem() {
 		assertGenericSearchConcepts(Json.object("id", Json.array(ID)))
 			.statusCode(400)
-			.body("message", equalTo("One or more code systems must be provided"));
+			.body("message", equalTo("One or more code system identifiers or versioned URIs must be provided"));
 	}
 	
 	@Test
@@ -121,6 +226,19 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 	}
 	
 	@Test
+	public void POST_Concepts_hitCount() {
+		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
+				"limit", 0,
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getTotal())
+			.isEqualTo(1888);
+	}
+	
+	@Test
 	public void POST_Concepts_filterById() {
 		final List<String> conceptIds = assertGenericSearchConceptsWithPost(Json.object(
 				"id", Json.array(ID),
@@ -133,28 +251,115 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 			.toList();
 		
 		assertThat(conceptIds)
-			.contains(ID);
+			.containsExactly(ID);
+	}
+	
+	@Test
+	public void POST_Concepts_filterByTerm() {
+		final List<String> conceptIds = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"term", "substance categorized"
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class)
+			.stream()
+			.map(Concept::getId)
+			.toList();
+		
+		assertThat(conceptIds)
+			.containsExactlyInAnyOrderElementsOf(SUBSTANCE_RECOGNIZED);
+	}
+	
+	@Test
+	public void POST_Concepts_filterByInactive() {
+		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"active", false
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getItems())
+			.hasSize(48)
+			.allMatch(c -> !c.isActive());
 	}
 	
 	@Test
 	public void POST_Concepts_filterByQuery() {
 		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
-				"limit", 0,
-				"query", "*",
-				"codeSystem", Json.array(CODESYSTEM_2018_01_31)
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"query", QUERY
 			)).statusCode(200)
 			.extract()
 			.as(Concepts.class);
 		
-		assertThat(concepts.getTotal())
-			.isEqualTo(1888);
+		assertThat(concepts.getItems())
+			.hasSize(5)
+			.allMatch(c -> c.getParentIds().contains(ID)  || c.getAncestorIds().contains(ID));
+	}
+	
+	@Test
+	public void POST_Concepts_filterByParent() {
+		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"parent", Json.array(ID)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getItems())
+			.hasSize(4)
+			.allMatch(c -> c.getParentIds().contains(ID));
+	}
+	
+	@Test
+	public void POST_Concepts_filterByAncestor() {
+		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"ancestor", Json.array(ID)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getItems())
+			.hasSize(5)
+			.allMatch(c -> c.getParentIds().contains(ID)  || c.getAncestorIds().contains(ID));
+	}
+	
+	@Test
+	public void POST_Concepts_setPreferreDisplayToFsn() {
+		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"id", Json.array(ID),
+				"preferredDisplay", "FSN"
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getTotal()).isEqualTo(1);
+		final Concept concept = concepts.first().get();
+		assertThat(concept.getTerm()).isEqualTo(FSN);
+	}
+	
+	@Test
+	public void POST_Concepts_useDefaultDisplay() {
+		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"id", Json.array(ID)
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class);
+		
+		assertThat(concepts.getTotal()).isEqualTo(1);
+		final Concept concept = concepts.first().get();
+		assertThat(concept.getTerm()).isEqualTo(PT);
 	}
 	
 	@Test
 	public void POST_Concepts_withoutCodeSystem() {
 		assertGenericSearchConceptsWithPost(Json.object("id", Json.array(ID)))
 			.statusCode(400)
-			.body("message", equalTo("One or more code systems must be provided"));
+			.body("message", equalTo("One or more code system identifiers or versioned URIs must be provided"));
 	}
 	
 	@Test
