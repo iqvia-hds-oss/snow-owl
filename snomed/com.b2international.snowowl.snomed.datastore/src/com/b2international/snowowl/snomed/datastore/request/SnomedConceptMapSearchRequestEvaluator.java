@@ -167,46 +167,48 @@ public final class SnomedConceptMapSearchRequestEvaluator implements ConceptMapM
 				.filter(u -> !u.isUnspecified())
 				.collect(Collectors.toSet());
 			
-			final Set<String> ids = urisToLabel.stream()
-				.map(c -> c.identifier())
-				.collect(Collectors.toSet());
-			
-			final Set<ResourceURI> codeSystemUris = urisToLabel.stream()
-				.map(c -> c.resourceUri())
-				.collect(Collectors.toSet());
-			
-			final Map<ComponentURI, Concept> conceptsToLabel = CodeSystemRequests.prepareSearchConcepts()
-				.all()
-				.filterByCodeSystemUris(codeSystemUris)
-				.filterByIds(ids)
-				.buildAsync()
-				.execute(context.service(IEventBus.class))
-				.getSync(5, TimeUnit.MINUTES)
-				.stream()
-				.filter(c -> urisToLabel.contains(c.getCode()))
-				.collect(Collectors.toMap(
-					c -> c.getCode(), 
-					c -> c));
-
-			mappings = mappings.stream().map(mapping -> {
-				if (mapping.getSourceIconId() == null && conceptsToLabel.containsKey(mapping.getSourceComponentURI())) {
-					final Concept concept = conceptsToLabel.get(mapping.getSourceComponentURI());
-					return mapping.toBuilder()
-						.sourceTerm(concept.getTerm())
-						.sourceIconId(concept.getIconId())
-						.build();
-				}
+			if (!urisToLabel.isEmpty()) {
+				final Set<String> ids = urisToLabel.stream()
+					.map(c -> c.identifier())
+					.collect(Collectors.toSet());
 				
-				if (mapping.getTargetIconId() == null && conceptsToLabel.containsKey(mapping.getTargetComponentURI())) {
-					final Concept concept = conceptsToLabel.get(mapping.getTargetComponentURI());
-					return mapping.toBuilder()
-						.targetTerm(concept.getTerm())
-						.targetIconId(concept.getIconId())
-						.build();
-				}
-
-				return mapping;
-			}).collect(Collectors.toList());
+				final Set<ResourceURI> codeSystemUris = urisToLabel.stream()
+					.map(c -> c.resourceUri())
+					.collect(Collectors.toSet());
+				
+				final Map<ComponentURI, Concept> conceptsToLabel = CodeSystemRequests.prepareSearchConcepts()
+					.all()
+					.filterByCodeSystemUris(codeSystemUris)
+					.filterByIds(ids)
+					.buildAsync()
+					.execute(context.service(IEventBus.class))
+					.getSync(5, TimeUnit.MINUTES)
+					.stream()
+					.filter(c -> urisToLabel.contains(c.getCode()))
+					.collect(Collectors.toMap(
+						c -> c.getCode(), 
+						c -> c));
+	
+				mappings = mappings.stream().map(mapping -> {
+					if (mapping.getSourceIconId() == null && conceptsToLabel.containsKey(mapping.getSourceComponentURI())) {
+						final Concept concept = conceptsToLabel.get(mapping.getSourceComponentURI());
+						return mapping.toBuilder()
+							.sourceTerm(concept.getTerm())
+							.sourceIconId(concept.getIconId())
+							.build();
+					}
+					
+					if (mapping.getTargetIconId() == null && conceptsToLabel.containsKey(mapping.getTargetComponentURI())) {
+						final Concept concept = conceptsToLabel.get(mapping.getTargetComponentURI());
+						return mapping.toBuilder()
+							.targetTerm(concept.getTerm())
+							.targetIconId(concept.getIconId())
+							.build();
+					}
+	
+					return mapping;
+				}).collect(Collectors.toList());
+			}
 		}
 		
 		return new ConceptMapMappings(

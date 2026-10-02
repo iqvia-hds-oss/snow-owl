@@ -15,17 +15,12 @@
  */
 package com.b2international.snowowl.core.config;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-
-import jakarta.validation.constraints.NotEmpty;
-
 import com.b2international.snowowl.core.domain.PagingSettingsProvider;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.net.HostAndPort;
+
+import jakarta.validation.constraints.*;
 
 /**
  * Repository configuration is the central place where database connection
@@ -60,6 +55,10 @@ public class RepositoryConfiguration implements PagingSettingsProvider {
 
 	@Pattern(regexp = "^[a-zA-Z0-9_-]{0,32}$")
 	private String deploymentId = "";
+	
+	@Min(1)
+	@Max(50)
+	private int genericConceptSearchBatchSize = 10;
 	
 	/**
 	 * @return the host
@@ -171,6 +170,22 @@ public class RepositoryConfiguration implements PagingSettingsProvider {
 	@JsonProperty
 	public void setDeploymentId(String deploymentId) {
 		this.deploymentId = deploymentId;
+	}
+
+	/*
+	 * @return number of code systems searched in parallel at once during generic concept search
+	 */
+	@JsonProperty
+	public int getGenericConceptSearchBatchSize() {
+		return genericConceptSearchBatchSize;
+	}
+
+	/*
+	 * @param genericConceptSearchBatchSize - the maximum number of code systems searched in parallel at once during generic concept search
+	 */
+	@JsonProperty
+	public void setGenericConceptSearchBatchSize(int genericConceptSearchBatchSize) {
+		this.genericConceptSearchBatchSize = genericConceptSearchBatchSize;
 	}
 
 	@JsonIgnore
