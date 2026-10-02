@@ -194,7 +194,7 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 		assertGenericSearchConcepts(Json.object(
 				"codeSystem", Json.array(CODESYSTEM_2018_01_31, CODESYSTEM_EXT)))
 			.statusCode(400)
-			.body("message", equalTo("Searching dependent code systems is not supported"));
+			.body("message", equalTo("Searching dependent code systems at once is not supported"));
 	}
 	
 	@Test
@@ -202,7 +202,7 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 		assertGenericSearchConcepts(Json.object(
 				"codeSystem", Json.array(CODESYSTEM_2018_01_31, CODESYSTEM_2021_01_31)))
 			.statusCode(400)
-			.body("message", equalTo("Searching multiple versions of the same code system is not supported"));
+			.body("message", equalTo("Searching multiple versions of the same code system at once is not supported"));
 	}
 	
 	@Test
@@ -346,14 +346,14 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 	public void POST_Concepts_multiCodeSystemWithDependency() {
 		assertGenericSearchConceptsWithPost(Json.object("codeSystem", Json.array(CODESYSTEM_2018_01_31, CODESYSTEM_EXT)))
 			.statusCode(400)
-			.body("message", equalTo("Searching dependent code systems is not supported"));
+			.body("message", equalTo("Searching dependent code systems at once is not supported"));
 	}
 	
 	@Test
 	public void POST_Concepts_multiCodeSystemWithDifferentVersions() {
 		assertGenericSearchConceptsWithPost(Json.object("codeSystem", Json.array(CODESYSTEM_2018_01_31, CODESYSTEM_2021_01_31)))
 			.statusCode(400)
-			.body("message", equalTo("Searching multiple versions of the same code system is not supported"));
+			.body("message", equalTo("Searching multiple versions of the same code system at once is not supported"));
 	}
 	
 	private ValidatableResponse assertGenericSearchConcepts(final Map<String, Object> queryParams) {
