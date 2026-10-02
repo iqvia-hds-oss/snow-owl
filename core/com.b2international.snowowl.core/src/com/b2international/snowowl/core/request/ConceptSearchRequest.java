@@ -31,9 +31,10 @@ import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.codesystem.CodeSystems;
 import com.b2international.snowowl.core.config.RepositoryConfiguration;
 import com.b2international.snowowl.core.config.SnowOwlConfiguration;
+import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.events.util.Promise;
-import com.google.common.collect.Iterables;
+import com.google.common.collect.*;
 
 /**
  * A generic concept search request that can be executed in any code system using generic query expressions and filters to get back primary
@@ -67,8 +68,8 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 		
 		if (containsKey(OptionKey.CODESYSTEM)) {
 			codeSystemUris = getCollection(OptionKey.CODESYSTEM, ResourceURI.class).stream()
-					.distinct()
-					.collect(Collectors.toList());
+				.distinct()
+				.collect(Collectors.toList());
 		}
 		
 		if (codeSystemUris == null || codeSystemUris.isEmpty()) {
@@ -77,21 +78,16 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 			throw new BadRequestException("Using searchAfter is not supported with multiple code systems");
 		}
 		
-		final int maxThread = context.service(SnowOwlConfiguration.class).getModuleConfig(RepositoryConfiguration.class).getMaxThreadsGenericConceptSearch();
-		if (codeSystemUris.size() > maxThread) {
-			throw new BadRequestException("Too many code systems supplied, maximum allowed number is %d", maxThread);
-		}
-		
 		final Set<ResourceURI> codeSystemUrisWithoutPath = codeSystemUris.stream()
-				.map(ResourceURI::withoutPath)
-				.collect(Collectors.toSet());
+			.map(ResourceURI::withoutPath)
+			.collect(Collectors.toSet());
 		
 		final Set<String> codeSystemIds = codeSystemUris.stream()
 			.map(ResourceURI::getResourceId)
 			.collect(Collectors.toSet());
 		
 		if (codeSystemUris.size() != codeSystemIds.size()) {
-			throw new BadRequestException("Searching multiple versions of the same code system is not supported");
+			throw new BadRequestException("Searching multiple versions of the same code system at once is not supported");
 		}
 		
 		CodeSystems codeSystems = CodeSystemRequests.prepareSearchCodeSystem()
@@ -105,69 +101,108 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 		
 		// No code system was found
 		if (codeSystems.isEmpty()) {
-			return new Concepts(0, 0);
+			return new Concepts(limit(), 0);
 		}
 		
-		// Validate that code systems are not dependent on each other
-		// so we can avoid cases where the same concept would be returned twice
-		Set<ResourceURI> dependencies = codeSystems
-				.stream()
-				.filter(codeSystem -> codeSystem.getDependencies() != null)
-				.flatMap(codeSystem -> codeSystem.getDependencies().stream())
-				.map(Dependency::getUri)
-				.map(ResourceURIWithQuery::getResourceUri)
-				.map(ResourceURI::withoutPath)
-				.collect(Collectors.toSet());
+		// XXX: Validate that code systems are not dependent on each-other and do not have shared dependencies
+		// Otherwise the same concept could be returned multiple times
+		Multiset<ResourceURI> dependencies = codeSystems
+			.stream()
+			.filter(codeSystem -> codeSystem.getDependencies() != null)
+			.flatMap(codeSystem -> codeSystem.getDependencies().stream())
+			.map(Dependency::getUri)
+			.map(ResourceURIWithQuery::getResourceUri)
+			.map(ResourceURI::withoutPath)
+			.collect(Collectors.toCollection(HashMultiset::create));
 		
 		if (!Collections.disjoint(codeSystemUrisWithoutPath, dependencies)) {
-			throw new BadRequestException("Searching dependent code systems is not supported");
+			throw new BadRequestException("Searching dependent code systems at once is not supported");
+		}
+		
+		if (dependencies.size() != dependencies.elementSet().size()) {
+			throw new BadRequestException("Searching code systems with shared dependencies at once is not supported");
 		}
 		
 		Map<String, String> toolingByCodeSystemId = codeSystems
-				.stream()
-				.collect(Collectors.toMap(CodeSystem::getId, CodeSystem::getToolingId));
-		
-		List<Promise<Concepts>> conceptPromises = codeSystemUris
 			.stream()
-			.map(codeSystemUri -> runConceptSearch(context, toolingByCodeSystemId.get(codeSystemUri.getResourceId()), codeSystemUri))
-			.collect(Collectors.toList());
+			.collect(Collectors.toMap(CodeSystem::getId, CodeSystem::getToolingId));
 		
-		List<Concepts> concepts = Promise.all(conceptPromises)
-			.getSync(3, TimeUnit.MINUTES)
-			.stream()
-			.map(Concepts.class::cast)
-			.collect(Collectors.toList());
+		if (codeSystemUris.size() == 1) {
+			// In most cases there is only one code system just execute as it is, so searchAfter is supported
+			ResourceURI codeSystemUri = Iterables.getOnlyElement(codeSystemUris);
+			
+			return runConceptSearch(context, toolingByCodeSystemId.get(codeSystemUri.getResourceId()), codeSystemUri, limit())
+				.getSync(3, TimeUnit.MINUTES);
+			
+		} else {
+			// It is an actual multi code system search
+			final ImmutableList.Builder<Concept> concepts = ImmutableList.builder();
+			
+			int total = 0;
+			int collected = 0;
+			
+			// Running searches in parallel could easily overload the system so we are only executing them in batches
+			final int batchSize = context.service(SnowOwlConfiguration.class).getModuleConfig(RepositoryConfiguration.class).getGenericConceptSearchBatchSize();
+			List<List<ResourceURI>> batches = Lists.partition(codeSystemUris, batchSize);		
+			for (List<ResourceURI> batch : batches) {
+				
+				// XXX: each search will try to reach the limit in a single batch
+				// which means we will probably gather unnecessary hits in a single batch
+				// but if there are multiple batches then at least we will reduce the limit
+				final int remaining = Math.max(0, limit() - collected);
+				
+				List<Promise<Concepts>> promises = batch
+					.stream()
+					.map(codeSystemUri -> runConceptSearch(context, toolingByCodeSystemId.get(codeSystemUri.getResourceId()), codeSystemUri, remaining))
+					.collect(Collectors.toList());
+				
+				List<Concepts> results = Promise.all(promises)
+					.getSync(3, TimeUnit.MINUTES)
+					.stream()
+					.map(Concepts.class::cast)
+					.collect(Collectors.toList());
+				
+				for (Concepts result : results) {
+					total += result.getTotal();
+					
+					// Recalculate remaining
+					int currentRemaining = Math.max(0, limit() - collected);
+					
+					List<Concept> resultConcepts = result.getItems();
+					int needed = Math.min(currentRemaining, resultConcepts.size());
+					
+					concepts.addAll(resultConcepts.subList(0, needed));
+					collected += needed;
+				}
+			}
 		
-		// for single CodeSystem searches, sorting, paging works as it should
-		if (concepts.size() == 1) {
-			return Iterables.getOnlyElement(concepts);
+			return new Concepts(
+				concepts.build(), // TODO add manual sorting here if multiple resources have been fetched 
+				null, /* not supported across codesystems */
+				limit(), 
+				total
+			);
 		}
-		
-		// calculate grand total
-		int total = concepts.stream()
-				.mapToInt(Concepts::getTotal)
-				.sum();
-		
-		return new Concepts(
-			concepts.stream().flatMap(Concepts::stream).limit(limit()).collect(Collectors.toList()), // TODO add manual sorting here if multiple resources have been fetched 
-			null, /* not supported across codesystems */
-			limit(), 
-			total
-		);
 	}
 
-	private Promise<Concepts> runConceptSearch(ServiceProvider context, final String toolingId, final ResourceURI codeSystemUri) {
+	private Promise<Concepts> runConceptSearch(
+			final ServiceProvider context,
+			final String toolingId,
+			final ResourceURI codeSystemUri,
+			int limit
+	) {
+		
 		final Repository repository = context.service(RepositoryManager.class).get(toolingId);
 		if (repository == null) {
 			context.log().warn("Tooling module '{}' is missing from this deployment.", toolingId);
-			return Promise.immediate(new Concepts(0, 0));
+			return Promise.immediate(new Concepts(limit, 0));
 		}
 		
 		Options conceptSearchOptions = Options.builder()
 				.putAll(options())
 				.put(ConceptSearchRequestEvaluator.OptionKey.ID, componentIds())
 				.put(ConceptSearchRequestEvaluator.OptionKey.AFTER, searchAfter())
-				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, limit())
+				.put(ConceptSearchRequestEvaluator.OptionKey.LIMIT, limit)
 				.put(ConceptSearchRequestEvaluator.OptionKey.MIN_SCORE, minScore())
 				.put(ConceptSearchRequestEvaluator.OptionKey.LOCALES, locales())
 				.put(ConceptSearchRequestEvaluator.OptionKey.FIELDS, fields())

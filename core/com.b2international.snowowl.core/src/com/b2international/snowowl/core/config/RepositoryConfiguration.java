@@ -58,7 +58,7 @@ public class RepositoryConfiguration implements PagingSettingsProvider {
 	
 	@Min(1)
 	@Max(50)
-	private int maxThreadsGenericConceptSearch = 10;
+	private int genericConceptSearchBatchSize = 10;
 	
 	/**
 	 * @return the host
@@ -173,19 +173,19 @@ public class RepositoryConfiguration implements PagingSettingsProvider {
 	}
 
 	/*
-	 * @return number of maximum threads to allowed in generic concept search request
+	 * @return number of code systems searched in parallel at once during generic concept search
 	 */
 	@JsonProperty
-	public int getMaxThreadsGenericConceptSearch() {
-		return maxThreadsGenericConceptSearch;
+	public int getGenericConceptSearchBatchSize() {
+		return genericConceptSearchBatchSize;
 	}
 
 	/*
-	 * @param maxThreadsGenericConceptSearch - the maximum number of threads to allowed in generic concept search request
+	 * @param genericConceptSearchBatchSize - the maximum number of code systems searched in parallel at once during generic concept search
 	 */
 	@JsonProperty
-	public void setMaxThreadsGenericConceptSearch(int maxThreadsGenericConceptSearch) {
-		this.maxThreadsGenericConceptSearch = maxThreadsGenericConceptSearch;
+	public void setGenericConceptSearchBatchSize(int genericConceptSearchBatchSize) {
+		this.genericConceptSearchBatchSize = genericConceptSearchBatchSize;
 	}
 
 	@JsonIgnore
