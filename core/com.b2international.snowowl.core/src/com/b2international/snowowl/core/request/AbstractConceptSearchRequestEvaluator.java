@@ -220,8 +220,8 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 		if (search.containsKey(OptionKey.KNN)) {
 			requestBuilder.filterByKnn(search.get(OptionKey.KNN, KnnFilter.class));
 		}
-		if (search.containsKey(OptionKey.DESCRIPTION_KNN) && requestBuilder instanceof DescriptionKnnFilterSupport<?>) {
-			((DescriptionKnnFilterSupport<?>) requestBuilder).filterByDescriptionKnn(search.get(OptionKey.DESCRIPTION_KNN, KnnFilter.class));
+		if (search.containsKey(OptionKey.DESCRIPTION_KNN) && requestBuilder instanceof DescriptionKnnFilterSupport<?> knnSupport) {
+			knnSupport.filterByDescriptionKnn(search.get(OptionKey.DESCRIPTION_KNN, KnnFilter.class));
 		}
 	}
 	
@@ -360,8 +360,8 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	private static <T> Optional<T> extractEclGrammarElement(final Class<T> elementClass, final ExpressionConstraint expression) {
 		if (elementClass.isInstance(expression)) {
 			return Optional.of(elementClass.cast(expression));
-		} else if (expression instanceof NestedExpression) {
-			return extractEclGrammarElement(elementClass, ((NestedExpression) expression).getNested());
+		} else if (expression instanceof NestedExpression nestedExpression) {
+			return extractEclGrammarElement(elementClass, nestedExpression.getNested());
 		} else {
 			return Optional.empty();
 		}
