@@ -194,6 +194,7 @@ public final class ConceptSearchRequest extends SearchResourceRequest<ServicePro
 		
 		final Repository repository = context.service(RepositoryManager.class).get(toolingId);
 		if (repository == null) {
+			// XXX: This is an edge case that could happen when handling the same request between different deployments/installations.
 			context.log().warn("Tooling module '{}' is missing from this deployment.", toolingId);
 			return Promise.immediate(new Concepts(limit, 0));
 		}
