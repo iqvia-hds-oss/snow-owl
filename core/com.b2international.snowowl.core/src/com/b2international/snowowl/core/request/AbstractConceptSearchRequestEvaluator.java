@@ -97,7 +97,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @return
 	 */
 	@Override
-	public Concepts evaluate(ResourceURI uri, ServiceProvider context, Options search) {
+	public final Concepts evaluate(ResourceURI uri, ServiceProvider context, Options search) {
 		if (!canEvaluate(uri, context, search)) {
 			return new Concepts(0, 0);
 		}
@@ -120,7 +120,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @return
 	 */
 	@Override
-	public Promise<Concepts> evaluateAsync(ResourceURI uri, ServiceProvider context, Options search) {
+	public final Promise<Concepts> evaluateAsync(ResourceURI uri, ServiceProvider context, Options search) {
 		if (!canEvaluate(uri, context, search)) {
 			return Promise.immediate(new Concepts(0, 0));
 		}
@@ -141,7 +141,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @param score
 	 * @return
 	 */
-	protected Concept toConcept(ResourceURI codeSystem, IComponent concept, String iconId, String term, Float score) {
+	protected final Concept toConcept(ResourceURI codeSystem, IComponent concept, String iconId, String term, Float score) {
 		Concept result = new Concept(codeSystem, concept.getComponentType());
 		result.setId(concept.getId());
 		result.setReleased(concept.isReleased());
@@ -151,7 +151,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 		// treat all concepts active by protected, so terminology plugin that does not support statuses can be simplified
 		result.setActive(true);
 		result.setInternalConcept(concept);
-		mapRemainingFields(result, concept);
+		mapCodeSystemSpecificFields(result, concept);
 		return result;
 	}
 
@@ -161,7 +161,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @param result
 	 * @param concept
 	 */
-	protected void mapRemainingFields(Concept result, IComponent concept) {
+	protected void mapCodeSystemSpecificFields(Concept result, IComponent concept) {
 	}
 
 	/**
@@ -170,7 +170,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @param requestBuilder
 	 * @param search
 	 */
-	protected void evaluateIdFilterOptions(SearchResourceRequestBuilder<?, ?, ?> requestBuilder, Options search) {
+	protected final void evaluateIdFilterOptions(SearchResourceRequestBuilder<?, ?, ?> requestBuilder, Options search) {
 		if (search.containsKey(OptionKey.ID)) {
 			requestBuilder.filterByIds(search.getCollection(OptionKey.ID, String.class));
 		}
@@ -182,7 +182,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @param requestBuilder
 	 * @param search
 	 */
-	protected void evaluateIdQueryMustNotQueryOptionsAsIdFilter(SearchResourceRequestBuilder<?, ?, ?> requestBuilder, Options search) {
+	protected final void evaluateIdQueryMustNotQueryOptionsAsIdFilter(SearchResourceRequestBuilder<?, ?, ?> requestBuilder, Options search) {
 		if (!search.containsKey(OptionKey.ID) && !search.containsKey(OptionKey.QUERY) && !search.containsKey(OptionKey.MUST_NOT_QUERY)) {
 			return;
 		}
@@ -204,7 +204,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 		requestBuilder.filterByIds(idFilter);
 	}
 	
-	protected void evaluateTermFilterOptions(TermFilterSupport<?> requestBuilder, Options search) {
+	protected final void evaluateTermFilterOptions(TermFilterSupport<?> requestBuilder, Options search) {
 		if (search.containsKey(OptionKey.TERM)) {
 			requestBuilder.filterByTerm(search.get(OptionKey.TERM, TermFilter.class));
 		}
@@ -216,7 +216,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @param requestBuilder
 	 * @param search
 	 */
-	protected void evaluateKnnFilterOptions(KnnFilterSupport<?> requestBuilder, Options search) {
+	protected final void evaluateKnnFilterOptions(KnnFilterSupport<?> requestBuilder, Options search) {
 		if (search.containsKey(OptionKey.KNN)) {
 			requestBuilder.filterByKnn(search.get(OptionKey.KNN, KnnFilter.class));
 		}
@@ -232,7 +232,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	 * @param req
 	 * @param search
 	 */
-	protected void evaluateQueryOptions(ServiceProvider context, AbstractComponentSearchRequestBuilder<?, ?, ?> req, Options search) {
+	protected final void evaluateQueryOptions(ServiceProvider context, AbstractComponentSearchRequestBuilder<?, ?, ?> req, Options search) {
 		if (search == null) {
 			return;
 		}
