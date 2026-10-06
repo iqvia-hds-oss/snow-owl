@@ -10,7 +10,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/micrometer-observation-1.17.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/micrometer-commons-1.17.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/micrometer-core-1.17.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/micrometer-registry-prometheus-1.17.0.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/micrometer-registry-prometheus-1.17.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/prometheus-metrics-config-1.7.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/prometheus-metrics-core-1.7.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/prometheus-metrics-model-1.7.0.jar"/>
