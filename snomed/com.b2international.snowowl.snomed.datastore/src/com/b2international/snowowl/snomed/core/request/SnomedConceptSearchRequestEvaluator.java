@@ -29,7 +29,7 @@ import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.domain.Concepts;
 import com.b2international.snowowl.core.domain.Description;
-import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.core.request.AbstractConceptSearchRequestEvaluator;
 import com.b2international.snowowl.core.request.ExpandParser;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
@@ -44,19 +44,10 @@ import com.google.common.collect.ImmutableSortedSet;
 /**
  * @since 7.5
  */
-public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchRequestEvaluator {
+public final class SnomedConceptSearchRequestEvaluator extends AbstractConceptSearchRequestEvaluator<SnomedConceptSearchRequestBuilder, SnomedConcepts> {
 
 	@Override
-	public Concepts evaluate(ResourceURI uri, ServiceProvider context, Options search) {
-		
-		final String preferredDisplay = search.getString(OptionKey.DISPLAY);
-		SnomedDisplayTermType displayTermType;
-		
-		if (preferredDisplay != null) {
-			displayTermType = SnomedDisplayTermType.getEnum(preferredDisplay);
-		} else {
-			displayTermType = SnomedDisplayTermType.PT;
-		}
+	public SnomedConceptSearchRequestBuilder prepareSearchConcept(ResourceURI uri, ServiceProvider context, Options search) {
 		
 		final SnomedConceptSearchRequestBuilder req = SnomedRequests.prepareSearchConcept();
 		
@@ -87,13 +78,15 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 		Options expand = ExpandParser.parse("preferredDescriptions()")
 				.merge(requestedExpand ? search.getOptions(OptionKey.EXPAND) : Options.empty());
 		
+		SnomedDisplayTermType displayTermType = getDisplayTermType(search);
+		
 		if (!Strings.isNullOrEmpty(displayTermType.getExpand())) {
 			expand = ExpandParser.parse(displayTermType.getExpand()).merge(expand);
 		}
 		
 		final List<ExtendedLocale> locales = search.getList(OptionKey.LOCALES, ExtendedLocale.class);
 		
-		SnomedConcepts matches = req
+		return req
 				.filterByDescriptionLanguageRefSet(locales)
 				.setLocales(locales)
 				.setSearchAfter(search.getString(OptionKey.AFTER))
@@ -101,10 +94,15 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 				.setMinScore(search.get(OptionKey.MIN_SCORE, Float.class))
 				.setFields(search.getList(OptionKey.FIELDS, String.class))
 				.setExpand(expand)
-				.sortBy(search.containsKey(SearchResourceRequest.OptionKey.SORT_BY) ? search.getList(SearchResourceRequest.OptionKey.SORT_BY, SearchResourceRequest.Sort.class) : null)
-				.build(uri)
-				.execute(context);
-
+				.sortBy(search.containsKey(SearchResourceRequest.OptionKey.SORT_BY) ? search.getList(SearchResourceRequest.OptionKey.SORT_BY, SearchResourceRequest.Sort.class) : null);
+	}
+	
+	
+	@Override
+	public Concepts toConcepts(SnomedConcepts matches, ResourceURI uri, ServiceProvider context, Options search) {
+		SnomedDisplayTermType displayTermType = getDisplayTermType(search);
+		boolean requestedExpand = search.containsKey(OptionKey.EXPAND);
+		
 		return new Concepts(
 			matches
 				.stream()
@@ -114,6 +112,16 @@ public final class SnomedConceptSearchRequestEvaluator implements ConceptSearchR
 			matches.getLimit(), 
 			matches.getTotal()
 		);
+	}
+	
+	private SnomedDisplayTermType getDisplayTermType(Options search) {
+		final String preferredDisplay = search.getString(OptionKey.DISPLAY);
+		
+		if (preferredDisplay != null) {
+			return SnomedDisplayTermType.getEnum(preferredDisplay);
+		} else {
+			return SnomedDisplayTermType.PT;
+		}
 	}
 	
 	private Concept toConcept(ResourceURI codeSystem, SnomedConcept snomedConcept, String pt, boolean requestedExpand) {

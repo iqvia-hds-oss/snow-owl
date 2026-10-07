@@ -101,7 +101,8 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 	// Optimization Java API Test
 	SnomedOptimizationApiTest.class,
 	// Generic API
-	ConceptSearchRequestSnomedTest.class,
+	SnomedGenericConceptSearchRequestTest.class,
+	SnomedGenericConceptSearchApiTest.class,
 	ValueSetMemberSearchSnomedReferenceSetTest.class,
 //	ConceptMapCompareSnomedMapTypeReferenceSetTest.class,
 	ConceptMapSearchMappingRequestSnomedMapTypeReferenceSetTest.class,
