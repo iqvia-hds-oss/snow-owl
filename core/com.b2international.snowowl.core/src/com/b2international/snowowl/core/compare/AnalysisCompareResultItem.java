@@ -15,24 +15,71 @@
  */
 package com.b2international.snowowl.core.compare;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.b2international.commons.StringUtils;
+import com.b2international.snowowl.core.ResourceURI;
+
 /**
  * @since 9.0.0
  */
-public record AnalysisCompareResultItem(String id, String label, String iconId, AnalysisCompareChangeKind changeKind, Boolean auxiliary) {
+public record AnalysisCompareResultItem(
+	String id, 
+	String label, 
+	String iconId, 
+	AnalysisCompareChangeKind changeKind, 
+	Boolean auxiliary, 
+	ResourceURI codeSystem
+) {
+	public static class Builder {
+		private String id;
+		private String label;
+		private String iconId;
+		private AnalysisCompareChangeKind changeKind;
+		private Boolean auxiliary = Boolean.FALSE; // Former "short constructors" defaulted to false
+		private ResourceURI codeSystem;
 
-	// Short constructor for label and icon-less items
-	public AnalysisCompareResultItem(final String id, final AnalysisCompareChangeKind changeKind) {
-		this(id, null, null, changeKind, false);
-	}
+		public Builder id(final String id) {
+			this.id = id;
+			return this;
+		}
 
-	// Short constructor for icon-less items
-	public AnalysisCompareResultItem(final String id, final String label, final AnalysisCompareChangeKind changeKind) {
-		this(id, label, null, changeKind, false);
+		public Builder label(final String label) {
+			this.label = label;
+			return this;
+		}
+
+		public Builder iconId(final String iconId) {
+			this.iconId = iconId;
+			return this;
+		}
+
+		public Builder changeKind(final AnalysisCompareChangeKind changeKind) {
+			this.changeKind = changeKind;
+			return this;
+		}
+
+		public Builder auxiliary(final Boolean auxiliary) {
+			this.auxiliary = auxiliary;
+			return this;
+		}
+
+		public Builder codeSystem(final ResourceURI codeSystem) {
+			this.codeSystem = codeSystem;
+			return this;
+		}
+
+		public AnalysisCompareResultItem build() {
+			return new AnalysisCompareResultItem(id, label, iconId, changeKind, auxiliary, codeSystem);
+		}
 	}
 	
-	// Short constructor for non-auxiliary items
-	public AnalysisCompareResultItem(final String id, final String label, final String iconId, final AnalysisCompareChangeKind changeKind) {
-		this(id, label, iconId, changeKind, false);
+	public static Builder builder() {
+		return new Builder();
 	}
 	
+	public AnalysisCompareResultItem {
+		checkArgument(!StringUtils.isEmpty(id), "id cannot be null or empty");
+		checkArgument(changeKind != null, "changeKind cannot be null");
+	}
 }
