@@ -11,7 +11,7 @@
 	
 	<properties>
 		<mapdb.version>3.1.0</mapdb.version>
-		<eclipse.collections.version>9.1.0</eclipse.collections.version>
+		<eclipse.collections.version>9.2.0</eclipse.collections.version>
 	</properties>
 	
 	<!-- NOTE: in case of dependency changes, please update "includeArtifactIds" in maven-dependency-plugin's configuration as well, listing all (exact and transitive) dependency artifacts -->
