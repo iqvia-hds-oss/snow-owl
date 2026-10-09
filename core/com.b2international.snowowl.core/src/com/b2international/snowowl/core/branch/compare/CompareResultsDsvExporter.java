@@ -40,6 +40,7 @@ import com.b2international.snowowl.eventbus.IEventBus;
 import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 
 /**
@@ -58,7 +59,7 @@ public final class CompareResultsDsvExporter {
 	private final Map<String, Function<IComponent, String>> labelResolvers;
 	private final Map<String, BiFunction<IComponent, IComponent, Collection<CompareData>>> componentCompareResultProviders;
 	private final char delimiter;
-
+	private final IEventBus bus;
 	
 	public CompareResultsDsvExporter(
 		Map<String, String> baseBranches,
@@ -71,6 +72,33 @@ public final class CompareResultsDsvExporter {
 		Map<String, BiFunction<IComponent, IComponent, Collection<CompareData>>> componentCompareResultProviders,
 		char delimiter
 	) {
+		this(
+			baseBranches, 
+			compareBranch, 
+			codeSystemsMap, 
+			outputPath, 
+			compareResults, 
+			fetcherFunction, 
+			labelResolver, 
+			componentCompareResultProviders, 
+			delimiter, 
+			ApplicationContext.getServiceForClass(IEventBus.class)
+		);
+	}
+	
+	@VisibleForTesting
+	public CompareResultsDsvExporter(
+		Map<String, String> baseBranches,
+		Map<String, String> compareBranch,
+		Map<String, CodeSystem> codeSystemsMap,
+		Path outputPath,
+		Map<String, BranchCompareResult> compareResults,
+		Map<String, BiFunction<String, Collection<String>, TerminologyResourceContentRequestBuilder<CollectionResource<IComponent>>>> fetcherFunction,
+		Map<String, Function<IComponent, String>> labelResolver,
+		Map<String, BiFunction<IComponent, IComponent, Collection<CompareData>>> componentCompareResultProviders,
+		char delimiter,
+		IEventBus bus
+	) {
 		this.baseBranches = baseBranches;
 		this.compareBranches = compareBranch;
 		this.codeSystemsMap = codeSystemsMap;
@@ -80,6 +108,7 @@ public final class CompareResultsDsvExporter {
 		this.labelResolvers = labelResolver;
 		this.componentCompareResultProviders = componentCompareResultProviders;
 		this.delimiter = delimiter;
+		this.bus = bus;
 	}
 	
 	private int totalWork() {
@@ -140,7 +169,7 @@ public final class CompareResultsDsvExporter {
 					
 					CollectionResource<IComponent> components = componentFetchRequest
 						.build(compareUri)
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.execute(bus)
 						.getSync();
 					
 					for (IComponent component : components) {
@@ -166,13 +195,13 @@ public final class CompareResultsDsvExporter {
 					
 					componentFetchRequest
 						.build(baseUri)
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.execute(bus)
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
 					
 					componentFetchRequest
 						.build(compareUri)
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.execute(bus)
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
 					
@@ -203,7 +232,7 @@ public final class CompareResultsDsvExporter {
 					
 					CollectionResource<IComponent> components = componentFetchRequest
 						.build(baseUri)
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.execute(bus)
 						.getSync();
 					
 					for (IComponent component : components) {
