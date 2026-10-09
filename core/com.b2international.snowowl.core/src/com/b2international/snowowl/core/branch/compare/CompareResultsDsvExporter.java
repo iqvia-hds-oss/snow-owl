@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.b2international.commons.ChangeKind;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.ComponentIdentifier;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.context.TerminologyResourceContentRequestBuilder;
@@ -118,8 +119,10 @@ public final class CompareResultsDsvExporter {
 	private void exportCodeSystem(final String codeSystem, SequenceWriter writer, IProgressMonitor monitor) {
 		BranchCompareResult compareResults = compareResultsProvider.get(codeSystem);
 		BiFunction<String, Collection<String>, TerminologyResourceContentRequestBuilder<CollectionResource<IComponent>>> fetcherFunction = fetcherProvider.get(codeSystem);
-		String compareBranch = compareBranches.get(codeSystem);
 		String baseBranch = baseBranches.get(codeSystem);
+		String compareBranch = compareBranches.get(codeSystem);
+		ResourceURI baseUri = codeSystemsMap.get(codeSystem).getResourceURI(baseBranch);
+		ResourceURI compareUri = codeSystemsMap.get(codeSystem).getResourceURI(compareBranch);
 		BiFunction<IComponent, IComponent, Collection<CompareData>> getCompareResultsOfComponent = componentCompareResultProviders.get(codeSystem);
 		
 		try {
@@ -136,7 +139,7 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					CollectionResource<IComponent> components = componentFetchRequest
-						.build(compareBranch)
+						.build(compareUri)
 						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
 						.getSync();
 					
@@ -162,13 +165,13 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(baseBranch))
+						.build(baseUri)
 						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
 					
 					componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(compareBranch))
+						.build(compareUri)
 						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
@@ -199,7 +202,7 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					CollectionResource<IComponent> components = componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(baseBranch))
+						.build(baseUri)
 						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
 						.getSync();
 					
