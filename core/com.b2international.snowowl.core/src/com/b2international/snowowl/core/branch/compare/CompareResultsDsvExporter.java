@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.b2international.commons.ChangeKind;
 import com.b2international.snowowl.core.ApplicationContext;
 import com.b2international.snowowl.core.ComponentIdentifier;
+import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
 import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.context.TerminologyResourceContentRequestBuilder;
@@ -39,6 +40,7 @@ import com.b2international.snowowl.eventbus.IEventBus;
 import com.fasterxml.jackson.databind.SequenceWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.*;
 
 /**
@@ -57,7 +59,7 @@ public final class CompareResultsDsvExporter {
 	private final Map<String, Function<IComponent, String>> labelResolvers;
 	private final Map<String, BiFunction<IComponent, IComponent, Collection<CompareData>>> componentCompareResultProviders;
 	private final char delimiter;
-
+	private final IEventBus bus;
 	
 	public CompareResultsDsvExporter(
 		Map<String, String> baseBranches,
@@ -70,6 +72,33 @@ public final class CompareResultsDsvExporter {
 		Map<String, BiFunction<IComponent, IComponent, Collection<CompareData>>> componentCompareResultProviders,
 		char delimiter
 	) {
+		this(
+			baseBranches, 
+			compareBranch, 
+			codeSystemsMap, 
+			outputPath, 
+			compareResults, 
+			fetcherFunction, 
+			labelResolver, 
+			componentCompareResultProviders, 
+			delimiter, 
+			ApplicationContext.getServiceForClass(IEventBus.class)
+		);
+	}
+	
+	@VisibleForTesting
+	public CompareResultsDsvExporter(
+		Map<String, String> baseBranches,
+		Map<String, String> compareBranch,
+		Map<String, CodeSystem> codeSystemsMap,
+		Path outputPath,
+		Map<String, BranchCompareResult> compareResults,
+		Map<String, BiFunction<String, Collection<String>, TerminologyResourceContentRequestBuilder<CollectionResource<IComponent>>>> fetcherFunction,
+		Map<String, Function<IComponent, String>> labelResolver,
+		Map<String, BiFunction<IComponent, IComponent, Collection<CompareData>>> componentCompareResultProviders,
+		char delimiter,
+		IEventBus bus
+	) {
 		this.baseBranches = baseBranches;
 		this.compareBranches = compareBranch;
 		this.codeSystemsMap = codeSystemsMap;
@@ -79,6 +108,7 @@ public final class CompareResultsDsvExporter {
 		this.labelResolvers = labelResolver;
 		this.componentCompareResultProviders = componentCompareResultProviders;
 		this.delimiter = delimiter;
+		this.bus = bus;
 	}
 	
 	private int totalWork() {
@@ -118,8 +148,10 @@ public final class CompareResultsDsvExporter {
 	private void exportCodeSystem(final String codeSystem, SequenceWriter writer, IProgressMonitor monitor) {
 		BranchCompareResult compareResults = compareResultsProvider.get(codeSystem);
 		BiFunction<String, Collection<String>, TerminologyResourceContentRequestBuilder<CollectionResource<IComponent>>> fetcherFunction = fetcherProvider.get(codeSystem);
-		String compareBranch = compareBranches.get(codeSystem);
 		String baseBranch = baseBranches.get(codeSystem);
+		String compareBranch = compareBranches.get(codeSystem);
+		ResourceURI baseUri = codeSystemsMap.get(codeSystem).getResourceURI(baseBranch);
+		ResourceURI compareUri = codeSystemsMap.get(codeSystem).getResourceURI(compareBranch);
 		BiFunction<IComponent, IComponent, Collection<CompareData>> getCompareResultsOfComponent = componentCompareResultProviders.get(codeSystem);
 		
 		try {
@@ -136,8 +168,8 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					CollectionResource<IComponent> components = componentFetchRequest
-						.build(compareBranch)
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.build(compareUri)
+						.execute(bus)
 						.getSync();
 					
 					for (IComponent component : components) {
@@ -162,14 +194,14 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(baseBranch))
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.build(baseUri)
+						.execute(bus)
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
 					
 					componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(compareBranch))
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.build(compareUri)
+						.execute(bus)
 						.getSync()
 						.forEach(c -> componentPairs.put(c.getId(), c));
 					
@@ -199,8 +231,8 @@ public final class CompareResultsDsvExporter {
 					}
 					
 					CollectionResource<IComponent> components = componentFetchRequest
-						.build(codeSystemsMap.get(codeSystem).getResourceURI(baseBranch))
-						.execute(ApplicationContext.getServiceForClass(IEventBus.class))
+						.build(baseUri)
+						.execute(bus)
 						.getSync();
 					
 					for (IComponent component : components) {
@@ -234,7 +266,7 @@ public final class CompareResultsDsvExporter {
 	
 	public CompareData removed(String codeSystem, IComponent component) {
 		return new CompareData(
-			ChangeKind.UPDATED,
+			ChangeKind.DELETED,
 			
 			component.getComponentType(),
 			labelResolvers.get(codeSystem).apply(component), 
