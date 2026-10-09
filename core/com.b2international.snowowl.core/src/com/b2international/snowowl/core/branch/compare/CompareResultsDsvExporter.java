@@ -266,7 +266,7 @@ public final class CompareResultsDsvExporter {
 	
 	public CompareData removed(String codeSystem, IComponent component) {
 		return new CompareData(
-			ChangeKind.UPDATED,
+			ChangeKind.DELETED,
 			
 			component.getComponentType(),
 			labelResolvers.get(codeSystem).apply(component), 
