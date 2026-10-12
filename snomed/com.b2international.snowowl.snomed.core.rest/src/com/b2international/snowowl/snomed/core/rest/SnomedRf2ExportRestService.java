@@ -34,6 +34,7 @@ import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.attachments.InternalAttachmentRegistry;
 import com.b2international.snowowl.core.rest.AbstractRestService;
+import com.b2international.snowowl.core.rest.RestApiError;
 import com.b2international.snowowl.core.rest.SnomedApiConfig;
 import com.b2international.snowowl.snomed.core.domain.Rf2MaintainerType;
 import com.b2international.snowowl.snomed.core.domain.Rf2RefSetExportLayout;
@@ -46,6 +47,7 @@ import com.google.common.base.Strings;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,9 +68,11 @@ public class SnomedRf2ExportRestService extends AbstractRestService {
 		description="Exports SNOMED CT content from the given branch to RF2."
 	)
 	@ApiResponses({
-		@ApiResponse(responseCode="200", description="OK", content = {@Content(mediaType = OCTET_STREAM_MEDIA_TYPE)}),
+		@ApiResponse(responseCode="200", description="OK", content={@Content(mediaType = AbstractRestService.OCTET_STREAM_MEDIA_TYPE)}),
+		@ApiResponse(responseCode="400", description="Bad request", content=@Content(mediaType=AbstractRestService.JSON_MEDIA_TYPE, schema=@Schema(implementation=RestApiError.class))),
+		@ApiResponse(responseCode="404", description="Not found", content=@Content(mediaType=AbstractRestService.JSON_MEDIA_TYPE, schema=@Schema(implementation=RestApiError.class)))
 	})
-	@GetMapping(produces = {OCTET_STREAM_MEDIA_TYPE})
+	@GetMapping(produces = {AbstractRestService.OCTET_STREAM_MEDIA_TYPE, AbstractRestService.JSON_MEDIA_TYPE})
 	public @ResponseBody ResponseEntity<?> export(
 			
 		@Parameter(description = "The branch path", required = true)

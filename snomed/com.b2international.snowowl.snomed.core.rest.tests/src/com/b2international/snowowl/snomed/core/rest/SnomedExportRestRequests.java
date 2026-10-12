@@ -39,8 +39,13 @@ public abstract class SnomedExportRestRequests {
 	}
 	
 	public static Response export(String path, Map<String, Object> exportConfiguration) {
+		return export(path, exportConfiguration, Map.of());
+	}
+	
+	public static Response export(String path, Map<String, Object> exportConfiguration, Map<String, String> headers) {
 		return givenAuthenticatedRequest(SnomedApiTestConstants.SCT_API)
 			.queryParams(RestExtensions.encodeQueryParameters(exportConfiguration))
+			.headers(headers)
 			.get("/{path}/export", path);
 	}
 	

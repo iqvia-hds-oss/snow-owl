@@ -51,6 +51,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.http.MediaType;
 
 import com.b2international.commons.Pair;
 import com.b2international.commons.http.ExtendedLocale;
@@ -91,6 +92,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.google.common.net.HttpHeaders;
 
 /**
  * @since 5.4
@@ -204,10 +206,31 @@ public class SnomedExportApiTest extends AbstractSnomedApiTest {
 	}
 	
 	@Test
-	public void incorrectRf2ReleaseType() {
+	public void incorrectRf2ReleaseTypeWithoutAccept() {
 		export(branchPath.getPath(), Map.of("type", "unknown"))
 			.then()
-			.statusCode(400);
+			.statusCode(400)
+			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.body("message", equalTo("Unknown RF2 release type: 'unknown'"));
+	}
+	
+	@Test
+	public void incorrectRf2ReleaseTypeWithJsonAccept() {
+		export(branchPath.getPath(), Map.of("type", "unknown"), Map.of(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE))
+			.then()
+			.statusCode(400)
+			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.body("message", equalTo("Unknown RF2 release type: 'unknown'"));
+	}
+	
+	@Test
+	public void incorrectRf2ReleaseTypeWithOctetStreamAccept() {
+		// XXX: even if we specify accept type as octet-stream the error should be returned as json
+		export(branchPath.getPath(), Map.of("type", "unknown"), Map.of(HttpHeaders.ACCEPT, MediaType.APPLICATION_OCTET_STREAM_VALUE))
+			.then()
+			.statusCode(400)
+			.contentType(MediaType.APPLICATION_JSON_VALUE)
+			.body("message", equalTo("Unknown RF2 release type: 'unknown'"));
 	}
 	
 	@Test
