@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.collections.Collections3;
 import com.b2international.commons.exceptions.BadRequestException;
+import com.b2international.index.revision.RevisionIndex;
 import com.b2international.snowowl.core.Resource;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -72,6 +73,19 @@ public final class DefaultResourceURIPathResolver implements ResourceURIPathReso
 
 	@Override
 	public PathWithVersion resolveWithVersion(ServiceProvider context, ResourceURI uri, Resource resource) {
+		if (uri.getPath() != null && RevisionIndex.isRevRangePath(uri.getPath())) {
+			final String[] rangePaths = RevisionIndex.getRevisionRangePaths(uri.getPath());
+			final String resolvedRangePath = Arrays.stream(rangePaths)
+				.map(path -> ResourceURI.branch(uri.getResourceType(), uri.getResourceId(), path))
+				.map(rangeUri -> resolveWithVersionSingle(context, rangeUri, resource).getPath())
+				.collect(Collectors.joining(RevisionIndex.REV_RANGE));
+			return new PathWithVersion(resolvedRangePath);
+		}
+		
+		return resolveWithVersionSingle(context, uri, resource);
+	}
+
+	private PathWithVersion resolveWithVersionSingle(ServiceProvider context, ResourceURI uri, Resource resource) {
 		if (resource instanceof TerminologyResource) {
 			TerminologyResource terminologyResource = (TerminologyResource) resource;
 			
