@@ -21,6 +21,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 import com.b2international.snowowl.core.attachments.AttachmentRegistryTest;
 import com.b2international.snowowl.core.codesystem.CodeSystemTest;
+import com.b2international.snowowl.core.context.TerminologyResourceRequestTest;
 import com.b2international.snowowl.core.domain.ReindexQuerySerializationTest;
 import com.b2international.snowowl.core.ecl.EclEvaluationRequestTest;
 import com.b2international.snowowl.core.ecl.EclRewriterTest;
@@ -82,6 +83,7 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 	ImportResponseSerializationTest.class,
 	ValidationThreadPoolTest.class,
 	SearchResourceRequestTest.class,
+	TerminologyResourceRequestTest.class,
 	CodeSystemTest.class,
 	GroovyScriptEngineTest.class,
 	EclRewriterTest.class,
@@ -99,5 +101,5 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 	TermFilterTest.class,
 })
 public class AllCoreTests {
-
+	// Empty class body
 }

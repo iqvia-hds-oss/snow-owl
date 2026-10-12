@@ -7,6 +7,7 @@ Bundle-Vendor: B2i Healthcare
 Fragment-Host: com.b2international.snowowl.core;bundle-version="7.5.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-25
 Require-Bundle: org.junit;bundle-version="4.12.0",
- com.b2international.index.test.tools
+ com.b2international.index.test.tools,
+ org.mockito.mockito-core
 Import-Package: org.assertj.core.api,
  org.assertj.core.api.iterable
