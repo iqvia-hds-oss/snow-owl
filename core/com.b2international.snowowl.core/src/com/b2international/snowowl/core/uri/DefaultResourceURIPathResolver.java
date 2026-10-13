@@ -199,8 +199,8 @@ public final class DefaultResourceURIPathResolver implements ResourceURIPathReso
 				if (Resource.STATUS_DRAFT.equals(terminologyResource.getStatus())) {
 					// exception is granted to look at the working branch of the resource if it is in DRAFT status
 					return getResourceHeadBranch(uriToResolve, terminologyResource);
-				} else if (!allowBranches) {
-					// single-segment paths are not allowed and the resource is not in DRAFT status
+				} else {
+					// otherwise this becomes a bad request, there is no version to resolve
 					throw new BadRequestException("No Resource version is present in '%s'. Explicit '%s' can be used to retrieve the latest work in progress version of the Resource.", 
 						terminologyResource.getId(), ResourceURI.HEAD);
 				}
