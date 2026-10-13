@@ -15,8 +15,12 @@
  */
 package com.b2international.snowowl.core.context;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import com.b2international.commons.exceptions.BadRequestException;
@@ -30,7 +34,7 @@ import com.b2international.snowowl.core.events.RequestInitializationRequired;
 import com.b2international.snowowl.core.repository.PathTerminologyResourceResolver;
 import com.b2international.snowowl.core.request.ResourceRequests;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -43,6 +47,16 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 
 	private static final long serialVersionUID = 1L;
 	
+	@VisibleForTesting
+	/*package*/ static interface ResourceFetcher extends BiFunction<ServiceProvider, ResourceURI, Resource> {
+		ResourceFetcher DEFAULT = (ServiceProvider context, ResourceURI resourceUri) -> {
+			return ResourceRequests.prepareGet(resourceUri)
+				.buildAsync()
+				.getRequest()
+				.execute(context);
+		};
+	}
+	
 	private final String toolingId;
 	
 	@NotEmpty
@@ -52,16 +66,52 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 	@JsonProperty
 	private transient ResourceURI resourceUri;
 	private transient TerminologyResource resource;
+
+	private transient ResourceFetcher resourceFetcher;
 	
-	public TerminologyResourceRequest(final String toolingId, final String resourcePath, final Request<TerminologyResourceContext, R> next) {
-		Preconditions.checkArgument(!Strings.isNullOrEmpty(resourcePath), "Resource path may not be null or empty");
-		if (resourcePath.startsWith(Branch.MAIN_PATH) && Strings.isNullOrEmpty(toolingId)) {
-			throw new BadRequestException("Reflective access ('repositoryId/path') to terminology resource content is not supported in this API.")
-			.withDeveloperMessage("No toolingId is specified on API level to ensure the correct reflective access to underlying terminology.");
-		}
+	public TerminologyResourceRequest(
+		final String toolingId, 
+		final String resourcePath, 
+		final Request<TerminologyResourceContext, R> next
+	) {
+		this(toolingId, resourcePath, next, ResourceFetcher.DEFAULT);
+	}
+	
+	@VisibleForTesting
+	/*package*/ TerminologyResourceRequest(
+		final String toolingId,
+		final String resourcePath,
+		final Request<TerminologyResourceContext, R> next,
+		final ResourceFetcher resourceFetcher
+	) {
+		validateResourcePath(resourcePath, toolingId);
 		super(next);
 		this.toolingId = toolingId;
 		this.resourcePath = resourcePath;
+		this.resourceFetcher = resourceFetcher;
+	}
+
+	private static void validateResourcePath(final String resourcePath, final String toolingId) {
+		checkArgument(!Strings.isNullOrEmpty(resourcePath), "Resource path may not be null or empty");
+		
+		final String[] pathsToCheck = RevisionIndex.isRevRangePath(resourcePath)
+			? RevisionIndex.getRevisionRangePaths(resourcePath)
+			: new String[] { resourcePath };
+		
+		if (pathsToCheck.length < 1 || pathsToCheck.length > 2) {
+			throw new BadRequestException("Invalid resource path '%s'.", resourcePath);
+		}
+		
+		for (final String currentPath : pathsToCheck) {
+			if (Strings.isNullOrEmpty(currentPath)) {
+				throw new BadRequestException("Invalid resource path '%s'.", resourcePath);
+			}
+			
+			if (currentPath.startsWith(Branch.MAIN_PATH) && Strings.isNullOrEmpty(toolingId)) {
+				throw new BadRequestException("Reflective access ('repositoryId/path') to terminology resource content is not supported in this API.")
+					.withDeveloperMessage("No toolingId is specified on API level to ensure the correct reflective access to underlying terminology.");
+			}
+		}
 	}
 	
 	public ResourceURI getResourceURI(ServiceProvider context) {
@@ -87,93 +137,108 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 	@Override
 	public void initializeRequestContext(ServiceProvider context) {
 		final String[] resourcePathsToCheck;
+		
 		if (RevisionIndex.isRevRangePath(resourcePath)) {
 			resourcePathsToCheck = RevisionIndex.getRevisionRangePaths(resourcePath);
 		} else {
 			resourcePathsToCheck = new String[] { resourcePath };
 		}
 		
-		// verify that all paths refer to the same resource
-		final TerminologyResource[] resolvedResources = new TerminologyResource[resourcePathsToCheck.length];
-		final ResourceURI[] resolvedUris = new ResourceURI[resourcePathsToCheck.length];
+		final ResourceWithUri[] resolvedResources = new ResourceWithUri[resourcePathsToCheck.length];
 
+		// for ranges the first path should reveal which resource we are working with
+		// the second path should be either absolute or only contain a relative path 
+		// (and we will not consider the first segment to be a resource ID)
 		TerminologyResource candidate = null;
+		
 		for (int i = 0; i < resourcePathsToCheck.length; i++) {
-			final ResourceWithUri resolved = resolveResource(context, resourcePathsToCheck[i], candidate);
-			candidate = resolved.resource;
-			resolvedResources[i] = resolved.resource;
-			resolvedUris[i] = resolved.uri;
+			resolvedResources[i] = resolveResource(context, resourcePathsToCheck[i], candidate);
+			candidate = resolvedResources[i].resource();
 		}
 
-		// we will use the last resource appearing in the iteration 
+		// we will use the last resource appearing in the iteration, since it might be resolving to a different point in time 
 		this.resource = candidate;
 		
-		if (resolvedUris.length == 1) {
-			this.resourceUri = resolvedUris[0];
+		if (resolvedResources.length == 1) {
+			this.resourceUri = resolvedResources[0].uri();
 		} else {
-			final String rangePath = Arrays.stream(resolvedUris)
-				.map(uri -> uri.getPath() + uri.getTimestampPart())
+			final String rangePath = Arrays.stream(resolvedResources)
+				.map(rwu -> rwu.uri().getPath() + rwu.uri().getTimestampPart()) // include special ID part as well?
 				.collect(Collectors.joining(RevisionIndex.REV_RANGE));
 			
-			this.resourceUri = ResourceURI.branch(candidate.getResourceURI().getResourceType(), candidate.getId(), rangePath);
+			this.resourceUri = ResourceURI.branch(resource.getResourceType(), resource.getId(), rangePath);
 		}
 	}
 	
 	private ResourceWithUri resolveResource(final ServiceProvider context, final String resourcePath, final TerminologyResource candidate) {
-		final TerminologyResource currentResource;
-		final ResourceURI resolvedUri;
-		
+
+		// If we receive an absolute path, we will resolve it using PathTerminologyResourceResolver
 		if (resourcePath.startsWith(Branch.MAIN_PATH)) {
 			// XXX remove support for querying content via raw branch path in high-level API 
 			context.log().warn("Reflective access of terminology resources ('{}/{}') is not the recommended way of accessing resources. Consider using Resource IDs and relative branch path expressions.", toolingId, resourcePath);
-			currentResource = context.service(PathTerminologyResourceResolver.class).resolve(context, toolingId, resourcePath);
-			resolvedUri = currentResource.getResourceURI(resourcePath);
-		} else {
-			// use the state of the resource at the given path
-			final ResourceURI referenceResourceUri = ResourceURI.of("any", resourcePath);
-			currentResource = context.optionalService(ResourceFragment.class)
-				.flatMap(fragment -> {
-					// if a fragment is cached then use it and prevent refetching existing data, but only for the first path parameter
-					// TODO it would be better to support other model types as well, but this was the faster to get this done for 10.1.0
-					if (candidate != null) {
-						return Optional.empty();
-					}
-					
-					final Resource convertedResource = context.service(ResourceTypeConverter.Registry.class)
-						.toResource(fragment);
-					
-					if (convertedResource instanceof TerminologyResource terminologyResource) {
-						return Optional.of(terminologyResource);
-					} else {
-						return Optional.empty();
-					}
-				})
-				.or(() -> {
-					// XXX intentionally not fetching using the full resourceUri here, this might change in the future
-					final Resource fetchedResource = ResourceRequests.prepareGet(referenceResourceUri)
-						.buildAsync()
-						.getRequest()
-						.execute(context);
-					
-					if (fetchedResource instanceof TerminologyResource terminologyResource) {
-						return Optional.of(terminologyResource);
-					} else {
-						return Optional.empty();
-					}
-				})
-				.orElseThrow(() -> new NotFoundException("Terminology Resource", referenceResourceUri.getResourceId()));
 			
-			resolvedUri = currentResource.getResourceURI()
+			final TerminologyResource currentResource = context.service(PathTerminologyResourceResolver.class).resolve(context, toolingId, resourcePath);
+
+			// It's possible that two absolute paths resolve to different resources, in which case we will throw an exception
+			if (candidate != null && !currentResource.getId().equals(candidate.getId())) {
+				throw new BadRequestException("The resolved resource '%s' does not match the expected resource '%s'.", currentResource.getId(), candidate.getId());
+			}
+			
+			final ResourceURI resolvedUri = currentResource.getResourceURI(resourcePath);
+			
+			return new ResourceWithUri(currentResource, resolvedUri);
+		}
+		
+		// If candidate is not null, we are resolving the second path of a range which should be treated as a relative path; we also need to fetch the resource again
+		if (candidate != null) {
+			final ResourceURI referenceResourceUri = candidate.getResourceURI().withPath(resourcePath);
+			final Resource fetchedResource = resourceFetcher.apply(context, referenceResourceUri);
+
+			if (!(fetchedResource instanceof TerminologyResource terminologyResource)) {
+				throw new NotFoundException("Terminology Resource", referenceResourceUri.getResourceId());
+			}
+			
+			final ResourceURI resolvedUri = fetchedResource.getResourceURI()
 				.withSpecialResourceIdPart(referenceResourceUri.getSpecialIdPart())
 				.withPath(referenceResourceUri.getPath())
 				.withTimestampPart(referenceResourceUri.getTimestampPart());
+			
+			return new ResourceWithUri(terminologyResource, resolvedUri);
 		}
 		
-		if (candidate != null && !candidate.getId().equals(currentResource.getId())) {
-			throw new BadRequestException("All resource paths must refer to the same terminology resource. Found '%s' and '%s'.", candidate.getId(), currentResource.getId());
+		// Otherwise we are resolving the first path of a range or a single path
+		final ResourceURI referenceResourceUri = ResourceURI.of("any", resourcePath);
+		TerminologyResource terminologyResource = null;
+		
+		// First check if a cached ResourceFragment is available in the context, if so, convert it to a TerminologyResource
+		final ResourceFragment fragment = context.optionalService(ResourceFragment.class).orElse(null);
+		if (fragment != null) {
+			final ResourceTypeConverter.Registry registry = context.service(ResourceTypeConverter.Registry.class);
+			final Resource convertedResource = registry.toResource(fragment);
+			if (convertedResource instanceof TerminologyResource convertedTerminologyResource) {
+				terminologyResource = convertedTerminologyResource;
+			}
 		}
 		
-		return new ResourceWithUri(currentResource, resolvedUri);
+		// Otherwise retrieve it using the resource fetcher
+		if (terminologyResource == null) {
+			final Resource fetchedResource = resourceFetcher.apply(context, referenceResourceUri);
+			if (fetchedResource instanceof TerminologyResource fetchedTerminologyResource) {
+				terminologyResource = fetchedTerminologyResource;
+			}
+		}
+		
+		// We have exhausted all options if the resource is still not found
+		if (terminologyResource == null) {
+			throw new NotFoundException("Terminology Resource", referenceResourceUri.getResourceId());
+		}
+		
+		final ResourceURI resolvedUri = terminologyResource.getResourceURI()
+			.withSpecialResourceIdPart(referenceResourceUri.getSpecialIdPart())
+			.withPath(referenceResourceUri.getPath())
+			.withTimestampPart(referenceResourceUri.getTimestampPart());
+		
+		return new ResourceWithUri(terminologyResource, resolvedUri);
 	}
 
 	private record ResourceWithUri(
@@ -181,5 +246,16 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 		ResourceURI uri
 	) {
 		// Empty record body
+	}
+	
+	@VisibleForTesting
+	/*package*/ ResourceFetcher getResourceFetcher() {
+		return resourceFetcher;
+	}
+	
+	private void readObject(final ObjectInputStream stream) throws IOException, ClassNotFoundException {
+		// Use the default resource fetcher strategy for de-serialized instances
+		stream.defaultReadObject();
+		this.resourceFetcher = ResourceFetcher.DEFAULT;
 	}
 }

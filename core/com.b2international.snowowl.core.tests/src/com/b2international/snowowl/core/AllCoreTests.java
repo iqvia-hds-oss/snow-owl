@@ -46,6 +46,7 @@ import com.b2international.snowowl.core.request.search.TermFilterTest;
 import com.b2international.snowowl.core.scripts.GroovyScriptEngineTest;
 import com.b2international.snowowl.core.taxonomy.SimpleTaxonomyGraphTest;
 import com.b2international.snowowl.core.uri.ComponentURITest;
+import com.b2international.snowowl.core.uri.DefaultResourceURIPathResolverTest;
 import com.b2international.snowowl.core.uri.ResourceURITest;
 import com.b2international.snowowl.core.uri.ResourceURIWithQueryTest;
 import com.b2international.snowowl.core.validation.ValidationRuleApiTest;
@@ -83,13 +84,14 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 	ImportResponseSerializationTest.class,
 	ValidationThreadPoolTest.class,
 	SearchResourceRequestTest.class,
-	TerminologyResourceRequestTest.class,
 	CodeSystemTest.class,
 	GroovyScriptEngineTest.class,
 	EclRewriterTest.class,
 	RepositoryInfoSerializationTest.class,
 	ServerInfoSerializationTest.class,
 	ReindexQuerySerializationTest.class,
+	DefaultResourceURIPathResolverTest.class,
+	TerminologyResourceRequestTest.class,
 	
 	// medium integration tests
 	JobRequestsTest.class,
