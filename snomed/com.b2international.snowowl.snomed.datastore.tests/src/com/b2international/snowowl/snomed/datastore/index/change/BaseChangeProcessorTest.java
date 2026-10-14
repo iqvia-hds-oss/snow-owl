@@ -43,6 +43,9 @@ import com.b2international.snowowl.test.commons.snomed.TestBranchContext;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 
 /**
  * @since 4.7
@@ -187,20 +190,29 @@ public abstract class BaseChangeProcessorTest extends BaseRevisionIndexTest {
 	}
 	
 	protected final SnomedDescriptionIndexEntry description(String conceptId, String typeId, String term, Map<String, Acceptability> acceptabilityMap) {
+		final Multimap<String, Acceptability> acceptabilityMultimap = (acceptabilityMap == null) 
+			? ImmutableMultimap.of()
+			: Multimaps.forMap(acceptabilityMap);
+		
+		final Multimap<Acceptability, String> invertedAcceptabilityMultimap = ImmutableMultimap.copyOf(acceptabilityMultimap).inverse();
+		final Collection<String> preferredIn = invertedAcceptabilityMultimap.get(Acceptability.PREFERRED);
+		final Collection<String> acceptableIn = invertedAcceptabilityMultimap.get(Acceptability.ACCEPTABLE);
+		
 		return SnomedDescriptionIndexEntry.builder()
-				.active(true)
-				.released(false)
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_SENSITIVE)
-				.id(generateDescriptionId())
-				.conceptId(conceptId)
-				.term(term)
-				.typeId(typeId)
-				.languageCode("en")
-				.moduleId(module())
-				.acceptabilityMap(acceptabilityMap)
-				.memberOf(List.of())
-				.activeMemberOf(List.of())
-				.build();
+			.active(true)
+			.released(false)
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_SENSITIVE)
+			.id(generateDescriptionId())
+			.conceptId(conceptId)
+			.term(term)
+			.typeId(typeId)
+			.languageCode("en")
+			.moduleId(module())
+			.replacePreferredIn(preferredIn)
+			.replaceAcceptableIn(acceptableIn)
+			.memberOf(List.of())
+			.activeMemberOf(List.of())
+			.build();
 	}
 	
 	protected final SnomedConceptDocument.Builder docWithDefaults(final SnomedConceptDocument concept) {

@@ -18,7 +18,10 @@ package com.b2international.snowowl.snomed.core.ecl;
 import static com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator.generateDescriptionId;
 import static org.junit.Assert.assertEquals;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import org.junit.Test;
 
@@ -29,7 +32,6 @@ import com.b2international.index.query.Expressions;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry;
@@ -455,8 +457,8 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 			.term("Clinical finding")
 			.conceptId(Concepts.ROOT_CONCEPT)
 			.typeId(Concepts.TEXT_DEFINITION)
-			.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-			.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_US)
 			.build());
 		
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
@@ -466,8 +468,8 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 			.term("Clinical finding")
 			.conceptId(Concepts.SUBSTANCE)
 			.typeId(Concepts.TEXT_DEFINITION)
-			.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-			.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
 			.build());
 		
 		final Expression actual = eval("* {{ preferredIn = " + Concepts.REFSET_LANGUAGE_TYPE_UK + " }}");
@@ -484,8 +486,8 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 			.term("Clinical finding")
 			.conceptId(Concepts.ROOT_CONCEPT)
 			.typeId(Concepts.TEXT_DEFINITION)
-			.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-			.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_US)
 			.build());
 		
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
@@ -495,8 +497,8 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 			.term("Clinical finding")
 			.conceptId(Concepts.SUBSTANCE)
 			.typeId(Concepts.TEXT_DEFINITION)
-			.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-			.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
 			.build());
 		
 		final Expression actual = eval("* {{ acceptableIn = " + Concepts.REFSET_LANGUAGE_TYPE_UK + " }}");
@@ -507,26 +509,26 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 	@Test
 	public void languageRefSet() throws Exception {
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding")
-				.conceptId(Concepts.ROOT_CONCEPT)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding")
+			.conceptId(Concepts.ROOT_CONCEPT)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.build());
 		
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding")
-				.conceptId(Concepts.SUBSTANCE)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-				.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding")
+			.conceptId(Concepts.SUBSTANCE)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 		
 		final Expression actual = eval("* {{ languageRefSetId = " + Concepts.REFSET_LANGUAGE_TYPE_UK + " }}");
 		final Expression expected = SnomedDocument.Expressions.ids(Set.of(Concepts.ROOT_CONCEPT, Concepts.SUBSTANCE));
@@ -536,38 +538,37 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 	@Test
 	public void semanticTag() throws Exception {
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding (finding)")
-				.conceptId(Concepts.ROOT_CONCEPT)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding (finding)")
+			.conceptId(Concepts.ROOT_CONCEPT)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.build());
 		
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding (clinical)")
-				.conceptId(Concepts.SUBSTANCE)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-				.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding (clinical)")
+			.conceptId(Concepts.SUBSTANCE)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 		
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding (disorder)")
-				.conceptId(Concepts.ATTRIBUTE)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-				.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.build());
-		
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding (disorder)")
+			.conceptId(Concepts.ATTRIBUTE)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 		
 		Expression expected = SnomedDocument.Expressions.ids(Set.of(Concepts.SUBSTANCE));
 		Expression actual = eval("* {{ semanticTag = \"clinical\" }}");
@@ -604,30 +605,30 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 	@Test
 	public void descriptionEffectiveTime() throws Exception {
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.released(true)
-				.effectiveTime(EffectiveTimes.getEffectiveTime("20210731", DateFormats.SHORT))
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding (finding)")
-				.conceptId(Concepts.ROOT_CONCEPT)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.released(true)
+			.effectiveTime(EffectiveTimes.getEffectiveTime("20210731", DateFormats.SHORT))
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding (finding)")
+			.conceptId(Concepts.ROOT_CONCEPT)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.build());
 		
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.released(true)
-				.effectiveTime(EffectiveTimes.getEffectiveTime("20020131", DateFormats.SHORT))
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding (clinical)")
-				.conceptId(Concepts.SUBSTANCE)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.preferredIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_US))
-				.acceptableIn(Set.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.released(true)
+			.effectiveTime(EffectiveTimes.getEffectiveTime("20020131", DateFormats.SHORT))
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding (clinical)")
+			.conceptId(Concepts.SUBSTANCE)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 		
 		// XXX injecting domain before effectiveTime field randomly to test default description domain and explicit domain cases
 		Expression expected = SnomedDocument.Expressions.ids(Set.of(Concepts.ROOT_CONCEPT));
@@ -904,18 +905,16 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 	@Test
 	public void dialectUnknownAlias() throws Exception {
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding")
-				.conceptId(Concepts.ROOT_CONCEPT)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.languageCode("en")
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.acceptabilityMap(Map.of(
-					Concepts.REFSET_LANGUAGE_TYPE_SG, Acceptability.ACCEPTABLE
-				))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding")
+			.conceptId(Concepts.ROOT_CONCEPT)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.languageCode("en")
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_SG)
+			.build());
 		
 		Expression actual = eval("* {{ dialect = en-sg }}");
 		Expression expected = SnomedDocument.Expressions.ids(Set.of());
@@ -1127,66 +1126,57 @@ public class SnomedEclEvaluationRequestPropertyFilterTest extends BaseSnomedEclE
 	
 	private void generatePreferredDescription(String conceptId) {
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding")
-				.conceptId(conceptId)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.languageCode("en")
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.acceptabilityMap(Map.of(
-					Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED
-				))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding")
+			.conceptId(conceptId)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.languageCode("en")
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 	}
 	
 	private void generateAcceptableDescription(String conceptId) {
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding")
-				.conceptId(conceptId)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.languageCode("en")
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.acceptabilityMap(Map.of(
-					Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.ACCEPTABLE
-				))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding")
+			.conceptId(conceptId)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.languageCode("en")
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 	}
 	
 	private void generateActiveAndInactiveDescription(String activeDescriptionConceptId, String inactiveDescriptionConceptId) {
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(true)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding")
-				.conceptId(activeDescriptionConceptId)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.languageCode("en")
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.acceptabilityMap(Map.of(
-					Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.ACCEPTABLE
-				))
-				.build());
+			.id(generateDescriptionId())
+			.active(true)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding")
+			.conceptId(activeDescriptionConceptId)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.languageCode("en")
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 		
 		indexRevision(MAIN, SnomedDescriptionIndexEntry.builder()
-				.id(generateDescriptionId())
-				.active(false)
-				.moduleId(Concepts.MODULE_SCT_CORE)
-				.term("Clinical finding")
-				.conceptId(inactiveDescriptionConceptId)
-				.typeId(Concepts.TEXT_DEFINITION)
-				.languageCode("en")
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.acceptabilityMap(Map.of(
-					Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.ACCEPTABLE
-				))
-				.build());
+			.id(generateDescriptionId())
+			.active(false)
+			.moduleId(Concepts.MODULE_SCT_CORE)
+			.term("Clinical finding")
+			.conceptId(inactiveDescriptionConceptId)
+			.typeId(Concepts.TEXT_DEFINITION)
+			.languageCode("en")
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build());
 	}
-	
 	
 	private void generateActiveAndInactiveSimpleTypeMember(String activeMemberConceptId, String inactiveMemberConceptId) {
 		generateActiveAndInactiveSimpleTypeMember(activeMemberConceptId, Concepts.MODULE_SCT_CORE, inactiveMemberConceptId, Concepts.MODULE_SCT_MODEL_COMPONENT);

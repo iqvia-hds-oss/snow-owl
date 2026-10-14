@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -65,10 +66,11 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		process(processor);
 		
 		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn)
-				.memberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK)) // TODO fix me
-				.activeMemberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.ACCEPTABLE)
-				.build();
+			.memberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK)) // TODO fix me
+			.activeMemberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build();
+		
 		final Revision currentDoc = Iterables.getOnlyElement(processor.getNewMappings().values());
 		assertDocEquals(expectedDoc, currentDoc);
 		assertEquals(0, processor.getChangedMappings().size());
@@ -85,10 +87,11 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		process(processor);
 		
 		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn)
-				.memberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.activeMemberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED)
-				.build();
+			.memberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.activeMemberOf(ImmutableList.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.build();
+		
 		final Revision currentDoc = Iterables.getOnlyElement(processor.getNewMappings().values());
 		assertDocEquals(expectedDoc, currentDoc);
 		assertEquals(0, processor.getChangedMappings().size());
@@ -114,8 +117,9 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		
 		// expected that the new doc will have only the preferred acceptability
 		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn)
-				.acceptabilityMap(Collections.singletonMap(Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED))
-				.build();
+			.replaceAcceptableIn(List.of())
+			.build();
+		
 		final Revision currentDoc = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
 		assertDocEquals(expectedDoc, currentDoc);
 		// XXX the deleted member handled by another processor
@@ -142,8 +146,9 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		
 		// expected that the new doc will have only the preferred acceptability
 		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn)
-				.acceptabilityMap(Collections.singletonMap(Concepts.REFSET_LANGUAGE_TYPE_US, Acceptability.ACCEPTABLE))
-				.build();
+			.replacePreferredIn(List.of())
+			.build();
+		
 		final Revision currentDoc = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
 		assertDocEquals(expectedDoc, currentDoc);
 		// XXX the deleted member handled by another processor
@@ -187,9 +192,11 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		assertEquals(1, processor.getChangedMappings().size());
 		
 		// description doc must be reindexed with change acceptabilityMap
-		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn).
-				acceptabilityMap(Collections.singletonMap(Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED))
-				.build();
+		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn)
+			.replacePreferredIn(List.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.replaceAcceptableIn(List.of())
+			.build();
+		
 		final Revision currentDoc = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
 		assertDocEquals(expectedDoc, currentDoc);
 		assertEquals(0, processor.getNewMappings().size());

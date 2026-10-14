@@ -43,7 +43,10 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssues;
 import com.b2international.snowowl.snomed.common.SnomedConstants;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
-import com.b2international.snowowl.snomed.core.domain.*;
+import com.b2international.snowowl.snomed.core.domain.RelationshipValue;
+import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
+import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
+import com.b2international.snowowl.snomed.core.domain.SnomedRelationship;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedRefSetType;
 import com.b2international.snowowl.snomed.core.domain.refset.SnomedReferenceSetMember;
 import com.b2international.snowowl.snomed.datastore.index.entry.*;
@@ -940,12 +943,13 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		String concept1Id = generateConceptId();
 		SnomedDescriptionIndexEntry fsn1 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 1 (tag)")
 				.conceptId(concept1Id)
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.build();
+		
 		SnomedRefSetMemberIndexEntry fsn1Member = createLanguageRefsetMember(fsn1);
 		SnomedDescriptionIndexEntry fsn2 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 2 (tag)")
 				.conceptId(concept1Id)
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.build();
 		SnomedRefSetMemberIndexEntry fsn2Member = createLanguageRefsetMember(fsn2);
 		SnomedConceptDocument c1 = concept(concept1Id)
@@ -957,12 +961,12 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		// index concept with two PTs in the same language refset
 		String concept2Id = generateConceptId();
 		SnomedDescriptionIndexEntry pt1 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 1")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.conceptId(concept2Id)
 				.build();
 		SnomedRefSetMemberIndexEntry pt1Member = createLanguageRefsetMember(pt1);
 		SnomedDescriptionIndexEntry pt2 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 2")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.conceptId(concept2Id)
 				.build();
 		SnomedRefSetMemberIndexEntry pt2Member = createLanguageRefsetMember(pt2);
@@ -977,11 +981,11 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		String concept3Id = generateConceptId();
 		SnomedDescriptionIndexEntry fsn3 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 3 (tag)")
 				.conceptId(concept3Id)
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.build();
 		SnomedRefSetMemberIndexEntry fsn3Member = createLanguageRefsetMember(fsn3);
 		SnomedDescriptionIndexEntry pt3 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 3")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.conceptId(concept3Id)
 				.build();
 		SnomedRefSetMemberIndexEntry pt3Member = createLanguageRefsetMember(pt3);
@@ -1174,19 +1178,19 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		String conceptId1 = generateConceptId();
 		SnomedDescriptionIndexEntry fsn1 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 1 (tag)")
 				.conceptId(conceptId1)
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.build();
 		// no need to generate an indicator here, active FSN without any indicator should be ALLOWED by the rule 
 		
 		SnomedDescriptionIndexEntry pt1 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 1")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.conceptId(conceptId1)
 				.build();
 		// mark this active PT with a active concept non-current indicator which should be ALLOWED by the rule
 		SnomedRefSetMemberIndexEntry validCNCForPt1 = member(pt1.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
 		
 		SnomedDescriptionIndexEntry pt2 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 2")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.conceptId(conceptId1)
 				.build();
 		// mark this active PT with an active erroneous indicator which should NOT be allowed by the rule
@@ -1207,7 +1211,7 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 		String conceptId2 = generateConceptId();
 		SnomedDescriptionIndexEntry fsn2 = description(generateDescriptionId(), Concepts.FULLY_SPECIFIED_NAME, "Fully specified name 2 (tag)")
 				.conceptId(conceptId2)
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.build();
 		// generate an inactive CNC indicator to test that it is not reported by the rule at all
 		SnomedRefSetMemberIndexEntry validCNCForFsn2 = member(fsn2.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR)
@@ -1216,14 +1220,14 @@ public class GenericValidationRuleTest extends BaseGenericValidationRuleTest {
 				.build();
 		
 		SnomedDescriptionIndexEntry pt3 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 3")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.active(false)
 				.conceptId(conceptId2)
 				.build();
 		// mark this inactive PT with a concept non-current indicator which should NOT be allowed by the rule as the description is inactive
 		SnomedRefSetMemberIndexEntry invalidCNCOnPt3 = member(pt3.getId(), Concepts.REFSET_DESCRIPTION_INACTIVITY_INDICATOR).valueId(Concepts.CONCEPT_NON_CURRENT).build();
 		SnomedDescriptionIndexEntry pt4 = description(generateDescriptionId(), Concepts.SYNONYM, "Preferred term 4")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_ES, Acceptability.PREFERRED)
+				.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_ES)
 				.active(false)
 				.conceptId(conceptId1)
 				.build();

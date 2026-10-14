@@ -54,9 +54,7 @@ import com.b2international.snowowl.test.commons.snomed.TestBranchContext.Builder
 import com.b2international.snowowl.test.commons.validation.BaseValidationTest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Injector;
 
 /**
@@ -210,20 +208,21 @@ public class SnomedQueryValidationRuleEvaluatorTest extends BaseValidationTest {
 		indexRevision(MAIN, 
 			description(description1, Concepts.SYNONYM, "Minor heart attack")
 				.conceptId(generateConceptId())
-				.acceptableIn(ImmutableSet.of(langRefSet1))
-				.preferredIn(ImmutableSet.of(langRefSet2))
+				.addAcceptableIn(langRefSet1)
+				.addPreferredIn(langRefSet2)
 				.build(),
+				
 			description(description2, Concepts.SYNONYM, "Clinical finding (finding)")
 				.conceptId(generateConceptId())
-				.acceptableIn(ImmutableSet.of(langRefSet1))
+				.addAcceptableIn(langRefSet1)
 				.build()
 		);
 		
 		final Map<String, Object> ruleQuery = ImmutableMap.<String, Object>builder()
-				.put("componentType", "description")
-				.put("acceptableIn", ImmutableList.of(langRefSet1))
-				.put("preferredIn", ImmutableList.of(langRefSet2))
-				.build();
+			.put("componentType", "description")
+			.put("acceptableIn", List.of(langRefSet1))
+			.put("preferredIn", List.of(langRefSet2))
+			.build();
 		
 		final String ruleId = createSnomedQueryRule(ruleQuery);
 		final ValidationIssues issues = validate(ruleId);

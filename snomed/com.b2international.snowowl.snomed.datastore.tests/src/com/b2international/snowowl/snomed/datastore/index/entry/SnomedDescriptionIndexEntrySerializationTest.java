@@ -27,7 +27,6 @@ import com.b2international.collections.PrimitiveCollectionModule;
 import com.b2international.index.revision.BaseRevisionIndexTest;
 import com.b2international.index.revision.RevisionBranch;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.test.commons.snomed.RandomSnomedIdentiferGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -50,19 +49,20 @@ public class SnomedDescriptionIndexEntrySerializationTest extends BaseRevisionIn
 	public void indexDescription() throws Exception {
 		final String id = RandomSnomedIdentiferGenerator.generateDescriptionId();
 		final SnomedDescriptionIndexEntry description = SnomedDescriptionIndexEntry.builder()
-				.id(id)
-				.active(true)
-				.released(true)
-				.effectiveTime(new Date().getTime())
-				.moduleId(Concepts.MODULE_ROOT)
-				.conceptId(Concepts.ROOT_CONCEPT)
-				.typeId(Concepts.SYNONYM)
-				.term("New Synonym")
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.languageCode("en")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED)
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_US, Acceptability.ACCEPTABLE)
-				.build();
+			.id(id)
+			.active(true)
+			.released(true)
+			.effectiveTime(new Date().getTime())
+			.moduleId(Concepts.MODULE_ROOT)
+			.conceptId(Concepts.ROOT_CONCEPT)
+			.typeId(Concepts.SYNONYM)
+			.term("New Synonym")
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
+			.languageCode("en")
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.build();
+		
 		indexRevision(RevisionBranch.MAIN_PATH, description);
 		final SnomedDescriptionIndexEntry actual = getRevision(RevisionBranch.MAIN_PATH, SnomedDescriptionIndexEntry.class, id);
 		assertDocEquals(description, actual);
@@ -74,19 +74,19 @@ public class SnomedDescriptionIndexEntrySerializationTest extends BaseRevisionIn
 		
 		final String id = RandomSnomedIdentiferGenerator.generateDescriptionId();
 		final SnomedDescriptionIndexEntry description = SnomedDescriptionIndexEntry.builder()
-				.id(id)
-				.active(true)
-				.released(true)
-				.effectiveTime(new Date().getTime())
-				.moduleId(Concepts.MODULE_ROOT)
-				.conceptId(Concepts.ROOT_CONCEPT)
-				.typeId(Concepts.FULLY_SPECIFIED_NAME)
-				.term("New Finding (finding)")
-				.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
-				.languageCode("en")
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED)
-				.acceptability(Concepts.REFSET_LANGUAGE_TYPE_US, Acceptability.ACCEPTABLE)
-				.build();
+			.id(id)
+			.active(true)
+			.released(true)
+			.effectiveTime(new Date().getTime())
+			.moduleId(Concepts.MODULE_ROOT)
+			.conceptId(Concepts.ROOT_CONCEPT)
+			.typeId(Concepts.FULLY_SPECIFIED_NAME)
+			.term("New Finding (finding)")
+			.caseSignificanceId(Concepts.ENTIRE_TERM_CASE_INSENSITIVE)
+			.languageCode("en")
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			.addAcceptableIn(Concepts.REFSET_LANGUAGE_TYPE_US)
+			.build();
 		
 		assertEquals("finding", description.getSemanticTag());
 		
