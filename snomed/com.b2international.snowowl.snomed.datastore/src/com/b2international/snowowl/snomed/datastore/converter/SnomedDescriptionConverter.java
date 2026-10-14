@@ -17,6 +17,7 @@ package com.b2international.snowowl.snomed.datastore.converter;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -26,14 +27,15 @@ import com.b2international.commons.options.Options;
 import com.b2international.snowowl.core.domain.BranchContext;
 import com.b2international.snowowl.core.request.BaseRevisionResourceConverter;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
+import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.AcceptabilityMembership;
-import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescriptions;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry;
 import com.b2international.snowowl.snomed.datastore.request.SnomedConceptRequestCache;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Maps;
 
 /**
  * @since 4.0
@@ -52,21 +54,27 @@ public final class SnomedDescriptionConverter extends BaseRevisionResourceConver
 	@Override
 	protected SnomedDescription toResource(final SnomedDescriptionIndexEntry input) {
 		final SnomedDescription result = new SnomedDescription();
-		result.setAcceptabilityMap(input.getAcceptabilityMap());
-		result.setActive(input.isActive());
-		result.setCaseSignificanceId(input.getCaseSignificanceId());
-		result.setConceptId(input.getConceptId());
-		result.setEffectiveTime(toEffectiveTime(input.getEffectiveTime()));
+		
 		result.setId(input.getId());
-		result.setLanguageCode(input.getLanguageCode());
-		result.setModuleId(input.getModuleId());
 		result.setIconId(input.getIconId());
+		result.setModuleId(input.getModuleId());
 		result.setReleased(input.isReleased());
+		result.setActive(input.isActive());
+		result.setEffectiveTime(toEffectiveTime(input.getEffectiveTime()));
+		
+		result.setConceptId(input.getConceptId());
+		result.setLanguageCode(input.getLanguageCode());
 		result.setTerm(input.getTerm());
 		result.setSemanticTag(input.getSemanticTag());
 		result.setTypeId(input.getTypeId());
+		result.setCaseSignificanceId(input.getCaseSignificanceId());
+
 		result.setScore(input.getScore());
-		
+
+		/*
+		 * "memberOf" and "activeMemberOf" fields repeat reference set IDs in case multiple 
+		 * members exist, we are using a sorted set to make them unique.
+		 */
 		if (input.getMemberOf() != null) {
 			result.setMemberOf(ImmutableSortedSet.copyOf(input.getMemberOf()));
 		}
@@ -74,10 +82,32 @@ public final class SnomedDescriptionConverter extends BaseRevisionResourceConver
 		if (input.getActiveMemberOf() != null) {
 			result.setActiveMemberOf(ImmutableSortedSet.copyOf(input.getActiveMemberOf()));
 		}
+
+		/*
+		 * The same holds true for acceptability membership fields; the map will make
+		 * them unique by language reference set ID, and preferred members will take
+		 * precedence over acceptable members if multiple active members exist for the
+		 * same refset ID.
+		 */
+		result.setAcceptabilityMap(toAcceptabilityMap(input));
 		
 		return result;
 	}
 	
+	private Map<String, Acceptability> toAcceptabilityMap(final SnomedDescriptionIndexEntry input) {
+		final Map<String, Acceptability> result = Maps.newHashMap();
+		
+		for (String acceptableIn : input.getAcceptableIn()) {
+			result.put(acceptableIn, Acceptability.ACCEPTABLE);
+		}
+		
+		for (String preferredIn : input.getPreferredIn()) {
+			result.put(preferredIn, Acceptability.PREFERRED);
+		}
+		
+		return result;
+	}
+
 	@Override
 	public void expand(List<SnomedDescription> results) {
 		if (expand().isEmpty()) {
