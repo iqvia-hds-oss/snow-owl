@@ -19,8 +19,10 @@ import static com.b2international.index.query.Expressions.exactMatch;
 import static com.b2international.index.query.Expressions.matchAny;
 import static com.b2international.index.query.Expressions.regexp;
 
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +35,6 @@ import com.b2international.index.mapping.FieldAlias.FieldAliasType;
 import com.b2international.index.query.Expression;
 import com.b2international.index.revision.ObjectId;
 import com.b2international.index.revision.Revision;
-import com.b2international.snowowl.core.date.EffectiveTimes;
 import com.b2international.snowowl.core.similarity.Similarity;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
@@ -47,8 +48,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.google.common.base.MoreObjects.ToStringHelper;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import com.google.common.collect.Multiset;
+import com.google.common.collect.TreeMultiset;
 
 /**
  * A transfer object representing a SNOMED CT description.
@@ -88,49 +89,34 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 		return new Builder();
 	}
 	
-	public static Builder builder(final SnomedDescription input) {
-		final Builder builder = builder()
-				.id(input.getId())
-				.active(input.isActive())
-				.effectiveTime(EffectiveTimes.getEffectiveTime(input.getEffectiveTime()))
-				.released(input.isReleased())
-				.moduleId(input.getModuleId())
-				.conceptId(input.getConceptId())
-				.languageCode(input.getLanguageCode())
-				.term(input.getTerm()) 
-				.typeId(input.getTypeId())
-				.caseSignificanceId(input.getCaseSignificanceId());
-		
-		for (final String refSetId : input.getAcceptabilityMap().keySet()) {
-			builder.acceptability(refSetId, input.getAcceptabilityMap().get(refSetId));
-		}
-	
-		return builder;
-	}
-	
 	/**
-	 * Creates a new {@link Builder} from the given {@link SnomedDescriptionIndexEntry}. The acceptability map is not copied over to the
-	 * {@link Builder} instance, if you need that, manually modify the returned {@link Builder} to represent the desired acceptability state.
+	 * Creates a new {@link Builder} from the given {@link SnomedDescriptionIndexEntry}.
+	 * <p>
+	 * Note that reference set membership and acceptability information is also copied 
+	 * over from the source document.
 	 * 
 	 * @param doc
 	 * @return
 	 */
 	public static Builder builder(SnomedDescriptionIndexEntry doc) {
 		return builder()
-				.id(doc.getId())
-				.active(doc.isActive())
-				.effectiveTime(doc.getEffectiveTime())
-				.released(doc.isReleased())
-				.moduleId(doc.getModuleId())
-				.conceptId(doc.getConceptId())
-				.languageCode(doc.getLanguageCode())
-				.term(doc.getTerm())
-				.typeId(doc.getTypeId())
-				.caseSignificanceId(doc.getCaseSignificanceId())
-				.acceptabilityMap(doc.getAcceptabilityMap())
-				.similarity(doc.getSimilarity())
-				.activeMemberOf(doc.getActiveMemberOf())
-				.memberOf(doc.getMemberOf());
+			.id(doc.getId())
+			.active(doc.isActive())
+			.effectiveTime(doc.getEffectiveTime())
+			.released(doc.isReleased())
+			.moduleId(doc.getModuleId())
+			.memberOf(doc.getMemberOf())
+			.activeMemberOf(doc.getActiveMemberOf())
+			
+			.conceptId(doc.getConceptId())
+			.languageCode(doc.getLanguageCode())
+			.term(doc.getTerm())
+			// semanticTag is derived from the term
+			.typeId(doc.getTypeId())
+			.caseSignificanceId(doc.getCaseSignificanceId())
+			.replaceAcceptableIn(doc.getAcceptableIn())
+			.replacePreferredIn(doc.getPreferredIn())
+			.similarity(doc.getSimilarity());
 	}
 	
 	public final static class Fields extends SnomedComponentDocument.Fields {
@@ -229,9 +215,8 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 		private String languageCode;
 		private String typeId;
 		private String caseSignificanceId;
-		private SortedSet<String> acceptableIn = Sets.newTreeSet();
-		private SortedSet<String> preferredIn = Sets.newTreeSet();
-		private String semanticTag;
+		private Multiset<String> acceptableIn = TreeMultiset.create();
+		private Multiset<String> preferredIn = TreeMultiset.create();
 		private Similarity similarity;
 		
 		@JsonCreator
@@ -246,11 +231,6 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 
 		public Builder term(final String term) {
 			this.term = term;
-			return getSelf();
-		}
-		
-		Builder semanticTag(final String semanticTag) {
-			this.semanticTag = semanticTag;
 			return getSelf();
 		}
 
@@ -274,37 +254,36 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 			return getSelf();
 		}
 		
-		public Builder acceptableIn(final Collection<String> acceptableIn) {
+		public Builder replaceAcceptableIn(final Collection<String> acceptableIn) {
 			this.acceptableIn.clear();
 			this.acceptableIn.addAll(acceptableIn);
 			return getSelf();
 		}
 		
-		public Builder preferredIn(final Collection<String> preferredIn) {
+		public Builder replacePreferredIn(final Collection<String> preferredIn) {
 			this.preferredIn.clear();
 			this.preferredIn.addAll(preferredIn);
 			return getSelf();
 		}
 		
-		public Builder acceptability(final String languageRefSetId, final Acceptability acceptability) {
+		public Builder addAcceptability(final String languageRefSetId, final Acceptability acceptability) {
 			switch (acceptability) {
-			case ACCEPTABLE:
-				this.acceptableIn.add(languageRefSetId);
-				break;
-			case PREFERRED:
-				this.preferredIn.add(languageRefSetId);
-				break;
-			default: throw new UnsupportedOperationException("Not implemented: " + acceptability);
+				case ACCEPTABLE:
+					this.acceptableIn.add(languageRefSetId);
+					break;
+				case PREFERRED:
+					this.preferredIn.add(languageRefSetId);
+					break;
+				default: 
+					throw new UnsupportedOperationException("Unsupported acceptability: " + acceptability);
 			}
+			
 			return getSelf();
 		}
 		
-		public Builder acceptabilityMap(final Map<String, Acceptability> acceptabilityMap) {
-			this.acceptableIn = Sets.newTreeSet();
-			this.preferredIn = Sets.newTreeSet();
-			for (Entry<String, Acceptability> entry : acceptabilityMap.entrySet()) {
-				acceptability(entry.getKey(), entry.getValue());
-			}
+		public Builder clearAcceptability() {
+			this.acceptableIn.clear();
+			this.preferredIn.clear();
 			return getSelf();
 		}
 		
@@ -315,30 +294,38 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 		}
 		
 		public SnomedDescriptionIndexEntry build() {
-			if (!Strings.isNullOrEmpty(term) && semanticTag == null) {
-				semanticTag = extractSemanticTag(term);
-			}
-			final SnomedDescriptionIndexEntry doc = new SnomedDescriptionIndexEntry(id,
-					moduleId,
-					released, 
-					active, 
-					effectiveTime, 
-					conceptId, 
-					languageCode,
-					term,
-					semanticTag,
-					typeId,
-					caseSignificanceId,
-					preferredIn, 
-					acceptableIn,
-					memberOf,
-					activeMemberOf);
+			final String semanticTag = !Strings.isNullOrEmpty(term)
+				? extractSemanticTag(term)
+				: null;
+
+			final String trimmedTerm = !Strings.isNullOrEmpty(term) 
+				? term.trim() 
+				: null;
+			
+			final List<String> preferredInAsList = new ArrayList<>(preferredIn);
+			final List<String> acceptableInAsList = new ArrayList<>(acceptableIn);
+			
+			final SnomedDescriptionIndexEntry doc = new SnomedDescriptionIndexEntry(
+				id,
+				moduleId,
+				released, 
+				active, 
+				effectiveTime, 
+				memberOf,
+				activeMemberOf,
+
+				conceptId, 
+				languageCode,
+				trimmedTerm,
+				semanticTag,
+				typeId,
+				caseSignificanceId,
+				preferredInAsList, 
+				acceptableInAsList,
+				similarity
+			);
+			
 			doc.setScore(score);
-			
-			if (similarity != null) {
-				doc.similarity = similarity;
-			}
-			
 			return doc;
 		}
 	}
@@ -356,43 +343,51 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 	private final String semanticTag;
 	private final String typeId;
 	private final String caseSignificanceId;
-	private final SortedSet<String> acceptableIn;
-	private final SortedSet<String> preferredIn;
-	private Similarity similarity;
+	private final List<String> acceptableIn;
+	private final List<String> preferredIn;
+	private final Similarity similarity;
 
-	private SnomedDescriptionIndexEntry(final String id,
-			final String moduleId, 
-			final Boolean released, 
-			final Boolean active, 
-			final Long effectiveTime, 
-			final String conceptId,
-			final String languageCode,
-			final String term,
-			final String semanticTag,
-			final String typeId,
-			final String caseSignificanceId,
-			final SortedSet<String> preferredIn, 
-			final SortedSet<String> acceptableIn,
-			final List<String> referringRefSets,
-			final List<String> referringMappingRefSets) {
+	private SnomedDescriptionIndexEntry(
+		// Fields applicable to all core components
+		final String id,
+		final String moduleId, 
+		final Boolean released, 
+		final Boolean active, 
+		final Long effectiveTime, 
+		final List<String> memberOf,
+		final List<String> activeMemberOf,
 		
-		super(id,
-				typeId /* XXX: iconId is the same as typeId*/,
-				moduleId,
-				released,
-				active,
-				effectiveTime,
-				referringRefSets,
-				referringMappingRefSets);
+		// Fields specific to descriptions
+		final String conceptId,
+		final String languageCode,
+		final String term,
+		final String semanticTag,
+		final String typeId, 
+		final String caseSignificanceId,
+		final List<String> preferredIn,
+		final List<String> acceptableIn,
+		final Similarity similarity
+	) {
+		super(
+			id,
+			typeId /* XXX: iconId is the same as typeId*/,
+			moduleId,
+			released,
+			active,
+			effectiveTime,
+			memberOf,
+			activeMemberOf
+		);
 		
 		this.conceptId = conceptId;
 		this.languageCode = languageCode;
-		this.term = term == null ? term : term.trim();
+		this.term = term;
 		this.semanticTag = semanticTag;
 		this.typeId = typeId;
 		this.caseSignificanceId = caseSignificanceId;
-		this.preferredIn = preferredIn == null ? Collections.<String>emptySortedSet() : preferredIn;
-		this.acceptableIn = acceptableIn == null ? Collections.<String>emptySortedSet() : acceptableIn;
+		this.preferredIn = preferredIn;
+		this.acceptableIn = acceptableIn;
+		this.similarity = similarity;
 	}
 	
 	@Override
@@ -459,7 +454,7 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 	 * Returns the language reference set identifiers where this description is preferred.
 	 * @return
 	 */
-	public SortedSet<String> getPreferredIn() {
+	public List<String> getPreferredIn() {
 		return preferredIn;
 	}
 	
@@ -467,29 +462,13 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 	 * Returns the language reference set identifiers where this description is acceptable.
 	 * @return
 	 */
-	public SortedSet<String> getAcceptableIn() {
+	public List<String> getAcceptableIn() {
 		return acceptableIn;
 	}
 	
 	@JsonGetter
 	/*package*/ Similarity getSimilarity() {
 		return similarity;
-	}
-	
-	/**
-	 * @return the map of active acceptability values for the description, keyed by language reference set identifier
-	 */
-	@JsonIgnore
-	public Map<String, Acceptability> getAcceptabilityMap() {
-		// TODO check reindex vm argument
-		final Map<String, Acceptability> result = Maps.newHashMap();
-		for (String acceptableIn : this.acceptableIn) {
-			result.put(acceptableIn, Acceptability.ACCEPTABLE);
-		}
-		for (String preferredIn : this.preferredIn) {
-			result.put(preferredIn, Acceptability.PREFERRED);
-		}
-		return result;
 	}
 	
 	/**
@@ -503,13 +482,13 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 	@Override
 	protected ToStringHelper doToString() {
 		return super.doToString()
-				.add("conceptId", conceptId)
-				.add("languageCode", languageCode)
-				.add("term", term)
-				.add("typeId", typeId)
-				.add("caseSignificanceId", caseSignificanceId)
-				.add("acceptableIn", acceptableIn)
-				.add("preferredIn", preferredIn);
+			.add("conceptId", conceptId)
+			.add("languageCode", languageCode)
+			.add("term", term)
+			.add("typeId", typeId)
+			.add("caseSignificanceId", caseSignificanceId)
+			.add("acceptableIn", acceptableIn)
+			.add("preferredIn", preferredIn);
 	}
 
 }
