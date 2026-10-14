@@ -210,8 +210,8 @@ public abstract class BaseChangeProcessorTest extends BaseRevisionIndexTest {
 			.moduleId(module())
 			.replacePreferredIn(preferredIn)
 			.replaceAcceptableIn(acceptableIn)
-			.memberOf(List.of())
-			.activeMemberOf(List.of())
+			.memberOf(List.copyOf(invertedAcceptabilityMultimap.values()))
+			.activeMemberOf(List.copyOf(invertedAcceptabilityMultimap.values()))
 			.build();
 	}
 	

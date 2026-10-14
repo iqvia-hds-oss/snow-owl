@@ -118,6 +118,8 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		// expected that the new doc will have only the preferred acceptability
 		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn)
 			.replaceAcceptableIn(List.of())
+			.memberOf(List.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.activeMemberOf(List.of(Concepts.REFSET_LANGUAGE_TYPE_UK))
 			.build();
 		
 		final Revision currentDoc = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
@@ -147,6 +149,8 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		// expected that the new doc will have only the preferred acceptability
 		final SnomedDescriptionIndexEntry expectedDoc = SnomedDescriptionIndexEntry.builder(fsn)
 			.replacePreferredIn(List.of())
+			.memberOf(List.of(Concepts.REFSET_LANGUAGE_TYPE_US))
+			.activeMemberOf(List.of(Concepts.REFSET_LANGUAGE_TYPE_US))
 			.build();
 		
 		final Revision currentDoc = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
@@ -324,6 +328,41 @@ public class DescriptionChangeProcessorTest extends BaseChangeProcessorTest {
 		assertDocEquals(expectedDoc, currentDoc);
 		assertEquals(0, processor.getNewMappings().size());
 		assertEquals(0, processor.getDeletions().size());
+	}
+	
+	@Test
+	public void addThenDeleteDuplicateMember() throws Exception {
+		final SnomedDescriptionIndexEntry fsn = fsn(generateConceptId(), ImmutableMap.of(
+			Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED
+		));
+		
+		final SnomedRefSetMemberIndexEntry existingPreferredInUk = langMember(fsn.getId(), Acceptability.PREFERRED, Concepts.REFSET_LANGUAGE_TYPE_UK);
+		initRevisions(fsn, existingPreferredInUk);
+
+		// Add a new UK language member
+		final SnomedRefSetMemberIndexEntry newPreferredInUk = langMember(fsn.getId(), Acceptability.PREFERRED, Concepts.REFSET_LANGUAGE_TYPE_UK);
+		stageNew(newPreferredInUk);
+		process(processor);
+
+		final SnomedDescriptionIndexEntry expectedAfterAdd = SnomedDescriptionIndexEntry.builder(fsn)
+			// An extra UK preferredIn entry should be present (the builder starts with a single UK preferredIn entry from "fsn")
+			.addPreferredIn(Concepts.REFSET_LANGUAGE_TYPE_UK)
+			// General refset membership tracking fields should also see the new member
+			.memberOf(List.of(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.activeMemberOf(List.of(Concepts.REFSET_LANGUAGE_TYPE_UK, Concepts.REFSET_LANGUAGE_TYPE_UK))
+			.build();
+
+		final Revision actualAfterAdd = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
+		assertDocEquals(expectedAfterAdd, actualAfterAdd);
+
+		// Remove the existing UK language member
+		processor = new DescriptionChangeProcessor();
+		stageRemove(existingPreferredInUk);
+		process(processor);
+
+		// We should be back to the original state, with only one UK preferredIn entry
+		final Revision actualAfterRemove = Iterables.getOnlyElement(processor.getChangedMappings().values()).getNewRevision();
+		assertDocEquals(fsn, actualAfterRemove);
 	}
 	
 }
