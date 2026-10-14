@@ -19,7 +19,6 @@ import static com.google.common.collect.Sets.newHashSet;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -120,51 +119,44 @@ public class DescriptionChangeProcessor extends SnomedChangeSetProcessorBase {
 		}
 	}
 	
-	private void processChanges(final String id, final Builder doc, final SnomedDescriptionIndexEntry currentRevision,
-			Multimap<Acceptability, RefSetMemberChange> acceptabilityChanges, Multimap<String, RefSetMemberChange> referringRefSets) {
-		final Multimap<Acceptability, String> acceptabilityMap = currentRevision == null ? ImmutableMultimap.<Acceptability, String> of()
-				: ImmutableMap.copyOf(currentRevision.getAcceptabilityMap()).asMultimap().inverse();
-		
-		final Collection<String> preferredLanguageRefSets = newHashSet(acceptabilityMap.get(Acceptability.PREFERRED));
-		final Collection<String> acceptableLanguageRefSets = newHashSet(acceptabilityMap.get(Acceptability.ACCEPTABLE));
-		
+	private void processChanges(
+		final String id, 
+		final Builder doc, 
+		final SnomedDescriptionIndexEntry currentRevision,
+		final Multimap<Acceptability, RefSetMemberChange> acceptabilityChanges, 
+		final Multimap<String, RefSetMemberChange> referringRefSets
+	) {
+		final Multiset<String> preferredIn = (currentRevision == null) ? TreeMultiset.create() : TreeMultiset.create(currentRevision.getPreferredIn());
+		final Multiset<String> acceptableIn = (currentRevision == null) ? TreeMultiset.create() : TreeMultiset.create(currentRevision.getAcceptableIn());
 		
 		if (acceptabilityChanges != null) {
-			collectChanges(acceptabilityChanges.get(Acceptability.PREFERRED), preferredLanguageRefSets);
-			collectChanges(acceptabilityChanges.get(Acceptability.ACCEPTABLE), acceptableLanguageRefSets);
+			collectChanges(acceptabilityChanges.get(Acceptability.PREFERRED), preferredIn);
+			collectChanges(acceptabilityChanges.get(Acceptability.ACCEPTABLE), acceptableIn);
 		}
 		
-		// clear acceptability map first then apply new acceptability settings
-		doc.acceptabilityMap(Collections.emptyMap());
-		
-		for (String preferredLanguageRefSet : preferredLanguageRefSets) {
-			doc.acceptability(preferredLanguageRefSet, Acceptability.PREFERRED);
-		}
-		
-		for (String acceptableLanguageRefSet : acceptableLanguageRefSets) {
-			doc.acceptability(acceptableLanguageRefSet, Acceptability.ACCEPTABLE);
-		}
+		doc.replacePreferredIn(preferredIn);
+		doc.replaceAcceptableIn(acceptableIn);
 		
 		updateReferenceSetMemberships(referringRefSets.removeAll(id), currentRevision, doc);
 	}
 	
-	private void collectChanges(Collection<RefSetMemberChange> changes, Collection<String> refSetIds) {
-		for (final RefSetMemberChange change : changes) {
-			switch (change.getChangeKind()) {
-				case REMOVED:
-					refSetIds.remove(change.getRefSetId());
-					break;
-				default:
-					break;
-			}
-		}
-		
+	private void collectChanges(Collection<RefSetMemberChange> changes, Multiset<String> refSetIds) {
+		/*
+		 * XXX: We no longer need to process changes in separate passes. The Multiset
+		 * can keep count of the final number of memberships for a given refset without
+		 * having to worry about losing track of a refset ID due to an "added", then a 
+		 * "removed" change arriving.
+		 */
 		for (final RefSetMemberChange change : changes) {
 			switch (change.getChangeKind()) {
 				case ADDED:
 					refSetIds.add(change.getRefSetId());
 					break;
+				case REMOVED:
+					refSetIds.remove(change.getRefSetId());
+					break;
 				default:
+					// CHANGED is unexpected but ignored here
 					break;
 			}
 		}

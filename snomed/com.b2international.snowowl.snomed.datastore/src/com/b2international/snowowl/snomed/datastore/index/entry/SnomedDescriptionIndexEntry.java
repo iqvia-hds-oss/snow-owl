@@ -38,7 +38,6 @@ import com.b2international.index.revision.Revision;
 import com.b2international.snowowl.core.similarity.Similarity;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedRf2Headers;
-import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.SnomedDescription;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -254,6 +253,16 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 			return getSelf();
 		}
 		
+		public Builder addAcceptableIn(final String refSetId) {
+			this.acceptableIn.add(refSetId);
+			return getSelf();
+		}
+		
+		public Builder addPreferredIn(final String refSetId) {
+			this.preferredIn.add(refSetId);
+			return getSelf();
+		}
+		
 		public Builder replaceAcceptableIn(final Collection<String> acceptableIn) {
 			this.acceptableIn.clear();
 			this.acceptableIn.addAll(acceptableIn);
@@ -263,27 +272,6 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 		public Builder replacePreferredIn(final Collection<String> preferredIn) {
 			this.preferredIn.clear();
 			this.preferredIn.addAll(preferredIn);
-			return getSelf();
-		}
-		
-		public Builder addAcceptability(final String languageRefSetId, final Acceptability acceptability) {
-			switch (acceptability) {
-				case ACCEPTABLE:
-					this.acceptableIn.add(languageRefSetId);
-					break;
-				case PREFERRED:
-					this.preferredIn.add(languageRefSetId);
-					break;
-				default: 
-					throw new UnsupportedOperationException("Unsupported acceptability: " + acceptability);
-			}
-			
-			return getSelf();
-		}
-		
-		public Builder clearAcceptability() {
-			this.acceptableIn.clear();
-			this.preferredIn.clear();
 			return getSelf();
 		}
 		

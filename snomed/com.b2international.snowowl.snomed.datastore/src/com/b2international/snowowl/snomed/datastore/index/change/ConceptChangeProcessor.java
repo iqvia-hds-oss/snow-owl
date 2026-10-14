@@ -33,7 +33,6 @@ import com.b2international.index.revision.StagingArea;
 import com.b2international.index.revision.StagingArea.RevisionDiff;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
-import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.core.domain.SnomedConcept;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument.Builder;
@@ -177,7 +176,7 @@ public final class ConceptChangeProcessor extends SnomedChangeSetProcessorBase {
 					for (SnomedDescriptionIndexEntry affectedDescription : affectedDescriptions) {
 						if (staging.isNew(affectedDescription) || staging.isChanged(affectedDescription)) {
 							updatedPreferredDescriptions.remove(affectedDescription.getId());
-							if (affectedDescription.isActive() && !getPreferredLanguageMembers(affectedDescription).isEmpty()) {
+							if (affectedDescription.isActive() && isPreferred(affectedDescription)) {
 								updatedPreferredDescriptions.put(affectedDescription.getId(), toDescriptionFragment(affectedDescription));
 							}
 						}
@@ -210,9 +209,9 @@ public final class ConceptChangeProcessor extends SnomedChangeSetProcessorBase {
 		
 		// changed descriptions are coming from potential merges/rebases
 		Streams.concat(staging.getNewObjects(SnomedDescriptionIndexEntry.class), staging.getChangedObjects(SnomedDescriptionIndexEntry.class))
-			.filter(SnomedDescriptionIndexEntry::isActive)
-			.filter(description -> !Concepts.TEXT_DEFINITION.equals(description.getTypeId()))
-			.filter(description -> !getPreferredLanguageMembers(description).isEmpty())
+			.filter(description -> description.isActive()
+				&& !Concepts.TEXT_DEFINITION.equals(description.getTypeId())
+				&& isPreferred(description))
 			.forEach(description -> newDescriptionFragmentsByConcept.put(description.getConceptId(), toDescriptionFragment(description)));
 		
 		// index new concepts
@@ -365,20 +364,18 @@ public final class ConceptChangeProcessor extends SnomedChangeSetProcessorBase {
 		doc.preferredDescriptions(preferredDescriptions);
 	}
 
-	private Set<String> getPreferredLanguageMembers(SnomedDescriptionIndexEntry description) {
-		return description.getAcceptabilityMap().entrySet()
-			.stream()
-			.filter(entry -> Acceptability.PREFERRED == entry.getValue())
-			.map(entry -> entry.getKey())
-			.collect(Collectors.toSet());
+	private boolean isPreferred(SnomedDescriptionIndexEntry description) {
+		return !description.getPreferredIn().isEmpty();
 	}
 	
 	private SnomedDescriptionFragment toDescriptionFragment(SnomedDescriptionIndexEntry description) {
+		final ImmutableSortedSet<String> languageRefSetIds = ImmutableSortedSet.copyOf(description.getPreferredIn());
+		
 		return new SnomedDescriptionFragment(
 			description.getId(), 
 			description.getTypeId(), 
 			description.getTerm(), 
-			List.copyOf(getPreferredLanguageMembers(description))
+			languageRefSetIds.asList()
 		);
 	}
 
