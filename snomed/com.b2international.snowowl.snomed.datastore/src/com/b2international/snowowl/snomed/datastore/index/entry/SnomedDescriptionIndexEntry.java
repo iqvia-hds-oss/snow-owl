@@ -232,6 +232,11 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 			this.term = term;
 			return getSelf();
 		}
+		
+		@JsonIgnore
+		/*package*/ Builder semanticTag(final String semanticTag) {
+			throw new IllegalStateException("Semantic tag is derived from the term and cannot be set explicitly.");
+		}
 
 		public Builder conceptId(final String conceptId) {
 			this.conceptId = conceptId;
@@ -263,12 +268,14 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 			return getSelf();
 		}
 		
+		@JsonSetter(Fields.ACCEPTABLE_IN)
 		public Builder replaceAcceptableIn(final Collection<String> acceptableIn) {
 			this.acceptableIn.clear();
 			this.acceptableIn.addAll(acceptableIn);
 			return getSelf();
 		}
 		
+		@JsonSetter(Fields.PREFERRED_IN)
 		public Builder replacePreferredIn(final Collection<String> preferredIn) {
 			this.preferredIn.clear();
 			this.preferredIn.addAll(preferredIn);
@@ -276,7 +283,7 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 		}
 		
 		@JsonSetter
-		/*package*/ Builder similarity(Similarity similarity) {
+		/*package*/ Builder similarity(final Similarity similarity) {
 			this.similarity = similarity;
 			return getSelf();
 		}
@@ -442,6 +449,7 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 	 * Returns the language reference set identifiers where this description is preferred.
 	 * @return
 	 */
+	@JsonGetter
 	public List<String> getPreferredIn() {
 		return preferredIn;
 	}
@@ -450,6 +458,7 @@ public final class SnomedDescriptionIndexEntry extends SnomedComponentDocument {
 	 * Returns the language reference set identifiers where this description is acceptable.
 	 * @return
 	 */
+	@JsonGetter
 	public List<String> getAcceptableIn() {
 		return acceptableIn;
 	}
