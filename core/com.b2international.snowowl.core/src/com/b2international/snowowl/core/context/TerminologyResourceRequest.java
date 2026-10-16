@@ -163,7 +163,7 @@ public final class TerminologyResourceRequest<R> extends DelegatingRequest<Servi
 			this.resourceUri = resolvedResources[0].uri();
 		} else {
 			final String rangePath = Arrays.stream(resolvedResources)
-				.map(rwu -> rwu.uri().getPath() + rwu.uri().getTimestampPart()) // include special ID part as well?
+				.map(rwu -> rwu.uri().getPath() + rwu.uri().getTimestampPart())
 				.collect(Collectors.joining(RevisionIndex.REV_RANGE));
 			
 			this.resourceUri = ResourceURI.branch(resource.getResourceType(), resource.getId(), rangePath);
