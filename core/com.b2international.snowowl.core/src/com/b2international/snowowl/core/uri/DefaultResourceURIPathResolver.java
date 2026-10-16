@@ -157,8 +157,8 @@ public final class DefaultResourceURIPathResolver implements ResourceURIPathReso
 			return new PathWithVersion("");
 		}
 		
-		// convert special URIs to regular ones (the special identifier moves to a path segment)
-		final ResourceURI uriToResolve = uri.toRegularURI();
+		// convert special URIs to regular ones if the terminology resource ID does not equal with the current URI's resource ID
+		final ResourceURI uriToResolve = !terminologyResource.getId().equals(uri.getResourceId()) ? uri.toRegularURI() : uri;
 			
 		// use code system working branch directly when HEAD is specified
 		if (Strings.isNullOrEmpty(uriToResolve.getPath()) || uriToResolve.isHead()) {
