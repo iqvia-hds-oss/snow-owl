@@ -21,6 +21,6 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.9.0",
  io.swagger.core.v3.swagger-annotations.jakarta;bundle-version="2.2.20",
  org.apache.commons.commons-compress;bundle-version="1.26.0",
  org.apache.commons.commons-io;bundle-version="2.21.0",
- com.b2international.fhir.core;bundle-version="0.6.0"
+ com.b2international.fhir.core;bundle-version="1.0.0"
 Bundle-ClassPath: .
 Bundle-ActivationPolicy: lazy
