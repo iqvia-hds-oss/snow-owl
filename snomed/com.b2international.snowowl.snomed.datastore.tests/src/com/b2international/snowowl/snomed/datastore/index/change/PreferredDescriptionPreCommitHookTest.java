@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 import java.util.Collections;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -28,6 +29,7 @@ import com.b2international.snowowl.snomed.core.domain.Acceptability;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedConceptDocument;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionFragment;
 import com.b2international.snowowl.snomed.datastore.index.entry.SnomedDescriptionIndexEntry;
+import com.b2international.snowowl.snomed.datastore.index.entry.SnomedRefSetMemberIndexEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
@@ -441,4 +443,49 @@ public class PreferredDescriptionPreCommitHookTest extends BaseConceptPreCommitH
 //		assertEquals(0, processor.getDeletions().size());
 //	}
 	
+	@Test
+	public void addThenDeleteDuplicateMember() throws Exception {
+		final SnomedConceptDocument concept = concept().build();
+		final SnomedDescriptionIndexEntry fsn = fsn(concept.getId(), Map.of(Concepts.REFSET_LANGUAGE_TYPE_UK, Acceptability.PREFERRED));
+		final SnomedRefSetMemberIndexEntry existingPreferredInUk = langMember(fsn.getId(), Acceptability.PREFERRED, Concepts.REFSET_LANGUAGE_TYPE_UK);
+
+		initRevisions(docWithDefaults(concept)
+			.preferredDescriptions(ImmutableList.of(
+				new SnomedDescriptionFragment(fsn.getId(), fsn.getTypeId(), fsn.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_UK)
+			))
+			.build(),
+			fsn,
+			existingPreferredInUk
+		);
+
+		final SnomedRefSetMemberIndexEntry newPreferredInUk = langMember(fsn.getId(), Acceptability.PREFERRED, Concepts.REFSET_LANGUAGE_TYPE_UK);
+		stageNew(newPreferredInUk);
+		final ConceptChangeProcessor firstProcessor = process();
+
+		final SnomedConceptDocument expectedAfterAdd = docWithDefaults(concept)
+			.semanticTags(ImmutableSortedSet.of("semantic tag"))
+			.preferredDescriptions(ImmutableList.of(
+				// Fragments do not keep track of multiple members for the same language refset, so the last parameter corresponds to a singleton list
+				new SnomedDescriptionFragment(fsn.getId(), fsn.getTypeId(), fsn.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_UK)
+			))
+			.build();
+
+		final Revision actualAfterAdd = Iterables.getOnlyElement(firstProcessor.getChangedMappings().values()).getNewRevision();
+		assertDocEquals(expectedAfterAdd, actualAfterAdd);
+
+		stageRemove(existingPreferredInUk);
+		final ConceptChangeProcessor secondProcessor = process();
+
+		final SnomedConceptDocument expectedAfterRemove = docWithDefaults(concept)
+			.semanticTags(ImmutableSortedSet.of("semantic tag"))
+			.preferredDescriptions(ImmutableList.of(
+				// The fragment should not disappear because a language member still remains for the same refset
+				new SnomedDescriptionFragment(fsn.getId(), fsn.getTypeId(), fsn.getTerm(), Concepts.REFSET_LANGUAGE_TYPE_UK)
+			))
+			.build();
+		
+		final Revision actualAfterRemove = Iterables.getOnlyElement(secondProcessor.getChangedMappings().values()).getNewRevision();
+		assertDocEquals(expectedAfterRemove, actualAfterRemove);
+	}
+
 }
