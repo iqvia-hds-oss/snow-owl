@@ -21,6 +21,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 import com.b2international.snowowl.core.attachments.AttachmentRegistryTest;
 import com.b2international.snowowl.core.codesystem.CodeSystemTest;
+import com.b2international.snowowl.core.context.TerminologyResourceRequestTest;
 import com.b2international.snowowl.core.domain.ReindexQuerySerializationTest;
 import com.b2international.snowowl.core.ecl.EclEvaluationRequestTest;
 import com.b2international.snowowl.core.ecl.EclRewriterTest;
@@ -45,6 +46,7 @@ import com.b2international.snowowl.core.request.search.TermFilterTest;
 import com.b2international.snowowl.core.scripts.GroovyScriptEngineTest;
 import com.b2international.snowowl.core.taxonomy.SimpleTaxonomyGraphTest;
 import com.b2international.snowowl.core.uri.ComponentURITest;
+import com.b2international.snowowl.core.uri.DefaultResourceURIPathResolverTest;
 import com.b2international.snowowl.core.uri.ResourceURITest;
 import com.b2international.snowowl.core.uri.ResourceURIWithQueryTest;
 import com.b2international.snowowl.core.validation.ValidationRuleApiTest;
@@ -88,6 +90,8 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 	RepositoryInfoSerializationTest.class,
 	ServerInfoSerializationTest.class,
 	ReindexQuerySerializationTest.class,
+	DefaultResourceURIPathResolverTest.class,
+	TerminologyResourceRequestTest.class,
 	
 	// medium integration tests
 	JobRequestsTest.class,
@@ -99,5 +103,5 @@ import com.b2international.snowowl.core.validation.issue.ValidationIssueApiTest;
 	TermFilterTest.class,
 })
 public class AllCoreTests {
-
+	// Empty class body
 }
