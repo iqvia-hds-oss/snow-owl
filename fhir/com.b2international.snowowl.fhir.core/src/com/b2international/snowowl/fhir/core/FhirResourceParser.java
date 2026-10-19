@@ -21,15 +21,18 @@ import java.io.InputStream;
 
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_40_50;
 import org.hl7.fhir.convertors.factory.VersionConvertorFactory_43_50;
+import org.hl7.fhir.convertors.factory.VersionConvertorFactory_50_N;
 import org.hl7.fhir.exceptions.FHIRFormatError;
+import org.hl7.fhir.model.ModelContext;
 import org.hl7.fhir.r5.elementmodel.Manager;
 import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
-import org.hl7.fhir.r5.model.Resource;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
+import org.hl7.fhir.r5.model.Resource;
 
 import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.fhir.conv.OperationConvertor_40_50;
 import com.b2international.fhir.conv.OperationConvertor_43_50;
+import com.b2international.fhir.conv.OperationConvertor_50_N;
 import com.b2international.fhir.formats.XmlParser;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.BaseParameters;
@@ -66,6 +69,10 @@ public class FhirResourceParser {
 		case _5_0:
 			fhirVersion = FHIRVersion._5_0_0;
 			break;
+		// TODO add this once the two digit variant is available
+//		case _6_0:
+//			fhirVersion = FHIRVersion._6_0_0;
+//			break;
 		default:
 			break;
 		}
@@ -102,6 +109,9 @@ public class FhirResourceParser {
 		case _5_0_0:
 			org.hl7.fhir.r5.model.Resource r5 = new org.hl7.fhir.r5.formats.JsonParser().parse(in);
 			return r5;
+		case _6_0_0:
+			org.hl7.fhir.model.core.Resource r6 = new org.hl7.fhir.model.core.formats.JsonParser(ModelContext.minimalContext()).parse(in);
+			return VersionConvertorFactory_50_N.convertResource(r6);
 		default: 
 			throw new NotImplementedException("No JSON parser implementation found for version: " + fhirVersion);
 		}
@@ -118,6 +128,9 @@ public class FhirResourceParser {
 		case _5_0_0:
 			org.hl7.fhir.r5.model.Resource r5 = XmlParser.parseR5(in);
 			return r5;
+		case _6_0_0:
+			org.hl7.fhir.model.core.Resource r6 = XmlParser.parseR6(in);
+			return VersionConvertorFactory_50_N.convertResource(r6);
 		default: 
 			throw new NotImplementedException("No XML parser implementation found for version: " + fhirVersion);
 		}
@@ -149,6 +162,10 @@ public class FhirResourceParser {
 		case _5_0_0:
 			new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r5.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r5.formats.IParser.OutputStyle.NORMAL).compose(baos, resource);
 			break;
+		case _6_0_0:
+			org.hl7.fhir.model.core.Resource r6 = VersionConvertorFactory_50_N.convertResource(resource);
+			new org.hl7.fhir.model.core.formats.JsonParser(ModelContext.minimalContext()).setOutputStyle(pretty ? org.hl7.fhir.model.utilities.formats.OutputStyle.PRETTY : org.hl7.fhir.model.utilities.formats.OutputStyle.NORMAL).compose(baos, r6);
+			break;
 		default: 
 			throw new NotImplementedException("No JSON serializer implementation found for version: " + fhirVersion);
 		}
@@ -166,6 +183,10 @@ public class FhirResourceParser {
 			break;
 		case _5_0_0:
 			XmlParser.composeR5(baos, resource, pretty);
+			break;
+		case _6_0_0:
+			org.hl7.fhir.model.core.Resource r6 = VersionConvertorFactory_50_N.convertResource(resource);
+			XmlParser.composeR6(baos, r6, pretty);
 			break;
 		default: 
 			throw new NotImplementedException("No XML serializer implementation found for version: " + fhirVersion);
@@ -198,6 +219,10 @@ public class FhirResourceParser {
 		case _5_0_0:
 			new org.hl7.fhir.r5.formats.JsonParser().setOutputStyle(pretty ? org.hl7.fhir.r5.formats.IParser.OutputStyle.PRETTY : org.hl7.fhir.r5.formats.IParser.OutputStyle.NORMAL).compose(baos, parameters.getParameters());
 			break;
+		case _6_0_0:
+			org.hl7.fhir.model.core.Resource r6 = OperationConvertor_50_N.convert(parameters).getParameters();
+			new org.hl7.fhir.model.core.formats.JsonParser(ModelContext.minimalContext()).setOutputStyle(pretty ? org.hl7.fhir.model.utilities.formats.OutputStyle.PRETTY : org.hl7.fhir.model.utilities.formats.OutputStyle.NORMAL).compose(baos, r6);
+			break;
 		default: 
 			throw new NotImplementedException("No JSON serializer implementation found for version: " + fhirVersion);
 		}
@@ -215,6 +240,10 @@ public class FhirResourceParser {
 			break;
 		case _5_0_0:
 			XmlParser.composeR5(baos, parameters.getParameters(), pretty);
+			break;
+		case _6_0_0:
+			org.hl7.fhir.model.core.Resource r6 = OperationConvertor_50_N.convert(parameters).getParameters();
+			XmlParser.composeR6(baos, r6, pretty);
 			break;
 		default: 
 			throw new NotImplementedException("No XML serializer implementation found for version: " + fhirVersion);
@@ -243,6 +272,9 @@ public class FhirResourceParser {
 		case _5_0_0:
 			org.hl7.fhir.r5.model.Parameters r5 = (org.hl7.fhir.r5.model.Parameters) new org.hl7.fhir.r5.formats.JsonParser().parse(in);
 			return factory.create(r5, strict);
+		case _6_0_0:
+			org.hl7.fhir.model.core.Parameters r6 = (org.hl7.fhir.model.core.Parameters) new org.hl7.fhir.model.core.formats.JsonParser(ModelContext.minimalContext()).parse(in);
+			return OperationConvertor_50_N.convert(factory.create(r6, strict));
 		default: 
 			throw new NotImplementedException("No JSON parser implementation found for version: " + fhirVersion);
 		}
@@ -259,6 +291,9 @@ public class FhirResourceParser {
 		case _5_0_0:
 			org.hl7.fhir.r5.model.Parameters r5 = (org.hl7.fhir.r5.model.Parameters) XmlParser.parseR5(in);
 			return factory.create(r5, strict);
+		case _6_0_0:
+			org.hl7.fhir.model.core.Parameters r6 = (org.hl7.fhir.model.core.Parameters) XmlParser.parseR6(in);
+			return OperationConvertor_50_N.convert(factory.create(r6, strict));
 		default: 
 			throw new NotImplementedException("No XML parser implementation found for version: " + fhirVersion);
 		}

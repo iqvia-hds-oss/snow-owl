@@ -60,6 +60,11 @@ public final class FhirMediaType {
 	public static final String APPLICATION_FHIR_XML_5_0_0_VALUE = "application/fhir+xml;fhirVersion=5.0.0";
 	public static final String APPLICATION_FHIR_JSON_5_0_VALUE = "application/fhir+json;fhirVersion=5.0";
 	public static final String APPLICATION_FHIR_XML_5_0_VALUE = "application/fhir+xml;fhirVersion=5.0";
+	
+	public static final String APPLICATION_FHIR_JSON_6_0_0_VALUE = "application/fhir+json;fhirVersion=6.0.0";
+	public static final String APPLICATION_FHIR_XML_6_0_0_VALUE = "application/fhir+xml;fhirVersion=6.0.0";
+	public static final String APPLICATION_FHIR_JSON_6_0_VALUE = "application/fhir+json;fhirVersion=6.0";
+	public static final String APPLICATION_FHIR_XML_6_0_VALUE = "application/fhir+xml;fhirVersion=6.0";
 
 	// Short values are only admitted as _format parameters
 	public static final String FORMAT_JSON = FhirResourceParser.FORMAT_JSON;
@@ -92,6 +97,11 @@ public final class FhirMediaType {
 	public static final MediaType APPLICATION_FHIR_JSON_5_0_0 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_5_0_0_VALUE);
 	public static final MediaType APPLICATION_FHIR_XML_5_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_5_0_VALUE);
 	public static final MediaType APPLICATION_FHIR_XML_5_0_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_5_0_0_VALUE);
+	
+	public static final MediaType APPLICATION_FHIR_JSON_6_0 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_6_0_VALUE);
+	public static final MediaType APPLICATION_FHIR_JSON_6_0_0 = MediaType.parseMediaType(APPLICATION_FHIR_JSON_6_0_0_VALUE);
+	public static final MediaType APPLICATION_FHIR_XML_6_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_6_0_VALUE);
+	public static final MediaType APPLICATION_FHIR_XML_6_0_0 = MediaType.parseMediaType(APPLICATION_FHIR_XML_6_0_0_VALUE);
 
 	// Last ditch effort: return JSON when "*/*" media type is accepted by the client
 	public static final String ALL_VALUE = MediaType.ALL_VALUE;
@@ -278,6 +288,10 @@ public final class FhirMediaType {
 			case APPLICATION_FHIR_JSON_5_0_0_VALUE:
 				return APPLICATION_FHIR_JSON_5_0_0;
 				
+			case APPLICATION_FHIR_JSON_6_0_VALUE:
+			case APPLICATION_FHIR_JSON_6_0_0_VALUE:
+				return APPLICATION_FHIR_JSON_6_0_0;
+				
 			case FORMAT_XML: //$FALL-THROUGH$
 			case TEXT_XML_VALUE: //$FALL-THROUGH$
 			case APPLICATION_FHIR_XML_VALUE: //$FALL-THROUGH$
@@ -295,6 +309,10 @@ public final class FhirMediaType {
 			case APPLICATION_FHIR_XML_5_0_VALUE:
 			case APPLICATION_FHIR_XML_5_0_0_VALUE:
 				return APPLICATION_FHIR_XML_5_0_0;
+				
+			case APPLICATION_FHIR_XML_6_0_VALUE:
+			case APPLICATION_FHIR_XML_6_0_0_VALUE:
+				return APPLICATION_FHIR_XML_6_0_0;
 				
 			default:
 				throw new NotAcceptableStatusException(SUPPORTED_MEDIA_TYPES);
