@@ -69,10 +69,16 @@
         			<target>
 						<!-- define a macro for the operation with a single attribute -->
 						<macrodef name="patch-blocked-certs">
-						    <attribute name="product.root"/>
+							<attribute name="id"/>
+							<attribute name="product.root"/>
+							
+							<local name="blocked.certs.count"/>
+							<local name="blocked.certs.file"/>
+							<local name="blocked.certs.contents"/>
+							
 							<sequential>
 								<fileset
-									id="blocked.certs.files"
+									id="blocked.certs.files.@{id}"
 									dir="@{product.root}"
 									erroronmissingdir="true">
 									<include name="**/jre/lib/security/blocked.certs"/>
@@ -80,7 +86,7 @@
 
 								<resourcecount
 									property="blocked.certs.count"
-									refid="blocked.certs.files"/>
+									refid="blocked.certs.files.@{id}"/>
 
 								<fail message="Expected exactly one blocked.certs file, but found ${blocked.certs.count}.">
 									<condition>
@@ -129,11 +135,11 @@ A496E23AC0CAB8155FC9B117B97EAE368EFCBB9041AEC8804D5A308D2D01C2D8
 						</macrodef>
 
 						<!-- call the macro once for each product -->
-						<patch-blocked-certs product.root="${linux.product.path}"/>
-						<patch-blocked-certs product.root="${win.product.path}"/>						
+						<patch-blocked-certs id="linux" product.root="${linux.product.path}"/>
+						<patch-blocked-certs id="win" product.root="${win.product.path}"/>						 
         			</target>
 				</configuration>
-			</plugin>
+			</plugin>			
 			<!-- create site and server zip, tar.gz base folders -->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
