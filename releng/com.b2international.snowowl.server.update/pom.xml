@@ -69,7 +69,7 @@
         			<target name="patch-justj-blocked-certs">
 			            <fileset
 			                id="blocked.certs.files"
-			                dir="${product.rootFolder}"
+			                dir="${linux.product.path}"
 			                erroronmissingdir="true">
 			                <include name="**/jre/lib/security/blocked.certs"/>
 			            </fileset>
