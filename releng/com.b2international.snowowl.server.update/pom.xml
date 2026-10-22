@@ -72,11 +72,11 @@
 							<attribute name="id"/>
 							<attribute name="product.root"/>
 							
-							<local name="blocked.certs.count"/>
-							<local name="blocked.certs.file"/>
-							<local name="blocked.certs.contents"/>
-							
 							<sequential>
+								<local name="blocked.certs.count"/>
+								<local name="blocked.certs.file"/>
+								<local name="blocked.certs.contents"/>
+							
 								<fileset
 									id="blocked.certs.files.@{id}"
 									dir="@{product.root}"
