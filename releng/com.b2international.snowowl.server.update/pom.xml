@@ -129,8 +129,8 @@ A496E23AC0CAB8155FC9B117B97EAE368EFCBB9041AEC8804D5A308D2D01C2D8
 						</macrodef>
 
 						<!-- call the macro once for each product -->
-						<patch-blocked-certs product.dir="${linux.product.path}"/>
-						<patch-blocked-certs product.dir="${win.product.path}"/>						
+						<patch-blocked-certs product.root="${linux.product.path}"/>
+						<patch-blocked-certs product.root="${win.product.path}"/>						
         			</target>
 				</configuration>
 			</plugin>
