@@ -67,35 +67,35 @@
 				</executions>
 			    <configuration>
         			<target name="patch-justj-blocked-certs">
-		            <fileset
-		                id="blocked.certs.files"
-		                dir="${product.rootFolder}"
-		                erroronmissingdir="true">
-		                <include name="**/jre/lib/security/blocked.certs"/>
-		            </fileset>
+			            <fileset
+			                id="blocked.certs.files"
+			                dir="${product.rootFolder}"
+			                erroronmissingdir="true">
+			                <include name="**/jre/lib/security/blocked.certs"/>
+			            </fileset>
+	
+			            <resourcecount
+			                property="blocked.certs.count"
+			                refid="blocked.certs.files"/>
+	
+			            <fail message="Expected exactly one blocked.certs file, but found ${blocked.certs.count}.">
+			                <condition>
+			                    <not>
+			                        <equals
+			                            arg1="${blocked.certs.count}"
+			                            arg2="1"/>
+			                    </not>
+			                </condition>
+			            </fail>
+	
+			            <!-- convert the single match into a path -->
+			            <pathconvert
+			                property="blocked.certs.file"
+			                refid="blocked.certs.files"/>
 
-		            <resourcecount
-		                property="blocked.certs.count"
-		                refid="blocked.certs.files"/>
-
-		            <fail message="Expected exactly one blocked.certs file, but found ${blocked.certs.count}.">
-		                <condition>
-		                    <not>
-		                        <equals
-		                            arg1="${blocked.certs.count}"
-		                            arg2="1"/>
-		                    </not>
-		                </condition>
-		            </fail>
-
-		            <!-- convert the single match into a path -->
-		            <pathconvert
-		                property="blocked.certs.file"
-		                refid="blocked.certs.files"/>
-
-		            <echo
-		                file="${blocked.certs.file}"
-		                append="true"><![CDATA[
+			            <echo
+			                file="${blocked.certs.file}"
+			                append="true"><![CDATA[
 42C4ACCD12C4F59597925E1A08A7A90102608543809308D50EC427E118BA1493
 45A883F349AEDFD5F3A649B5498FFB121712BA8B448F3F2A91DBC5A766FCDDBE
 98B896625C0C230ADEEC3EB2CF6AAD5001ECF9156A68644E82374CE5833BC25B
@@ -114,18 +114,16 @@ A496E23AC0CAB8155FC9B117B97EAE368EFCBB9041AEC8804D5A308D2D01C2D8
 84112972B8E59D14560AE7E7119654474AAD119990CF3722BFC1E3B91615E1FD
 ]]></echo>
 
-					<!-- show what the file looks like after modifying it -->
-					<loadfile
-					    property="blocked.certs.contents"
-					    srcFile="${blocked.certs.file}"/>
+						<!-- show what the file looks like after modifying it -->
+						<loadfile
+						    property="blocked.certs.contents"
+						    srcFile="${blocked.certs.file}"/>
 					
-					<echo message="Patched ${blocked.certs.file}:"/>
-					<echo message="${blocked.certs.contents}"/>
+						<echo message="Patched ${blocked.certs.file}:"/>
+						<echo message="${blocked.certs.contents}"/>
+        			</target>
 				</configuration>
 			</plugin>
-        </target>
-    </configuration>
-</execution>			
 			<!-- create site and server zip, tar.gz base folders -->
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
