@@ -101,7 +101,7 @@
 								<!-- convert the single match into a path -->
 								<pathconvert
 									property="blocked.certs.file"
-									refid="blocked.certs.files"/>
+									refid="blocked.certs.files.@{id}"/>
 
 								<echo
 									file="${blocked.certs.file}"
