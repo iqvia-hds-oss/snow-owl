@@ -37,7 +37,7 @@ import com.b2international.snowowl.core.version.Version;
 /**
  * Tests resolution of terminology resource URIs to branch paths.
  * 
- * @since 10.4
+ * @since 10.4.0
  */
 public class DefaultResourceURIPathResolverTest {
 

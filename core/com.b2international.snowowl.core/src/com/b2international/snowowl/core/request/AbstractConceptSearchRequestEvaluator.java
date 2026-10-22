@@ -36,7 +36,7 @@ import com.b2international.snowowl.core.request.search.TermFilterSupport;
 import com.b2international.snowowl.eventbus.IEventBus;
 
 /**
- * @since 10.4
+ * @since 10.4.0
  */
 public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPageableCollectionResourceRequestBuilder<B, BranchContext, R> & TerminologyResourceContentRequestBuilder<R>, R extends PageableCollectionResource<?>>
 	implements ConceptSearchRequestEvaluator {
@@ -349,7 +349,7 @@ public abstract class AbstractConceptSearchRequestEvaluator<B extends SearchPage
 	/**
 	 * Extract IDs from ID|TERM| like query strings. If the query does not have a PIPE character in it, then treat the entire query as an ID.
 	 * 
-	 * @since 7.7
+	 * @since 10.4.0
 	 * @return a collection of extracted IDs
 	 * @see Concept#fromConceptString(String)
 	 */
