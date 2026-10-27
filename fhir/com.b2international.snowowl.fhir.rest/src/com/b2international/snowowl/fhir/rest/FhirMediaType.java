@@ -26,6 +26,7 @@ import org.hl7.fhir.r5.elementmodel.Manager.FhirFormat;
 import org.hl7.fhir.r5.model.Enumerations.FHIRVersion;
 import org.hl7.fhir.r5.model.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.server.NotAcceptableStatusException;
 
 import com.b2international.commons.StringUtils;
@@ -239,7 +240,7 @@ public final class FhirMediaType {
 		final List<MediaType> mediaTypeCandidates = MediaType.parseMediaTypes(accept);
 		
 		if (!mediaTypeCandidates.isEmpty()) {
-			MediaType.sortBySpecificityAndQuality(mediaTypeCandidates);
+			MimeTypeUtils.sortBySpecificity(mediaTypeCandidates);
 			
 			// Remove quality values and other (eg. charset) parameters once the list is sorted
 			for (int i = 0; i < mediaTypeCandidates.size(); i++) {

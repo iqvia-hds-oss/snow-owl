@@ -98,13 +98,13 @@
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-classic</artifactId>
-				<version>1.5.32</version>
+				<version>1.5.38</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-core</artifactId>
-				<version>1.5.32</version>
+				<version>1.5.38</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -270,6 +270,13 @@
 				<type>jar</type>
 			</dependency>
 			-->
+			<!-- Jspecify is required for Spring 7 -->
+			<dependency>
+			    <groupId>org.jspecify</groupId>
+			    <artifactId>jspecify</artifactId>
+			    <version>1.0.1</version>
+			    <type>jar</type>
+			</dependency>
 			<!-- Jakarta Spec API and Implementation Modules (must work with the embedded Jetty 12 EE10 version) -->
 			<dependency>
 			    <groupId>jakarta.servlet</groupId>
