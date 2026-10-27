@@ -1,6 +1,40 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 10.4.0
+
+### Core
+- Expose internal multi-codesystem search request through a new API endpoint, `GET /concepts` (#1754)
+- Support using resource URIs in path range expressions to restrict scope of various requests between two points in time (#1772) 
+
+### FHIR
+- Support handling FHIR Value Sets with multiple domain compose definitions (#1756)
+
+
+### Bugs/Improvements
+- [snomed] properly persist, store and update language reference set memberships for duplicates (#1777)
+- [snomed] properly merge and auto-apply incoming effective time vs other property changes during branch sync/merge operations (#1713)
+- [fhir] properly respond with the correct Content-Type header when failing to serve a request consuming an octet-stream binary (e.g. file upload or import endpoints) (#1767)
+
+### Security
+- Mitigate security vulnerabilities CVE-2026-111943, CVE-2026-111944, CVE-2026-93749, CVE-2026-101904, CVE-2026-101900, CVE-2026-101905, CVE-2026-101899, CVE-2026-101908, CVE-2026-101902, CVE-2026-101903, CVE-2026-101906, CVE-2026-101909, CVE-2026-101898, CVE-2026-101901, CVE-2026-102277, CVE-2026-102278, CVE-2026-102276, CVE-2026-101907, CVE-2026-84375, CVE-2026-82417, CVE-2026-82562, CVE-2026-54513, CVE-2026-54512, CVE-2026-55470, CVE-2026-81876, CVE-2026-81875, CVE-2026-68497, CVE-2026-91777, CVE-2026-91776, CVE-2026-75140
+
+### Dependencies
+- Bump Jetty to 12.1.14
+- Bump Jackson to 2.22.3
+- Bump lz4-java to 1.12.0
+- Bump mockito-core to 5.24.0
+- Bump Apache Lang3 to 3.21.0
+- Bump Apache Commons Codec to 1.23.0
+- Bump classmate to 1.8.0
+- Bump net-bytebuddy to 1.18.15
+- Bump netty to 4.1.139.Final
+- Bump bouncycastle to 1.86
+- Bump bucket4j to 8.21.0
+- Bump rest-assured to 6.2.0
+- Upgrade fhir-core to 0.7.3 (and with it org.hl7.fhir.core libs to 6.10.4)
+
+
 ## 10.3.0
 
 ### FHIR
@@ -42,7 +76,7 @@ All notable changes to this project will be documented in this file.
 - Bump commons-collections4 to 4.6.0
 - Bump commons-codec to 1.22.1
 - Bump commons-compress to 1.28.0
-- Bump netty-bytebuddy to 1.18.13
+- Bump net-bytebuddy to 1.18.13
 - Bump lz4-java to 1.11.2
 - Bump fastutil to 8.5.19
 - Bump classmate to 1.7.3
