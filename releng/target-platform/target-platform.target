@@ -42,6 +42,8 @@
 		<unit id="com.b2international.snomed.ecl.ui.feature.feature.group" version="0.0.0"/>
 	</location>
 	<location includeSource="true" includeMode="planner" missingManifest="error" type="Maven">
+		<!-- Synchronize this dependency list when updated with the one present in the sibling pom.xml file -->
+		<!-- This is the source of truth for available Maven dependencies -->
 		<dependencies>
 			<!-- Load bouncycastle version from Maven for more control over its actual version -->
 			<dependency>
