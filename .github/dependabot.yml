@@ -7,20 +7,14 @@ version: 2
 
 updates:
   - package-ecosystem: maven
-    directory: /
-    exclude-paths:
-      - "releng/target-platform"
-    open-pull-requests-limit: 15
+    directories: 
+      - "**/*"
+    open-pull-requests-limit: 20
     schedule:
       interval: daily
-    allow:
-      - dependency-name: '*'
-        update-types: [version-update:semver-minor, version-update:semver-patch]
     ignore:
-      - dependency-name: 'com.fasterxml.jackson:*'
-      - dependency-name: 'org.yaml:*'
-      - dependency-name: 'org.codehaus.woodstox:*'
-      - dependency-name: 'com.fasterxml.woodstox:*'
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
     groups:
       spring:
         applies-to: version-updates
@@ -40,26 +34,6 @@ updates:
           - 'co.elastic.clients:*'
           - 'org.elasticsearch.client:*'
           - 'jakarta.json:*'
-    labels:
-       - 'requires-manifest-update'
-       - 'dependencies'
-       - 'java'
-
-  - package-ecosystem: maven
-    directories:
-      - "releng/target-platform"
-    open-pull-requests-limit: 15
-    schedule:
-      interval: daily
-    allow:
-      - dependency-name: '*'
-        update-types: [version-update:semver-minor, version-update:semver-patch]
-    ignore:
-      - dependency-name: 'com.fasterxml.jackson:*'
-      - dependency-name: 'org.yaml:*'
-      - dependency-name: 'org.codehaus.woodstox:*'
-      - dependency-name: 'com.fasterxml.woodstox:*'
-    groups:
       org-bouncycastle:
         applies-to: version-updates
         patterns:
@@ -117,26 +91,6 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-
-  - package-ecosystem: maven
-    directories:
-      - /
-      - /releng/target-platform
-    open-pull-requests-limit: 1
-    schedule:
-      interval: daily
-    allow:
-      - dependency-name: 'com.fasterxml.jackson:*'
-        update-types: ['version-update:semver-minor', 'version-update:semver-patch']
-      - dependency-name: 'org.yaml:*'
-        update-types: ['version-update:semver-minor', 'version-update:semver-patch']
-      - dependency-name: 'org.codehaus.woodstox:*'
-        update-types: ['version-update:semver-minor', 'version-update:semver-patch']
-      - dependency-name: 'com.fasterxml.woodstox:*'
-        update-types: ['version-update:semver-minor', 'version-update:semver-patch']
-    ignore:
-      - dependency-name: '*'
-    groups:
       com-fasterxml-jackson:
         applies-to: version-updates
         patterns:
