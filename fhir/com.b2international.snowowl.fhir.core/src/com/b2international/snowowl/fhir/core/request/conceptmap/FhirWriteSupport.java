@@ -114,7 +114,7 @@ public interface FhirWriteSupport {
 		return safeId(id, false);
 	}
 	
-	default String safeId(final String id, final boolean allowForwardSlash) {
+	default String safeId(final String id, final boolean allowDot) {
 		if (StringUtils.isEmpty(id)) {
 			return id;
 		}
@@ -122,8 +122,8 @@ public interface FhirWriteSupport {
 		final StringBuilder safeIdBuilder = new StringBuilder();
 		
 		id.chars().forEach(c -> {
-			if (ALLOWED_ID_MATCHER.matches((char) c) || (allowForwardSlash && c == '/')) {
-				// Allowed characters are safe to use as-is (we are making an exception for the forward slash as well if enabled)
+			if (ALLOWED_ID_MATCHER.matches((char) c) || (allowDot && c == '.')) {
+				// Allowed characters are safe to use as-is (we are making an exception for the dot as well if enabled)
 				safeIdBuilder.append((char) c);
 			} else if (c == '.') {
 				// The dot character appears in FHIR identifiers frequently so we will replace it with a single underscore
