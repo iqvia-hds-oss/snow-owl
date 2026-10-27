@@ -638,7 +638,7 @@
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm-util</artifactId>
-				<version>9.10.1</version>
+				<version>9.11.1</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Testing libraries (REST API, Assertions and Mocking) -->
