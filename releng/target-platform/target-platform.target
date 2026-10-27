@@ -270,6 +270,13 @@
 				<type>jar</type>
 			</dependency>
 			-->
+			<!-- Jspecify is required for Spring 7 -->
+			<dependency>
+			    <groupId>org.jspecify</groupId>
+			    <artifactId>jspecify</artifactId>
+			    <version>1.0.1</version>
+			    <type>jar</type>
+			</dependency>
 			<!-- Jakarta Spec API and Implementation Modules (must work with the embedded Jetty 12 EE10 version) -->
 			<dependency>
 			    <groupId>jakarta.servlet</groupId>
