@@ -18,7 +18,7 @@ updates:
         update-types: ['version-update:semver-major']
     groups:
       spring:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'io.swagger.core.v3:*'
           - 'org.springdoc:*'
@@ -30,7 +30,7 @@ updates:
           - 'minor'
           - 'patch'
       elastic-client:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'co.elastic.clients:*'
           - 'org.elasticsearch.client:*'
@@ -51,14 +51,14 @@ updates:
         update-types: ['version-update:semver-major']
     groups:
       org-bouncycastle:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'org.bouncycastle:*'
         update-types:
           - 'minor'
           - 'patch'
       slf4j:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'org.slf4j:*'
           - 'ch.qos.logback:*'
@@ -66,7 +66,7 @@ updates:
           - 'minor'
           - 'patch'
       com-fasterxml-jackson:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'com.fasterxml.jackson*:*'
           - 'org.yaml:*'
@@ -76,20 +76,20 @@ updates:
           - 'minor'
           - 'patch'
       io-netty:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'io.netty:*'
         update-types:
           - 'patch'
       io-swagger-core:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'io.swagger.core.v3:*'
         update-types:
           - 'minor'
           - 'patch'
       org-eclipse-jetty:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'org.eclipse.jetty*:*'
           - 'jakarta.websocket:*'
@@ -97,21 +97,21 @@ updates:
           - 'minor'
           - 'patch'
       org-ow2-asm:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'org.ow2.asm:*'
         update-types:
           - 'minor'
           - 'patch'
       io-rest-assured:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'io.rest-assured:*'
         update-types:
           - 'minor'
           - 'patch'
       net-bytebuddy:
-        applies-to: security-updates
+        applies-to: version-updates
         patterns:
           - 'net.bytebuddy:*'
         update-types:
