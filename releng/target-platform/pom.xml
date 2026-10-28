@@ -14,6 +14,13 @@
 	<!-- Keep this dependency list fully synchronized with the source of truth in the sibling target-platform.target file's content -->
 	<!-- This part is required for GitHub security scanning to detect and report security vulnerabilities in dependencies properly as currently it does not look into target files -->
 	<dependencies>
+		<!-- Explicit Guava version to override anything coming from p2 repositories -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>33.7.2-jre</version>
+			<type>jar</type>
+		</dependency>
 		<!-- Load bouncycastle version from Maven for more control over its actual version -->
 		<dependency>
 			<groupId>org.bouncycastle</groupId>

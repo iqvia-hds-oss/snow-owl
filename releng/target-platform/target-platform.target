@@ -45,6 +45,13 @@
 		<!-- Synchronize this dependency list when updated with the one present in the sibling pom.xml file -->
 		<!-- This is the source of truth for available Maven dependencies -->
 		<dependencies>
+			<!-- Explicit Guava version to override anything coming from p2 repositories -->
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>33.7.2-jre</version>
+				<type>jar</type>
+			</dependency>
 			<!-- Load bouncycastle version from Maven for more control over its actual version -->
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
