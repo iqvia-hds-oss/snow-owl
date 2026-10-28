@@ -10,7 +10,7 @@ updates:
     directories: 
       - /
       - /releng/target-platform
-    open-pull-requests-limit: 20
+    open-pull-requests-limit: 25
     schedule:
       interval: daily
     ignore:
