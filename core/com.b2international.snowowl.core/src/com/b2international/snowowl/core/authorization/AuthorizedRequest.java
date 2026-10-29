@@ -33,7 +33,6 @@ import com.b2international.snowowl.core.identity.Permission;
 import com.b2international.snowowl.core.identity.User;
 import com.b2international.snowowl.core.monitoring.MonitoredRequest;
 import com.b2international.snowowl.core.util.PlatformUtil;
-import com.b2international.snowowl.eventbus.IEventBus;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 
@@ -101,13 +100,13 @@ public final class AuthorizedRequest<R> extends DelegatingRequest<ServiceProvide
 
 		// 2. Unprotected requests do not require an authenticated user (if all nested requests are unprotected)
 		if (requests.stream().allMatch(req -> req.getClass().isAnnotationPresent(Unprotected.class))) {
-			return impersonatedContext(originalContext, requestHeaders, User.SYSTEM);
+			return impersonatedContext(originalContext, User.SYSTEM);
 		}
 		
 		// 3. "Open house" identity providers do not require an authenticated user either
 		final IdentityProvider identityProvider = originalContext.service(IdentityProvider.class);
 		if (IdentityProvider.UNPROTECTED == identityProvider) {
-			return impersonatedContext(originalContext, requestHeaders, User.SYSTEM);
+			return impersonatedContext(originalContext, User.SYSTEM);
 		}
 
 		// 4. All other requests require authorization in the form of a token
@@ -128,25 +127,19 @@ public final class AuthorizedRequest<R> extends DelegatingRequest<ServiceProvide
 		final AuthorizationHeaderVerifier headerVerifier = originalContext.service(AuthorizationHeaderVerifier.class);
 		final User userFromToken = headerVerifier.auth(authorizationToken);
 		if (userFromToken != null) {
-			return impersonatedContext(originalContext, requestHeaders, userFromToken);
+			return impersonatedContext(originalContext, userFromToken);
 		}
 		
 		// 6. In any other case authentication has failed
 		throw new UnauthorizedException("Incorrect authorization token");
 	}
 
-	private ServiceProvider impersonatedContext(final ServiceProvider originalContext, final RequestHeaders requestHeaders, final User user) {
+	private ServiceProvider impersonatedContext(final ServiceProvider originalContext, final User user) {
 		
 		// Inject the user to the current RequestContext so that the entire request execution tree can access it
 		originalContext.service(RequestContext.class)
 			.bind(User.class, user);
-		
-		// Return a new context with an authorized event bus instance; include all headers from the original request
-		final IEventBus originalBus = originalContext.service(IEventBus.class);
-		final Map<String, String> originalHeaders = requestHeaders.headers();
-		
-		return originalContext.inject()
-			.bind(IEventBus.class, new AuthorizedEventBus(originalBus, originalHeaders))
-			.build();
+	
+		return originalContext;
 	}
 }
