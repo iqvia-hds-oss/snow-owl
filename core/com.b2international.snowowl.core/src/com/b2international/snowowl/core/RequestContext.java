@@ -19,9 +19,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 
 import com.b2international.commons.metric.Metrics;
+import com.b2international.snowowl.core.authorization.AuthorizedEventBus;
 import com.b2international.snowowl.core.domain.DelegatingContext;
 import com.b2international.snowowl.core.events.util.RequestHeaders;
 import com.b2international.snowowl.core.events.util.ResponseHeaders;
+import com.b2international.snowowl.eventbus.IEventBus;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.MapMaker;
@@ -43,6 +45,7 @@ public final class RequestContext extends DelegatingContext implements Metrics {
 		bind(Metrics.class, this);
 		bind(RequestHeaders.class, new RequestHeaders(requestHeaders));
 		bind(ResponseHeaders.class, new ResponseHeaders());
+		bind(IEventBus.class, new AuthorizedEventBus(delegate.service(IEventBus.class), requestHeaders));
 	}
 	
 	@Override
