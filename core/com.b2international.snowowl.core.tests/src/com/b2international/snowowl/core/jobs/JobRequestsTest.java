@@ -85,6 +85,7 @@ public class JobRequestsTest extends BaseElasticsearchAwareTest {
 				.bind(RemoteJobTracker.class, tracker)
 				.bind(IdentityProvider.class, IdentityProvider.UNPROTECTED)
 				.bind(User.class, User.SYSTEM)
+				.bind(IEventBus.class, bus)
 				.build();
 		
 		this.context = new RequestContext(systemContext, Map.of());
