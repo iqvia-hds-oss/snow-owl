@@ -1,6 +1,30 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 10.4.1
+
+### Bugs/Improvements
+- [core] fixed an issue where certain already authenticated requests could end up in an unauthenticated state and respond with HTTP 401 instead of serving the request (#1822)
+- [fhir] fixed an issue where ICD10 concept identifiers with dots got escaped with underscores incorrectly (#1800)
+- [fhir] ensure that resource version result parameters are properly represent the version value of the correct state in $validate-code responses
+- [snomed] fixed an issue where parentOf, ancestorOf and ancestorOrSelfOf ECL expressions resulted in an unauthorized HTTP 401 call (#1802)
+- [import] significantly decrease memory requirements of Excel import operations
+
+### Security
+- Mitigate security vulnerabilities CVE-2026-47890, CVE-2026-110816, CVE-2026-112946, CVE-2026-111756, CVE-2026-111755, CVE-2026-112942, CVE-2026-93749
+
+### Dependencies
+- Bump Spring to 7.0.10
+- Bump Spring Security to 7.1.2
+- Bump Spring Boot to 4.2.1
+- Bump SpringDoc to 3.2.0
+- Bump Jackson to 2.22.4
+- Bump net-bytebuddy to 1.18.16
+- Bump lz4-java to 1.12.1
+- Bump logback to 1.5.38
+- Bump Hibernate Validator to 9.1.5.Final
+- Bump Guava to 33.7.2
+
 ## 10.4.0
 
 ### Core
@@ -33,7 +57,6 @@ All notable changes to this project will be documented in this file.
 - Bump bucket4j to 8.21.0
 - Bump rest-assured to 6.2.0
 - Upgrade fhir-core to 0.7.3 (and with it org.hl7.fhir.core libs to 6.10.4)
-
 
 ## 10.3.0
 
