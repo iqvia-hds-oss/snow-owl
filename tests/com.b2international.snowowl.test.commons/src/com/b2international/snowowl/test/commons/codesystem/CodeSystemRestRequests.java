@@ -185,11 +185,16 @@ public abstract class CodeSystemRestRequests {
 				.then().assertThat().statusCode(204);
 	}
 	
-	public static ValidatableResponse deleteCodeSystem(String codeSystemId) {
+	public static ValidatableResponse assertDeleteCodeSystem(String codeSystemId) {
 		return givenAuthenticatedRequest(ApiTestConstants.CODESYSTEMS_API)
 				.delete("/{id}", codeSystemId)
-				.then().assertThat().statusCode(204);
+				.then()
+				.assertThat();
 
+	}
+	
+	public static void deleteCodeSystem(String codeSystemId) {
+		assertDeleteCodeSystem(codeSystemId).statusCode(204);
 	}
 	
 	public static CodeSystems search(String id, String...expand) {
