@@ -1,6 +1,14 @@
 # Change Log
 All notable changes to this project will be documented in this file.
 
+## 10.4.2
+
+### Bugs/Improvements
+- [fhir] resolve resource not found errors when looking up ValueSets or ConceptMaps during $expand/$translate operations using valueSetVersion or conceptMapVersion parameters (#1839)
+
+### Dependencies
+- Update built-in JDK to JustJ 25.0.5+8
+
 ## 10.4.1
 
 ### Bugs/Improvements
