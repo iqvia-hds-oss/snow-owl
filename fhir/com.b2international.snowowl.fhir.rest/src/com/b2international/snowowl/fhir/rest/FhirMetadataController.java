@@ -432,6 +432,7 @@ public class FhirMetadataController extends AbstractFhirController {
 			.setSoftware(new CapabilityStatement.CapabilityStatementSoftwareComponent()
 				.setName("Snow Owl©")
 				.setVersion(softwareVersion)
+				.setReleaseDate(date)
 			) 
 			.setImplementation(new CapabilityStatement.CapabilityStatementImplementationComponent()
 				.setUrl("https://b2ihealthcare.com")
