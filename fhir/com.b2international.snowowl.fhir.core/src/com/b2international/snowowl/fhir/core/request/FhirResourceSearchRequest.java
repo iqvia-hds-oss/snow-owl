@@ -132,7 +132,16 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		// Both resource and version documents have an "id" and a "url" field; we will use the expression from ResourceDocument purely by choice
 		addIdFilter(query, ids -> Expressions.bool()
 			.should(ResourceDocument.Expressions.ids(ids))
-			.should(ResourceDocument.Expressions.urls(ids))
+			// to support settings-based FHIR URL overrides and version we need to match both the metadata setting values and the default URL field
+			.should(Expressions.bool()
+				// Exact match for any of the provided URLs on the FHIR-specific URL override field
+				.should(Expressions.matchAny(FIELD_SETTINGS_FHIR_URL, ids))
+				.should(Expressions.bool()
+					// Exact match for the original URL field if no override setting is present
+					.mustNot(Expressions.exists(FIELD_SETTINGS_FHIR_URL))
+					.filter(ResourceDocument.Expressions.urls(ids))
+					.build())
+				.build())
 			.build());
 	}
 
@@ -155,7 +164,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				.mustNot(Expressions.exists(FIELD_SETTINGS_FHIR_URL))
 				.filter(ResourceDocument.Expressions.urls(uniqueUrls))
 				.build())
-			.build());		
+			.build());
 	}
 		
 	private void addVersionFilter(final ExpressionBuilder query) {

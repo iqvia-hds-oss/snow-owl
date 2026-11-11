@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.core.request.conceptmap;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import org.hl7.fhir.r5.model.Bundle;
@@ -32,6 +33,7 @@ import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
+import com.b2international.snowowl.core.uri.ResourceURLSchemaSupport;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
@@ -104,24 +106,33 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 
 	// TODO make this consider source/target scopes to find appropriate ConceptMaps when URL is not defined, for now we basically need the URL parameter to be able to translate using a dedicated map
 	private ConceptMap lookupConceptMaps(ServiceProvider context) {
+		final String url = parameters.getUrl().getValue();
 		final String conceptMapVersion = Strings.emptyToNull(parameters.getConceptMapVersion() != null ? parameters.getConceptMapVersion().getValue() : null);
-		if (FhirModelHelpers.isImplicitConceptMapUrl(parameters.getUrl().getValue())) {
-			return buildImplicitConceptMap(context, parameters.getUrl().getValue());
+		final boolean hasVersion = !Strings.isNullOrEmpty(conceptMapVersion);
+		
+		if (FhirModelHelpers.isImplicitConceptMapUrl(url)) {
+			return buildImplicitConceptMap(context, url);
 		} else {
-			return FhirRequests.conceptMaps().prepareSearch()
-					.filterById(parameters.getUrl().getValue())
-					.filterByVersion(conceptMapVersion)
-					.setElements(List.copyOf(R5ObjectFields.ConceptMap.MANDATORY))
-					.setCount(1)
-					.buildAsync()
-					.execute(context)
-					.getEntry()
-					.stream()
-					.map(BundleEntryComponent::getResource)
-					.filter(ConceptMap.class::isInstance)
-					.map(ConceptMap.class::cast)
-					.findFirst()
-					.orElse(null);
+			var req = FhirRequests.conceptMaps().prepareSearch();
+			
+			if (hasVersion) {
+				req.filterByIds(Set.of(url, ResourceURLSchemaSupport.DEFAULT.withVersion(url, conceptMapVersion)));
+			} else {
+				req.filterById(url);
+			}
+			 
+			return req.filterByVersion(conceptMapVersion)
+				.setElements(List.copyOf(R5ObjectFields.ConceptMap.MANDATORY))
+				.setCount(1)
+				.buildAsync()
+				.execute(context)
+				.getEntry()
+				.stream()
+				.map(BundleEntryComponent::getResource)
+				.filter(ConceptMap.class::isInstance)
+				.map(ConceptMap.class::cast)
+				.findFirst()
+				.orElse(null);
 		}
 	}
 

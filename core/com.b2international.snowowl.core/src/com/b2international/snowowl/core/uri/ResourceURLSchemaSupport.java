@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,16 @@ import com.b2international.commons.exceptions.BadRequestException;
  */
 public interface ResourceURLSchemaSupport {
 
-	default void validate(String uri) throws BadRequestException {
-		// by default any URI is valid, specific terminology schemas can provide their
+	default void validate(String url) throws BadRequestException {
+		// by default any URL is valid, specific terminology schemas can provide their
 	}
 	
-	default String withVersion(String uri, String version, LocalDate effectiveTime) {
-		return String.join("/version/", uri, version);
+	default String withVersion(String url, String version) {
+		return withVersion(url, version, null);
+	}
+	
+	default String withVersion(String url, String version, LocalDate effectiveTime) {
+		return String.join("/version/", url, version);
 	}
 	
 	ResourceURLSchemaSupport DEFAULT = new ResourceURLSchemaSupport() {};
