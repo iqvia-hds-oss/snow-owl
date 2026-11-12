@@ -23,6 +23,7 @@ import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 
 import org.junit.Test;
@@ -277,6 +278,36 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(0));
+	}
+	
+	@Test
+	public void expandSnomedCodeSystemURLviaPost_includeDesignations() throws Exception {
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.accept(APPLICATION_FHIR_JSON)
+			.body(Json.object(
+					"resourceType", "Parameters",
+					"parameter", Json.array(
+							Json.object(
+									"name", "url",
+									"valueUri", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008/version/20100131?fhir_vs"
+							),
+							Json.object(
+									"name", "filter",
+									"valueString", "drug"
+							),
+							Json.object(
+									"name", "includeDesignations",
+									"valueBoolean", true
+							))
+				)
+			)
+			.when()
+			.post(VALUESET_EXPAND)
+			.then()
+			.statusCode(200)
+			.body("expansion.contains[0].designation", notNullValue())
+			.body("expansion.contains[0].designation.size()", greaterThan(0));
 	}
 	
 	@Test
