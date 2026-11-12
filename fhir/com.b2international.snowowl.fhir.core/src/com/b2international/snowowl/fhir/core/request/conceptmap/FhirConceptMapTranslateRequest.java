@@ -16,7 +16,6 @@
 package com.b2international.snowowl.fhir.core.request.conceptmap;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -42,6 +41,7 @@ import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.Hashing;
 
 /**
@@ -50,6 +50,14 @@ import com.google.common.hash.Hashing;
 final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, ConceptMapTranslateResultParameters> {
 
 	private static final long serialVersionUID = 1L;
+	
+	/*
+	 * Make sure we also load the URL next to the mandatory fields
+	 */
+	private static final Set<String> R5_CONCEPT_MAP_ELEMENTS = ImmutableSet.<String>builder()
+		.addAll(R5ObjectFields.ConceptMap.MANDATORY)
+		.add(R5ObjectFields.ConceptMap.URL)
+		.build();
 	
 	@JsonProperty
 	private final ConceptMapTranslateParameters parameters;
@@ -113,26 +121,27 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 		if (FhirModelHelpers.isImplicitConceptMapUrl(url)) {
 			return buildImplicitConceptMap(context, url);
 		} else {
-			var req = FhirRequests.conceptMaps().prepareSearch();
+            var req = FhirRequests.conceptMaps().prepareSearch();
 			
 			if (hasVersion) {
 				req.filterByIds(Set.of(url, ResourceURLSchemaSupport.DEFAULT.withVersion(url, conceptMapVersion)));
 			} else {
 				req.filterById(url);
 			}
-			 
-			return req.filterByVersion(conceptMapVersion)
-				.setElements(List.copyOf(R5ObjectFields.ConceptMap.MANDATORY))
-				.setCount(1)
-				.buildAsync()
-				.execute(context)
-				.getEntry()
-				.stream()
-				.map(BundleEntryComponent::getResource)
-				.filter(ConceptMap.class::isInstance)
-				.map(ConceptMap.class::cast)
-				.findFirst()
-				.orElse(null);
+            
+			return req
+                .filterByVersion(conceptMapVersion)
+                .setElements(R5_CONCEPT_MAP_ELEMENTS)
+                .setCount(1)
+                .buildAsync()
+                .execute(context)
+                .getEntry()
+                .stream()
+                .map(BundleEntryComponent::getResource)
+                .filter(ConceptMap.class::isInstance)
+                .map(ConceptMap.class::cast)
+                .findFirst()
+                .orElse(null);
 		}
 	}
 
