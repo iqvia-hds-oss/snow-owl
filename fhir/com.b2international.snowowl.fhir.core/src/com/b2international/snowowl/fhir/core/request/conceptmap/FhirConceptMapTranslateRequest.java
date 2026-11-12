@@ -16,8 +16,8 @@
 package com.b2international.snowowl.fhir.core.request.conceptmap;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.hl7.fhir.r5.model.Bundle;
@@ -113,26 +113,29 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 		if (FhirModelHelpers.isImplicitConceptMapUrl(url)) {
 			return buildImplicitConceptMap(context, url);
 		} else {
-			var req = FhirRequests.conceptMaps().prepareSearch();
+            var req = FhirRequests.conceptMaps().prepareSearch();
 			
 			if (hasVersion) {
 				req.filterByIds(Set.of(url, ResourceURLSchemaSupport.DEFAULT.withVersion(url, conceptMapVersion)));
 			} else {
 				req.filterById(url);
 			}
-			 
-			return req.filterByVersion(conceptMapVersion)
-				.setElements(List.copyOf(R5ObjectFields.ConceptMap.MANDATORY))
-				.setCount(1)
-				.buildAsync()
-				.execute(context)
-				.getEntry()
-				.stream()
-				.map(BundleEntryComponent::getResource)
-				.filter(ConceptMap.class::isInstance)
-				.map(ConceptMap.class::cast)
-				.findFirst()
-				.orElse(null);
+            
+			//Make sure we also load the URL next to the mandatory fields
+			Set<String> elements = Stream.concat(R5ObjectFields.ConceptMap.MANDATORY.stream(), Stream.of(R5ObjectFields.ConceptMap.URL)).collect(Collectors.toSet());
+			return req
+                .filterByVersion(conceptMapVersion)
+                .setElements(elements)
+                .setCount(1)
+                .buildAsync()
+                .execute(context)
+                .getEntry()
+                .stream()
+                .map(BundleEntryComponent::getResource)
+                .filter(ConceptMap.class::isInstance)
+                .map(ConceptMap.class::cast)
+                .findFirst()
+                .orElse(null);
 		}
 	}
 
