@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Coding;
+import org.hl7.fhir.r5.model.OperationOutcome;
 
 import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
@@ -66,12 +67,28 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final Concept conceptA = conceptsById.get(codeA);
 		final Concept conceptB = conceptsById.get(codeB);
 		
+		//TODO: Add a coding to error messages with code and system params
 		if (conceptA == null && conceptB == null) {
-			throw new BadRequestException(String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeA, codeB, codeSystem.getUrl()));
+			throw new BadRequestException(
+					OperationOutcome.IssueType.CODEINVALID, 
+					String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeA, codeB, codeSystem.getUrl()),
+					null,
+					null
+			);
 		} else if (conceptA == null) {
-			throw new BadRequestException(String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeA, codeSystem.getUrl()));
+			throw new BadRequestException(
+					OperationOutcome.IssueType.CODEINVALID,
+					String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeA, codeSystem.getUrl()),
+					null,
+					null
+			);
 		} else if (conceptB == null) {
-			throw new BadRequestException(String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeB, codeSystem.getUrl()));
+			throw new BadRequestException(
+					OperationOutcome.IssueType.CODEINVALID,
+					String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeB, codeSystem.getUrl()),
+					null,
+					null
+			);
 		}
 		
 		if (Objects.equals(codeA, codeB)) {
@@ -124,5 +141,5 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 	
 	private boolean isSubsumedBy(Concept subTypeConcept, String superTypeCode) {
 		return subTypeConcept.getParentIds().contains(superTypeCode) || subTypeConcept.getAncestorIds().contains(superTypeCode);
-	} 
+	}
 }
