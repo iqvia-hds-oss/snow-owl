@@ -478,6 +478,14 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		}
 	}
 	
+	private boolean getExperimental(final Map<String, Object> settings) {
+		if (settings == null) {
+			return false;
+		} else {
+			return (boolean) settings.getOrDefault(R5ObjectFields.MetadataResource.EXPERIMENTAL, false);
+		}
+	}
+	
 	private DateTimeType toDateTimeType(final Long effectiveTime) {
 		return FhirModelHelpers.toDateTimeElement(effectiveTime);
 	}
@@ -589,6 +597,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		
 		includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> getBlankNarrative(), entry::setText);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.PUBLISHER, () -> getPublisher(resource.getSettings()), entry::setPublisher);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.EXPERIMENTAL, () -> getExperimental(resource.getSettings()), entry::setExperimental);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> toDateTimeType(resource.getEffectiveTime()), entry::setDateElement);
 		// addContact(contact) is a no-op if contact is null so we can safely call it here
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.CONTACT, () -> toContactDetail(resource.getContact()), entry::addContact);
