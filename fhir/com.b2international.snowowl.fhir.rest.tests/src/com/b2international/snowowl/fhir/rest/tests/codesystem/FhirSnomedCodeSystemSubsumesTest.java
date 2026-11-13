@@ -137,8 +137,8 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.details.text", hasItem("An invalid code was supplied, codeA: \"invalid\"."))
-			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeA: \"invalid\"."));
+			.body("issue.details.text", hasItem("codeA: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."))
+			.body("issue.diagnostics", hasItem("codeA: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
 	}
 
 	@Test
@@ -155,8 +155,8 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.details.text", hasItem("An invalid code was supplied, codeB: \"invalid\"."))
-			.body("issue.diagnostics", hasItem("An invalid code was supplied, codeB: \"invalid\"."));
+			.body("issue.details.text", hasItem("codeB: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."))
+			.body("issue.diagnostics", hasItem("codeB: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
 	}
 
 	@Test
@@ -173,7 +173,7 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.details.text", hasItem("Invalid codes were supplied, codeA: \"invalid\", codeB: \"invalid\"."))
-			.body("issue.diagnostics", hasItem("Invalid codes were supplied, codeA: \"invalid\", codeB: \"invalid\"."));
+			.body("issue.details.text", hasItem("codeA: 'invalid' and codeB: 'invalid' are invalid or non-existent codes in 'http://snomed.info/sct' system."))
+			.body("issue.diagnostics", hasItem("codeA: 'invalid' and codeB: 'invalid' are invalid or non-existent codes in 'http://snomed.info/sct' system."));
 	}
 }

@@ -30,7 +30,6 @@ import com.b2international.snowowl.fhir.core.Summary;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirResourceSearchRequest.OptionKey;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 /**

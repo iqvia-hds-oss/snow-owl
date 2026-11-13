@@ -65,7 +65,7 @@ public abstract class FhirRestTest {
 	@After
 	public void after() {
 		for (String codeSystemId : createdCodeSystems) {
-			CodeSystemRestRequests.deleteCodeSystem(codeSystemId).statusCode(204);
+			CodeSystemRestRequests.deleteCodeSystem(codeSystemId);
 		}
 	}
 	

@@ -18,9 +18,12 @@ package com.b2international.snowowl.fhir.core.request.codesystem;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.CodeType;
+import org.hl7.fhir.r5.model.Coding;
 
 import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
@@ -44,7 +47,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest<CodeSystemSubsumptionResultParameters> {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	@JsonProperty
 	private final CodeSystemSubsumptionParameters parameters;
 
@@ -52,12 +55,11 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		super(parameters.extractSystem(), parameters.extractSystemVersion());
 		this.parameters = parameters;
 	}
-
+	
 	@Override
 	public CodeSystemSubsumptionResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
-		
-		final String codeA = parameters.getCodeA() != null ? parameters.getCodeA().getValue() : parameters.getCodingA().getCode();
-		final String codeB = parameters.getCodeB() != null ? parameters.getCodeB().getValue() : parameters.getCodingB().getCode();
+		final String codeA = getCode(parameters::getCodeA, parameters::getCodingA);
+		final String codeB = getCode(parameters::getCodeB, parameters::getCodingB);
 		
 		final Map<String, Concept> conceptsById = fetchConcepts(context, codeSystem, codeA, codeB);
 		
@@ -65,11 +67,11 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final Concept conceptB = conceptsById.get(codeB);
 		
 		if (conceptA == null && conceptB == null) {
-			throw new BadRequestException(String.format("Invalid codes were supplied, codeA: \"%s\", codeB: \"%s\".", codeA, codeB));
+			throw new BadRequestException(String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeA, codeB, codeSystem.getUrl()));
 		} else if (conceptA == null) {
-			throw new BadRequestException(String.format("An invalid code was supplied, codeA: \"%s\".", codeA));
+			throw new BadRequestException(String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeA, codeSystem.getUrl()));
 		} else if (conceptB == null) {
-			throw new BadRequestException(String.format("An invalid code was supplied, codeB: \"%s\".", codeB));
+			throw new BadRequestException(String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeB, codeSystem.getUrl()));
 		}
 		
 		if (Objects.equals(codeA, codeB)) {
@@ -83,6 +85,19 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		}
 	}
 
+	private static String getCode(Supplier<CodeType> codeExtractor, Supplier<Coding> codingExtractor) {
+		final CodeType code = codeExtractor.get();
+		final Coding coding = codingExtractor.get();
+		
+		if (code != null) {
+			return code.getValue();
+		} else if (coding != null) {
+			return coding.getCode();
+		} else {
+			return null;
+		}
+	}
+	
 	private Map<String, Concept> fetchConcepts(ServiceProvider context, CodeSystem codeSystem, String codeA, String codeB) {
 		
 		if (codeA == null || codeB == null) {

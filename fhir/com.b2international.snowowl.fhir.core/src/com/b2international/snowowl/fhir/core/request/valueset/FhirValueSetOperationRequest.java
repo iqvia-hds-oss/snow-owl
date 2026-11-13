@@ -18,6 +18,7 @@ package com.b2international.snowowl.fhir.core.request.valueset;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -29,6 +30,7 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
+import com.b2international.snowowl.core.uri.ResourceURLSchemaSupport;
 import com.b2international.snowowl.core.version.VersionDocument;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
@@ -60,7 +62,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 			throw new BadRequestException("URL must be defined to identify a value set. 'valueSet' parameter is not available yet.", "url");
 		}
 		this.url = url;
-		this.version = version;
+		this.version = Strings.emptyToNull(version);
 	}
 	
 	protected final String getUrl() {
@@ -73,19 +75,28 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		// for now we need an URL to be defined
 		
 		ValueSet valueSet = null;
+		boolean hasVersion = !Strings.isNullOrEmpty(version);
 		
 		// check if url is an implicit URL
 		if (FhirModelHelpers.isImplicitValueSetUrl(url)) {
 			// raise an error if the version is specified through the valueSetVersion field
-			if (!Strings.isNullOrEmpty(version)) {
+			if (hasVersion) {
 				throw new BadRequestException("'valueSetVersion' parameter should not be used with implicit Value Set URLs.")
 					.withDeveloperMessage("Consult the guide of the implicit Value Set URL you are using on how to include the version in the value.");
 			}
 			valueSet = expandImplicitValueSet(context, url);
 		} else {
-			valueSet = FhirRequests.valueSets().prepareSearch()
-					.filterById(url) // operations can use the resource ID in place of the URL parameter, filterById matches both
-					.filterByVersion(version)
+			
+			var req = FhirRequests.valueSets().prepareSearch();
+			
+			// operations can use the resource ID in place of the URL parameter, filterById matches both
+			if (hasVersion) {
+				req.filterByIds(Set.of(url, ResourceURLSchemaSupport.DEFAULT.withVersion(url, version)));
+			} else {
+				req.filterById(url);
+			}
+			
+			valueSet = req.filterByVersion(version)
 					.setElements(ImmutableList.<String>builder()
 							.addAll(R5ObjectFields.ValueSet.SUMMARY)
 							.add(R5ObjectFields.ValueSet.STATUS)

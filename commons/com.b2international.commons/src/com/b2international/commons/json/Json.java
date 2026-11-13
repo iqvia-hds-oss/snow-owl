@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import java.util.Map;
 import com.b2international.commons.CompareUtils;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
@@ -100,7 +101,11 @@ public final class Json extends ForwardingMap<String, Object> {
 
 	@SafeVarargs
 	public static <T> List<T> array(T...values) {
-		return ImmutableList.copyOf(values);
+		if (values == null) {
+			return null;
+		}
+		
+		return FluentIterable.from(values).filter(Predicates.notNull()).toList();
 	}
 	
 	/**
