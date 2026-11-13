@@ -75,7 +75,12 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	/** The FHIR version property field in resource metadata settings (appearing both on resource and version documents) */
 	private static final String FIELD_SETTINGS_FHIR_VERSION_PROPERTY = TerminologyResource.Fields.SETTINGS + "." + TerminologyResource.Settings.FHIR_VERSION_PROPERTY;
 
-	private static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
+	/**
+	 * Fields that are not stored in the internal index models, ResourceDocument and VersionDocument, but could be supplied as _elements to the
+	 * request. Keeping them in the field selection would cause an issue, so it is a must to always exclude them. Maintain only this constant list and
+	 * reference from everywhere.
+	 */
+	public static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
 		R5ObjectFields.MetadataResource.NAME,
 		R5ObjectFields.MetadataResource.META,
 		R5ObjectFields.MetadataResource.TEXT,
