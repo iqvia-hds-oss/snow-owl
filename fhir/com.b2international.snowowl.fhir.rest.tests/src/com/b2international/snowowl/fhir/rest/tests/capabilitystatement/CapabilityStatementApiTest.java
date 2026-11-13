@@ -15,12 +15,16 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.capabilitystatement;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.APPLICATION_FHIR_JSON_R4;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.*;
-import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
+import static org.hamcrest.CoreMatchers.hasItems;
+import static org.hamcrest.CoreMatchers.notNullValue;
 
+import org.hl7.fhir.r5.model.CapabilityStatement;
 import org.hl7.fhir.r5.model.Enumerations.CapabilityStatementKind;
+import org.hl7.fhir.r5.model.OperationDefinition;
 import org.junit.Test;
 
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
@@ -50,6 +54,9 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 			.body("date", notNullValue())
 			.body("description", notNullValue())
 			.body("kind", equalTo(CapabilityStatementKind.INSTANCE.toCode()))
+			.body("software.name", notNullValue())
+			.body("software.version", notNullValue())
+			.body("software.releaseDate", notNullValue())
 			.body("fhirVersion", equalTo("4.0.1"))
 			.body("rest[0]", notNullValue())
 			.body("rest[0].resource[0]", notNullValue());
@@ -57,6 +64,7 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 	
 	@Test(timeout = 15000)
 	public void capabilityStatementTest_5_0_0() {
+		
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.when().get("metadata")
 			.then()
@@ -71,6 +79,9 @@ public class CapabilityStatementApiTest extends FhirRestTest {
 			.body("date", notNullValue())
 			.body("description", notNullValue())
 			.body("kind", equalTo(CapabilityStatementKind.INSTANCE.toCode()))
+			.body("software.name", notNullValue())
+			.body("software.version", notNullValue())
+			.body("software.releaseDate", notNullValue())
 			.body("fhirVersion", equalTo("5.0.0"))
 			.body("rest[0]", notNullValue())
 			.body("rest[0].resource[0]", notNullValue());
