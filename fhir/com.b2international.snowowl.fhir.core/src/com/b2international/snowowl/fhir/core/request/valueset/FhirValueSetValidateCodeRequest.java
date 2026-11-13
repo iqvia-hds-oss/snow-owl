@@ -85,7 +85,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			validateDisplay = true;
 		} else if (hasCoding) {
 			coding = parameters.getCoding();
-			codeLocation = "coding.code";
+			codeLocation = "Coding.code";
 			validateDisplay = true;
 		} else if (hasCodeableConcept)	{
 			// TODO support multiple values in codeableConcept? currently the underlying interface and its implementations do not support it
@@ -94,7 +94,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			}
 			
 			coding = parameters.getCodeableConcept().getCoding().getFirst();
-			codeLocation = "codeableConcept.coding[0].code";
+			codeLocation = "CodeableConcept.coding[0].code";
 			validateDisplay = false;
 		} else {
 			throw new IllegalStateException("Should not happen");
