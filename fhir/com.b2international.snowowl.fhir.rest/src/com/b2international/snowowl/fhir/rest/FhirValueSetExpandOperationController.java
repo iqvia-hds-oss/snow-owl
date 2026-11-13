@@ -356,7 +356,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			parameters.getValueSetVersion() == null ? null : parameters.getValueSetVersion().getValue(),
 			parameters.getFilter() == null ? null : parameters.getFilter().getValue(), 
 			parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue(), 
-			parameters.getDisplayLanguage() == null ? null : parameters.getDisplayLanguage(), 
+			parameters.getDisplayLanguage() == null ? null : parameters.getDisplayLanguage().getValue(), 
 			parameters.getIncludeDesignations() == null ? null : parameters.getIncludeDefinition().getValue(), 
 			parameters.getWithHistorySupplements() == null ? null : parameters.getWithHistorySupplements().getValue(), 
 			parameters.getCount() == null ? null : parameters.getCount().getValue(), 
