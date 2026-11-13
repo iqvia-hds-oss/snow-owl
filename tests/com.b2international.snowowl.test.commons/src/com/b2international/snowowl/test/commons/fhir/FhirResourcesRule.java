@@ -15,10 +15,14 @@
  */
 package com.b2international.snowowl.test.commons.fhir;
 
+import java.time.Instant;
+import java.util.List;
+
 import org.junit.rules.ExternalResource;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 
 /**
@@ -32,7 +36,7 @@ public final class FhirResourcesRule extends ExternalResource {
 	private final Multimap<String, String> fhirValueSetsToManage = ArrayListMultimap.create();
 	private final Multimap<String, String> fhirConceptMapsToManage = ArrayListMultimap.create();
 
-	
+	private final ListMultimap<String, String> insertionTimesByResource = ArrayListMultimap.create(); 
 	
 	public FhirResourcesRule() {
 	}
@@ -41,7 +45,7 @@ public final class FhirResourcesRule extends ExternalResource {
 		Preconditions.checkArgument(!this.fhirCodeSystemsToManage.containsEntry(codeSystemId, body), "FHIR CodeSystem '%s' with the supplied body is already managed by this rule", codeSystemId);
 		this.fhirCodeSystemsToManage.put(codeSystemId, body);
 		if (initialized) {
-			FhirApiHelpers.createCodeSystem(codeSystemId, body);
+			createCodeSystem(codeSystemId, body);
 		}
 		return this;
 	}
@@ -50,7 +54,7 @@ public final class FhirResourcesRule extends ExternalResource {
 		Preconditions.checkArgument(!this.fhirValueSetsToManage.containsEntry(valueSetId, body), "FHIR ValueSet '%s' with the supplied body is already managed by this rule", valueSetId);
 		this.fhirValueSetsToManage.put(valueSetId, body);
 		if (initialized) {
-			FhirApiHelpers.createValueSet(valueSetId, body);
+			createValueSet(valueSetId, body);
 		}
 		return this;
 	}
@@ -59,16 +63,20 @@ public final class FhirResourcesRule extends ExternalResource {
 		Preconditions.checkArgument(!this.fhirConceptMapsToManage.containsEntry(conceptMapId, body), "FHIR ConceptMap '%s' with the supplied body is already managed by this rule", conceptMapId);
 		this.fhirConceptMapsToManage.put(conceptMapId, body);
 		if (initialized) {
-			FhirApiHelpers.createConceptMap(conceptMapId, body);
+			createConceptMap(conceptMapId, body);
 		}
 		return this;
 	}
 	
+	public List<String> getInsertionTimes(String resourceId) {
+		return List.copyOf(this.insertionTimesByResource.get(resourceId));
+	}
+	
 	@Override
 	protected void before() throws Throwable {
-		this.fhirCodeSystemsToManage.forEach(FhirApiHelpers::createCodeSystem);
-		this.fhirValueSetsToManage.forEach(FhirApiHelpers::createValueSet);
-		this.fhirConceptMapsToManage.forEach(FhirApiHelpers::createConceptMap);
+		this.fhirCodeSystemsToManage.forEach(this::createCodeSystem);
+		this.fhirValueSetsToManage.forEach(this::createValueSet);
+		this.fhirConceptMapsToManage.forEach(this::createConceptMap);
 		this.initialized = true;
 	}
 	
@@ -77,7 +85,23 @@ public final class FhirResourcesRule extends ExternalResource {
 		this.fhirConceptMapsToManage.keySet().forEach(FhirApiHelpers::deleteConceptMap);
 		this.fhirValueSetsToManage.keySet().forEach(FhirApiHelpers::deleteValueSet);
 		this.fhirCodeSystemsToManage.keySet().forEach(FhirApiHelpers::deleteCodeSystem);
+		this.insertionTimesByResource.clear();
 		this.initialized = false;
+	}
+	
+	private void createCodeSystem(String codeSystemId, String body) {
+		FhirApiHelpers.createCodeSystem(codeSystemId, body);
+		this.insertionTimesByResource.put(codeSystemId, Instant.now().toString());
+	}
+	
+	private void createValueSet(String valueSetId, String body) {
+		FhirApiHelpers.createValueSet(valueSetId, body);
+		this.insertionTimesByResource.put(valueSetId, Instant.now().toString());
+	}
+
+	private void createConceptMap(String conceptMapId, String body) {
+		FhirApiHelpers.createConceptMap(conceptMapId, body);
+		this.insertionTimesByResource.put(conceptMapId, Instant.now().toString());
 	}
 	
 }
