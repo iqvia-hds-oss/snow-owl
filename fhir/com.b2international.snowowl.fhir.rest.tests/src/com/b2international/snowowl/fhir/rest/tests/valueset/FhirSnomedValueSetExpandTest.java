@@ -19,10 +19,7 @@ import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.APPLI
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.VALUESET_EXPAND;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 
@@ -53,6 +50,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(1943))
+			.body("expansion.parameter", nullValue())
 			.body("expansion.contains[0].code", equalTo("103335007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
@@ -78,6 +76,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(1943))
+			.body("expansion.parameter", nullValue())
 			.body("expansion.contains[0].code", equalTo("103335007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING)) // expanded resource has proper full system value
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
@@ -94,6 +93,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(1943))
+			.body("expansion.parameter", nullValue())
 			.body("expansion.contains[0].code", equalTo("103335007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
@@ -110,6 +110,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(1613))
+			.body("expansion.parameter", nullValue())
 			.body("expansion.contains[0].code", equalTo("103335007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL + "/version/20100131"))
@@ -138,6 +139,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(4))
+			.body("expansion.parameter", nullValue())
 			.body("expansion.contains[0].code", equalTo("312412007"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
@@ -154,6 +156,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(16)) // minified dataset only has 16 top level nodes
+			.body("expansion.parameter", nullValue())
 			.body("expansion.contains[0].code", equalTo("105590001"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
@@ -171,6 +174,8 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(16)) // minified dataset only has 16 top level nodes
+			.body("expansion.parameter.name", hasItem("includeDesignations"))
+			.body("expansion.parameter.valueBoolean", hasItem(true))
 			.body("expansion.contains[0].code", equalTo("105590001"))
 			.body("expansion.contains[0].system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))
 			.body("expansion.contains[0].version", equalTo(SNOMEDCT_URL))
@@ -199,6 +204,8 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
 			.body("expansion.total", equalTo(0))
+			.body("expansion.parameter.name", hasItem("activeOnly"))
+			.body("expansion.parameter.valueBoolean", hasItem(true))
 			.body("expansion.contains.code", nullValue());
 	}
 	
@@ -286,26 +293,29 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.contentType(APPLICATION_FHIR_JSON)
 			.accept(APPLICATION_FHIR_JSON)
 			.body(Json.object(
-					"resourceType", "Parameters",
-					"parameter", Json.array(
-							Json.object(
-									"name", "url",
-									"valueUri", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008/version/20100131?fhir_vs"
-							),
-							Json.object(
-									"name", "filter",
-									"valueString", "drug"
-							),
-							Json.object(
-									"name", "includeDesignations",
-									"valueBoolean", true
-							))
+				"resourceType", "Parameters",
+				"parameter", Json.array(
+					Json.object(
+						"name", "url",
+						"valueUri", SnomedTerminologyComponentConstants.SNOMED_URI_SCT + "/900000000000207008/version/20100131?fhir_vs"
+					),
+					Json.object(
+						"name", "filter",
+						"valueString", "drug"
+					),
+					Json.object(
+						"name", "includeDesignations",
+						"valueBoolean", true
+					))
 				)
 			)
 			.when()
 			.post(VALUESET_EXPAND)
 			.then()
 			.statusCode(200)
+			.body("expansion.parameter.name", hasItems("filter", "includeDesignations"))
+			.body("expansion.parameter.valueBoolean", hasItem(true))
+			.body("expansion.parameter.valueString", hasItem("drug"))
 			.body("expansion.contains[0].designation", notNullValue())
 			.body("expansion.contains[0].designation.size()", greaterThan(0));
 	}
@@ -336,6 +346,8 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("ValueSet"))
 			.body("id", notNullValue())
+			.body("expansion.parameter.name", hasItems("displayLanguage"))
+			.body("expansion.parameter.valueCode", hasItem("en-us,en-gb"))
 			.rootPath("expansion.contains[0]")
 				.body("code", equalTo("105590001"))
 				.body("system", equalTo(FhirModelHelpers.SNOMED_BASE_URI_STRING))

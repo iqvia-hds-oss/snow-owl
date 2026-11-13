@@ -529,6 +529,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 	) {
 		if (parameters.getDisplayLanguage() == null || parameters.getDisplayLanguage().getCode() == null) {
 			parameters.setDisplayLanguage(acceptLanguage);
+			parameters.getDisplayLanguage().setUserData("_source", "Accept-Language");
 		}
 		
 		return FhirRequests.valueSets().prepareExpand()
