@@ -15,14 +15,19 @@
  */
 package com.b2international.snowowl.fhir.rest.tests.valueset;
 
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.APPLICATION_FHIR_JSON;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.FHIR_ROOT_CONTEXT;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.VALUESET_VALIDATE_CODE;
+import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.toJson;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 
+import org.hl7.fhir.r5.model.CodeableConcept;
+import org.hl7.fhir.r5.model.Coding;
 import org.junit.Test;
 
+import com.b2international.fhir.r5.operations.ValueSetValidateCodeParameters;
 import com.b2international.snowowl.fhir.rest.tests.FhirRestTest;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConstants;
@@ -33,7 +38,7 @@ import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConst
 public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 
 	@Test
-	public void snomedImplicitValueSet_ValidateCode_NoCodeParameter() throws Exception {
+	public void GET_validateCode_NoCodeParameter() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
 			.when().get(VALUESET_VALIDATE_CODE)
@@ -42,7 +47,7 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void snomedImplicitValueSet_ValidateCode_NoSystemParameter() throws Exception {
+	public void GET_validateCode_NoSystemParameter() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
 			.queryParam("code", "103335007")
@@ -52,7 +57,7 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void snomedImplicitValueSet_ValidateCode() throws Exception {
+	public void GET_validateCode() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
 			.queryParam("code", "103335007")
@@ -67,7 +72,7 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void snomedImplicitValueSet_ValidateCode_CodeNotPresentInValueSet() throws Exception {
+	public void GET_validateCode_CodeNotPresentInValueSet() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs=isa/105590001")
 			.queryParam("code", Concepts.ROOT_CONCEPT) // root is no child of others, so this should not be available
@@ -84,7 +89,7 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void snomedImplicitValueSet_ValidateCode_InvalidCodeNotPresentInCodeSystem() throws Exception {
+	public void GET_validateCode_InvalidCodeNotPresentInCodeSystem() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
 			.queryParam("code", "1290989121103") // invalid concept not in snomed
@@ -102,7 +107,7 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void snomedImplicitValueSet_ValidateCode_PastDate() throws Exception {
+	public void GET_validateCode_PastDate() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("url", SNOMEDCT_URL + "?fhir_vs")
 			.queryParam("code", Concepts.ROOT_CONCEPT)
@@ -118,4 +123,63 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'message' }.valueString", containsString("does not exist at the specified date"));
 	}
 	
+	@Test
+	public void POST_validateCode_usingCode() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCode("103335007")
+			.setSystem(SnomedTerminologyComponentConstants.SNOMED_URI_SCT);
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL));
+	}
+	
+	@Test
+	public void POST_validateCode_usingCoding() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCoding(new Coding()
+				.setCode("103335007")
+				.setSystem(SnomedTerminologyComponentConstants.SNOMED_URI_SCT));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL));
+	}
+	
+	@Test
+	public void POST_validateCode_usingCodeableConcept() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCodeableConcept(new CodeableConcept()
+				.addCoding(new Coding()
+					.setCode("103335007")
+					.setSystem(SnomedTerminologyComponentConstants.SNOMED_URI_SCT)));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL));
+	}
 }
