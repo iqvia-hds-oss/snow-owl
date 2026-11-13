@@ -136,7 +136,9 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
-			.body("issue.code", hasItem("invalid"))
+			.body("issue.code", hasItem("code-invalid"))
+			.body("issue.details.coding.system", hasItem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type"))
+			.body("issue.details.coding.code", hasItem("invalid-code"))
 			.body("issue.details.text", hasItem("codeA: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."))
 			.body("issue.diagnostics", hasItem("codeA: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
 	}
@@ -154,7 +156,9 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
-			.body("issue.code", hasItem("invalid"))
+			.body("issue.code", hasItem("code-invalid"))
+			.body("issue.details.coding.system", hasItem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type"))
+			.body("issue.details.coding.code", hasItem("invalid-code"))
 			.body("issue.details.text", hasItem("codeB: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."))
 			.body("issue.diagnostics", hasItem("codeB: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
 	}
@@ -172,7 +176,9 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
-			.body("issue.code", hasItem("invalid"))
+			.body("issue.code", hasItem("code-invalid"))
+			.body("issue.details.coding.system", hasItem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type"))
+			.body("issue.details.coding.code", hasItem("invalid-code"))
 			.body("issue.details.text", hasItem("codeA: 'invalid' and codeB: 'invalid' are invalid or non-existent codes in 'http://snomed.info/sct' system."))
 			.body("issue.diagnostics", hasItem("codeA: 'invalid' and codeB: 'invalid' are invalid or non-existent codes in 'http://snomed.info/sct' system."));
 	}
