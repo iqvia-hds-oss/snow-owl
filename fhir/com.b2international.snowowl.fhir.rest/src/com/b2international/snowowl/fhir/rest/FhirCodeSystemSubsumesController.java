@@ -19,12 +19,10 @@ import static com.b2international.snowowl.fhir.rest.FhirMediaType.*;
 
 import java.io.InputStream;
 
-import org.hl7.fhir.r5.model.Coding;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.b2international.commons.StringUtils;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
 import com.b2international.snowowl.core.events.util.Promise;
@@ -32,6 +30,7 @@ import com.b2international.snowowl.core.rest.FhirApiConfig;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
 import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
+import com.google.common.base.Strings;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -128,14 +127,14 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 		
 	) {
 		
-		validateSubsumptionRequest(codeA, codeB, system, version);
-		
 		var parameters = new CodeSystemSubsumptionParameters()
-			.setCodeA(codeA)
-			.setCodeB(codeB)
-			.setSystem(system)
-			.setVersion(version);
-
+				.setCodeA(codeA)
+				.setCodeB(codeB)
+				.setSystem(system)
+				.setVersion(version);
+		
+		validateSubsumptionRequest(parameters);
+	
 		return subsumes(parameters, accept, _format, _pretty);
 	}
 
@@ -213,14 +212,12 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 		final Boolean _pretty
 		
 	) {
-		
-		validateSubsumptionRequest(codeSystemId, codeA, codeB, null, null);
-		
 		var parameters = new CodeSystemSubsumptionParameters()
-			.setCodeA(codeA)
-			.setCodeB(codeB)
-			// XXX: We populate a resource ID in an URI here that is also potentially versioned
-			.setSystem(codeSystemId);
+				.setCodeA(codeA)
+				.setCodeB(codeB)
+				.setSystem(codeSystemId);
+		
+		validateSubsumptionRequest(parameters);
 		
 		return subsumes(parameters, accept, _format, _pretty);		
 	}
@@ -467,15 +464,10 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 		
 		final CodeSystemSubsumptionParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.CodeSystemSubsumptionParametersFactory.INSTANCE);
 		
-		validateSubsumptionRequest(codeSystemId, parameters);
+		// Overwrite system with codeSystemId
+		parameters.setSystem(codeSystemId);
+		validateSubsumptionRequest(parameters);
 		
-		/*
-		 * TODO: Interpolate codeSystemId into "system" parameter if the subsumption
-		 * works with codes, not Codings (and so no system information is available in
-		 * the request at all). This is valid, as clients rightfully assume that an
-		 * instance-level operation works with the CodeSystem instance mentioned in the
-		 * identifier.
-		 */
 		return subsumes(parameters, accept, _format, _pretty);
 	}
 	
@@ -493,62 +485,30 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 				return toResponseEntity(result, accept, _format, _pretty);
 			});
 	}
-
-	private void validateSubsumptionRequest(String codeA, String codeB, String system, String version) {
-		validateSubsumptionRequest(null, codeA,  codeB, system, version);
-	}
 	
-	private void validateSubsumptionRequest(CodeSystemSubsumptionParameters request) {
-		validateSubsumptionRequest(null, request);
-	}
-	
-	private void validateSubsumptionRequest(String codeSystemId, CodeSystemSubsumptionParameters request) {
-		validateSubsumptionRequest(codeSystemId, request.getCodeA().getValue(), request.getCodeB().getValue(), request.getSystem().getValue(), request.getVersion().getValue(), request.getCodingA(), request.getCodingB());
-	}
-
-	private void validateSubsumptionRequest(String codeSystemId, String codeA, String codeB, String system, String version) {
-		validateSubsumptionRequest(codeSystemId, codeA, codeB, system, version, null, null);
-	}
-	
-	private void validateSubsumptionRequest(String codeSystemId, String codeA, String codeB, String system, String version, Coding codingA, Coding codingB) {
-		
-		// check the systems
-		if (StringUtils.isEmpty(system) && StringUtils.isEmpty(codeSystemId)) {
+	private void validateSubsumptionRequest(CodeSystemSubsumptionParameters parameters) {
+		// Note this system value can come from either the specific system parameter or either codings if provided
+		if (Strings.isNullOrEmpty(parameters.extractSystem())) {
 			throw new BadRequestException("Parameter 'system' is not specified for subsumption testing.", "SubsumptionRequest.system");
 		}
 		
-		// TODO: this probably incorrect as codeSystemId is an internal id vs. system that is external
-		if (!StringUtils.isEmpty(system) && !StringUtils.isEmpty(codeSystemId) && !codeSystemId.equals(system)) {
-			throw new BadRequestException(String.format("Parameter 'system: %s' and path parameter 'codeSystem: %s' are not the same.", system, codeSystemId), "SubsumptionRequest.system");
-		}
+		// We do allow using codes and codings together as long as there is only one for A and B
+		final String codeA = parameters.getCodeA() != null ? parameters.getCodeA().getValue() : null;
+		final String codeB = parameters.getCodeB() != null ? parameters.getCodeB().getValue() : null;
+		final String codingAValue = parameters.getCodingA() != null ? parameters.getCodingA().getCode() : null;
+		final String codingBValue = parameters.getCodingB() != null ? parameters.getCodingB().getCode() : null;
 		
-		if (StringUtils.isEmpty(codeA) && StringUtils.isEmpty(codeB)) {
-			// No codes and no codings
-			if (codingA == null && codingB == null) {
-				throw new BadRequestException("No codes or Codings are provided for subsumption testing.", "SubsumptionRequest");
-			}
-
-			// One coding is present, but the other is missing (both can not be missing as it was handled above)
-			if (codingA == null || codingB == null) {
-				throw new BadRequestException("No Codings are provided for subsumption testing.", "SubsumptionRequest.Coding");
-			}
-			
-			// Both codings are present at this point
-			
-		} else {
-
-			// Some codes were provided, but a coding is also present, ambiguous
-			if (codingA != null || codingB != null) {
-				throw new BadRequestException("Provide either codes or Codings.", "SubsumptionRequest");
-			}
-
-			// One code is present, but the other is missing (both can not be missing as it was handled in the outer "if" block above)
-			if (StringUtils.isEmpty(codeA) || StringUtils.isEmpty(codeB)) {
-				throw new BadRequestException("No codes are provided for subsumption testing.", "SubsumptionRequest.code");		
-			}
-			
-			// Both codes are present at this point
+		if (!Strings.isNullOrEmpty(codeA) && !Strings.isNullOrEmpty(codingAValue)) {
+			throw new BadRequestException("Provide either codeA or codingA not both.", "SubsumptionRequest");
 		}
-
+		if (Strings.isNullOrEmpty(codeA) && Strings.isNullOrEmpty(codingAValue)) {
+			throw new BadRequestException("Provide either codeA or codingA.", "SubsumptionRequest");
+		}
+		if (!Strings.isNullOrEmpty(codeB) && !Strings.isNullOrEmpty(codingBValue)) {
+			throw new BadRequestException("Provide either codeB or codingB not both.", "SubsumptionRequest");
+		}
+		if (Strings.isNullOrEmpty(codeB) && Strings.isNullOrEmpty(codingBValue)) {
+			throw new BadRequestException("Provide either codeB or codingB.", "SubsumptionRequest");
+		}
 	}
 }
