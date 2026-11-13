@@ -71,44 +71,39 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		}
 		
 		final Coding coding;
-		final String propertyTemplate;
+		final String codeLocation;
 		final boolean validateDisplay;
 		
 		if (hasCode) {
-				
 			coding = new Coding()
-					.setCode(parameters.getCode().getValue())
-					.setDisplay(parameters.getDisplay() != null ? parameters.getDisplay().getValue() : null);
+				.setCodeElement(parameters.getCode())
+				.setDisplayElement(parameters.getDisplay())
+				.setSystemElement(parameters.getSystem())
+				.setVersionElement(parameters.getSystemVersion());
 				
-			propertyTemplate = "code";
+			codeLocation = "code";
 			validateDisplay = true;
-			
 		} else if (hasCoding) {
-			
 			coding = parameters.getCoding();
-			propertyTemplate = "coding.code";
+			codeLocation = "coding.code";
 			validateDisplay = true;
-			
 		} else if (hasCodeableConcept)	{
-			
 			// TODO support multiple values in codeableConcept? currently the underlying interface and its implementations do not support it
 			if (parameters.getCodeableConcept().getCoding().size() > 1) {
 				throw new BadRequestException("Multiple codeableConcept codings are not supported.");
 			}
 			
 			coding = parameters.getCodeableConcept().getCoding().getFirst();
-			propertyTemplate = "CodeableConcept.coding[%d].code";
+			codeLocation = "codeableConcept.coding[0].code";
 			validateDisplay = false;
-			
 		} else {
 			throw new IllegalStateException("Should not happen");
 		}
 		
 		final String code = coding.getCode();
-
 		// TODO have an 'inferSystem' flag to infer the system from the url (the parameter is planned to be added in R6)
-		String system = parameters.getSystem() != null ? parameters.getSystem().getValue() : null;
-		String version = parameters.getSystemVersion() != null ? parameters.getSystemVersion().getValue() : null;
+		final String system = coding.getSystem();
+		String version = coding.getVersion();
 		
 		if (Strings.isNullOrEmpty(system)) {
 			throw new BadRequestException("$validate-code must supply a 'system'");
@@ -149,9 +144,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				version = compose.getVersion();
 			}
 			
-			// TODO add iteration from FhirCodeSystemValidateCodeRequest once we support multi-valued codeableConcepts
-			final String location = String.format(propertyTemplate, 0);
-			final OperationOutcome.OperationOutcomeIssueComponent issue = buildNotInVsIssue(code, system, location, valueSet.getUrl());
+			final OperationOutcome.OperationOutcomeIssueComponent issue = buildNotInVsIssue(code, system, codeLocation, valueSet.getUrl());
 			issues.add(issue);
 			
 			ResourceURI codeSystemUri = getCodeSystemUri(valueSet);
@@ -166,7 +159,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 					.getTotal();
 				
 				if (total == 0) {
-					final OperationOutcome.OperationOutcomeIssueComponent invalidCodeIssue = buildInvalidCodeIssue(code, system, version, location);
+					final OperationOutcome.OperationOutcomeIssueComponent invalidCodeIssue = buildInvalidCodeIssue(code, system, version, codeLocation);
 					issues.add(invalidCodeIssue);
 				}
 			}
