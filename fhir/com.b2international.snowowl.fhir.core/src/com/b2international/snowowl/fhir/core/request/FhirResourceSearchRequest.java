@@ -79,7 +79,8 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		R5ObjectFields.MetadataResource.NAME,
 		R5ObjectFields.MetadataResource.META,
 		R5ObjectFields.MetadataResource.TEXT,
-		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD
+		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD,
+		R5ObjectFields.MetadataResource.EXPERIMENTAL
 	);
 	
 	// Identifier system URI that indicates that the identifier value represents a URI
