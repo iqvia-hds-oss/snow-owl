@@ -60,7 +60,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		final boolean hasCode = parameters.getCode() != null;
 		final boolean hasCoding = parameters.getCoding() != null;
-		final boolean hasCodeableConcept = parameters.getCodeableConcept() != null && parameters.getCodeableConcept().getCoding() != null;
+		final boolean hasCodeableConcept = parameters.getCodeableConcept() != null && parameters.getCodeableConcept().hasCoding();
 		
 		if (!hasCode && !hasCoding && !hasCodeableConcept) {
 			throw new BadRequestException("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
