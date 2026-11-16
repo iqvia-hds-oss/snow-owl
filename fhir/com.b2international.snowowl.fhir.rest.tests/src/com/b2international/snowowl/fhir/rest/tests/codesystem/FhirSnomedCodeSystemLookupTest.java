@@ -18,10 +18,8 @@ package com.b2international.snowowl.fhir.rest.tests.codesystem;
 import static com.b2international.snowowl.test.commons.fhir.FhirApiHelpers.*;
 import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.Matchers.not;
 
 import java.util.List;
 
@@ -239,12 +237,14 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.queryParam("_format", "json")
 			.when().get(CODESYSTEM_LOOKUP)
 			.then().assertThat()
-			.statusCode(400)
-			.body("resourceType", equalTo("OperationOutcome"))
-			.body("issue.severity", hasItem("error"))
-			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", not(hasItem(containsString("null"))))
-			.body("issue.diagnostics[0]", containsString("Unrecognized property [http://snomed.info/id/12345]."));
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("name"))
+			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
+			.body("parameter[1].name", equalTo("display"))
+			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 	
 	@Test
@@ -356,11 +356,14 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body(toJson(parameters.getParameters()))
 			.when().post(CODESYSTEM_LOOKUP)
 			.then().assertThat()
-			.statusCode(400)
-			.body("resourceType", equalTo("OperationOutcome"))
-			.body("issue.severity", hasItem("error"))
-			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics[0]", containsString("Unrecognized property [http://snomed.info/id/12345]."));
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter[0].name", equalTo("name"))
+			.body("parameter[0].valueString", equalTo("SNOMEDCT"))
+			.body("parameter[1].name", equalTo("display"))
+			.body("parameter[1].valueString", equalTo("SNOMED CT Concept"))
+			.body("parameter[2].name", equalTo("version"))
+			.body("parameter[2].valueString", equalTo(SNOMEDCT_URL));
 	}
 
 }
