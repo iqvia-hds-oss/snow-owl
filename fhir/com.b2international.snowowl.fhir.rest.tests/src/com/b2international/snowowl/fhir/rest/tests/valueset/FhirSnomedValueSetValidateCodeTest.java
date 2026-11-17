@@ -180,6 +180,8 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
 			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
-			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL));
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter.find { it.name == 'codeableConcept' }.valueCodeableConcept.coding[0].system", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'codeableConcept' }.valueCodeableConcept.coding[0].code", equalTo("103335007"));
 	}
 }
