@@ -20,6 +20,7 @@ import static com.b2international.snowowl.test.commons.rest.RestExtensions.given
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.hasItems;
 
 import java.util.List;
 
@@ -341,6 +342,35 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("parameter[3].part[0].valueCode", equalTo("parent"))
 			.body("parameter[3].part[1].valueCode", equalTo(Concepts.ROOT_CONCEPT))
 			.body("parameter[3].part[2].valueString", equalTo("SNOMED CT Concept"));
+	}
+	
+	@Test
+	public void POST_CodeSystem_$lookup_AllProperties() throws Exception {
+		var parameters = new CodeSystemLookupParameters()
+			.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
+			.setVersion(SNOMEDCT_URL)
+			.setCode(CLINICAL_FINDING)
+			.setProperty(List.of("*"));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(CODESYSTEM_LOOKUP)
+			.then().assertThat()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'name' }.valueString", equalTo("SNOMEDCT"))
+			.body("parameter.find { it.name == 'display' }.valueString", equalTo("Clinical finding"))
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter.findAll { it.name == 'property' }.part.flatten().findAll { it.name == 'code' }.valueCode",
+					hasItems(
+							"inactive",
+							"moduleId",
+							"sufficientlyDefined",
+							"effectiveTime",
+							"child",
+							"parent"
+			));
 	}
 	
 	@Test
