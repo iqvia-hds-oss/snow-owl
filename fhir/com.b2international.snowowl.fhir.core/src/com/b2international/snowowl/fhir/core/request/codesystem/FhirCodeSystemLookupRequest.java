@@ -32,9 +32,9 @@ import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
 import com.b2international.snowowl.core.request.ExpandParser;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -165,9 +165,9 @@ final class FhirCodeSystemLookupRequest extends FhirCodeSystemOperationRequest<C
 					.collect(Collectors.toSet());
 
 			if (unsupportedProperties.size() == 1) {
-				throw new BadRequestException(String.format("Unrecognized property %s. Supported properties are: %s.", unsupportedProperties, supportedPropertiesDisplay), "LookupRequest.property");
+				throw FhirExceptions.paramInvalid(String.format("Unrecognized property %s. Supported properties are: %s.", unsupportedProperties, supportedPropertiesDisplay), "LookupRequest.property");
 			} else {
-				throw new BadRequestException(String.format("Unrecognized properties %s. Supported properties are: %s.", unsupportedProperties, supportedPropertiesDisplay), "LookupRequest.property");
+				throw FhirExceptions.paramInvalid(String.format("Unrecognized properties %s. Supported properties are: %s.", unsupportedProperties, supportedPropertiesDisplay), "LookupRequest.property");
 			}
 		}
 	} 

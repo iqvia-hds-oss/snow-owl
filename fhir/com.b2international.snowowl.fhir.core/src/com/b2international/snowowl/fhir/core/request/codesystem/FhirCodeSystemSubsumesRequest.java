@@ -25,6 +25,7 @@ import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Coding;
 
+import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionResultParameters;
@@ -34,8 +35,8 @@ import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -67,11 +68,11 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final Concept conceptB = conceptsById.get(codeB);
 		
 		if (conceptA == null && conceptB == null) {
-			throw new BadRequestException(String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeA, codeB, codeSystem.getUrl()));
+			throw FhirExceptions.paramInvalid(String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeA, codeB, codeSystem.getUrl()));
 		} else if (conceptA == null) {
-			throw new BadRequestException(String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeA, codeSystem.getUrl()));
+			throw FhirExceptions.paramInvalid(String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeA, codeSystem.getUrl()));
 		} else if (conceptB == null) {
-			throw new BadRequestException(String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeB, codeSystem.getUrl()));
+			throw FhirExceptions.paramInvalid(String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeB, codeSystem.getUrl()));
 		}
 		
 		if (Objects.equals(codeA, codeB)) {

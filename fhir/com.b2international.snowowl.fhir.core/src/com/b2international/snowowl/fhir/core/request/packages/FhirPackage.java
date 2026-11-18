@@ -30,12 +30,10 @@ import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.hl7.fhir.r4.model.codesystems.OperationOutcome;
 
 import com.b2international.commons.collections.Collections3;
 import com.b2international.snowowl.core.api.SnowowlRuntimeException;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.exceptions.FhirException;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -89,7 +87,7 @@ public final class FhirPackage {
 		} catch (IOException e) {
 			// XXX FhirException does not allow cause to be specified, so we print out here if we ever fail to extract a package
 			e.printStackTrace();
-			throw new FhirException(String.format("Failed to extract package '%s'", packageFile.getFileName().toString()), OperationOutcome.MSGERRORPARSING);
+			throw FhirExceptions.parsingError(String.format("Failed to extract package '%s'", packageFile.getFileName().toString()));
 		}
 	}
 	
@@ -132,7 +130,7 @@ public final class FhirPackage {
 			}
 			
 			if (packageJson == null) {
-				throw new BadRequestException(String.format("'%s' file is not present in the selected FHIR package under the '%s' folder.", PACKAGE_JSON, PACKAGE_FOLDER));
+				throw FhirExceptions.paramInvalid(String.format("'%s' file is not present in the selected FHIR package under the '%s' folder.", PACKAGE_JSON, PACKAGE_FOLDER));
 			}
 			
 			return new FhirPackage(packageFile, packageJson, recognizedEntries);
@@ -140,8 +138,7 @@ public final class FhirPackage {
 		} catch (IOException e) {
 			// XXX FhirException does not allow cause to be specified, so we print out here if we ever fail to parse a package
 			e.printStackTrace();
-			throw new FhirException(String.format("Failed to parse FHIR package contents '%s'", packageFile.getFileName().toString()),
-					OperationOutcome.MSGERRORPARSING);
+			throw FhirExceptions.parsingError(String.format("Failed to parse FHIR package contents '%s'", packageFile.getFileName().toString()));
 		}
 	}
 	

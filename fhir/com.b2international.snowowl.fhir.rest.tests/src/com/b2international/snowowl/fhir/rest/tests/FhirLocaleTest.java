@@ -23,7 +23,7 @@ import org.hl7.fhir.r5.model.CodeType;
 import org.junit.Test;
 
 import com.b2international.commons.http.AcceptLanguageHeader;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.FhirException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 
 /**
@@ -70,13 +70,13 @@ public class FhirLocaleTest {
 	@Test
 	public void compactInvalidPrivateUseExtension() {
 		// 19 digits as "unbroken" input is not allowed however
-		assertThrows(BadRequestException.class, () -> FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US-x-1234567890123456789")));
+		assertThrows(FhirException.class, () -> FhirCodeSystemOperationRequest.compactLocale(new CodeType("en-US-x-1234567890123456789")));
 	}
 	
 	@Test
 	public void compactInvalidLanguage() {
 		// 9 characters long input can not be accepted as a language tag
-		assertThrows(BadRequestException.class, () -> FhirCodeSystemOperationRequest.compactLocale(new CodeType("notsubtag")));
+		assertThrows(FhirException.class, () -> FhirCodeSystemOperationRequest.compactLocale(new CodeType("notsubtag")));
 	}
 	
 	@Test

@@ -37,7 +37,6 @@ import com.b2international.snowowl.core.request.ResourceRequests;
 import com.b2international.snowowl.core.terminology.TerminologyRegistry;
 import com.b2international.snowowl.core.version.Version;
 import com.b2international.snowowl.core.version.VersionDocument;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
@@ -85,7 +84,7 @@ public class FhirModelHelpers {
 		
 		if (resource.hasVersion() && parameterTimestamp.isPresent()) {
 			// using both a versioned state and the date parameter together leads to inconsistencies and should not be used, report error
-			throw new BadRequestException("Using both a versioned canonical resource and the 'date' parameter is discouraged. Either specify the versioned state or just use the 'date' parameter with the non-versioned resource url.");
+			throw FhirExceptions.paramInvalid("Using both a versioned canonical resource and the 'date' parameter is discouraged. Either specify the versioned state or just use the 'date' parameter with the non-versioned resource url.");
 		}
 
 		final ResourceURI resourceUri = resourceUriFrom(resource);
