@@ -103,7 +103,7 @@ public abstract class FhirResourceSearchRequestBuilder<B extends FhirResourceSea
 		} else if (Summary.COUNT.equalsIgnoreCase(summary)) {
 			return setLimit(0);
 		} else {
-			throw FhirExceptions.unsupported(String.format("'%s' is unrecognized or not yet supported _summary value. Supported values are: '%s'", summary, Summary.VALUES));
+			throw FhirExceptions.paramInvalid(String.format("'%s' is unrecognized or not yet supported _summary value. Supported values are: '%s'", summary, Summary.VALUES));
 		}
 	}
 	
@@ -129,7 +129,7 @@ public abstract class FhirResourceSearchRequestBuilder<B extends FhirResourceSea
 			// check for anything not supported by this search request (per resource type)
 			Set<String> unrecognizedElements = Sets.difference(fields, getKnownResourceFields());
 			if (!unrecognizedElements.isEmpty()) {
-				throw FhirExceptions.unsupported(String.format(
+				throw FhirExceptions.paramInvalid(String.format(
 					"'%s' %s unrecognized or not yet supported _elements value(s). Supported values are: '%s'", 
 					unrecognizedElements, 
 					unrecognizedElements.size() == 1 ? "is" : "are",

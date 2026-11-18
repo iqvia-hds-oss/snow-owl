@@ -19,6 +19,8 @@ import org.hl7.fhir.r5.model.CanonicalType;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.ResourceType;
 
+import com.b2international.snowowl.fhir.core.FhirException.TerminologyIssueType;
+
 /**
  * @since 10.5.0
  */
@@ -29,8 +31,12 @@ public abstract class FhirExceptions {
 	}
 	
 	public static FhirException paramInvalid(String message, String location) {
+		return paramInvalid(message, location, TerminologyIssueType.INVALID_DATA);
+	}
+	
+	public static FhirException paramInvalid(String message, String location, TerminologyIssueType txIssueType) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGPARAMINVALID, message, null)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, txIssueType, message, location)
 				.build();
 	}
 	
@@ -44,41 +50,31 @@ public abstract class FhirExceptions {
 	
 	public static FhirException noExist(String message, String location) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGNOEXIST, message, location)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, null, message, location)
 				.build();
 	}
 	
-	public static FhirException badSyntax(String message) {
-		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.INVALID, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX, message, null)
-				.build();
-	}
-
 	public static FhirException unsupported(String message) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGPARAMINVALID, message, null)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTSUPPORTED, null, message, null)
 				.build();
 	}
 
 	public static FhirException parsingError(String message) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGERRORPARSING, message, null)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.EXCEPTION, null, message, null)
 				.build();
 	}
 
 	public static FhirException authRequired(String message) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.LOGIN, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGAUTHREQUIRED, message, null)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.LOGIN, null, message, null)
 				.build();
 	}
 
-	public static FhirException cantParseContent(String message) {
-		return processingError(message, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGCANTPARSECONTENT);
-	}
-	
-	public static FhirException processingError(String message, org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode) {
+	public static FhirException processingError(String message) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, operationOutcomeCode, message, null)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.PROCESSING, null, message, null)
 				.build();
 	}
 

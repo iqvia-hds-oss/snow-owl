@@ -51,7 +51,7 @@ public abstract class FhirResourceGetRequest<SB extends FhirResourceSearchReques
 	@Override
 	protected final SB createSearchRequestBuilder() {
 		if (Summary.COUNT.equals(summary)) {
-			throw FhirExceptions.unsupported(String.format("_summary=count is not supported on single resource operations"));
+			throw FhirExceptions.paramInvalid(String.format("_summary=count is not supported on single resource operations"));
 		}
 		
 		return prepareSearch()

@@ -24,10 +24,9 @@ import org.hl7.fhir.r5.model.Coding;
 import org.hl7.fhir.r5.model.OperationOutcome;
 
 import com.b2international.commons.CompareUtils;
-import com.b2international.commons.StringUtils;
 import com.b2international.commons.exceptions.ApiException;
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 
 /**
  * Sealed sole Exception implementation responsible for delivering {@link OperationOutcome} responses from internal request implementations to
@@ -93,12 +92,20 @@ public final class FhirException extends ApiException {
 		 * @param location
 		 * @return
 		 */
-		public Builder addIssue(OperationOutcome.IssueSeverity issueSeverity, OperationOutcome.IssueType issueType, org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode, String message, String location) {
+		public Builder addIssue(OperationOutcome.IssueSeverity issueSeverity, OperationOutcome.IssueType issueType, TerminologyIssueType txIssueType, String message, String location) {
 			if (issues == null) {
 				issues = new ArrayList<>(2);
 			}
 			
-			var details = operationOutcomeCode == null ? new CodeableConcept().setText(message) : toDetails(operationOutcomeCode, location);
+			var details = new CodeableConcept()
+					.setText(message);
+			
+			if (txIssueType != null) {
+				details.addCoding(new Coding()
+					.setCode(txIssueType.getCode())
+					.setSystem(txIssueType.getSystem())
+				);
+			}
 			
 			this.issues.add(new OperationOutcome.OperationOutcomeIssueComponent()
 					.setCode(issueType)
@@ -116,73 +123,51 @@ public final class FhirException extends ApiException {
 		return new FhirException.Builder();
 	}
 	
-	private static CodeableConcept toDetails(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode, String location) {
-		String operationOutcomeCodeDisplay = operationOutcomeCode.getDisplay();
+	/**
+	 * Official tx specific issue types to use for OperationOutcome.issue.details.
+	 * 
+	 * @since 10.5.0
+	 */
+	public enum TerminologyIssueType {
+		NOT_FOUND("Not Found", "An issue that identifies a code system or value set that was not found validating the code(s)"),
+		NOT_IN_VS("Not in ValueSet", "An issue that represents the value set validation failure"),
+		THIS_CODE_NOT_IN_VS("This code not in valueset", "An issue that indicates that a particular code as not in the value set (but others might be)"),
+		INVALID_DATA("Invalid Data", "An issue that indicates that the code/Coding/CodeableConcept provided was invalid"),
+		INVALID_CODE("Invalid Code", "An issue that indicates that a provided code is not valid in a code system"),
+		CODE_COMMENT("Code Comment", "An issue that provides some hints or warnings about the use of the code, but does not indicate that is invalid"),
+		INVALID_DISPLAY("Invalid Display", "An issue relating to the display provided for a code"),
+		DISPLAY_COMMENT("Display Comment", "An issue that provides some hints or warnings about the use of the display, but does not indicate that is invalid"),
+		CANNOT_INFER("Cannot Infer System", "An issue indicating why inferring the code system failed (for type=code)"),
+		CODE_RULE("Code Rule", "An issue indicating that a valid code was not valid in this context"),
+		VS_INVALID("ValueSet Invalid", "An issue relating to a problem processing a value set while validating"),
+		STATUS_CHECK("Status Check", "An issue pertaining to the status of the underlying resources");
 		
-		// A single placeholder will split the original input in two, so we need to subtract 1 from the count
-		final long placeholderCount = Splitter.on("%s")
-			.limit(3)
-			.splitToStream(operationOutcomeCodeDisplay)
-			.count() - 1L;
-		
-		if (placeholderCount == 1 && !StringUtils.isEmpty(location)) {
-			operationOutcomeCodeDisplay = String.format(operationOutcomeCodeDisplay, location);
-		} else {
-			operationOutcomeCodeDisplay = getDisplayWithoutPlaceholders(operationOutcomeCode);
+		private final String code;
+		private final String display;
+		private final String definition;
+
+		TerminologyIssueType(String display, String definition) {
+			this.code = CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_HYPHEN, name());
+			this.display = display;
+			this.definition = definition;
 		}
 		
-		return new CodeableConcept()
-			.addCoding(new Coding()
-				.setCode(operationOutcomeCode.toCode())
-				.setSystem(operationOutcomeCode.getSystem())
-				// XXX: The display for the outcome code should _not_ be interpolated, as that is not the original label
-				// .setDisplay(operationOutcomeCodeDisplay) 
-			)
-			.setText(operationOutcomeCodeDisplay);
+		public String getCode() {
+			return code;
+		}
+		
+		public String getDefinition() {
+			return definition;
+		}
+		
+		public String getDisplay() {
+			return display;
+		}
+		
+		public String getSystem() {
+			return "http://hl7.org/fhir/tools/CodeSystem/tx-issue-type";
+		}
+		
 	}
 	
-	/**
-	 * Returns a display string for the given {@link org.hl7.fhir.r4.model.codesystems.OperationOutcome} 
-	 * code with any <code>%s</code> placeholders removed, producing correct English for those literals
-	 * that originally contained format arguments. For the rest of the codes the original display is 
-	 * preserved.
-	 *
-	 * @param operationOutcomeCode the code whose placeholder-free display is requested
-	 * @return a display string without placeholders, never <code>null</code>
-	 */
-	private static String getDisplayWithoutPlaceholders(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode) {
-		switch (operationOutcomeCode) {
-			case MSGBADFORMAT:              return "Bad Format";
-			case MSGBADSYNTAX:              return "Bad Syntax";
-			case MSGCANTPARSECONTENT:       return "Unable to parse content type of feed";
-			case MSGCANTPARSEROOT:          return "Unable to parse element root of feed";
-			case MSGDATEFORMAT:             return "The Date value is not in the correct format (XML Date Format required)";
-			case MSGDELETEDID:              return "The resource has been deleted";
-			case MSGDUPLICATEID:            return "Duplicate ID for resource type";
-			case MSGERRORPARSING:           return "Error parsing resource XML";
-			case MSGIDINVALID:              return "ID has an invalid character";
-			case MSGIDTOOLONG:              return "ID is too long (length limit 36)";
-			case MSGLOCALFAIL:              return "Unable to resolve local reference to resource";
-			case MSGNOEXIST:                return "Resource ID does not exist";
-			case MSGNOMATCH:                return "No Resource found matching the query";
-			case MSGNOMODULE:               return "No module could be found to handle the request";
-			case MSGOPNOTALLOWED:           return "Operation not allowed for resource (due to local configuration)";
-			case MSGPARAMCHAINED:           return "Unknown chained parameter name";
-			case MSGPARAMINVALID:           return "Parameter content is invalid";
-			case MSGPARAMMODIFIERINVALID:   return "Parameter modifier is invalid";
-			case MSGPARAMNOREPEAT:          return "Parameter is not allowed to repeat";
-			case MSGPARAMUNKNOWN:           return "Parameter not understood";
-			case MSGSORTUNKNOWN:            return "Unknown sort parameter name";
-			case MSGTRANSACTIONDUPLICATEID: return "Duplicate Identifier in transaction";
-			case MSGUNHANDLEDNODETYPE:      return "Unhandled XML node type";
-			case MSGUNKNOWNCONTENT:         return "Unknown Content";
-			case MSGUNKNOWNTYPE:            return "Resource Type not recognised";
-			case MSGVERSIONAWARECONFLICT:   return "Update Conflict";
-			case MSGWRONGNS:                return "This does not appear to be a FHIR element or resource (wrong namespace)";
-			case SEARCHMULTIPLE:            return "Error: Multiple matches exist for search parameters";
-			case SEARCHNONE:                return "Error: no processable search found for search parameters";
-			default:                        return operationOutcomeCode.getDisplay();
-		}
-	}
-
 }
