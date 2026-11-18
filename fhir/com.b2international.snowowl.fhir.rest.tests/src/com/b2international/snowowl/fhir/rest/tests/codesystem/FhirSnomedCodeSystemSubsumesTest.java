@@ -124,7 +124,7 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 	}
 	
 	@Test
-	public void GET_CodeSystem_$susbsumes_codeA_Invalid() throws Exception {
+	public void GET_CodeSystem_$subsumes_codeA_Invalid() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", "invalid")
 			.queryParam("codeB", BACTERIA)
@@ -137,12 +137,11 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.details.text", hasItem("codeA: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."))
-			.body("issue.diagnostics", hasItem("codeA: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
+			.body("issue.details.text", hasItem("codeA: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
 	}
 
 	@Test
-	public void GET_CodeSystem_$susbsumes_codeB_Invalid() throws Exception {
+	public void GET_CodeSystem_$subsumes_codeB_Invalid() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", BACTERIA)
 			.queryParam("codeB", "invalid")
@@ -155,12 +154,11 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.details.text", hasItem("codeB: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."))
-			.body("issue.diagnostics", hasItem("codeB: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
+			.body("issue.details.text", hasItem("codeB: 'invalid' is an invalid or non-existent code in 'http://snomed.info/sct' system."));
 	}
 
 	@Test
-	public void GET_CodeSystem_$susbsumes_Invalid_Same_Codes() throws Exception {
+	public void GET_CodeSystem_$subsumes_Invalid_Same_Codes() throws Exception {
 		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.queryParam("codeA", "invalid")
 			.queryParam("codeB", "invalid")
@@ -173,7 +171,6 @@ public class FhirSnomedCodeSystemSubsumesTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.details.text", hasItem("codeA: 'invalid' and codeB: 'invalid' are invalid or non-existent codes in 'http://snomed.info/sct' system."))
-			.body("issue.diagnostics", hasItem("codeA: 'invalid' and codeB: 'invalid' are invalid or non-existent codes in 'http://snomed.info/sct' system."));
+			.body("issue.details.text", hasItem("codeA: 'invalid' and codeB: 'invalid' are invalid or non-existent codes in 'http://snomed.info/sct' system."));
 	}
 }

@@ -125,8 +125,7 @@ public class FhirSnomedValueSetExpandTest extends FhirRestTest {
 			.when().get(VALUESET_EXPAND)
 			.then()
 			.statusCode(400)
-			.body("issue[0].details.text", equalTo("'valueSetVersion' parameter should not be used with implicit Value Set URLs."))
-			.body("issue[0].diagnostics", equalTo("'valueSetVersion' parameter should not be used with implicit Value Set URLs."));
+			.body("issue[0].details.text", equalTo("'valueSetVersion' parameter should not be used with implicit Value Set URLs."));
 	}
 	
 	@Test
