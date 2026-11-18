@@ -15,16 +15,12 @@
  */
 package com.b2international.snowowl.snomed.fhir;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.*;
 
-import com.b2international.commons.StringUtils;
 import com.b2international.fhir.r5.operations.CodeSystemLookupParameters;
 import com.b2international.fhir.r5.operations.CodeSystemLookupResultParameters;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -38,6 +34,7 @@ import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConst
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
 import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.google.common.base.Predicates;
 
 /**
  * @since 8.0
@@ -51,15 +48,20 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		final StringJoiner expand = new StringJoiner(",");
 		expand.add("pt()");
 		
-		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
+		final boolean allPropertiesRequested = parameters.isPropertyRequested("*");
+		final Predicate<String> isRequested = allPropertiesRequested 
+			? Predicates.alwaysTrue() 
+			: parameters::isPropertyRequested;
+		
+		if (isRequested.test(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
 			expand.add("descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")");
 		}
 		
-		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD)) {
+		if (isRequested.test(CodeSystemLookupParameters.PROPERTY_CHILD)) {
 			expand.add("descendants(direct:true,expand(pt()))");
 		}
 		
-		if (parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT)) {
+		if (isRequested.test(CodeSystemLookupParameters.PROPERTY_PARENT)) {
 			expand.add("ancestors(direct:true,expand(pt()))");
 		}
 		
@@ -158,26 +160,31 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		
 		List<CodeSystemLookupResultParameters.Property> properties = new ArrayList<>();
 		
+		final boolean allPropertiesRequested = parameters.isPropertyRequested("*");
+		final Predicate<String> isRequested = allPropertiesRequested 
+			? Predicates.alwaysTrue() 
+			: parameters::isPropertyRequested;
+		
 		// add basic SNOMED properties
-		if (parameters.isPropertyRequested(SnomedFhirConstants.SNOMED_PROPERTY_INACTIVE.getCode())) {
+		if (isRequested.test(SnomedFhirConstants.SNOMED_PROPERTY_INACTIVE.getCode())) {
 			properties.add(new CodeSystemLookupResultParameters.Property()
 					.setCode(SnomedFhirConstants.SNOMED_PROPERTY_INACTIVE.getCode())
 					.setValue(new BooleanType(!snomedConcept.isActive())));
 		}
 		
-		if (parameters.isPropertyRequested(SnomedFhirConstants.SNOMED_PROPERTY_MODULE_ID.getCode())) {
+		if (isRequested.test(SnomedFhirConstants.SNOMED_PROPERTY_MODULE_ID.getCode())) {
 			properties.add(new CodeSystemLookupResultParameters.Property()
 					.setCode(SnomedFhirConstants.SNOMED_PROPERTY_MODULE_ID.getCode())
 					.setValue(new CodeType(snomedConcept.getModuleId())));
 		}
 		
-		if (parameters.isPropertyRequested(SnomedFhirConstants.SNOMED_PROPERTY_SUFFICIENTLY_DEFINED.getCode())) {
+		if (isRequested.test(SnomedFhirConstants.SNOMED_PROPERTY_SUFFICIENTLY_DEFINED.getCode())) {
 			properties.add(new CodeSystemLookupResultParameters.Property()
 					.setCode(SnomedFhirConstants.SNOMED_PROPERTY_SUFFICIENTLY_DEFINED.getCode())
 					.setValue(new BooleanType(!snomedConcept.isPrimitive())));
 		}
 		
-		if (parameters.isPropertyRequested(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())) {
+		if (isRequested.test(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())) {
 			properties.add(new CodeSystemLookupResultParameters.Property()
 					.setCode(SnomedFhirConstants.SNOMED_PROPERTY_EFFECTIVE_TIME.getCode())
 					// FHIR DateTimeType expects YYYY-mm-dd format (with a dash separator in positions 4 and 7) 
@@ -185,8 +192,8 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		}
 		
 		// Optionally requested properties
-		boolean requestedChild = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_CHILD);
-		boolean requestedParent = parameters.isPropertyRequested(CodeSystemLookupParameters.PROPERTY_PARENT);
+		boolean requestedChild = isRequested.test(CodeSystemLookupParameters.PROPERTY_CHILD);
+		boolean requestedParent = isRequested.test(CodeSystemLookupParameters.PROPERTY_PARENT);
 		
 			
 		if (requestedChild && snomedConcept.getDescendants() != null) {
