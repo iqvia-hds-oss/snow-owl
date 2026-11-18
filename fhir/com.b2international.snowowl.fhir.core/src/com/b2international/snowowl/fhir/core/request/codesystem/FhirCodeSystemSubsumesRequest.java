@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeType;
 import org.hl7.fhir.r5.model.Coding;
+import org.hl7.fhir.r5.model.OperationOutcome;
 
-import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionResultParameters;
@@ -35,6 +35,8 @@ import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.fhir.core.FhirException;
+import com.b2international.snowowl.fhir.core.FhirException.TerminologyIssueType;
 import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -68,11 +70,32 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 		final Concept conceptB = conceptsById.get(codeB);
 		
 		if (conceptA == null && conceptB == null) {
-			throw FhirExceptions.paramInvalid(String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeA, codeB, codeSystem.getUrl()));
+			throw  FhirException.builder()
+				.addIssue(
+					OperationOutcome.IssueSeverity.ERROR,
+					OperationOutcome.IssueType.CODEINVALID,
+					TerminologyIssueType.INVALID_CODE,
+					String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeA, codeB, codeSystem.getUrl()),
+					null  // XXX: FHIR validator has no test for this case, so it is unclear what would be expected
+				).build();
 		} else if (conceptA == null) {
-			throw FhirExceptions.paramInvalid(String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeA, codeSystem.getUrl()));
+			throw  FhirException.builder()
+				.addIssue(
+					OperationOutcome.IssueSeverity.ERROR,
+					OperationOutcome.IssueType.CODEINVALID,
+					TerminologyIssueType.INVALID_CODE,
+					String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeA, codeSystem.getUrl()),
+					"codeA"
+				).build();
 		} else if (conceptB == null) {
-			throw FhirExceptions.paramInvalid(String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeB, codeSystem.getUrl()));
+			throw  FhirException.builder()
+				.addIssue(
+					OperationOutcome.IssueSeverity.ERROR,
+					OperationOutcome.IssueType.CODEINVALID,
+					TerminologyIssueType.INVALID_CODE,
+					String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeB, codeSystem.getUrl()),
+					"codeB"
+				).build();
 		}
 		
 		if (Objects.equals(codeA, codeB)) {
@@ -102,7 +125,7 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 	private Map<String, Concept> fetchConcepts(ServiceProvider context, CodeSystem codeSystem, String codeA, String codeB) {
 		
 		if (codeA == null || codeB == null) {
-			throw new BadRequestException("codeA and codeB parameters are required");
+			throw FhirExceptions.paramInvalid("codeA and codeB parameters are required");
 		}
 
 		final List<String> conceptIds = List.of(codeA, codeB);
