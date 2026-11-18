@@ -309,15 +309,8 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	 */
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final NotFoundException ex, final WebRequest request) {
-		return toResponseEntity(HttpStatus.NOT_FOUND, new OperationOutcome()
-				.addIssue(
-					new OperationOutcome.OperationOutcomeIssueComponent()
-						.setSeverity(IssueSeverity.ERROR)
-						.setCode(IssueType.NOTFOUND)
-						.setDiagnostics(ex.getMessage())
-						.addLocation(ex.getKey())
-						.setDetails(FhirException.toDetails(org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGNOEXIST, ex.getKey()))
-				), null, null, true);
+		FhirException fhirException = FhirExceptions.noExist(ex.getMessage(), ex.getKey());
+		return toResponseEntity(HttpStatus.NOT_FOUND, fhirException.getOperationOutcome(), null, null, true);
 	}
 	
 	/**

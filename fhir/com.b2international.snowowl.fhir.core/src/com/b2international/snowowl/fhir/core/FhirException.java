@@ -30,7 +30,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 
 /**
+ * Sealed sole Exception implementation responsible for delivering {@link OperationOutcome} responses from internal request implementations to
+ * controllers and API callers.
+ * 
+ * Use the {@link #builder()} method to initiate the construction of this exception and specify your issues as needed. At least one FHIR specific
+ * issues is required to complete the creation of an instance.
+ * 
+ * For well-known issues and errors, see and use the available static factory methods from {@link FhirExceptions}.
+ * 
  * @since 6.3
+ * @see FhirExceptions
  */
 public final class FhirException extends ApiException {
 
@@ -53,13 +62,17 @@ public final class FhirException extends ApiException {
 		return 0;
 	}
 	
+	/**
+	 * @since 10.5.0
+	 */
 	public static final class Builder {
 
 		private List<OperationOutcome.OperationOutcomeIssueComponent> issues;
 		
-		public Builder() {
-		}
-		
+		/**
+		 * Creates an {@link OperationOutcome} from the currently registered issues and construct a {@link FhirException} to deliver it to callers when an error occurs.
+		 * @return
+		 */
 		public FhirException build() {
 			final OperationOutcome operationOutcome = new OperationOutcome();
 			
@@ -70,9 +83,16 @@ public final class FhirException extends ApiException {
 			return new FhirException(operationOutcome);
 		}
 		
-		// default builder helpers
-//		IssueSeverity.ERROR, IssueType.EXCEPTION
-
+		/**
+		 * Register an issue to the underlying {@link OperationOutcome} instance.
+		 * 
+		 * @param issueSeverity
+		 * @param issueType
+		 * @param operationOutcomeCode
+		 * @param message
+		 * @param location
+		 * @return
+		 */
 		public Builder addIssue(OperationOutcome.IssueSeverity issueSeverity, OperationOutcome.IssueType issueType, org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode, String message, String location) {
 			if (issues == null) {
 				issues = new ArrayList<>(2);
@@ -96,7 +116,7 @@ public final class FhirException extends ApiException {
 		return new FhirException.Builder();
 	}
 	
-	public static CodeableConcept toDetails(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode, String location) {
+	private static CodeableConcept toDetails(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode, String location) {
 		String operationOutcomeCodeDisplay = operationOutcomeCode.getDisplay();
 		
 		// A single placeholder will split the original input in two, so we need to subtract 1 from the count
@@ -130,7 +150,7 @@ public final class FhirException extends ApiException {
 	 * @param operationOutcomeCode the code whose placeholder-free display is requested
 	 * @return a display string without placeholders, never <code>null</code>
 	 */
-	public static String getDisplayWithoutPlaceholders(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode) {
+	private static String getDisplayWithoutPlaceholders(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode) {
 		switch (operationOutcomeCode) {
 			case MSGBADFORMAT:              return "Bad Format";
 			case MSGBADSYNTAX:              return "Bad Syntax";

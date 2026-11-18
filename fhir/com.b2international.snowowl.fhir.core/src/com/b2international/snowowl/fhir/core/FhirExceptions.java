@@ -39,8 +39,12 @@ public abstract class FhirExceptions {
 	}
 	
 	public static FhirException noExist(String message) {
+		return noExist(message, null);
+	}
+	
+	public static FhirException noExist(String message, String location) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGNOEXIST, message, null)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGNOEXIST, message, location)
 				.build();
 	}
 	
