@@ -36,6 +36,23 @@ public final class FhirException extends ApiException {
 
 	private static final long serialVersionUID = 3L;
 
+	private final OperationOutcome operationOutcome;
+	
+	FhirException(OperationOutcome operationOutcome) {
+		Preconditions.checkArgument(operationOutcome.hasIssue(), "At least one OperationOutcome.issue is required");
+		this.operationOutcome = operationOutcome;
+		super(Optional.ofNullable(operationOutcome.getIssueFirstRep().getText()).orElse(operationOutcome.getIssueFirstRep().getDiagnostics()));
+	}
+	
+	public OperationOutcome getOperationOutcome() {
+		return operationOutcome;
+	}
+	
+	@Override
+	protected Integer getStatus() {
+		return 0;
+	}
+	
 	public static final class Builder {
 
 		private List<OperationOutcome.OperationOutcomeIssueComponent> issues;
@@ -77,16 +94,6 @@ public final class FhirException extends ApiException {
 	
 	public static FhirException.Builder builder() {
 		return new FhirException.Builder();
-	}
-	
-	FhirException(OperationOutcome operationOutcome) {
-		Preconditions.checkArgument(operationOutcome.hasIssue(), "At least one OperationOutcome.issue is required");
-		super(Optional.ofNullable(operationOutcome.getIssueFirstRep().getText()).orElse(operationOutcome.getIssueFirstRep().getDiagnostics()));
-	}
-	
-	@Override
-	protected Integer getStatus() {
-		return 0;
 	}
 	
 	public static CodeableConcept toDetails(org.hl7.fhir.r4.model.codesystems.OperationOutcome operationOutcomeCode, String location) {

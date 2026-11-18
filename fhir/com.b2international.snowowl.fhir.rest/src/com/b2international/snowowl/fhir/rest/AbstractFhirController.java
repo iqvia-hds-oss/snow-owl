@@ -45,10 +45,8 @@ import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.BaseParameters;
 import com.b2international.snowowl.core.rest.AbstractRestService;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.core.rest.RestApiError;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.exceptions.FhirException;
-import com.b2international.snowowl.fhir.core.exceptions.FhirResourceNotResolvableException;
+import com.b2international.snowowl.fhir.core.FhirException;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -244,29 +242,29 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	        return null; // socket is closed, cannot return any response    
 	    } else {
 	    	LOG.error("Exception during processing of a request", ex);
-	    	FhirException fhirException = new FhirException(GENERIC_USER_MESSAGE + " Exception: " + ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
-	    	return toResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, fhirException.toOperationOutcome(), request);
+			var error = FhirExceptions.processingError(GENERIC_USER_MESSAGE + " Exception: " + ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
+	    	return toResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, error.getOperationOutcome(), request);
 	    }
 	}
 	
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final SyntaxException ex, final WebRequest request) {
-    	FhirException fhirException = new FhirException(ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
+    	var fhirException = FhirExceptions.badSyntax(ex.getMessage());
     	fhirException.withAdditionalInfo(ex.getAdditionalInfo());
-    	return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.toOperationOutcome(), request);
+    	return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.getOperationOutcome(), request);
 	}
 	
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final ValidationException ex, final WebRequest request) {
-		FhirException error = new FhirException("Validation error", org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
+		var error = FhirExceptions.badSyntax("Validation error");
 		error.withAdditionalInfo(ex.getAdditionalInfo());
-		return toResponseEntity(HttpStatus.BAD_REQUEST, error.toOperationOutcome(), request);
+		return toResponseEntity(HttpStatus.BAD_REQUEST, error.getOperationOutcome(), request);
 	}
 	
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final UnauthorizedException ex, final WebRequest request) {
-		FhirException fhirException = new FhirException(ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGAUTHREQUIRED);
-		ResponseEntity<byte[]> responseEntityWithoutAuth = toResponseEntity(HttpStatus.UNAUTHORIZED, fhirException.toOperationOutcome(), request);
+		var fhirException = FhirExceptions.authRequired(ex.getMessage());
+		ResponseEntity<byte[]> responseEntityWithoutAuth = toResponseEntity(HttpStatus.UNAUTHORIZED, fhirException.getOperationOutcome(), request);
 		
 		return ResponseEntity.status(responseEntityWithoutAuth.getStatusCode())
 			.headers(responseEntityWithoutAuth.getHeaders())
@@ -276,8 +274,8 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	}
 	
 	@ExceptionHandler
-	public @ResponseBody ResponseEntity<byte[]> handle(final BadRequestException ex, final WebRequest request) {
-		return toResponseEntity(HttpStatus.BAD_REQUEST, ex.toSimpleOperationOutcome(), request);
+	public @ResponseBody ResponseEntity<byte[]> handle(final FhirException ex, final WebRequest request) {
+		return toResponseEntity(HttpStatus.BAD_REQUEST, ex.getOperationOutcome(), request);
 	}
 	
 	@ExceptionHandler
@@ -298,8 +296,8 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(HttpMessageNotReadableException ex, final WebRequest request) {
 		LOG.trace("Exception during processing of a JSON document", ex);
-		FhirException fhirException = new FhirException(GENERIC_USER_MESSAGE + " Exception: " + ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGCANTPARSECONTENT);
-		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.toOperationOutcome(), request);
+		FhirException fhirException = FhirExceptions.cantParseContent(GENERIC_USER_MESSAGE + " Exception: " + ex.getMessage());
+		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.getOperationOutcome(), request);
 	}
 
 	/**
@@ -307,7 +305,7 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	 * <em>404 Not Found</em>} in case of the absence of an instance resource.
 	 * 
 	 * @param ex
-	 * @return {@link RestApiError} instance with detailed messages
+	 * @return {@link OperationOutcome} instance with detailed messages
 	 */
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final NotFoundException ex, final WebRequest request) {
@@ -323,75 +321,56 @@ public abstract class AbstractFhirController extends AbstractRestService {
 	}
 	
 	/**
-	 * <b>Not resolvable</b> exception handler. {@link FhirResourceNotResolvableException not resolvable exception}s are mapped to {@link HttpStatus#NOT_FOUND
-	 * <em>404 Not Found</em>} in case of the absence of an instance resource.
-	 * 
-	 * @param ex
-	 * @return {@link RestApiError} instance with detailed messages
-	 */
-	@ExceptionHandler
-	public @ResponseBody ResponseEntity<byte[]> handle(final FhirResourceNotResolvableException ex, final WebRequest request) {
-		return toResponseEntity(HttpStatus.NOT_FOUND, new OperationOutcome()
-				.addIssue(
-					new OperationOutcome.OperationOutcomeIssueComponent()
-						.setSeverity(IssueSeverity.ERROR)
-						.setCode(IssueType.NOTFOUND)
-						.setDetails(FhirException.toDetails(ex.getMessage()))
-						.setDiagnostics(ex.getMessage())
-				), request);
-	}
-
-	/**
 	 * Exception handler to return <b>Not Implemented</b> when an {@link UnsupportedOperationException} is thrown from the underlying system.
 	 * 
 	 * @param ex
-	 * @return {@link RestApiError} instance with detailed messages
+	 * @return {@link OperationOutcome} instance with detailed messages
 	 */
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(NotImplementedException ex, final WebRequest request) {
-		FhirException fhirException = new FhirException(ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGUNKNOWNOPERATION);
-		return toResponseEntity(HttpStatus.NOT_IMPLEMENTED, fhirException.toOperationOutcome(), request);
+		FhirException fhirException = FhirExceptions.unsupported(ex.getMessage());
+		return toResponseEntity(HttpStatus.NOT_IMPLEMENTED, fhirException.getOperationOutcome(), request);
 	}
 
 	/**
 	 * Exception handler to return <b>Conflict</b> when an {@link ConflictException} is thrown from the underlying system.
 	 * 
 	 * @param ex
-	 * @return {@link RestApiError} instance with detailed messages
+	 * @return {@link OperationOutcome} instance with detailed messages
 	 */
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final ConflictException ex, final WebRequest request) {
-		FhirException fhirException = new FhirException(ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGLOCALFAIL);
-		return toResponseEntity(HttpStatus.CONFLICT, fhirException.toOperationOutcome(), request);
+		FhirException fhirException = FhirExceptions.processingError(ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGLOCALFAIL);
+		return toResponseEntity(HttpStatus.CONFLICT, fhirException.getOperationOutcome(), request);
 	}
 	
 	/**
 	 * Exception handler for exceptions thrown due to required but missing query parameters.
 	 * @param ex
-	 * @return
+	 * @return {@link OperationOutcome} instance with detailed messages
 	 */
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final MissingServletRequestParameterException ex, final WebRequest request) {
-		FhirException fhirException = new FhirException(ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
-		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.toOperationOutcome(), request);
+		FhirException fhirException = FhirExceptions.processingError(ex.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
+		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.getOperationOutcome(), request);
 	}
 	
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(FHIRException e, final WebRequest request) {
-		FhirException fhirException = new FhirException(e.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
-		return toResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, fhirException.toOperationOutcome(), request);
+		FhirException fhirException = FhirExceptions.processingError(e.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
+		return toResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, fhirException.getOperationOutcome(), request);
 	}
 	
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(FHIRFormatError e, final WebRequest request) {
-		FhirException fhirException = new FhirException(e.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADFORMAT);
-		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.toOperationOutcome(), request);
+		FhirException fhirException = FhirExceptions.processingError(e.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADFORMAT);
+		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.getOperationOutcome(), request);
 	}
 	
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(com.b2international.commons.exceptions.BadRequestException e, final WebRequest request) {
-		FhirException fhirException = new FhirException(e.getMessage(), org.hl7.fhir.r4.model.codesystems.OperationOutcome.MSGBADSYNTAX);
-		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.toOperationOutcome(), request);
+		FhirException fhirException = FhirExceptions.badSyntax(e.getMessage());
+		return toResponseEntity(HttpStatus.BAD_REQUEST, fhirException.getOperationOutcome(), request);
 	}
 	
 }
