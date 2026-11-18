@@ -28,7 +28,7 @@ import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.FhirApiConfig;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.google.common.base.Strings;
 
@@ -489,7 +489,7 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 	private void validateSubsumptionRequest(CodeSystemSubsumptionParameters parameters) {
 		// Note this system value can come from either the specific system parameter or either codings if provided
 		if (Strings.isNullOrEmpty(parameters.extractSystem())) {
-			throw new BadRequestException("Parameter 'system' is not specified for subsumption testing.", "SubsumptionRequest.system");
+			throw FhirExceptions.paramInvalid("Parameter 'system' is not specified for subsumption testing.", "SubsumptionRequest.system");
 		}
 		
 		// We do allow using codes and codings together as long as there is only one for A and B
@@ -499,16 +499,16 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 		final String codingBValue = parameters.getCodingB() != null ? parameters.getCodingB().getCode() : null;
 		
 		if (!Strings.isNullOrEmpty(codeA) && !Strings.isNullOrEmpty(codingAValue)) {
-			throw new BadRequestException("Provide either codeA or codingA not both.", "SubsumptionRequest");
+			throw FhirExceptions.paramInvalid("Provide either codeA or codingA not both.", "SubsumptionRequest");
 		}
 		if (Strings.isNullOrEmpty(codeA) && Strings.isNullOrEmpty(codingAValue)) {
-			throw new BadRequestException("Provide either codeA or codingA.", "SubsumptionRequest");
+			throw FhirExceptions.paramInvalid("Provide either codeA or codingA.", "SubsumptionRequest");
 		}
 		if (!Strings.isNullOrEmpty(codeB) && !Strings.isNullOrEmpty(codingBValue)) {
-			throw new BadRequestException("Provide either codeB or codingB not both.", "SubsumptionRequest");
+			throw FhirExceptions.paramInvalid("Provide either codeB or codingB not both.", "SubsumptionRequest");
 		}
 		if (Strings.isNullOrEmpty(codeB) && Strings.isNullOrEmpty(codingBValue)) {
-			throw new BadRequestException("Provide either codeB or codingB.", "SubsumptionRequest");
+			throw FhirExceptions.paramInvalid("Provide either codeB or codingB.", "SubsumptionRequest");
 		}
 	}
 }
