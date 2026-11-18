@@ -110,7 +110,8 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		final String expectedDisplay = coding.getDisplay();
 		String display = expectedDisplay;  // Initialize display with provided value
-		final boolean validateDisplay = !Strings.isNullOrEmpty(expectedDisplay);  // XXX: r6 will introduce parameter `lenient-display-validation` which should turn the error into a warning
+		// XXX: [FHIR] r6 will introduce parameter `lenient-display-validation` which should turn the error into a warning
+		final boolean validateDisplay = !Strings.isNullOrEmpty(expectedDisplay);  
 		
 		boolean invalidDate;
 		ValueSet.ValueSetExpansionContainsComponent valueSetExpansionContainsComponent = null;
