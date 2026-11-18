@@ -34,6 +34,7 @@ import com.b2international.snowowl.snomed.common.SnomedTerminologyComponentConst
 import com.b2international.snowowl.snomed.core.SnomedDisplayTermType;
 import com.b2international.snowowl.snomed.core.domain.*;
 import com.b2international.snowowl.snomed.datastore.request.SnomedRequests;
+import com.google.common.base.Predicates;
 
 /**
  * @since 8.0
@@ -48,8 +49,9 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		expand.add("pt()");
 		
 		final boolean allPropertiesRequested = parameters.isPropertyRequested("*");
-		
-		final Predicate<String> isRequested = property -> parameters.isPropertyRequested(property) || allPropertiesRequested;
+		final Predicate<String> isRequested = allPropertiesRequested 
+			? Predicates.alwaysTrue() 
+			: parameters::isPropertyRequested;
 		
 		if (isRequested.test(CodeSystemLookupParameters.PROPERTY_DESIGNATION)) {
 			expand.add("descriptions(expand(type(expand(pt()))),sort:\"typeId,term\")");
@@ -159,8 +161,9 @@ public final class SnomedFhirCodeSystemLookupConverter implements FhirCodeSystem
 		List<CodeSystemLookupResultParameters.Property> properties = new ArrayList<>();
 		
 		final boolean allPropertiesRequested = parameters.isPropertyRequested("*");
-		
-		final Predicate<String> isRequested = property -> parameters.isPropertyRequested(property) || allPropertiesRequested;
+		final Predicate<String> isRequested = allPropertiesRequested 
+			? Predicates.alwaysTrue() 
+			: parameters::isPropertyRequested;
 		
 		// add basic SNOMED properties
 		if (isRequested.test(SnomedFhirConstants.SNOMED_PROPERTY_INACTIVE.getCode())) {
