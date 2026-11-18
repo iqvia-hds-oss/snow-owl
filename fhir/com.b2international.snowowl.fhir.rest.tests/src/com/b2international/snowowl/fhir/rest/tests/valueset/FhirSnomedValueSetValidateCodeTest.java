@@ -163,6 +163,64 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 	}
 	
 	@Test
+	public void POST_validateCode_usingCodingWithoutCode() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCoding(new Coding()
+				.setSystem(SnomedTerminologyComponentConstants.SNOMED_URI_SCT));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			// System and version were inferred from the implicit url
+			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has node code, so it cannot be validated. A code should be provided"));
+	}
+	
+	@Test
+	public void POST_validateCode_usingCodingWithoutSystem() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCoding(new Coding()
+				.setCode("103335007"));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			// System and version were inferred from the implicit url
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has no system. A code with no system has no defined meaning, and it cannot be validated. A system should be provided"));
+	}
+	
+	@Test
+	public void POST_validateCode_usingCodingWithOnlyDislay() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCoding(new Coding()
+				.setDisplay("display"));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			// System and version were inferred from the implicit url
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has neither a system nor a code, so it cannot be validated. A system and a code should be provided"));
+	}
+	
+	@Test
 	public void POST_validateCode_usingCodeableConcept() throws Exception {
 		var parameters = new ValueSetValidateCodeParameters()
 			.setUrl(SNOMEDCT_URL + "?fhir_vs")
@@ -180,6 +238,64 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(true))
 			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
-			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL));
+			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
+			.body("parameter.find { it.name == 'codeableConcept' }.valueCodeableConcept.coding[0].system", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
+			.body("parameter.find { it.name == 'codeableConcept' }.valueCodeableConcept.coding[0].code", equalTo("103335007"));
+	}
+	
+	public void POST_validateCode_usingCodableConceptWithoutCode() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCodeableConcept(new CodeableConcept()
+				.addCoding(new Coding()
+					.setSystem(SnomedTerminologyComponentConstants.SNOMED_URI_SCT)));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has node code, so it cannot be validated. A code should be provided"));
+	}
+	
+	@Test
+	public void POST_validateCode_usingCodableConceptWithoutSystem() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCodeableConcept(new CodeableConcept()
+				.addCoding(new Coding()
+					.setCode("103335007")));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has no system. A code with no system has no defined meaning, and it cannot be validated. A system should be provided"));
+	}
+	
+	@Test
+	public void POST_validateCode_usingCodableConceptWithOnlyDisplay() throws Exception {
+		var parameters = new ValueSetValidateCodeParameters()
+			.setUrl(SNOMEDCT_URL + "?fhir_vs")
+			.setCodeableConcept(new CodeableConcept()
+				.addCoding(new Coding()
+					.setDisplay("display")));
+		
+		givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(toJson(parameters.getParameters()))
+			.when().post(VALUESET_VALIDATE_CODE)
+			.then()
+			.statusCode(200)
+			.body("resourceType", equalTo("Parameters"))
+			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has neither a system nor a code, so it cannot be validated. A system and a code should be provided"));
 	}
 }
