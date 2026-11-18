@@ -223,7 +223,8 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		} else if (hasCodeableConcept) {
 			result.setCodeableConcept(parameters.getCodeableConcept());
 			if (codeValidated) {
-				// If a CodeableConcept was provided then FHIR validator only expects the code/system/display parameters if the code was deemed valid
+				// If a CodeableConcept was provided then FHIR validator only expects the code/system/display parameters if the code was deemed valid,
+				// invalid display is not considered here.
 				result
 					.setCode(code)
 					.setSystem(system)
@@ -279,7 +280,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				.addCoding(new Coding()
 					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
 					.setCode("invalid-data"))
-				.setText("Coding has neither code and system. It cannot ve validated"))
+				.setText("Coding has neither a system nor a code, so it cannot be validated. A system and a code should be provided"))
 			.addLocation(expression)
 			.addExpression(expression);
 	}
@@ -293,7 +294,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				.addCoding(new Coding()
 					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
 					.setCode("invalid-data"))
-				.setText("Coding has no code. It cannot ve validated"))
+				.setText("Coding has node code, so it cannot be validated. A code should be provided"))
 			.addLocation(expression)
 			.addExpression(expression);
 	}
