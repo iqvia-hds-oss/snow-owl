@@ -34,6 +34,7 @@ import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.r5.model.*;
 import org.hl7.fhir.r5.model.Enumerations.CodeSystemContentMode;
 
+import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.commons.exceptions.NotImplementedException;
 import com.b2international.fhir.r5.operations.LoadPackageParameters;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -42,9 +43,9 @@ import com.b2international.snowowl.core.attachments.Attachment;
 import com.b2international.snowowl.core.attachments.AttachmentRegistry;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.setup.Environment;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.FhirResourceParser;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemWriteSupport;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapWriteSupport;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetWriteSupport;
@@ -128,24 +129,24 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 		final FhirPackage fhirPackage = FhirPackage.parse(packageFile, context.service(ObjectMapper.class), RECOGNIZED_PACKAGE_FILE_FILTER);
 
 		if (!fhirPackage.hasRecognizedEntries()) {
-			throw new BadRequestException("FHIR package does not contain any CodeSystem, ValueSet or ConceptMap resources");
+			throw FhirExceptions.paramInvalid("FHIR package does not contain any CodeSystem, ValueSet or ConceptMap resources");
 		}
 		
 		// check package.json has the same package info as the one requested in the params, just to ensure the we downloaded the right package
 		if (parameters.getName() != null && !Objects.equals(parameters.getName().getValue(), fhirPackage.getPackageJson().name())) {
-			throw new BadRequestException(String.format("Received FHIR package '%s' is not the requested one '%s'.", fhirPackage.getPackageJson().name(), parameters.getName().getValue()));
+			throw FhirExceptions.paramInvalid(String.format("Received FHIR package '%s' is not the requested one '%s'.", fhirPackage.getPackageJson().name(), parameters.getName().getValue()));
 		}
 		
 		if (parameters.getVersion() != null && !Objects.equals(parameters.getVersion().getValue(), fhirPackage.getPackageJson().version())) {
-			throw new BadRequestException(String.format("Received FHIR package '%s' has a different version '%s' that the requested one '%s'.", fhirPackage.getPackageJson().name(), fhirPackage.getPackageJson().version(), parameters.getName().getValue()));
+			throw FhirExceptions.paramInvalid(String.format("Received FHIR package '%s' has a different version '%s' that the requested one '%s'.", fhirPackage.getPackageJson().name(), fhirPackage.getPackageJson().version(), parameters.getName().getValue()));
 		}
 		
 		if (fhirPackage.getPackageJson().fhirVersions().isEmpty()) {
-			throw new BadRequestException(String.format("Received FHIR package does not declare the fhirVersions property in package.json which is required to properly load and import the resources."));
+			throw FhirExceptions.paramInvalid(String.format("Received FHIR package does not declare the fhirVersions property in package.json which is required to properly load and import the resources."));
 		}
 		
 		if (fhirPackage.getPackageJson().fhirVersions().size() > 1) {
-			throw new BadRequestException(String.format("Received FHIR package declares more than one value in the fhirVersions property which is currently not supported."));
+			throw FhirExceptions.paramInvalid(String.format("Received FHIR package declares more than one value in the fhirVersions property which is currently not supported."));
 		}
 		
 		// package.json is valid and there are entries to import, extract all recognized files
@@ -336,7 +337,7 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 			if (packageToLoad != null) {
 				// check if package data is specified in the parameters object and raise errors if yes
 				if (parameters.hasPackageInfo()) {
-					throw new BadRequestException(String.format("Unable to fulfill request as both an attachment (multipart=file) and package information (name and/or version) are available."));
+					throw FhirExceptions.paramInvalid(String.format("Unable to fulfill request as both an attachment (multipart=file) and package information (name and/or version) are available."));
 				}
 				
 				// ensure packagesDirectory exists
@@ -376,13 +377,13 @@ public final class FhirLoadPackageRequest implements Request<ServiceProvider, Fh
 					FileUtils.copyURLToFile(new URI(packageUrl).toURL(), packageFile.toFile(), 30000, 60000);
 					return packageFile;
 				} catch (IOException e) {
-					throw new BadRequestException(String.format("Package '%s' cannot be downloaded from registry URL '%s'", packageInfo, packageUrl));
+					throw FhirExceptions.paramInvalid(String.format("Package '%s' cannot be downloaded from registry URL '%s'", packageInfo, packageUrl));
 				} catch (URISyntaxException e) {
-					throw new BadRequestException("Malformed package location: " + packageUrl);
+					throw FhirExceptions.paramInvalid("Malformed package location: " + packageUrl);
 				}
 			} else {
 				// neither attachment nor package info is available, raise error
-				throw new BadRequestException("FHIR Package coordinates are missing. Either specify them via name and version parameters or upload a file as a request attachment.");
+				throw FhirExceptions.paramInvalid("FHIR Package coordinates are missing. Either specify them via name and version parameters or upload a file as a request attachment.");
 			}
 			
 	}

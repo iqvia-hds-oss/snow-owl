@@ -17,14 +17,12 @@ package com.b2international.snowowl.fhir.rest.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
+import com.b2international.snowowl.fhir.core.FhirException;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.exceptions.FhirException;
 import com.b2international.snowowl.snomed.common.SnomedConstants.Concepts;
 import com.b2international.snowowl.snomed.fhir.SnomedUri;
 import com.b2international.snowowl.snomed.fhir.SnomedUri.QueryPartDefinition;
@@ -34,51 +32,40 @@ import com.b2international.snowowl.snomed.fhir.SnomedUri.QueryPartDefinition;
  */
 public class SnomedUriParsingTest {
 	
-	@Rule
-	public ExpectedException exception = ExpectedException.none();
-	
 	@Test
 	public void testInvalidBase() {
-		
-		String uriString = "invalid uri";
-		
-		exception.expect(BadRequestException.class);
-		exception.expectMessage("URI 'invalid uri' is not a valid SNOMED CT URI. It should start as 'http://snomed.info/sct'");
-
-		SnomedUri.fromUriString(uriString, "uri");
+		assertThrows(
+			"URI 'invalid uri' is not a valid SNOMED CT URI. It should start as 'http://snomed.info/sct'", 
+			FhirException.class, 
+			() -> SnomedUri.fromUriString("invalid uri", "uri")
+		);
 	}
 	
 	@Test
 	public void testInvalidModule() {
-		
-		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/a";
-		
-		exception.expect(FhirException.class);
-		exception.expectMessage("Invalid SNOMED CT extension module ID [a] defined.");
-
-		SnomedUri.fromUriString(uriString, "uri");
+		assertThrows(
+			"Invalid SNOMED CT extension module ID [a] defined.", 
+			FhirException.class, 
+			() -> SnomedUri.fromUriString(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/a", "uri")
+		);
 	}
 	
 	@Test
 	public void testInvalidVersionTag() {
-		
-		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008/invalidTag";
-		
-		exception.expect(FhirException.class);
-		exception.expectMessage("Invalid path segment [invalidTag], 'version' expected.");
-
-		SnomedUri.fromUriString(uriString, "uri");
+		assertThrows(
+			"Invalid path segment [invalidTag], 'version' expected.", 
+			FhirException.class, 
+			() -> SnomedUri.fromUriString(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008/invalidTag", "uri")
+		);
 	}
 	
 	@Test
 	public void testMissingVersionTag() {
-		
-		String uriString = FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008/version";
-		
-		exception.expect(FhirException.class);
-		exception.expectMessage("No version tag is specified after the 'version' parameter.");
-
-		SnomedUri.fromUriString(uriString, "uri");
+		assertThrows(
+			"No version tag is specified after the 'version' parameter.", 
+			FhirException.class, 
+			() -> SnomedUri.fromUriString(FhirModelHelpers.SNOMED_BASE_URI_STRING + "/900000000000207008/version", "uri")
+		);
 	}
 
 	//correct paths

@@ -59,7 +59,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("not-found"))
-			.body("issue.diagnostics", hasItem("A usable CodeSystem with URL 'unknown' could not be resolved."));
+			.body("issue.details.text", hasItem("A usable CodeSystem with URL 'unknown' could not be resolved."));
 	}
 	
 	@Test
@@ -75,7 +75,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("not-found"))
-			.body("issue.diagnostics", hasItem("A usable CodeSystem with URL 'http://snomed.info/sct|unknown' could not be resolved."));
+			.body("issue.details.text", hasItem("A usable CodeSystem with URL 'http://snomed.info/sct|unknown' could not be resolved."));
 	}
 	
 	@Test
@@ -91,7 +91,7 @@ public class FhirSnomedCodeSystemLookupTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("not-found"))
-			.body("issue.diagnostics", hasItem("Concept with identifier '12345' could not be found."));
+			.body("issue.details.text", hasItem("Concept with identifier '12345' could not be found."));
 	}
 
 	@Test

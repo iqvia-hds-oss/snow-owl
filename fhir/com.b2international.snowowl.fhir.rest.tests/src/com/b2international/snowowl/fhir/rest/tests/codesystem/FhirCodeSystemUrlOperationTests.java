@@ -514,7 +514,7 @@ public class FhirCodeSystemUrlOperationTests extends FhirRestTest {
 			.then().assertThat()
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
-			.body("issue[0].diagnostics", containsString("unique effective versions"));
+			.body("issue[0].details.text", containsString("unique effective versions"));
 	}
 
 	@Test

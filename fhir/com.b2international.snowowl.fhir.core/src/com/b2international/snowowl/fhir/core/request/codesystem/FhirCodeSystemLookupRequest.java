@@ -121,4 +121,5 @@ final class FhirCodeSystemLookupRequest extends FhirCodeSystemOperationRequest<C
 		// super defines the ultra minimal set
 		return super.configureFieldsToLoad();
 	}
+
 }

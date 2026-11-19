@@ -38,7 +38,7 @@ import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 import com.b2international.snowowl.fhir.rest.ResponseTypeSchemas.OperationOutcome;
@@ -373,16 +373,16 @@ public class FhirConceptMapController extends AbstractFhirResourceController {
 	) {
 		
 		if (soConceptMap.getId() == null) {
-			throw new BadRequestException("Concept map resource did not contain an id element.");
+			throw FhirExceptions.paramInvalid("Concept map resource did not contain an id element.");
 		}
 		
 		final String idInResource = soConceptMap.getId();
 		if (!id.equals(idInResource)) {
-			throw new BadRequestException("Concept map resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
+			throw FhirExceptions.paramInvalid("Concept map resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
 		}
 		
 		if (!soConceptMap.hasUrl()) {
-			throw new BadRequestException("Concept map resource did not contain a url element.");
+			throw FhirExceptions.paramInvalid("Concept map resource did not contain a url element.");
 		}
 		
 		return FhirRequests.conceptMaps()

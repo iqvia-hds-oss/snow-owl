@@ -36,8 +36,8 @@ import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.internal.DependencyDocument;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -68,11 +68,11 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		if (!hasCode && !hasCoding && !hasCodeableConcept) {
 			// TODO: [FHIR] add `invalid-data` coding as details
-			throw new BadRequestException("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
+			throw FhirExceptions.paramInvalid("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
 		}
 		
 		if (hasCode ? (hasCoding || hasCodeableConcept) : (hasCoding && hasCodeableConcept)) {
-			throw new BadRequestException("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
+			throw FhirExceptions.paramInvalid("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
 		}
 		
 		final Coding coding;
@@ -91,7 +91,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		} else if (hasCodeableConcept)	{
 			// TODO: support multiple values in codeableConcept? currently the underlying interface and its implementations do not support it
 			if (parameters.getCodeableConcept().getCoding().size() > 1) {
-				throw new BadRequestException("Multiple codeableConcept codings are not supported.");
+				throw FhirExceptions.paramInvalid("Multiple codeableConcept codings are not supported.");
 			}
 			coding = parameters.getCodeableConcept().getCoding().getFirst();
 			expression = "CodeableConcept.coding[0]";
@@ -120,7 +120,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 		
 		if (hasCode) {
 			if (Strings.isNullOrEmpty(system)) {
-				throw new BadRequestException("$validate-code must supply a 'system'");
+				throw FhirExceptions.paramInvalid("$validate-code must supply a 'system'");
 			}
 		} else {
 			// These problems are expected as issues in the output parameters
@@ -143,7 +143,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				valueSetExpansionContainsComponent = context.service(RepositoryManager.class)
 					.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
 					.optionalService(FhirValueSetCodeValidator.class)
-					.orElseThrow(() -> new BadRequestException("No validate-code implementation is available to handle valueSet: " + getUrl()))
+					.orElseThrow(() -> FhirExceptions.paramInvalid("No validate-code implementation is available to handle valueSet: " + getUrl()))
 					.validateCode(context, valueSet, code, parameters);
 			} catch (final NotFoundException e) {
 				invalidDate = true;
@@ -295,7 +295,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				.addCoding(new Coding()
 					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
 					.setCode("invalid-data"))
-				.setText("Coding has node code, so it cannot be validated. A code should be provided"))
+				.setText("Coding has no code, so it cannot be validated. A code should be provided"))
 			.addLocation(expression)
 			.addExpression(expression);
 	}

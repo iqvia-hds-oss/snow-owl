@@ -34,9 +34,9 @@ import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
 import com.b2international.snowowl.core.uri.ResourceURLSchemaSupport;
 import com.b2international.snowowl.core.version.VersionDocument;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -66,7 +66,7 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 		this.parameters = parameters;
 
 		if (parameters.getUrl() == null || parameters.getUrl().getValue() == null) {
-			throw new BadRequestException("'url' is required to reduce the scope of the translate operation to a single ConceptMap");
+			throw FhirExceptions.paramInvalid("'url' is required to reduce the scope of the translate operation to a single ConceptMap");
 		}
 		
 		// One (and only one) of the in parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, or targetCodeableConcept) SHALL be provided, to identify the code that is to be translated.
@@ -82,12 +82,12 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 		.count();
 		
 		if (nonNullInputs != 1L) {
-			throw new BadRequestException("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated.");
+			throw FhirExceptions.paramInvalid("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated.");
 		}
 		
 		// Check that an actual sourceCode and targetCode was provided as the value itself can still be null
 		if (FhirConceptMapTranslator.getSourceCoding(parameters).getCode() == null && FhirConceptMapTranslator.getTargetCoding(parameters).getCode() == null) {
-			throw new BadRequestException("Either sourceCode or targetCode must be provided to identify the code that is to be translated");
+			throw FhirExceptions.paramInvalid("Either sourceCode or targetCode must be provided to identify the code that is to be translated");
 		};
 		
 // XXX: according to the fhir specification system is required if sourceCode was provided, 
@@ -148,7 +148,7 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 	private ConceptMap buildImplicitConceptMap(ServiceProvider context, String urlValue) {
 		// only URLs with query parts are supported, every other case is rejected for now
 		if (urlValue.contains("#")) {
-			throw new BadRequestException("Unsupported implicit Concept Map URL with fragment '#' character: " + urlValue, urlValue);
+			throw FhirExceptions.paramInvalid("Unsupported implicit Concept Map URL with fragment '#' character: " + urlValue, urlValue);
 		}
 		
 		String codeSystemUrl = null;
@@ -166,10 +166,10 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 				version = version.concat("/900000000000207008");
 			}
 			if (!query.startsWith("fhir_cm=")) {
-				throw new BadRequestException("Unsupported implicit Concept Map URL query type: " + urlValue, urlValue);
+				throw FhirExceptions.paramInvalid("Unsupported implicit Concept Map URL query type: " + urlValue, urlValue);
 			}
 		} else {
-			throw new BadRequestException("Unsupported implicit Concept Map URL " + urlValue, urlValue);
+			throw FhirExceptions.paramInvalid("Unsupported implicit Concept Map URL " + urlValue, urlValue);
 		}
 		
 		// try to lookup the CodeSystem using the baseUrl and version (to get the proper edition)
@@ -190,7 +190,7 @@ final class FhirConceptMapTranslateRequest implements Request<ServiceProvider, C
 		
 		// if no CodeSystem stored to use as Concept Map source, return bad request response
 		if (codeSystem == null) {
-			throw new BadRequestException("Supported implicit Concept Map URL but no underlying CodeSystem is available at " + codeSystemUrl, urlValue);
+			throw FhirExceptions.paramInvalid("Supported implicit Concept Map URL but no underlying CodeSystem is available at " + codeSystemUrl, urlValue);
 		}
 		
 		// return the content of the CodeSystem as Concept Map

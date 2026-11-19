@@ -179,7 +179,7 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
 			// System and version were inferred from the implicit url
 			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
-			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has node code, so it cannot be validated. A code should be provided"));
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has no code, so it cannot be validated. A code should be provided"));
 	}
 	
 	@Test
@@ -258,7 +258,7 @@ public class FhirSnomedValueSetValidateCodeTest extends FhirRestTest {
 			.statusCode(200)
 			.body("resourceType", equalTo("Parameters"))
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
-			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has node code, so it cannot be validated. A code should be provided"));
+			.body("parameter.find { it.name == 'message' }.valueString", containsString("Coding has no code, so it cannot be validated. A code should be provided"));
 	}
 	
 	@Test

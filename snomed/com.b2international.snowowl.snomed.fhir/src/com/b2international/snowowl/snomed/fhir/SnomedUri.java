@@ -23,8 +23,8 @@ import org.hl7.fhir.r5.model.UriType;
 import com.b2international.commons.StringUtils;
 import com.b2international.snowowl.core.date.DateFormats;
 import com.b2international.snowowl.core.date.EffectiveTimes;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
 
 /**
@@ -214,14 +214,14 @@ public class SnomedUri {
 		Builder builder = builder();
 		
 		if (!uriString.startsWith(FhirModelHelpers.SNOMED_BASE_URI_STRING)) {
-			throw new BadRequestException(String.format("URI '%s' is not a valid SNOMED CT URI. It should start as '%s'.", uriString, FhirModelHelpers.SNOMED_BASE_URI_STRING), parameterName);
+			throw FhirExceptions.paramInvalid(String.format("URI '%s' is not a valid SNOMED CT URI. It should start as '%s'.", uriString, FhirModelHelpers.SNOMED_BASE_URI_STRING), parameterName);
 		}
 		
 		String extensionString = uriString.replaceFirst(FhirModelHelpers.SNOMED_BASE_URI_STRING, "");
 		
 		String[] splitUri = extensionString.split("\\?");
 		if (splitUri.length > 2) {
-			throw new BadRequestException(String.format("Invalid SNOMED CT URI [%s].", uriString), parameterName);
+			throw FhirExceptions.paramInvalid(String.format("Invalid SNOMED CT URI [%s].", uriString), parameterName);
 		}
 		
 		if (splitUri.length == 2) {
@@ -240,7 +240,7 @@ public class SnomedUri {
 		if (StringUtils.isEmpty(pathSegment)) return builder.build();
 		
 		if (!SnomedIdentifiers.isValid(pathSegment)) {
-			throw new BadRequestException(String.format("Invalid SNOMED CT extension module ID [%s] defined.", pathSegment), parameterName);
+			throw FhirExceptions.paramInvalid(String.format("Invalid SNOMED CT extension module ID [%s] defined.", pathSegment), parameterName);
 		} else {
 			builder.extensionModuleId(pathSegment);
 		}
@@ -249,19 +249,19 @@ public class SnomedUri {
 		if (!tokenizer.hasMoreTokens()) return builder.build();
 		String versionParameterKeySegment = tokenizer.nextToken();
 		if (!VERSION_PATH_SEGMENT.equals(versionParameterKeySegment)) {
-			throw new BadRequestException(String.format("Invalid path segment [%s], 'version' expected.", versionParameterKeySegment), parameterName);
+			throw FhirExceptions.paramInvalid(String.format("Invalid path segment [%s], 'version' expected.", versionParameterKeySegment), parameterName);
 		}
 		
 		//Version tag
 		if (!tokenizer.hasMoreTokens()) {
-			throw new BadRequestException(String.format("No version tag is specified after the 'version' parameter."), parameterName);
+			throw FhirExceptions.paramInvalid(String.format("No version tag is specified after the 'version' parameter."), parameterName);
 		}
 		String versionTag = tokenizer.nextToken();
 		//to validate
 		try {
 			EffectiveTimes.parse(versionTag, DateFormats.SHORT);
 		} catch(RuntimeException re) {
-			throw new BadRequestException(String.format("Could not parse version date [%s].", versionTag), parameterName);
+			throw FhirExceptions.paramInvalid(String.format("Could not parse version date [%s].", versionTag), parameterName);
 		}
 		return builder.version(versionTag).build();
 	}
@@ -289,21 +289,21 @@ public class SnomedUri {
 					if (split.length == 2) {
 						builder.isAQuery(split[1]); //isa/138875005
 					} else {
-						throw new BadRequestException(String.format("Invalid 'fhir_vs=isa/conceptId' query part [%s] for URI [%s].", queryPartString, uriString), parameterName);
+						throw FhirExceptions.paramInvalid(String.format("Invalid 'fhir_vs=isa/conceptId' query part [%s] for URI [%s].", queryPartString, uriString), parameterName);
 					}
 				} else if (parameter.startsWith(QueryPartDefinition.REFSET.getUrlString())) {
 					String[] split = parameter.split("/");
 					if (split.length == 2) {
 						builder.refsetQuery(split[1]);  //refset/138875005
 					} else {
-						throw new BadRequestException(String.format("Invalid 'fhir_vs=refset/conceptId' query part [%s] for URI [%s].", queryPartString, uriString), parameterName);
+						throw FhirExceptions.paramInvalid(String.format("Invalid 'fhir_vs=refset/conceptId' query part [%s] for URI [%s].", queryPartString, uriString), parameterName);
 					}
 				} else if (parameter.startsWith(QueryPartDefinition.REFSETS.getUrlString())) {
 					builder.refsetsQuery();  //fhir_vs=refset
 				}
 			}
 			else {
-				throw new BadRequestException(String.format("Invalid 'fhir_vs' query part [%s] for URI [%s].", queryPartString, uriString), parameterName); 
+				throw FhirExceptions.paramInvalid(String.format("Invalid 'fhir_vs' query part [%s] for URI [%s].", queryPartString, uriString), parameterName); 
 			}
 			
 		} else if (queryPartString.startsWith(QueryPart.PREFIX_CM)) {
@@ -312,11 +312,11 @@ public class SnomedUri {
 			if (split.length == 2) {
 				builder.conceptMapQuery(split[1]); //fhir_cm=138875005
 			} else {
-				throw new BadRequestException(String.format("Invalid 'fhir_cm' query part [%s] for the URI [%s], the format is '?fhir_cm=conceptId'.", queryPartString, uriString), parameterName);
+				throw FhirExceptions.paramInvalid(String.format("Invalid 'fhir_cm' query part [%s] for the URI [%s], the format is '?fhir_cm=conceptId'.", queryPartString, uriString), parameterName);
 			}
 			
 		} else {
-			throw new BadRequestException(String.format("Invalid query part [%s] for the URI [%s], it should be either '?fhir_vs' or '?fhir_cm'.", queryPartString, uriString), parameterName);
+			throw FhirExceptions.paramInvalid(String.format("Invalid query part [%s] for the URI [%s], it should be either '?fhir_vs' or '?fhir_cm'.", queryPartString, uriString), parameterName);
 		}
 	}
 

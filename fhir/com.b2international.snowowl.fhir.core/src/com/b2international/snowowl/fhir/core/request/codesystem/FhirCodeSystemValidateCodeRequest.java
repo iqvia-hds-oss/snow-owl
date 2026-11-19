@@ -33,8 +33,8 @@ import com.b2international.fhir.r5.operations.CodeSystemValidateCodeResultParame
 import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 
@@ -64,11 +64,11 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 		final boolean hasCodeableConcept = parameters.getCodeableConcept() != null && parameters.getCodeableConcept().getCoding() != null;
 		
 		if (!hasCode && !hasCoding && !hasCodeableConcept) {
-			throw new BadRequestException("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
+			throw FhirExceptions.paramInvalid("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
 		}
 		
 		if (hasCode ? (hasCoding || hasCodeableConcept) : (hasCoding && hasCodeableConcept)) {
-			throw new BadRequestException("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
+			throw FhirExceptions.paramInvalid("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code.");
 		}
 		
 		final List<Coding> codings;

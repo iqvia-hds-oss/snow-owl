@@ -1,6 +1,18 @@
-/*******************************************************************************
- * Copyright (c) 2026 B2i Healthcare. All rights reserved.
- *******************************************************************************/
+/*
+ * Copyright 2026 B2i Healthcare, https://b2ihealthcare.com
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.b2international.snowowl.snomed.fhir;
 
 import java.util.List;
@@ -23,9 +35,9 @@ import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ResourceURI;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers.SystemAndVersion;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.b2international.snowowl.fhir.core.request.conceptmap.FhirConceptMapTranslator;
 import com.b2international.snowowl.snomed.cis.SnomedIdentifiers;
@@ -69,11 +81,11 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 		// Extract reference set id
 		QueryPart queryPart = SnomedUri.fromUriString(conceptMap.getUrl(), conceptMap.getUrl()).getQueryPart();
 		if (!queryPart.isConceptMapQuery()) {
-			throw new BadRequestException(String.format("'url' is not an implicit concept map query: %s", conceptMap.getUrl()), conceptMap.getUrl());
+			throw FhirExceptions.paramInvalid(String.format("'url' is not an implicit concept map query: %s", conceptMap.getUrl()), conceptMap.getUrl());
 		}
 		final String refSetId = queryPart.getQueryValue();
 		if (!SnomedIdentifiers.isValid(refSetId)) {
-			throw new BadRequestException(String.format("'url' contains an invalid reference set id: %s", refSetId), conceptMap.getUrl());
+			throw FhirExceptions.paramInvalid(String.format("'url' contains an invalid reference set id: %s", refSetId), conceptMap.getUrl());
 		}
 
 		final Coding sourceCoding = FhirConceptMapTranslator.getSourceCoding(parameters);
@@ -98,7 +110,7 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 				.execute(context);
 			
 		if (referenceSets.getTotal() < 1) {
-			throw new BadRequestException(String.format("Reference set could not be found: %s", refSetId), conceptMap.getUrl());
+			throw FhirExceptions.paramInvalid(String.format("Reference set could not be found: %s", refSetId), conceptMap.getUrl());
 		}
 		
 		final Function<ResourceURI, SystemAndVersion> urlByResourceUri = FhirModelHelpers.createResourceUriToUrlFunction(context);
@@ -215,7 +227,7 @@ public class SnomedFhirConceptMapTranslator implements FhirConceptMapTranslator 
 					return target;
 				}
 			}
-			throw new BadRequestException("Failed to find target code");
+			throw FhirExceptions.paramInvalid("Failed to find target code");
 		}
 	}
 	

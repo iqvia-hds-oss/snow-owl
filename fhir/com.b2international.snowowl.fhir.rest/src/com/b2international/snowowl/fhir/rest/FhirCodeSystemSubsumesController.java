@@ -28,9 +28,7 @@ import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.FhirApiConfig;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
-import com.google.common.base.Strings;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -133,8 +131,6 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 				.setSystem(system)
 				.setVersion(version);
 		
-		validateSubsumptionRequest(parameters);
-	
 		return subsumes(parameters, accept, _format, _pretty);
 	}
 
@@ -216,8 +212,6 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 				.setCodeA(codeA)
 				.setCodeB(codeB)
 				.setSystem(codeSystemId);
-		
-		validateSubsumptionRequest(parameters);
 		
 		return subsumes(parameters, accept, _format, _pretty);		
 	}
@@ -337,8 +331,6 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 	) {
 		
 		final CodeSystemSubsumptionParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.CodeSystemSubsumptionParametersFactory.INSTANCE);
-		
-		validateSubsumptionRequest(parameters);
 		
 		return subsumes(parameters, accept, _format, _pretty);
 	}
@@ -466,7 +458,6 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 		
 		// Overwrite system with codeSystemId
 		parameters.setSystem(codeSystemId);
-		validateSubsumptionRequest(parameters);
 		
 		return subsumes(parameters, accept, _format, _pretty);
 	}
@@ -486,29 +477,4 @@ public class FhirCodeSystemSubsumesController extends AbstractFhirController {
 			});
 	}
 	
-	private void validateSubsumptionRequest(CodeSystemSubsumptionParameters parameters) {
-		// Note this system value can come from either the specific system parameter or either codings if provided
-		if (Strings.isNullOrEmpty(parameters.extractSystem())) {
-			throw new BadRequestException("Parameter 'system' is not specified for subsumption testing.", "SubsumptionRequest.system");
-		}
-		
-		// We do allow using codes and codings together as long as there is only one for A and B
-		final String codeA = parameters.getCodeA() != null ? parameters.getCodeA().getValue() : null;
-		final String codeB = parameters.getCodeB() != null ? parameters.getCodeB().getValue() : null;
-		final String codingAValue = parameters.getCodingA() != null ? parameters.getCodingA().getCode() : null;
-		final String codingBValue = parameters.getCodingB() != null ? parameters.getCodingB().getCode() : null;
-		
-		if (!Strings.isNullOrEmpty(codeA) && !Strings.isNullOrEmpty(codingAValue)) {
-			throw new BadRequestException("Provide either codeA or codingA not both.", "SubsumptionRequest");
-		}
-		if (Strings.isNullOrEmpty(codeA) && Strings.isNullOrEmpty(codingAValue)) {
-			throw new BadRequestException("Provide either codeA or codingA.", "SubsumptionRequest");
-		}
-		if (!Strings.isNullOrEmpty(codeB) && !Strings.isNullOrEmpty(codingBValue)) {
-			throw new BadRequestException("Provide either codeB or codingB not both.", "SubsumptionRequest");
-		}
-		if (Strings.isNullOrEmpty(codeB) && Strings.isNullOrEmpty(codingBValue)) {
-			throw new BadRequestException("Provide either codeB or codingB.", "SubsumptionRequest");
-		}
-	}
 }

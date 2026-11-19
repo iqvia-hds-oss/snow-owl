@@ -38,7 +38,7 @@ import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.id.IDs;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.FhirResourceUpdateResult;
 import com.b2international.snowowl.fhir.rest.ResponseTypeSchemas.OperationOutcome;
@@ -367,16 +367,16 @@ public class FhirCodeSystemController extends AbstractFhirResourceController {
 	) {
 		
 		if (codeSystem.getId() == null) {
-			throw new BadRequestException("Code system resource did not contain an id element.");
+			throw FhirExceptions.paramInvalid("Code system resource did not contain an id element.");
 		}
 		
 		final String idInResource = codeSystem.getId();
 		if (!id.equals(idInResource)) {
-			throw new BadRequestException("Code system resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
+			throw FhirExceptions.paramInvalid("Code system resource ID '" + idInResource + "' disagrees with '" + id + "' provided in the request URL.");
 		}
 		
 		if (!codeSystem.hasUrl()) {
-			throw new BadRequestException("Code system resource did not contain a url element.");
+			throw FhirExceptions.paramInvalid("Code system resource did not contain a url element.");
 		}
 		
 		return FhirRequests.codeSystems()
