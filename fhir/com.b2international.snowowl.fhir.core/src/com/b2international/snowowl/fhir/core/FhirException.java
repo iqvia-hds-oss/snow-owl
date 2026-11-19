@@ -101,10 +101,7 @@ public final class FhirException extends ApiException {
 					.setText(message);
 			
 			if (txIssueType != null) {
-				details.addCoding(new Coding()
-					.setCode(txIssueType.getCode())
-					.setSystem(txIssueType.getSystem())
-				);
+				details.addCoding(txIssueType.getCoding());
 			}
 			
 			this.issues.add(new OperationOutcome.OperationOutcomeIssueComponent()
@@ -172,6 +169,12 @@ public final class FhirException extends ApiException {
 		
 		public String getSystem() {
 			return "http://hl7.org/fhir/tools/CodeSystem/tx-issue-type";
+		}
+		
+		public Coding getCoding() {
+			return new Coding()
+					.setCode(getCode())
+					.setSystem(getSystem());
 		}
 		
 	}

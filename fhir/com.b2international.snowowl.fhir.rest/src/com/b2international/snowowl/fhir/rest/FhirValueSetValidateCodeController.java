@@ -130,6 +130,10 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		@RequestParam(value = "display") 
 		final Optional<String> display,
 		
+		@Parameter(description = "Language code for display") 
+		@RequestParam(value = "displayLanguage") 
+		final Optional<String> displayLanguage,
+		
 		@Parameter(description = "The date stamp of the value set to validate against") 
 		@RequestParam(value = "date") 
 		final Optional<String> date,
@@ -184,6 +188,7 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		system.ifPresent(parameters::setSystem);
 		systemVersion.ifPresent(parameters::setSystemVersion);
 		display.ifPresent(parameters::setDisplay);
+		displayLanguage.ifPresent(parameters::setDisplayLanguage);
 		isAbstract.ifPresent(parameters::setAbstract);
 		date.ifPresent(parameters::setDate);
 				
@@ -414,6 +419,10 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		@RequestParam(value = "display") 
 		final Optional<String> display,
 		
+		@Parameter(description = "Language code for display") 
+		@RequestParam(value = "displayLanguage") 
+		final Optional<String> displayLanguage,
+		
 		@Parameter(description = "The date stamp of the value set to validate against") 
 		@RequestParam(value = "date") 
 		final Optional<String> date,
@@ -470,6 +479,7 @@ public class FhirValueSetValidateCodeController extends AbstractFhirController {
 		system.ifPresent(parameters::setSystem);
 		systemVersion.ifPresent(parameters::setSystemVersion);
 		display.ifPresent(parameters::setDisplay);
+		displayLanguage.ifPresent(parameters::setDisplayLanguage);
 		isAbstract.ifPresent(parameters::setAbstract);
 		date.ifPresent(parameters::setDate);
 		
