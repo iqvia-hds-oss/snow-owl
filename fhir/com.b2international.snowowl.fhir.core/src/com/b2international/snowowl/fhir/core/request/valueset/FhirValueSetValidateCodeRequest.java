@@ -208,7 +208,8 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				if (validateDisplay) {
 					if (!Objects.equals(expectedDisplay, display)) {
 						// TODO: [FHIR] validate that provided display is a valid alternate
-						issues.add(buildInvalidDisplayIssue(code, expectedDisplay, display, expression));
+						final String displayLanguage = parameters.getDisplayLanguage() != null ? parameters.getDisplayLanguage().getValue() : null;
+						issues.add(buildInvalidDisplayIssue(code, displayLanguage, expectedDisplay, display, expression));
 					}
 				}
 			}
@@ -369,11 +370,23 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.addExpression(expression);
 	}
 	
-	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidDisplayIssue(final String code, final String expectedDisplay, final String actualDisplay, final String expressionBase) {
-		final String message = String.format("Incorrect display '%s' for code '%s'. Recommended display is '%s'",
-			expectedDisplay,
-			code,
-			actualDisplay);
+	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidDisplayIssue(final String code, final String displayLanguage, final String expectedDisplay, final String actualDisplay, final String expressionBase) {
+		final String message;
+		if (Strings.isNullOrEmpty(displayLanguage)) {
+			// Controller will inject a default Accept-Language header so this will not really run
+			message = String.format("Incorrect display '%s' for code '%s'. Recommended display is '%s'",
+				expectedDisplay,
+				code,
+				actualDisplay
+			);
+		} else {
+			message = String.format("Incorrect display '%s' for language(s) '%s' for code '%s'. Recommended display is '%s'",
+				expectedDisplay,
+				displayLanguage,
+				code,
+				actualDisplay
+			);
+		}
 		final String expression = Strings.isNullOrEmpty(expressionBase) ? "display" : String.join(".", expressionBase, "display");
 		
 		return new OperationOutcome.OperationOutcomeIssueComponent()
