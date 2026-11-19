@@ -36,6 +36,7 @@ import com.b2international.snowowl.core.codesystem.CodeSystem;
 import com.b2international.snowowl.core.codesystem.CodeSystemRequests;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.internal.DependencyDocument;
+import com.b2international.snowowl.fhir.core.FhirException.TerminologyIssueType;
 import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
@@ -279,9 +280,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.setSeverity(OperationOutcome.IssueSeverity.WARNING)
 			.setCode(OperationOutcome.IssueType.INVALID)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("invalid-data"))
+				.addCoding(TerminologyIssueType.INVALID_DATA.getCoding())
 				.setText("Coding has neither a system nor a code, so it cannot be validated. A system and a code should be provided"))
 			.addLocation(expression)
 			.addExpression(expression);
@@ -293,9 +292,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.setSeverity(OperationOutcome.IssueSeverity.WARNING)
 			.setCode(OperationOutcome.IssueType.INVALID)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("invalid-data"))
+				.addCoding(TerminologyIssueType.INVALID_DATA.getCoding())
 				.setText("Coding has no code, so it cannot be validated. A code should be provided"))
 			.addLocation(expression)
 			.addExpression(expression);
@@ -306,9 +303,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.setSeverity(OperationOutcome.IssueSeverity.WARNING)
 			.setCode(OperationOutcome.IssueType.INVALID)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("invalid-data"))
+				.addCoding(TerminologyIssueType.INVALID_DATA.getCoding())
 				.setText("Coding has no system. A code with no system has no defined meaning, and it cannot be validated. A system should be provided"))
 			.addLocation(expression)
 			.addExpression(expression);
@@ -324,9 +319,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.NOTFOUND)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("not-found"))
+				.addCoding(TerminologyIssueType.NOT_FOUND.getCoding())
 				.setText(message));
 	}	
 	
@@ -342,9 +335,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.CODEINVALID)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("not-in-vs"))
+				.addCoding(TerminologyIssueType.NOT_IN_VS.getCoding())
 				.setText(message))
 			.addLocation(expression)
 			.addExpression(expression);
@@ -362,9 +353,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.CODEINVALID)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("invalid-code"))
+				.addCoding(TerminologyIssueType.INVALID_CODE.getCoding())
 				.setText(message))
 			.addLocation(expression)
 			.addExpression(expression);
@@ -393,9 +382,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.INVALID)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("invalid-display"))
+				.addCoding(TerminologyIssueType.INVALID_DISPLAY.getCoding())
 				.setText(message))
 			.addLocation(expression)
 			.addExpression(expression);
