@@ -111,7 +111,10 @@ public final class FhirException extends ApiException {
 					.setCode(issueType)
 					.setSeverity(issueSeverity)
 					.setDetails(details)
-					.setDiagnostics(message)
+					// XXX keeping this as commented out statement
+					// diagnostics should not be returned otherwise the FHIR Validator reports an error
+					// details.text should contain the error message in all cases
+					// .setDiagnostics(message)
 					.addLocation(location));
 			
 			return this;

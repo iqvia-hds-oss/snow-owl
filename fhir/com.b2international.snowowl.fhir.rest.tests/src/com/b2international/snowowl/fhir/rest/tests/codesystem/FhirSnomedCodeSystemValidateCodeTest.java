@@ -244,7 +244,7 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue[0].code", equalTo("invalid"))
-			.body("issue[0].diagnostics", equalTo("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code."));
+			.body("issue[0].details.text", equalTo("At least one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code."));
 	}
 	
 	@Test
@@ -283,6 +283,6 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue[0].code", equalTo("invalid"))
-			.body("issue[0].diagnostics", equalTo("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code."));
+			.body("issue[0].details.text", equalTo("Exactly one of 'code', 'coding', or 'codeableConcept' must be provided for $validate-code."));
 	}
 }

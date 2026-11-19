@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.elasticsearch.common.Strings;
 import org.hl7.fhir.r5.model.CanonicalResource;
+import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueSeverity;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
@@ -82,7 +83,7 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 				new OperationOutcome.OperationOutcomeIssueComponent()
 					.setSeverity(IssueSeverity.SUCCESS)
 					.setCode(IssueType.SUCCESS)
-					.setDiagnostics(result.getMessage())
+					.setDetails(new CodeableConcept().setText(result.getMessage()))
 			);
 	}
 	
@@ -92,7 +93,7 @@ public abstract class AbstractFhirResourceController extends AbstractFhirControl
 				new OperationOutcome.OperationOutcomeIssueComponent()
 					.setSeverity(IssueSeverity.ERROR)
 					.setCode(IssueType.BUSINESSRULE)
-					.setDiagnostics(result.getMessage())
+					.setDetails(new CodeableConcept().setText(result.getMessage()))
 			);
 	}
 	

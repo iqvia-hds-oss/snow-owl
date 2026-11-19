@@ -24,6 +24,7 @@ import java.util.function.Function;
 import org.hl7.fhir.exceptions.FHIRException;
 import org.hl7.fhir.exceptions.FHIRFormatError;
 import org.hl7.fhir.r5.model.Bundle;
+import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.OperationOutcome;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueSeverity;
 import org.hl7.fhir.r5.model.OperationOutcome.IssueType;
@@ -292,11 +293,12 @@ public abstract class AbstractFhirController extends AbstractRestService {
 
 	@ExceptionHandler
 	public @ResponseBody ResponseEntity<byte[]> handle(final ForbiddenException ex, final WebRequest request) {
-		return toResponseEntity(HttpStatus.FORBIDDEN, new OperationOutcome()
+		var operationOutcome = new OperationOutcome()
 			.addIssue(new OperationOutcome.OperationOutcomeIssueComponent()
 				.setSeverity(IssueSeverity.ERROR)
 				.setCode(IssueType.FORBIDDEN)
-				.setDiagnostics(ex.getMessage())), null, null, true);
+				.setDetails(new CodeableConcept().setText(ex.getMessage())));
+		return toResponseEntity(HttpStatus.FORBIDDEN, operationOutcome, null, null, true);
 	}
 	
 	/**
