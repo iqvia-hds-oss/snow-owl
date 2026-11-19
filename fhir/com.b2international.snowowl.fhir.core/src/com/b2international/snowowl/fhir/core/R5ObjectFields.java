@@ -55,6 +55,7 @@ public final class R5ObjectFields {
 		public static final String NAME = "name";
 		public static final String TITLE = "title";
 		public static final String STATUS = "status";
+		public static final String EXPERIMENTAL = "experimental";
 		public static final String DATE = "date";
 		public static final String PUBLISHER = "publisher";
 		public static final String CONTACT = "contact";
@@ -73,7 +74,7 @@ public final class R5ObjectFields {
 		
 		public static final Set<String> SUMMARY = ImmutableSet.<String>builder()
 				.addAll(Resource.SUMMARY)
-				.add(URL, VERSION, NAME, TITLE, DATE, PUBLISHER, CONTACT, EFFECTIVE_PERIOD, IDENTIFIER)
+				.add(URL, VERSION, NAME, TITLE, EXPERIMENTAL, DATE, PUBLISHER, CONTACT, EFFECTIVE_PERIOD, IDENTIFIER)
 				.build();
 		
 		/**

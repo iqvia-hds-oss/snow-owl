@@ -23,7 +23,7 @@ import com.b2international.snowowl.core.ResourceURI;
 /**
  * Converts a {@link String} to a {@link ResourceURI} instance.
  * 
- * @since 10.4
+ * @since 10.4.0
  */
 @Component
 public class StringToResourceUriConverter implements Converter<String, ResourceURI> {

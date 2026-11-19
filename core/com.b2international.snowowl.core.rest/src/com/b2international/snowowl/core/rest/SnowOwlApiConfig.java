@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -341,7 +341,7 @@ public class SnowOwlApiConfig extends WebMvcConfigurationSupport {
 	
 	@Override
 	public void configurePathMatch(final PathMatchConfigurer configurer) {
-		configurer.setUseRegisteredSuffixPatternMatch(true);
+//		configurer.setUseRegisteredSuffixPatternMatch(true);
 		configurer.setPathMatcher(new AntPathWildcardMatcher());
 		ctx.getBeansWithAnnotation(Configuration.class)
 			.values()
@@ -382,7 +382,7 @@ public class SnowOwlApiConfig extends WebMvcConfigurationSupport {
 					if (prefix != null && !prefix.equals("/")) {
 						BuilderConfiguration config = new BuilderConfiguration();
 						config.setPathMatcher(getPathMatcher());
-						config.setSuffixPatternMatch(false);
+//						config.setSuffixPatternMatch(false);
 						info = RequestMappingInfo.paths(prefix).options(config).build().combine(info);
 					}
 				}

@@ -7,15 +7,15 @@ version: 2
 
 updates:
   - package-ecosystem: maven
-    directory: /
-    exclude-paths:
-      - "releng/target-platform"
-    open-pull-requests-limit: 15
+    directories: 
+      - /
+      - /releng/target-platform
+    open-pull-requests-limit: 25
     schedule:
       interval: daily
     ignore:
       - dependency-name: '*'
-        update-types: ['version-update:semver-major']
+        update-types: [version-update:semver-major]
     groups:
       spring:
         applies-to: version-updates
@@ -35,21 +35,6 @@ updates:
           - 'co.elastic.clients:*'
           - 'org.elasticsearch.client:*'
           - 'jakarta.json:*'
-    labels:
-       - 'requires-manifest-update'
-       - 'dependencies'
-       - 'java'
-
-  - package-ecosystem: maven
-    directories:
-      - "releng/target-platform"
-    open-pull-requests-limit: 15
-    schedule:
-      interval: daily
-    ignore:
-      - dependency-name: '*'
-        update-types: ['version-update:semver-major']
-    groups:
       org-bouncycastle:
         applies-to: version-updates
         patterns:
@@ -62,16 +47,6 @@ updates:
         patterns:
           - 'org.slf4j:*'
           - 'ch.qos.logback:*'
-        update-types:
-          - 'minor'
-          - 'patch'
-      com-fasterxml-jackson:
-        applies-to: version-updates
-        patterns:
-          - 'com.fasterxml.jackson*:*'
-          - 'org.yaml:*'
-          - 'org.codehaus.woodstox:*'
-          - 'com.fasterxml.woodstox:*'
         update-types:
           - 'minor'
           - 'patch'
@@ -114,6 +89,16 @@ updates:
         applies-to: version-updates
         patterns:
           - 'net.bytebuddy:*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      com-fasterxml-jackson:
+        applies-to: version-updates
+        patterns:
+          - 'com.fasterxml.jackson*:*'
+          - 'org.yaml:*'
+          - 'org.codehaus.woodstox:*'
+          - 'com.fasterxml.woodstox:*'
         update-types:
           - 'minor'
           - 'patch'

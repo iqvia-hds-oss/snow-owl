@@ -21,6 +21,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.hl7.fhir.r5.model.CodeSystem;
+import org.hl7.fhir.r5.model.OperationOutcome;
 
 import com.b2international.commons.options.Options;
 import com.b2international.fhir.r5.operations.CodeSystemSubsumptionParameters;
@@ -31,9 +32,12 @@ import com.b2international.snowowl.core.ResourceFragment;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.fhir.core.FhirException;
+import com.b2international.snowowl.fhir.core.FhirException.TerminologyIssueType;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Strings;
 
 /**
  * Test the subsumption relationship between code/Coding A and code/Coding B given the semantics of subsumption in the underlying code system (see hierarchyMeaning).
@@ -44,53 +48,114 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest<CodeSystemSubsumptionResultParameters> {
 
 	private static final long serialVersionUID = 1L;
-	
+
 	@JsonProperty
 	private final CodeSystemSubsumptionParameters parameters;
+
+	private String codeAId;
+	private String codeBId;
+	private String codeAExpression;
+	private String codeBExpression;
 
 	public FhirCodeSystemSubsumesRequest(CodeSystemSubsumptionParameters parameters) {
 		super(parameters.extractSystem(), parameters.extractSystemVersion());
 		this.parameters = parameters;
-	}
-
-	@Override
-	public CodeSystemSubsumptionResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
 		
-		final String codeA = parameters.getCodeA() != null ? parameters.getCodeA().getValue() : parameters.getCodingA().getCode();
-		final String codeB = parameters.getCodeB() != null ? parameters.getCodeB().getValue() : parameters.getCodingB().getCode();
-		
-		final Map<String, Concept> conceptsById = fetchConcepts(context, codeSystem, codeA, codeB);
-		
-		final Concept conceptA = conceptsById.get(codeA);
-		final Concept conceptB = conceptsById.get(codeB);
-		
-		if (conceptA == null && conceptB == null) {
-			throw new BadRequestException(String.format("Invalid codes were supplied, codeA: \"%s\", codeB: \"%s\".", codeA, codeB));
-		} else if (conceptA == null) {
-			throw new BadRequestException(String.format("An invalid code was supplied, codeA: \"%s\".", codeA));
-		} else if (conceptB == null) {
-			throw new BadRequestException(String.format("An invalid code was supplied, codeB: \"%s\".", codeB));
+		// Note this system value can come from either the specific system parameter or either codings if provided
+		if (Strings.isNullOrEmpty(parameters.extractSystem())) {
+			throw FhirExceptions.paramInvalid("Parameter 'system' is not specified for subsumption testing.");
 		}
 		
-		if (Objects.equals(codeA, codeB)) {
+		final String codeA = parameters.getCodeA() == null ? null : parameters.getCodeA().getValue();
+		final String codingA = parameters.getCodingA() == null ? null : parameters.getCodingA().getCode();
+		final String codeB = parameters.getCodeB() == null ? null : parameters.getCodeB().getValue();
+		final String codingB = parameters.getCodingB() == null ? null : parameters.getCodingB().getCode();
+
+		final boolean hasCodeA = !Strings.isNullOrEmpty(codeA);
+		final boolean hasCodingA = !Strings.isNullOrEmpty(codingA);
+		final boolean hasCodeB = !Strings.isNullOrEmpty(codeB);
+		final boolean hasCodingB = !Strings.isNullOrEmpty(codingB);
+		
+		// We do allow using codes and codings together as long as there is only one for A and B
+		if (!hasCodeA && !hasCodingA) {
+			throw FhirExceptions.paramInvalid("Provide either codeA or codingA.");
+		}
+		
+		if (hasCodeA && hasCodingA) {
+			throw FhirExceptions.paramInvalid("Provide either codeA or codingA, not both.");
+		}
+		
+		if (!hasCodeB && !hasCodingB) {
+			throw FhirExceptions.paramInvalid("Provide either codeB or codingB.");
+		}
+		
+		if (hasCodeB && hasCodingB) {
+			throw FhirExceptions.paramInvalid("Provide either codeB or codingB, not both.");
+		}
+		
+		// extract actual concept IDs based on supplied parameters
+		this.codeAId = hasCodeA ? codeA : codingA;
+		this.codeBId = hasCodeB ? codeB : codingB;
+		
+		// select which property to present in the expression if invalid codes are supplied
+		this.codeAExpression = hasCodeA ? "codeA" : "codingA";
+		this.codeBExpression = hasCodeB ? "codeB" : "codingB";
+	}
+	
+	@Override
+	public CodeSystemSubsumptionResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
+		// fetch both concepts first
+		final Map<String, Concept> conceptsById = fetchConcepts(context, codeSystem, codeAId, codeBId);
+		
+		// extract them
+		final Concept conceptA = conceptsById.get(codeAId);
+		final Concept conceptB = conceptsById.get(codeBId);
+		
+		// check if they exists, if not they are invalid
+		if (conceptA == null && conceptB == null) {
+			throw FhirException.builder()
+				.addIssue(
+					OperationOutcome.IssueSeverity.ERROR,
+					OperationOutcome.IssueType.CODEINVALID,
+					TerminologyIssueType.INVALID_CODE,
+					String.format("codeA: '%s' and codeB: '%s' are invalid or non-existent codes in '%s' system.", codeAId, codeBId, codeSystem.getUrl()),
+					null  // XXX: FHIR validator has no test for this case, so it is unclear what would be expected
+				).build();
+		} else if (conceptA == null) {
+			throw FhirException.builder()
+				.addIssue(
+					OperationOutcome.IssueSeverity.ERROR,
+					OperationOutcome.IssueType.CODEINVALID,
+					TerminologyIssueType.INVALID_CODE,
+					String.format("codeA: '%s' is an invalid or non-existent code in '%s' system.", codeAId, codeSystem.getUrl()),
+					codeAExpression
+				).build();
+		} else if (conceptB == null) {
+			throw FhirException.builder()
+				.addIssue(
+					OperationOutcome.IssueSeverity.ERROR,
+					OperationOutcome.IssueType.CODEINVALID,
+					TerminologyIssueType.INVALID_CODE,
+					String.format("codeB: '%s' is an invalid or non-existent code in '%s' system.", codeBId, codeSystem.getUrl()),
+					codeBExpression
+				).build();
+		}
+		
+		// then check subsumption
+		if (Objects.equals(codeAId, codeBId)) {
 			return CodeSystemSubsumptionResultParameters.equivalent();
-		} else if (isSubsumedBy(conceptA, codeB)) {
+		} else if (isSubsumedBy(conceptA, codeBId)) {
 			return CodeSystemSubsumptionResultParameters.subsumedBy();
-		} else if (isSubsumedBy(conceptB, codeA)) {
+		} else if (isSubsumedBy(conceptB, codeAId)) {
 			return CodeSystemSubsumptionResultParameters.subsumes();
 		} else {
 			return CodeSystemSubsumptionResultParameters.notSubsumed();
 		}
 	}
 
-	private Map<String, Concept> fetchConcepts(ServiceProvider context, CodeSystem codeSystem, String codeA, String codeB) {
+	private Map<String, Concept> fetchConcepts(ServiceProvider context, CodeSystem codeSystem, String codeAId, String codeBId) {
+		final List<String> conceptIds = List.of(codeAId, codeBId);
 		
-		if (codeA == null || codeB == null) {
-			throw new BadRequestException("codeA and codeB parameters are required");
-		}
-
-		final List<String> conceptIds = List.of(codeA, codeB);
-
 		final ResourceFragment resource = FhirModelHelpers.getResourceFragment(codeSystem);
 		final Repository codeSystemToolingRepository = context.service(RepositoryManager.class).get(resource.getToolingId());
 		

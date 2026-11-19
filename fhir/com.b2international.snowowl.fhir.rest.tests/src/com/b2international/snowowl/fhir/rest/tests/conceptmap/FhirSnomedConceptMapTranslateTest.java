@@ -136,8 +136,8 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
-			.body("issue.code", hasItem("exception"))
-			.body("issue.diagnostics", hasItem("Required request parameter 'url' for method parameter type String is not present"));
+			.body("issue.code", hasItem("invalid"))
+			.body("issue.details.text", hasItem("Required request parameter 'url' for method parameter type String is not present"));
 	}
 	
 	@Test
@@ -152,7 +152,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem("'url' is required to reduce the scope of the translate operation to a single ConceptMap"));
+			.body("issue.details.text", hasItem("'url' is required to reduce the scope of the translate operation to a single ConceptMap"));
 	}
 	
 	@Test
@@ -165,7 +165,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated."));
+			.body("issue.details.text", hasItem("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated."));
 	}
 	
 	@Test
@@ -178,7 +178,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated."));
+			.body("issue.details.text", hasItem("One (and only one) of the 'in' parameters (sourceCode, sourceCoding, sourceCodeableConcept, targetCode, targetCoding, targetCodeableConcept) must be provided to identify the code that is to be translated."));
 	}
 	
 	@Test
@@ -190,7 +190,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem("'url' contains an invalid reference set id: INVALID"));
+			.body("issue.details.text", hasItem("'url' contains an invalid reference set id: INVALID"));
 	}
 	
 	@Test
@@ -202,7 +202,7 @@ public class FhirSnomedConceptMapTranslateTest extends FhirRestTest {
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
 			.body("issue.code", hasItem("invalid"))
-			.body("issue.diagnostics", hasItem("Reference set could not be found: 1204364002"));
+			.body("issue.details.text", hasItem("Reference set could not be found: 1204364002"));
 	}
 	
 	@Test

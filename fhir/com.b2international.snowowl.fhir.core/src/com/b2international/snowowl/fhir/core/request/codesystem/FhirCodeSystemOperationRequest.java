@@ -32,10 +32,9 @@ import com.b2international.snowowl.core.TerminologyResource;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.version.VersionDocument;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
-import com.b2international.snowowl.fhir.core.exceptions.FhirResourceNotResolvableException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.google.common.base.Splitter;
 
@@ -123,7 +122,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		final CodeSystem codeSystem = Optional.<CodeSystem>empty()
 			.or(() -> fetchByUrlAndVersion(context))
 			.or(() -> fetchByIdAndVersion(context))
-			.orElseThrow(() -> new FhirResourceNotResolvableException(ResourceType.CodeSystem, FhirModelHelpers.toCanonicalType(system, version)));
+			.orElseThrow(() -> FhirExceptions.fhirResourceNotResolvable(ResourceType.CodeSystem, FhirModelHelpers.toCanonicalType(system, version)));
 		
 		return doExecute(context, codeSystem);
 	}
@@ -179,7 +178,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		try {
 			builder.setLanguageTag(locale);
 		} catch (final IllformedLocaleException ex) {
-			throw new BadRequestException(ex.getMessage());
+			throw FhirExceptions.paramInvalid(ex.getMessage());
 		}
 		
 		// Remove hyphen separators from the private use extension
@@ -251,7 +250,7 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		// locale might contain quality modifier, remove then re-attach after modification
 		final String[] parts = locale.split(";");
 		if (parts.length > 2) {
-			throw new BadRequestException(String.format("Invalid locale quality format: %s", locale));
+			throw FhirExceptions.paramInvalid(String.format("Invalid locale quality format: %s", locale));
 		}
 		final String modifiedLocale = modifier.apply(parts[0]);
 		if (parts.length > 1) {

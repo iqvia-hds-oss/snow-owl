@@ -15,8 +15,13 @@
  */
 package com.b2international.snowowl.fhir.core.request.valueset;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hl7.fhir.r5.model.DataType;
 import org.hl7.fhir.r5.model.ValueSet;
 
+import com.b2international.commons.CompareUtils;
 import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.RepositoryManager;
 import com.b2international.snowowl.core.ServiceProvider;
@@ -47,12 +52,41 @@ final class FhirValueSetExpandRequest extends FhirValueSetOperationRequest<Value
 	
 	@Override
 	public ValueSet doExecute(ServiceProvider context, ValueSet valueSet) {
-		return context.service(RepositoryManager.class)
+		final ValueSet expandedValueSet = context.service(RepositoryManager.class)
 			.get(FhirModelHelpers.getResourceFragment(valueSet).getToolingId())
 			.optionalService(FhirValueSetExpander.class)
 			.orElse(FhirValueSetExpander.NOOP)
 			.expand(context, valueSet, parameters, preferredDisplay);
+		
+		// set incoming parameters as outgoing parameters in the expanded VS
+		final List<ValueSet.ValueSetExpansionParameterComponent> outParameters = new ArrayList<>(3);
+		
+		addIfNotNull(outParameters, parameters.getActiveOnly(), "activeOnly");
+		addIfNotNull(outParameters, parameters.getDate(), "date");
+		addIfNotNull(outParameters, parameters.getDisplayLanguage(), "displayLanguage");
+		addIfNotNull(outParameters, parameters.getExcludeNested(), "excludeNested");
+		addIfNotNull(outParameters, parameters.getFilter(), "filter");
+		addIfNotNull(outParameters, parameters.getIncludeDesignations(), "includeDesignations");
+		addIfNotNull(outParameters, parameters.getValueSetVersion(), "valueSetVersion");
+		
+		// TODO set used-codesystem
+		
+		if (!CompareUtils.isEmpty(outParameters)) {
+			expandedValueSet.getExpansion().setParameter(outParameters);
+		}
+		
+		return expandedValueSet;
 
+	}
+
+	private void addIfNotNull(List<ValueSet.ValueSetExpansionParameterComponent> outParameters, DataType parameter, String parameterName) {
+		if (parameter != null && parameter.getUserData("_source") == null) {
+			outParameters.add(
+				new ValueSet.ValueSetExpansionParameterComponent()
+					.setName(parameterName)
+					.setValue(parameter)
+			);
+		}
 	}
 
 }

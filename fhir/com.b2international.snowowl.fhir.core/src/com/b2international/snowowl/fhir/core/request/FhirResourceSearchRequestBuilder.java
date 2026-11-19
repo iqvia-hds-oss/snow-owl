@@ -26,11 +26,10 @@ import com.b2international.snowowl.core.context.ResourceRepositoryRequestBuilder
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequestBuilder;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.Summary;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirResourceSearchRequest.OptionKey;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 
 /**
@@ -104,7 +103,7 @@ public abstract class FhirResourceSearchRequestBuilder<B extends FhirResourceSea
 		} else if (Summary.COUNT.equalsIgnoreCase(summary)) {
 			return setLimit(0);
 		} else {
-			throw new BadRequestException(String.format("'%s' is unrecognized or not yet supported _summary value. Supported values are: '%s'", summary, Summary.VALUES));
+			throw FhirExceptions.paramInvalid(String.format("'%s' is unrecognized or not yet supported _summary value. Supported values are: '%s'", summary, Summary.VALUES));
 		}
 	}
 	
@@ -130,7 +129,7 @@ public abstract class FhirResourceSearchRequestBuilder<B extends FhirResourceSea
 			// check for anything not supported by this search request (per resource type)
 			Set<String> unrecognizedElements = Sets.difference(fields, getKnownResourceFields());
 			if (!unrecognizedElements.isEmpty()) {
-				throw new BadRequestException(String.format(
+				throw FhirExceptions.paramInvalid(String.format(
 					"'%s' %s unrecognized or not yet supported _elements value(s). Supported values are: '%s'", 
 					unrecognizedElements, 
 					unrecognizedElements.size() == 1 ? "is" : "are",

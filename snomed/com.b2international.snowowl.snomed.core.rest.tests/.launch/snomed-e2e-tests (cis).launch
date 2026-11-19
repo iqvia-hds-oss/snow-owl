@@ -45,6 +45,7 @@
         <setEntry value="bcutil@default:default"/>
         <setEntry value="ch.qos.logback.classic@default:default"/>
         <setEntry value="ch.qos.logback.core@default:default"/>
+        <setEntry value="com.b2international.fhir.core@default:default"/>
         <setEntry value="com.b2international.snomed.ecl@default:default"/>
         <setEntry value="com.bucket4j.core@default:default"/>
         <setEntry value="com.diffplug.osgi.extension.sun.misc@default:false"/>
@@ -194,6 +195,7 @@
         <setEntry value="org.hamcrest*2.2.0@default:default"/>
         <setEntry value="org.hdrhistogram.HdrHistogram@default:default"/>
         <setEntry value="org.jetbrains.kotlin.osgi-bundle@default:default"/>
+        <setEntry value="org.jspecify.jspecify@default:default"/>
         <setEntry value="org.jsr-305@default:default"/>
         <setEntry value="org.junit@default:default"/>
         <setEntry value="org.mockito.mockito-core@default:default"/>
@@ -223,10 +225,10 @@
         <setEntry value="org.protege.common@default:default"/>
         <setEntry value="org.protege.editor.core.application@default:default"/>
         <setEntry value="org.protege.editor.owl@default:default"/>
-        <setEntry value="reactive-streams@default:default"/>
         <setEntry value="org.semanticweb.elk@default:default"/>
         <setEntry value="org.semanticweb.owl.owlapi@default:default"/>
         <setEntry value="org.yaml.snakeyaml@default:default"/>
+        <setEntry value="reactive-streams@default:default"/>
         <setEntry value="slf4j.api@default:default"/>
         <setEntry value="stax2-api@default:default"/>
     </setAttribute>

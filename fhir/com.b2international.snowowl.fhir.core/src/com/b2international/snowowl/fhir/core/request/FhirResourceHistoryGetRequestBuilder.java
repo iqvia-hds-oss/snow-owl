@@ -22,14 +22,15 @@ import java.util.Set;
 
 import org.hl7.fhir.r5.model.Bundle;
 
+import com.b2international.commons.exceptions.BadRequestException;
 import com.b2international.snowowl.core.context.ResourceRepositoryRequestBuilder;
 import com.b2international.snowowl.core.domain.RepositoryContext;
 import com.b2international.snowowl.core.request.SearchResourceRequest;
 import com.b2international.snowowl.core.request.SearchResourceRequestBuilder;
 import com.b2international.snowowl.core.version.VersionDocument;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirHistorySort;
 import com.b2international.snowowl.fhir.core.Summary;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirResourceHistoryGetRequest.OptionKey;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
@@ -58,7 +59,7 @@ public abstract class FhirResourceHistoryGetRequestBuilder<B extends FhirResourc
 			try {
 				return filterBySince(Instant.parse(since).toEpochMilli());
 			} catch (DateTimeParseException e) {
-				throw new BadRequestException(String.format("'%s' is not a valid _since instant value.", since));
+				throw FhirExceptions.paramInvalid(String.format("'%s' is not a valid _since instant value.", since));
 			}
 		} else {
 			return getSelf();

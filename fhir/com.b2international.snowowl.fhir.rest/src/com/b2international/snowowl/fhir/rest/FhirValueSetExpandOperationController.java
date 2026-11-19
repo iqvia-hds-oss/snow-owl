@@ -33,7 +33,7 @@ import com.b2international.fhir.r5.operations.ValueSetExpandParameters;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.FhirApiConfig;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.valueset.FhirValueSetExpander;
 
@@ -335,11 +335,11 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 		final ValueSetExpandParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.ValueSetExpandParametersFactory.INSTANCE);
 		
 		if (parameters.getUrl() == null && parameters.getValueSet() == null) {
-			throw new BadRequestException("Both URL and ValueSet parameters are null.", "ExpandValueSetRequest");
+			throw FhirExceptions.paramInvalid("Both URL and ValueSet parameters are null.", "ExpandValueSetRequest");
 		}
 
 		if (parameters.getUrl() == null) {
-			throw new BadRequestException("Expand request URL is not defined.", "ExpandValueSetRequest");
+			throw FhirExceptions.paramInvalid("Expand request URL is not defined.", "ExpandValueSetRequest");
 		}
 		
 		if (parameters.getUrl() != null && 
@@ -347,7 +347,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			parameters.getValueSet().getUrl() != null &&
 			!parameters.getUrl().equals(parameters.getValueSet().getUrl())) {
 			
-			throw new BadRequestException("URL and ValueSet.URL parameters are different.", "ExpandValueSetRequest");
+			throw FhirExceptions.paramInvalid("URL and ValueSet.URL parameters are different.", "ExpandValueSetRequest");
 		}
 		
 		// The "next" parameter will re-use request parameters in query parameter form
@@ -356,8 +356,8 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 			parameters.getValueSetVersion() == null ? null : parameters.getValueSetVersion().getValue(),
 			parameters.getFilter() == null ? null : parameters.getFilter().getValue(), 
 			parameters.getActiveOnly() == null ? null : parameters.getActiveOnly().getValue(), 
-			parameters.getDisplayLanguage() == null ? null : parameters.getDisplayLanguage(), 
-			parameters.getIncludeDesignations() == null ? null : parameters.getIncludeDefinition().getValue(), 
+			parameters.getDisplayLanguage() == null ? null : parameters.getDisplayLanguage().getValue(), 
+			parameters.getIncludeDesignations() == null ? null : parameters.getIncludeDesignations().getValue(),
 			parameters.getWithHistorySupplements() == null ? null : parameters.getWithHistorySupplements().getValue(), 
 			parameters.getCount() == null ? null : parameters.getCount().getValue(), 
 			parameters.getAfter() == null ? null : parameters.getAfter().getValue(),
@@ -529,6 +529,7 @@ public class FhirValueSetExpandOperationController extends AbstractFhirControlle
 	) {
 		if (parameters.getDisplayLanguage() == null || parameters.getDisplayLanguage().getCode() == null) {
 			parameters.setDisplayLanguage(acceptLanguage);
+			parameters.getDisplayLanguage().setUserData("_source", "Accept-Language");
 		}
 		
 		return FhirRequests.valueSets().prepareExpand()

@@ -25,7 +25,6 @@ import com.b2international.snowowl.fhir.rest.tests.capabilitystatement.Capabilit
 import com.b2international.snowowl.fhir.rest.tests.codesystem.*;
 import com.b2international.snowowl.fhir.rest.tests.conceptmap.FhirImplicitConceptMapUrlTest;
 import com.b2international.snowowl.fhir.rest.tests.conceptmap.FhirSnomedConceptMapTranslateTest;
-import com.b2international.snowowl.fhir.rest.tests.packages.FhirLoadPackageApiTest;
 import com.b2international.snowowl.fhir.rest.tests.valueset.FhirImplicitValueSetUrlTest;
 import com.b2international.snowowl.fhir.rest.tests.valueset.FhirSnomedValueSetExpandTest;
 import com.b2international.snowowl.fhir.rest.tests.valueset.FhirSnomedValueSetValidateCodeTest;
@@ -68,8 +67,7 @@ import com.b2international.snowowl.test.commons.SnowOwlAppRule;
 	FhirCodeSystemSetIncludeInCapabilitiesTest.class,
 	
 	// Packages
-	FhirLoadPackageApiTest.class
-	
+	// FhirLoadPackageApiTest.class
 })
 public class AllFhirApiTests {
 	

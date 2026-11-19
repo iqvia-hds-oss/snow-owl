@@ -39,7 +39,7 @@ import com.google.common.collect.Lists;
 /**
  * Tests resolution of terminology resource paths and revision ranges.
  *
- * @since 10.4
+ * @since 10.4.0
  */
 public class TerminologyResourceRequestTest {
 

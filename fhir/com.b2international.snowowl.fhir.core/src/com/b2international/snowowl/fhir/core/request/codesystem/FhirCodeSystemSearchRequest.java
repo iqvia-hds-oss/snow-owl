@@ -36,7 +36,10 @@ final class FhirCodeSystemSearchRequest extends FhirResourceSearchRequest<CodeSy
 
 	private static final long serialVersionUID = 1L;
 	
-	private static final Set<String> EXTERNAL_FHIR_CODESYSTEM_FIELDS = Set.of(
+	/**
+	 * Similar to {@link FhirResourceSearchRequest#EXTERNAL_FHIR_RESOURCE_FIELDS} but for CodeSystem specific fields.
+	 */
+	static final Set<String> EXTERNAL_FHIR_CODESYSTEM_FIELDS = Set.of(
 		R5ObjectFields.CodeSystem.COUNT,
 		R5ObjectFields.CodeSystem.CASE_SENSITIVE,
 		R5ObjectFields.CodeSystem.CONTENT,

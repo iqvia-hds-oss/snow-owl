@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2019-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public class PromiseMethodReturnValueHandler implements HandlerMethodReturnValue
 
 	private Stream<Entry<String, String>> flattenHttpHeaders(ResponseEntity<?> b) {
 		return b.getHeaders()
-				.entrySet()
+				.headerSet()
 				.stream()
 				.map(entry -> {
 					// raise an error if we'd like to set a multi-valued HTTP response header

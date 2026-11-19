@@ -29,7 +29,7 @@ import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.core.rest.FhirApiConfig;
 import com.b2international.snowowl.core.rest.PreferHandlingInterceptor;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -581,19 +581,19 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		
 		// Validate parameters that are not allowed on the instance level
 		if (parameters.getUrl() != null) {
-			throw new BadRequestException("Parameter 'url' cannot be specified when the code system ID is set.", "ValidateCodeRequest.url");
+			throw FhirExceptions.paramInvalid("Parameter 'url' cannot be specified when the code system ID is set.", "ValidateCodeRequest.url");
 		}
 		
 		if (parameters.getCoding() != null) {
-			throw new BadRequestException("Parameter 'coding' cannot be specified when the code system ID is set.", "ValidateCodeRequest.coding");
+			throw FhirExceptions.paramInvalid("Parameter 'coding' cannot be specified when the code system ID is set.", "ValidateCodeRequest.coding");
 		}
 		
 		if (parameters.getCodeableConcept() != null) {
-			throw new BadRequestException("Parameter 'codeableConcept' cannot be specified when the code system ID is set.", "ValidateCodeRequest.codeableConcept");
+			throw FhirExceptions.paramInvalid("Parameter 'codeableConcept' cannot be specified when the code system ID is set.", "ValidateCodeRequest.codeableConcept");
 		}
 		
 		if (parameters.getCodeSystem() != null) {
-			throw new BadRequestException("Validation against external code systems is not supported", "ValidateCodeRequest.codeSystem");
+			throw FhirExceptions.paramInvalid("Validation against external code systems is not supported", "ValidateCodeRequest.codeSystem");
 		}
 		
 		// Before execution set the URI to match the path variable
@@ -610,7 +610,7 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 	) {
 		
 		if (parameters.getUrl() == null) {
-			throw new BadRequestException("'url' parameter is required.");
+			throw FhirExceptions.paramInvalid("'url' parameter is required.");
 		}
 		
 		return FhirRequests.codeSystems().prepareValidateCode()

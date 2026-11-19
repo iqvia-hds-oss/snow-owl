@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2021-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.domain.PageableCollectionResource;
 import com.b2international.snowowl.core.events.AsyncRequest;
+import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.events.util.Promise;
 import com.b2international.snowowl.eventbus.IEventBus;
 import com.google.common.collect.Streams;
@@ -41,6 +42,10 @@ public abstract class SearchPageableCollectionResourceRequestBuilder<B extends S
 
 	public final Stream<R> stream(C context) {
 		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> builder.build().execute(context)));
+	}
+	
+	public final Stream<R> streamSync(C context, Function<B, Request<C, R>> req) {
+		return Streams.stream(new SearchResourceRequestIterator<B, R>(getSelf(), (builder) -> req.apply(builder).execute(context)));
 	}
 
 	public final Stream<R> stream(ServiceProvider context, Function<B, AsyncRequest<R>> req) {

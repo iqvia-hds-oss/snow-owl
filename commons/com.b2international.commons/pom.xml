@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>com.b2international.snowowl</groupId>
 		<artifactId>commons-parent</artifactId>
-		<version>10.3.1-SNAPSHOT</version>
+		<version>10.4.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>com.b2international.commons</artifactId>
 	<packaging>eclipse-plugin</packaging>
@@ -18,7 +18,7 @@
 		<!-- Micrometer Metrics framework -->
 		<micrometer.version>1.17.1</micrometer.version>
 		<!-- Bean Validation - when updating make sure to bump jboss-logging as well in the MANIFEST.MF and .classpath files -->
-		<hibernate.validator.version>9.1.2.Final</hibernate.validator.version>
+		<hibernate.validator.version>9.1.5.Final</hibernate.validator.version>
 		<!-- Console Lib -->
 		<picocli.version>3.5.1</picocli.version>
 		<!-- Java Annotations -->

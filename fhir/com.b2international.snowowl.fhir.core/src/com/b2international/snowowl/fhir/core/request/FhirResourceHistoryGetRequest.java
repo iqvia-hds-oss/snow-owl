@@ -65,13 +65,6 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
-		R5ObjectFields.MetadataResource.NAME,
-		R5ObjectFields.MetadataResource.META,
-		R5ObjectFields.MetadataResource.TEXT,
-		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD
-	);
-	
 	// Identifier system URI that indicates that the identifier value represents a URI
 	private static final String SYSTEM_GLOBALLY_UNIQUE_URI = "urn:ietf:rfc:3986";
 	
@@ -212,7 +205,7 @@ public abstract class FhirResourceHistoryGetRequest<T extends MetadataResource> 
 		}
 		
 		// Remove all fields that are not part of the current resource model
-		internalFields.removeAll(EXTERNAL_FHIR_RESOURCE_FIELDS);
+		internalFields.removeAll(FhirResourceSearchRequest.EXTERNAL_FHIR_RESOURCE_FIELDS);
 		internalFields.removeAll(getExternalFhirResourceFields());
 		
 		// Replace publisher with internal settings field (publisher is stored within resource metadata)

@@ -18,6 +18,7 @@ package com.b2international.snowowl.fhir.core.request.valueset;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Set;
 
 import org.hl7.fhir.r5.model.Bundle;
 import org.hl7.fhir.r5.model.CodeSystem;
@@ -29,10 +30,11 @@ import com.b2international.commons.exceptions.NotFoundException;
 import com.b2international.snowowl.core.ServiceProvider;
 import com.b2international.snowowl.core.events.Request;
 import com.b2international.snowowl.core.request.SearchResourceRequest.Sort;
+import com.b2international.snowowl.core.uri.ResourceURLSchemaSupport;
 import com.b2international.snowowl.core.version.VersionDocument;
+import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
-import com.b2international.snowowl.fhir.core.exceptions.BadRequestException;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.b2international.snowowl.fhir.core.request.codesystem.FhirCodeSystemOperationRequest;
 import com.google.common.base.Strings;
@@ -57,10 +59,10 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 	
 	public FhirValueSetOperationRequest(String url, String version) {
 		if (Strings.isNullOrEmpty(url)) {
-			throw new BadRequestException("URL must be defined to identify a value set. 'valueSet' parameter is not available yet.", "url");
+			throw FhirExceptions.paramInvalid("URL must be defined to identify a value set. 'valueSet' parameter is not available yet.", "url");
 		}
 		this.url = url;
-		this.version = version;
+		this.version = Strings.emptyToNull(version);
 	}
 	
 	protected final String getUrl() {
@@ -73,19 +75,28 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		// for now we need an URL to be defined
 		
 		ValueSet valueSet = null;
+		boolean hasVersion = !Strings.isNullOrEmpty(version);
 		
 		// check if url is an implicit URL
 		if (FhirModelHelpers.isImplicitValueSetUrl(url)) {
 			// raise an error if the version is specified through the valueSetVersion field
-			if (!Strings.isNullOrEmpty(version)) {
-				throw new BadRequestException("'valueSetVersion' parameter should not be used with implicit Value Set URLs.")
+			if (hasVersion) {
+				throw FhirExceptions.paramInvalid("'valueSetVersion' parameter should not be used with implicit Value Set URLs.")
 					.withDeveloperMessage("Consult the guide of the implicit Value Set URL you are using on how to include the version in the value.");
 			}
 			valueSet = expandImplicitValueSet(context, url);
 		} else {
-			valueSet = FhirRequests.valueSets().prepareSearch()
-					.filterById(url) // operations can use the resource ID in place of the URL parameter, filterById matches both
-					.filterByVersion(version)
+			
+			var req = FhirRequests.valueSets().prepareSearch();
+			
+			// operations can use the resource ID in place of the URL parameter, filterById matches both
+			if (hasVersion) {
+				req.filterByIds(Set.of(url, ResourceURLSchemaSupport.DEFAULT.withVersion(url, version)));
+			} else {
+				req.filterById(url);
+			}
+			
+			valueSet = req.filterByVersion(version)
 					.setElements(ImmutableList.<String>builder()
 							.addAll(R5ObjectFields.ValueSet.SUMMARY)
 							.add(R5ObjectFields.ValueSet.STATUS)
@@ -109,7 +120,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 	private ValueSet expandImplicitValueSet(ServiceProvider context, String urlValue) {
 		// only URLs with query parts are supported, every other case is rejected for now
 		if (urlValue.contains("#")) {
-			throw new BadRequestException("Unsupported implicit Value Set URL with fragment '#' character: " + urlValue, urlValue);
+			throw FhirExceptions.paramInvalid("Unsupported implicit Value Set URL with fragment '#' character: " + urlValue, urlValue);
 		}
 		
 		String codeSystemUrl = null;
@@ -138,7 +149,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 			// version cannot be extracted from the URL either
 			codeSystemUrl = FhirModelHelpers.toGenericCodeSystemUrl(urlValue);
 		} else {
-			throw new BadRequestException("Unsupported implicit Value Set URL " + urlValue, urlValue);
+			throw FhirExceptions.paramInvalid("Unsupported implicit Value Set URL " + urlValue, urlValue);
 		}
 		
 		// try to lookup the CodeSystem using the baseUrl and version (to get the proper edition)
@@ -159,7 +170,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		
 		// if no CodeSystem stored to use as Value Set source, return bad request response
 		if (codeSystem == null) {
-			throw new BadRequestException("Supported implicit Value Set URL but no underlying CodeSystem is available at " + codeSystemUrl, urlValue);
+			throw FhirExceptions.paramInvalid("Supported implicit Value Set URL but no underlying CodeSystem is available at " + codeSystemUrl, urlValue);
 		}
 		
 		// return the content of the CodeSystem as Value Set
@@ -211,7 +222,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		
 		if (!query.startsWith("fhir_vs=")) {
 			// No support for other query parameters, return bad request response
-			throw new BadRequestException("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
+			throw FhirExceptions.paramInvalid("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
 		}
 			
 		// Get the value of the "fhir_vs" query parameter and check which type of filter is requested
@@ -225,7 +236,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 			try {
 				ecl = URLDecoder.decode(ecl, StandardCharsets.UTF_8.toString());
 			} catch (UnsupportedEncodingException e) {
-				throw new BadRequestException("Failed to decode ECL expression: " + e.getMessage());
+				throw FhirExceptions.paramInvalid("Failed to decode ECL expression: " + e.getMessage());
 			}
 					
 			return sctEclExpression(valueSet, codeSystem, version, ecl);
@@ -243,7 +254,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 			
 			if (Strings.isNullOrEmpty(refsetId)) {
 				// TODO: support refset identifier concept search
-				throw new BadRequestException("Reference set identifier is missing in the query parameter value: " + urlValue, urlValue);
+				throw FhirExceptions.paramInvalid("Reference set identifier is missing in the query parameter value: " + urlValue, urlValue);
 			}
 			
 			return sctMembersOfRefSet(valueSet, codeSystem, version, refsetId);
@@ -251,7 +262,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 					
 		// We have ran out of supported query types, return bad request response for unsupported query parameter value
 		// TODO: check against declared filter values in CodeSystem
-		throw new BadRequestException("Unsupported implicit SNOMED CT Value Set URL type: " + urlValue, urlValue);
+		throw FhirExceptions.paramInvalid("Unsupported implicit SNOMED CT Value Set URL type: " + urlValue, urlValue);
 	}
 
 	private ValueSet sctAllConcepts(ValueSet valueSet, CodeSystem codeSystem, String version) {
@@ -326,7 +337,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 	) {
 		// This is a LOINC implicit Value Set URL which supports the "/vs" and "/vs/[part]" URL patterns
 		if (!Strings.isNullOrEmpty(query)) {
-			throw new BadRequestException("Unsupported implicit Value Set URL with query parameters: " + urlValue, urlValue);
+			throw FhirExceptions.paramInvalid("Unsupported implicit Value Set URL with query parameters: " + urlValue, urlValue);
 		}
 		
 		final String code = FhirModelHelpers.getLoincImplicitValueSetCode(urlValue);
@@ -339,7 +350,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 		}
 		
 		// Return bad request response for unsupported query parameter value
-		throw new BadRequestException("Unsupported implicit LOINC Value Set URL type: " + urlValue, urlValue);
+		throw FhirExceptions.paramInvalid("Unsupported implicit LOINC Value Set URL type: " + urlValue, urlValue);
 	}
 
 	private ValueSet loincPartDescendants(
@@ -375,7 +386,7 @@ public abstract class FhirValueSetOperationRequest<R> implements Request<Service
 	) {
 		// This is a generic implicit Value Set URL which only supports the "fhir_vs" query type for now
 		if (!"fhir_vs".equals(query)) {
-			throw new BadRequestException("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
+			throw FhirExceptions.paramInvalid("Unsupported implicit Value Set URL query type: " + urlValue, urlValue);
 		}
 		
 		return genericAllConcepts(valueSet, codeSystem, codeSystemUrl, version);

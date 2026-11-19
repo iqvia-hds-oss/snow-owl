@@ -42,7 +42,16 @@
 		<unit id="com.b2international.snomed.ecl.ui.feature.feature.group" version="0.0.0"/>
 	</location>
 	<location includeSource="true" includeMode="planner" missingManifest="error" type="Maven">
+		<!-- Synchronize this dependency list when updated with the one present in the sibling pom.xml file -->
+		<!-- This is the source of truth for available Maven dependencies -->
 		<dependencies>
+			<!-- Explicit Guava version to override anything coming from p2 repositories -->
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>33.7.2-jre</version>
+				<type>jar</type>
+			</dependency>
 			<!-- Load bouncycastle version from Maven for more control over its actual version -->
 			<dependency>
 				<groupId>org.bouncycastle</groupId>
@@ -96,13 +105,13 @@
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-classic</artifactId>
-				<version>1.5.32</version>
+				<version>1.5.38</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>ch.qos.logback</groupId>
 				<artifactId>logback-core</artifactId>
-				<version>1.5.32</version>
+				<version>1.5.38</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -122,43 +131,43 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-core</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-databind</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.dataformat</groupId>
 				<artifactId>jackson-dataformat-cbor</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.dataformat</groupId>
 				<artifactId>jackson-dataformat-csv</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.dataformat</groupId>
 				<artifactId>jackson-dataformat-smile</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.dataformat</groupId>
 				<artifactId>jackson-dataformat-xml</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.dataformat</groupId>
 				<artifactId>jackson-dataformat-yaml</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Make sure the snakeyaml library always in sync with the jackson dataformat yaml lib -->
@@ -171,26 +180,26 @@
 			<dependency>
 				<groupId>com.fasterxml.jackson.datatype</groupId>
 				<artifactId>jackson-datatype-guava</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.datatype</groupId>
 				<artifactId>jackson-datatype-jsr310</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>com.fasterxml.jackson.module</groupId>
 				<artifactId>jackson-module-afterburner</artifactId>
-				<version>2.22.3</version>
+				<version>2.22.4</version>
 				<type>jar</type>
 			</dependency>
 			<!-- Make sure the stax2-api and woodstox-core libraries are always in sync with the jackson dataformat xml lib -->
 			<dependency>
 		      	<groupId>org.codehaus.woodstox</groupId>
 			    <artifactId>stax2-api</artifactId>
-				<version>4.3.1</version>
+				<version>4.3.2</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -268,6 +277,13 @@
 				<type>jar</type>
 			</dependency>
 			-->
+			<!-- Jspecify is required for Spring 7 -->
+			<dependency>
+			    <groupId>org.jspecify</groupId>
+			    <artifactId>jspecify</artifactId>
+			    <version>1.0.1</version>
+			    <type>jar</type>
+			</dependency>
 			<!-- Jakarta Spec API and Implementation Modules (must work with the embedded Jetty 12 EE10 version) -->
 			<dependency>
 			    <groupId>jakarta.servlet</groupId>
@@ -643,25 +659,25 @@
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>json-path</artifactId>
-				<version>6.1.0</version>
+				<version>6.3.0</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>rest-assured-common</artifactId>
-				<version>6.1.0</version>
+				<version>6.3.0</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>rest-assured</artifactId>
-				<version>6.1.0</version>
+				<version>6.3.0</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>io.rest-assured</groupId>
 				<artifactId>xml-path</artifactId>
-				<version>6.1.0</version>
+				<version>6.3.0</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -692,13 +708,13 @@
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy-agent</artifactId>
-				<version>1.18.14</version>
+				<version>1.18.16</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
 				<groupId>net.bytebuddy</groupId>
 				<artifactId>byte-buddy</artifactId>
-				<version>1.18.14</version>
+				<version>1.18.16</version>
 				<type>jar</type>
 			</dependency>
 			<dependency>
@@ -828,7 +844,7 @@
 			<dependency>
 			    <groupId>at.yawk.lz4</groupId>
 			    <artifactId>lz4-java</artifactId>
-			    <version>1.12.0</version>
+			    <version>1.14.0</version>
 			    <type>jar</type>
 			</dependency>
 		</dependencies>

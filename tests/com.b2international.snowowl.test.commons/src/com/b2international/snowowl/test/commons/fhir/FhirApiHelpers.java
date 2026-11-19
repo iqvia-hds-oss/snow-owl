@@ -15,8 +15,16 @@
  */
 package com.b2international.snowowl.test.commons.fhir;
 
+import static com.b2international.snowowl.test.commons.rest.RestExtensions.givenAuthenticatedRequest;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.equalTo;
+
 import org.hl7.fhir.r5.formats.JsonParser;
 import org.hl7.fhir.r5.model.Resource;
+
+import com.b2international.snowowl.test.commons.rest.RestExtensions;
+
+import io.restassured.response.ValidatableResponse;
 
 /**
  * @since 10.1.0
@@ -71,8 +79,63 @@ public final class FhirApiHelpers {
 		return new JsonParser().composeString(resource);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public static final <T> T fromJson(String resource) throws Exception {
 		return (T) new JsonParser().parse(resource);
 	}
+	
+	public static ValidatableResponse createCodeSystem(String codeSystemId, String body) {
+		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(body)
+			.header("X-Author", RestExtensions.USER)
+			.put(CODESYSTEM_ID, codeSystemId)
+			.then()
+			.statusCode(anyOf(equalTo(200), equalTo(201)));
+	}
+	
+	public static ValidatableResponse deleteCodeSystem(String codeSystemId) {
+		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.header("X-Author", RestExtensions.USER)
+			.delete(CODESYSTEM_ID, codeSystemId)
+			.then()
+			.statusCode(anyOf(equalTo(200), equalTo(204)));
+	}
+	
+	public static ValidatableResponse createValueSet(String valueSetId, String body) {
+		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(body)
+			.header("X-Author", RestExtensions.USER)
+			.put(VALUESET_ID, valueSetId)
+			.then()
+			.statusCode(anyOf(equalTo(200), equalTo(201)));
+	}
+	
+	public static ValidatableResponse deleteValueSet(String valueSetId) {
+		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.header("X-Author", RestExtensions.USER)
+			.delete(VALUESET_ID, valueSetId)
+			.then()
+			.statusCode(anyOf(equalTo(200), equalTo(204)));
+	}
+	
+	public static ValidatableResponse createConceptMap(String conceptMapId, String body) {
+		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.contentType(APPLICATION_FHIR_JSON)
+			.body(body)
+			.header("X-Author", RestExtensions.USER)
+			.put(CONCEPTMAP_ID, conceptMapId)
+			.then()
+			.statusCode(anyOf(equalTo(200), equalTo(201)));
+	}
 
+	public static ValidatableResponse deleteConceptMap(String conceptMapId) {
+		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
+			.header("X-Author", RestExtensions.USER)
+			.delete(CONCEPTMAP_ID, conceptMapId)
+			.then()
+			.statusCode(anyOf(equalTo(200), equalTo(204)));
+	}
+	
 }

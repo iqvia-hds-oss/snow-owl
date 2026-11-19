@@ -75,11 +75,17 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 	/** The FHIR version property field in resource metadata settings (appearing both on resource and version documents) */
 	private static final String FIELD_SETTINGS_FHIR_VERSION_PROPERTY = TerminologyResource.Fields.SETTINGS + "." + TerminologyResource.Settings.FHIR_VERSION_PROPERTY;
 
-	private static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
+	/**
+	 * Fields that are not stored in the internal index models, ResourceDocument and VersionDocument, but could be supplied as _elements to the
+	 * request. Keeping them in the field selection would cause an issue, so it is a must to always exclude them. Maintain only this constant list and
+	 * reference from everywhere.
+	 */
+	public static final Set<String> EXTERNAL_FHIR_RESOURCE_FIELDS = Set.of(
 		R5ObjectFields.MetadataResource.NAME,
 		R5ObjectFields.MetadataResource.META,
 		R5ObjectFields.MetadataResource.TEXT,
-		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD
+		R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD,
+		R5ObjectFields.MetadataResource.EXPERIMENTAL
 	);
 	
 	// Identifier system URI that indicates that the identifier value represents a URI
@@ -132,7 +138,16 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		// Both resource and version documents have an "id" and a "url" field; we will use the expression from ResourceDocument purely by choice
 		addIdFilter(query, ids -> Expressions.bool()
 			.should(ResourceDocument.Expressions.ids(ids))
-			.should(ResourceDocument.Expressions.urls(ids))
+			// to support settings-based FHIR URL overrides and version we need to match both the metadata setting values and the default URL field
+			.should(Expressions.bool()
+				// Exact match for any of the provided URLs on the FHIR-specific URL override field
+				.should(Expressions.matchAny(FIELD_SETTINGS_FHIR_URL, ids))
+				.should(Expressions.bool()
+					// Exact match for the original URL field if no override setting is present
+					.mustNot(Expressions.exists(FIELD_SETTINGS_FHIR_URL))
+					.filter(ResourceDocument.Expressions.urls(ids))
+					.build())
+				.build())
 			.build());
 	}
 
@@ -155,7 +170,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 				.mustNot(Expressions.exists(FIELD_SETTINGS_FHIR_URL))
 				.filter(ResourceDocument.Expressions.urls(uniqueUrls))
 				.build())
-			.build());		
+			.build());
 	}
 		
 	private void addVersionFilter(final ExpressionBuilder query) {
@@ -469,6 +484,14 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		}
 	}
 	
+	private boolean getExperimental(final Map<String, Object> settings) {
+		if (settings == null) {
+			return false;
+		} else {
+			return (boolean) settings.getOrDefault(R5ObjectFields.MetadataResource.EXPERIMENTAL, false);
+		}
+	}
+	
 	private DateTimeType toDateTimeType(final Long effectiveTime) {
 		return FhirModelHelpers.toDateTimeElement(effectiveTime);
 	}
@@ -580,6 +603,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		
 		includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> getBlankNarrative(), entry::setText);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.PUBLISHER, () -> getPublisher(resource.getSettings()), entry::setPublisher);
+		includeIfFieldSelected(R5ObjectFields.MetadataResource.EXPERIMENTAL, () -> getExperimental(resource.getSettings()), entry::setExperimental);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> toDateTimeType(resource.getEffectiveTime()), entry::setDateElement);
 		// addContact(contact) is a no-op if contact is null so we can safely call it here
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.CONTACT, () -> toContactDetail(resource.getContact()), entry::addContact);

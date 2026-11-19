@@ -36,22 +36,13 @@ final class FhirCodeSystemHistoryGetRequest extends FhirResourceHistoryGetReques
 
 	private static final long serialVersionUID = 1L;
 	
-	private static final Set<String> EXTERNAL_FHIR_CODESYSTEM_FIELDS = Set.of(
-		R5ObjectFields.CodeSystem.COUNT,
-		R5ObjectFields.CodeSystem.CASE_SENSITIVE,
-		R5ObjectFields.CodeSystem.CONTENT,
-		R5ObjectFields.CodeSystem.CONCEPT,
-		R5ObjectFields.CodeSystem.FILTER,
-		R5ObjectFields.CodeSystem.PROPERTY
-	);
-	
 	protected String getResourceType( ) {
 		return com.b2international.snowowl.core.codesystem.CodeSystem.RESOURCE_TYPE;
 	}
 	
 	@Override
 	protected Set<String> getExternalFhirResourceFields() {
-		return EXTERNAL_FHIR_CODESYSTEM_FIELDS;
+		return FhirCodeSystemSearchRequest.EXTERNAL_FHIR_CODESYSTEM_FIELDS;
 	}
 
 	@Override

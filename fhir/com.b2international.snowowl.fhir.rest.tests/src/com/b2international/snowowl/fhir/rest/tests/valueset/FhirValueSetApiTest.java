@@ -49,7 +49,7 @@ public class FhirValueSetApiTest extends FhirRestTest {
 			.statusCode(400)
 			.body("resourceType", equalTo("OperationOutcome"))
 			.body("issue.severity", hasItem("error"))
-			.body("issue.code", hasItem("exception"));
+			.body("issue.code", hasItem("invalid"));
 	}
 
 	@Test
