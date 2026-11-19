@@ -295,7 +295,7 @@ final class FhirValueSetValidateCodeRequest extends FhirValueSetOperationRequest
 				.addCoding(new Coding()
 					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
 					.setCode("invalid-data"))
-				.setText("Coding has node code, so it cannot be validated. A code should be provided"))
+				.setText("Coding has no code, so it cannot be validated. A code should be provided"))
 			.addLocation(expression)
 			.addExpression(expression);
 	}
