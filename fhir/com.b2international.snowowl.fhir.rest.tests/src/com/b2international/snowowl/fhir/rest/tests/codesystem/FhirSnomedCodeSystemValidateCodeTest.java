@@ -218,11 +218,11 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			// Issues
 			.body("parameter.find { it.name == 'issues' }.resource.issue[0].details.coding[0].code", equalTo("invalid-code"))
 			.body("parameter.find { it.name == 'issues' }.resource.issue[0].details.text", equalTo("Unknown code 'invalid1' in the CodeSystem 'http://snomed.info/sct' version 'http://snomed.info/sct/900000000000207008/version/20200131'"))
-			.body("parameter.find { it.name == 'issues' }.resource.issue[0].location[0]", equalTo("CodeableConcept.coding[1].code"))
+			.body("parameter.find { it.name == 'issues' }.resource.issue[0].expression[0]", equalTo("CodeableConcept.coding[1].code"))
 			
 			.body("parameter.find { it.name == 'issues' }.resource.issue[1].details.coding[0].code", equalTo("invalid-code"))
 			.body("parameter.find { it.name == 'issues' }.resource.issue[1].details.text", equalTo("Unknown code 'invalid2' in the CodeSystem 'http://snomed.info/sct' version 'http://snomed.info/sct/900000000000207008/version/20200131'"))
-			.body("parameter.find { it.name == 'issues' }.resource.issue[1].location[0]", equalTo("CodeableConcept.coding[2].code"))
+			.body("parameter.find { it.name == 'issues' }.resource.issue[1].expression[0]", equalTo("CodeableConcept.coding[2].code"))
 			
 			.body("parameter.find { it.name == 'message' }.valueString", equalTo(
 					"Unknown code 'invalid1' in the CodeSystem 'http://snomed.info/sct' version 'http://snomed.info/sct/900000000000207008/version/20200131';"

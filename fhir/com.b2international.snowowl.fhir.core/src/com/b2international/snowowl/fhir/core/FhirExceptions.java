@@ -30,8 +30,8 @@ public abstract class FhirExceptions {
 		return paramInvalid(message, null);
 	}
 	
-	public static FhirException paramInvalid(String message, String location) {
-		return paramInvalid(message, location, TerminologyIssueType.INVALID_DATA);
+	public static FhirException paramInvalid(String message, String expression) {
+		return paramInvalid(message, expression, TerminologyIssueType.INVALID_DATA);
 	}
 	
 	public static FhirException paramInvalid(String message, String location, TerminologyIssueType txIssueType) {
@@ -48,9 +48,9 @@ public abstract class FhirExceptions {
 		return noExist(message, null);
 	}
 	
-	public static FhirException noExist(String message, String location) {
+	public static FhirException noExist(String message, String expression) {
 		return FhirException.builder()
-				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, null, message, location)
+				.addIssue(OperationOutcome.IssueSeverity.ERROR, OperationOutcome.IssueType.NOTFOUND, null, message, expression)
 				.build();
 	}
 	

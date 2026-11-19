@@ -89,10 +89,10 @@ public final class FhirException extends ApiException {
 		 * @param issueType
 		 * @param operationOutcomeCode
 		 * @param message
-		 * @param location
+		 * @param expression
 		 * @return
 		 */
-		public Builder addIssue(OperationOutcome.IssueSeverity issueSeverity, OperationOutcome.IssueType issueType, TerminologyIssueType txIssueType, String message, String location) {
+		public Builder addIssue(OperationOutcome.IssueSeverity issueSeverity, OperationOutcome.IssueType issueType, TerminologyIssueType txIssueType, String message, String expression) {
 			if (issues == null) {
 				issues = new ArrayList<>(2);
 			}
@@ -115,7 +115,10 @@ public final class FhirException extends ApiException {
 					// diagnostics should not be returned otherwise the FHIR Validator reports an error
 					// details.text should contain the error message in all cases
 					// .setDiagnostics(message)
-					.addLocation(location));
+					// XXX location property is kept for backward compatibility purposes, expression is the new property for the same previous meaning
+					// See more info here: https://hl7.org/fhir/R5/operationoutcome-definitions.html#OperationOutcome.issue.location
+					.addLocation(expression)
+					.addExpression(expression));
 			
 			return this;
 		}
