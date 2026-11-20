@@ -17,6 +17,7 @@ package com.b2international.snowowl.fhir.core.request.codesystem;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.hl7.fhir.r5.model.CodeSystem;
 import org.hl7.fhir.r5.model.CodeableConcept;
@@ -33,10 +34,13 @@ import com.b2international.fhir.r5.operations.CodeSystemValidateCodeResultParame
 import com.b2international.snowowl.core.*;
 import com.b2international.snowowl.core.domain.Concept;
 import com.b2international.snowowl.core.request.ConceptSearchRequestEvaluator;
+import com.b2international.snowowl.fhir.core.FhirException.TerminologyIssueType;
 import com.b2international.snowowl.fhir.core.FhirExceptions;
 import com.b2international.snowowl.fhir.core.FhirModelHelpers;
+import com.b2international.snowowl.fhir.core.FhirModelHelpers.SystemAndVersion;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -51,14 +55,14 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 	@JsonProperty
 	private final CodeSystemValidateCodeParameters parameters;
 	
+	private final boolean hasCode;
+	private final boolean hasCoding;
+	private final boolean hasCodeableConcept;
+	
+	private final List<Coding> codings;
+	private final String expressionTemplate;
+	
 	FhirCodeSystemValidateCodeRequest(CodeSystemValidateCodeParameters parameters) {
-		super(parameters.extractUrl(), parameters.extractVersion());
-		this.parameters = parameters;
-	}
-
-	@Override
-	public CodeSystemValidateCodeResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
-		
 		final boolean hasCode = parameters.getCode() != null;
 		final boolean hasCoding = parameters.getCoding() != null;
 		final boolean hasCodeableConcept = parameters.getCodeableConcept() != null && parameters.getCodeableConcept().getCoding() != null;
@@ -72,38 +76,76 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 		}
 		
 		final List<Coding> codings;
-		final String propertyTemplate;
-		final boolean validateDisplay;
 		
 		if (hasCode) {
-				
 			Coding coding = new Coding()
-					.setCode(parameters.getCode().getValue())
-					.setDisplay(parameters.getDisplay() != null ? parameters.getDisplay().getValue() : null);
-				
+				.setCodeElement(parameters.getCode())
+				.setSystemElement(parameters.getUrl())
+				.setVersionElement(parameters.getVersion())
+				.setDisplayElement(parameters.getDisplay());
 			codings = List.of(coding);
-			propertyTemplate = "code";
-			validateDisplay = true;
-			
+			expressionTemplate = "";
 		} else if (hasCoding) {
-			
 			codings = List.of(parameters.getCoding());
-			propertyTemplate = "coding.code";
-			validateDisplay = true;
-			
-		} else if (hasCodeableConcept)	{
-			
+			expressionTemplate = "Coding";
+		} else if (hasCodeableConcept) {
 			codings = List.copyOf(parameters.getCodeableConcept().getCoding());
-			propertyTemplate = "CodeableConcept.coding[%d].code";
-			validateDisplay = false;
-		
+			// TODO For now we have disabled this feature (until we clear how the batch validate should work)
+			if (codings.size() > 1) {
+				throw FhirExceptions.paramInvalid("Multiple codeableConcept codings are not supported.");
+			}
+			expressionTemplate = "CodeableConcept.coding[%d]";
 		} else {
 			throw new IllegalStateException("Should not happen");
 		}
 		
+		// Make sure we compare systems with URL as well
+		SystemAndVersion urlAndVersion = new SystemAndVersion(
+			parameters.getUrl() != null ? parameters.getUrl().getValue() : null,
+			parameters.getVersion() != null ? parameters.getVersion().getValue() : null
+		);
+		
+		Set<SystemAndVersion> systemAndVersions = Stream.concat(
+			Stream.of(urlAndVersion),
+			codings.stream()
+				.map(c -> new SystemAndVersion(c.getSystem(), c.getVersion()))
+			)
+			.filter(s -> !Strings.isNullOrEmpty(s.system()))  // Ignore codings with empty system for now
+			.collect(Collectors.toSet());
+		
+		final String system;
+		final String version;
+		if (systemAndVersions.isEmpty()) {
+			if (hasCode) {
+				throw FhirExceptions.paramInvalid("$validate-code must supply a 'url'");
+			} else {
+				// This special case will be handled in handleMissingSystem callback
+				system = null;
+				version = null;
+			}
+		} else if (systemAndVersions.size() > 1) {
+			throw FhirExceptions.paramInvalid("different 'url' and 'system(s)' are not supported");
+		} else {
+			final SystemAndVersion systemAndVersion = Iterables.getOnlyElement(systemAndVersions);	
+			system = systemAndVersion.system();
+			version = systemAndVersion.version();
+		}
+		
+		super(system, version);
+		
+		this.hasCode = hasCode;
+		this.hasCoding = hasCoding;
+		this.hasCodeableConcept = hasCodeableConcept;
+		this.codings = codings;
+		this.parameters = parameters;
+	}
+
+	@Override
+	public CodeSystemValidateCodeResultParameters doExecute(ServiceProvider context, CodeSystem codeSystem) {
+		
 		final boolean[] invalidDate = { false };
 		final Map<String, Concept> conceptsById = fetchCodes(context, codeSystem, codings, invalidDate);
-		
+
 		final String system = codeSystem.getUrl();
 		final String version = codeSystem.getVersion();
 		
@@ -115,59 +157,89 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			issues.add(issue);
 		}
 		
+		final String displayLanguage = parameters.getDisplayLanguage() != null ? parameters.getDisplayLanguage().getValue() : null;
+		
+		boolean atLeastOneValid = false;
+		
 		for (int i = 0; i < codings.size(); i++) {
 			
 			final Coding coding = codings.get(i);
 			final String code = coding.getCode();
-		
-			if (Strings.isNullOrEmpty(code)) {
+			final String currentSystem = coding.getSystem();
+			final String indexedExpression = String.format(expressionTemplate, i);
+	
+			if (Strings.isNullOrEmpty(code) && Strings.isNullOrEmpty(currentSystem)) {
+				issues.add(buildMissingCodeAndSystemIssue(indexedExpression));
+				continue;
+			} else if (Strings.isNullOrEmpty(code)) {
+				issues.add(buildMissingCodeIssue(indexedExpression));
+				continue;
+			} else if (Strings.isNullOrEmpty(currentSystem)){
+				issues.add(buildMissingSystemIssue(indexedExpression));
 				continue;
 			}
-			
+
 			final Concept concept = conceptsById.get(code);
 			
 			if (concept == null) {
-				final String location = String.format(propertyTemplate, i);
-				final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidCodeIssue(code, system, version, location);
+				final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidCodeIssue(code, system, version, indexedExpression);
 				issues.add(issue);
 			} else {
 				// Display information about the first valid concept that the system has found
 				if (conceptToDisplayInResult == null) {
 					conceptToDisplayInResult = concept;
-				}
+				}				
+					
+				final String expectedDisplay = coding.getDisplay();
+				final String actualDisplay = concept.getTerm();
 				
-				// if display needs to be validated, validate it here
-				if (validateDisplay) {
+				if (expectedDisplay != null && !expectedDisplay.equals(actualDisplay)) {
 					
-					final String expectedDisplay = coding.getDisplay();
-					final String actualDisplay = concept.getTerm();
-					
-					if (expectedDisplay != null && !expectedDisplay.equals(actualDisplay)) {
-						
-						final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidDisplayIssue(code, expectedDisplay, actualDisplay);
-						issues.add(issue);
-						
-					} else {
-						// display looks good, no issue found
-					}
+					final OperationOutcome.OperationOutcomeIssueComponent issue = buildInvalidDisplayIssue(code, displayLanguage, expectedDisplay, actualDisplay, indexedExpression);
+					issues.add(issue);
 					
 				} else {
-					// otherwise no issue is found
+					// display looks good, no issue found
+					atLeastOneValid = true;
 				}
-				
 			}
 		}
 		
 		final CodeSystemValidateCodeResultParameters result = new CodeSystemValidateCodeResultParameters();
 		
-		result
-			.setSystem(system)
-			.setVersion(version);
-		
-		if (conceptToDisplayInResult != null) {
-			result
-				.setCode(conceptToDisplayInResult.getId())
-				.setDisplay(conceptToDisplayInResult.getTerm());
+		if (hasCode || hasCoding) { 
+			result.setSystem(system);
+			
+			if (conceptToDisplayInResult != null) {
+				// Use validated concept if present
+				result
+					.setVersion(version)
+					.setCode(conceptToDisplayInResult.getId())
+					.setDisplay(conceptToDisplayInResult.getTerm());
+			} else {
+				// Use provided values if present
+				codings.stream().findFirst()
+					.ifPresent(coding -> {
+						result
+							// We do not use the coding.system as it could be an ID, instead we have already it using the CodeSystem.url 
+							.setVersion(coding.getVersion())
+							.setCode(coding.getCode())
+							.setDisplay(coding.getDisplay());
+					});
+			}
+		} else if (hasCodeableConcept) {
+			// Codeable concept was used returned input parameters
+			result.setCodeableConcept(parameters.getCodeableConcept());
+			if (conceptToDisplayInResult != null) {
+				// Return first successfully validated code's properties
+				result
+					.setSystem(system)
+					.setVersion(version)
+					.setCode(conceptToDisplayInResult.getId())
+					.setDisplay(conceptToDisplayInResult.getTerm());
+			}
+		} else {
+			throw new IllegalStateException("Should not happen");
 		}
 		
 		if (!CompareUtils.isEmpty(issues)) {
@@ -177,8 +249,7 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 				.collect(Collectors.joining("; "));
 			
 			result
-				// if at least one code is found in case of a codeableConcept request, then regardless of the issues this should be marked true
-				.setResult(conceptToDisplayInResult != null && hasCodeableConcept)
+				.setResult(atLeastOneValid)
 				.setIssues(new OperationOutcome().setIssue(issues))
 				.setMessage(message);
 		
@@ -190,7 +261,69 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 	
 		return result;
 	}
-
+	
+	@Override
+	protected CodeSystemValidateCodeResultParameters handleMissingSystem(ServiceProvider context, String system, String version) {
+		if (Strings.isNullOrEmpty(system)) {
+			/*
+			 * No system were provided and either Coding or CodeableConcept has been used.
+			 * We must return a dummy Parameters results containing blames for the provided Coding(s).
+			 */
+			final CodeSystemValidateCodeResultParameters result = new CodeSystemValidateCodeResultParameters();
+			if (hasCode) {
+				// This case should have already raised an error in the constructor
+				throw new IllegalStateException("Should not happen");
+			} else if (hasCoding) {
+				// We do not set these if Coding was used
+				final Coding coding = Iterables.getOnlyElement(codings);
+				// system is null
+				result.setCode(coding.getCode());
+				result.setDisplay(coding.getDisplay());
+				result.setVersion(coding.getVersion());
+			} else if (hasCodeableConcept) {
+				result.setCodeableConcept(parameters.getCodeableConcept());
+			} else {
+				throw new IllegalStateException("Should not happen");
+			}
+			
+			final List<OperationOutcome.OperationOutcomeIssueComponent> issues = new ArrayList<>(1);
+			
+			for (int i = 0; i < codings.size(); i++) {
+				
+				final Coding coding = codings.get(i);
+				final String code = coding.getCode();
+				final String currentSystem = coding.getSystem();
+				final String indexedExpression = String.format(expressionTemplate, i);
+				
+				if (Strings.isNullOrEmpty(code) && Strings.isNullOrEmpty(currentSystem)) {
+					issues.add(buildMissingCodeAndSystemIssue(indexedExpression));
+					continue;
+				} else if (Strings.isNullOrEmpty(code)) {
+					issues.add(buildMissingCodeIssue(indexedExpression));
+					continue;
+				} else if (Strings.isNullOrEmpty(currentSystem)){
+					issues.add(buildMissingSystemIssue(indexedExpression));
+					continue;
+				}
+				
+			}
+			
+			final String message = issues.stream()
+				.map(issue -> issue.getDetails().getText())
+				.filter(s -> !Strings.isNullOrEmpty(s))
+				.collect(Collectors.joining("; "));
+			
+			result
+				.setResult(false)
+				.setIssues(new OperationOutcome().setIssue(issues))
+				.setMessage(message);
+			
+			return result;
+		} else {
+			return super.handleMissingSystem(context, system, version);
+		}
+	}
+	
 	private Map<String, Concept> fetchCodes(ServiceProvider context, CodeSystem codeSystem, final List<Coding> codings, final boolean[] invalidDate) {
 		final Set<String> codes = codings.stream()
 			.map(Coding::getCode)
@@ -244,6 +377,40 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 		}
 	}
 
+	private OperationOutcomeIssueComponent buildMissingCodeAndSystemIssue(final String expression) {
+		return new OperationOutcome.OperationOutcomeIssueComponent()
+			.setSeverity(OperationOutcome.IssueSeverity.WARNING)
+			.setCode(OperationOutcome.IssueType.INVALID)
+			.setDetails(new CodeableConcept()
+				.addCoding(TerminologyIssueType.INVALID_DATA.getCoding())
+				.setText("Coding has neither a system nor a code, so it cannot be validated. A system and a code should be provided"))
+			.addLocation(expression)
+			.addExpression(expression);
+	}
+	
+	private OperationOutcomeIssueComponent buildMissingCodeIssue(final String expression) {
+		
+		return new OperationOutcome.OperationOutcomeIssueComponent()
+			.setSeverity(OperationOutcome.IssueSeverity.WARNING)
+			.setCode(OperationOutcome.IssueType.INVALID)
+			.setDetails(new CodeableConcept()
+				.addCoding(TerminologyIssueType.INVALID_DATA.getCoding())
+				.setText("Coding has no code, so it cannot be validated. A code should be provided"))
+			.addLocation(expression)
+			.addExpression(expression);
+	}
+	
+	private OperationOutcomeIssueComponent buildMissingSystemIssue(final String expression) {
+		return new OperationOutcome.OperationOutcomeIssueComponent()
+			.setSeverity(OperationOutcome.IssueSeverity.WARNING)
+			.setCode(OperationOutcome.IssueType.INVALID)
+			.setDetails(new CodeableConcept()
+				.addCoding(TerminologyIssueType.INVALID_DATA.getCoding())
+				.setText("Coding has no system. A code with no system has no defined meaning, and it cannot be validated. A system should be provided"))
+			.addLocation(expression)
+			.addExpression(expression);
+	}
+	
 	private OperationOutcomeIssueComponent buildInvalidDateIssue(final String system) {
 		final String message = String.format("CodeSystem '%s' does not exist at the specified date '%s'", 
 			system, 
@@ -254,13 +421,12 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.NOTFOUND)
 			.setDetails(new CodeableConcept()
-				.addCoding(new Coding()
-					.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-					.setCode("not-found"))
+				.addCoding(TerminologyIssueType.NOT_FOUND.getCoding())
 				.setText(message));
 	}
 
-	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidCodeIssue(String code, String system, String version, String location) {
+	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidCodeIssue(String code, String system, String version, String baseExpression) {
+		final String expression = baseExpression.isEmpty() ? "code" : String.join(".", baseExpression, "code");
 		final String message = String.format("Unknown code '%s' in the CodeSystem '%s'%s",
 			code,
 			system,
@@ -271,32 +437,40 @@ final class FhirCodeSystemValidateCodeRequest extends FhirCodeSystemOperationReq
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.CODEINVALID)
 			.setDetails(new CodeableConcept()
-					.addCoding(new Coding()
-						.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-						.setCode("invalid-code"))
+					.addCoding(TerminologyIssueType.INVALID_CODE.getCoding())
 					.setText(message))
-			.addLocation(location)
-			.addExpression(location);
+			.addLocation(expression)
+			.addExpression(expression);
 	}
 	
 
-	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidDisplayIssue(String code, String expectedDisplay, String actualDisplay) {
+	private OperationOutcome.OperationOutcomeIssueComponent buildInvalidDisplayIssue(String code, String displayLanguage, String expectedDisplay, String actualDisplay, String baseExpression) {
+		final String message;
+		if (Strings.isNullOrEmpty(displayLanguage)) {
+			message = String.format("Incorrect display '%s' for code '%s'. Recommended display is '%s'",
+				expectedDisplay,
+				code,
+				actualDisplay
+			);
+		} else {
+			message = String.format("Incorrect display '%s' for language(s) '%s' for code '%s'. Recommended display is '%s'",
+				expectedDisplay,
+				displayLanguage,
+				code,
+				actualDisplay
+			);
+		}
 		
-		final String message = String.format("Incorrect display '%s' for code '%s'. Recommended display is '%s'",
-			expectedDisplay,
-			code,
-			actualDisplay);
+		final String expression = baseExpression.isEmpty() ? "display" : String.join(".", baseExpression, "display");
 		
 		return new OperationOutcome.OperationOutcomeIssueComponent()
 			.setSeverity(OperationOutcome.IssueSeverity.ERROR)
 			.setCode(OperationOutcome.IssueType.INVALID)
 			.setDetails(new CodeableConcept()
-					.addCoding(new Coding()
-							.setSystem("http://hl7.org/fhir/tools/CodeSystem/tx-issue-type")
-							.setCode("invalid-display"))
+					.addCoding(TerminologyIssueType.INVALID_DISPLAY.getCoding())
 					.setText(message))
-			.addLocation("display")
-			.addExpression("display");
+			.addLocation(expression)
+			.addExpression(expression);
 	}
 
 	

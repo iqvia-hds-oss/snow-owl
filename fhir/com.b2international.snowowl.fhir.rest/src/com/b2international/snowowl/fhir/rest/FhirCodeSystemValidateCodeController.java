@@ -24,6 +24,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.b2international.commons.http.AcceptLanguageHeader;
 import com.b2international.fhir.operations.OperationParametersFactory;
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
 import com.b2international.snowowl.core.events.util.Promise;
@@ -130,6 +131,10 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		@Parameter(hidden = true)
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
+		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
 
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
@@ -170,7 +175,7 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		isAbstract.ifPresent(parameters::setAbstract);
 		date.ifPresent(parameters::setDate);
 		
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 	
 	/**
@@ -268,6 +273,10 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
+		
 		@Parameter(description = "Prefer header", schema = @Schema(
 			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
 			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
@@ -305,7 +314,7 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 			
 	) {
 		final CodeSystemValidateCodeParameters parameters = toFhirParameters(requestBody, contentType, prefer, OperationParametersFactory.CodeSystemValidateCodeParametersFactory.INSTANCE);
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 
 	
@@ -395,6 +404,10 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
+		
 		@Parameter(description = "Alternative response format", schema = @Schema(allowableValues = {
 			APPLICATION_FHIR_JSON_5_0_VALUE,
 			APPLICATION_FHIR_JSON_5_0_0_VALUE,
@@ -435,7 +448,7 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		isAbstract.ifPresent(parameters::setAbstract);
 		date.ifPresent(parameters::setDate);
 		
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 	
 	/**
@@ -540,6 +553,10 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		@RequestHeader(value = HttpHeaders.ACCEPT)
 		final String accept,
 		
+		@Parameter(description = "Accepted language tags, in order of preference", example = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER)
+		@RequestHeader(value = HttpHeaders.ACCEPT_LANGUAGE, defaultValue = AcceptLanguageHeader.DEFAULT_ACCEPT_LANGUAGE_HEADER, required = false) 
+		final String acceptLanguage,
+		
 		@Parameter(description = "Prefer header", schema = @Schema(
 			allowableValues = { PreferHandlingInterceptor.PREFER_HANDLING_STRICT, PreferHandlingInterceptor.PREFER_HANDLING_LENIENT }, 
 			defaultValue = PreferHandlingInterceptor.PREFER_HANDLING_LENIENT
@@ -581,36 +598,36 @@ public class FhirCodeSystemValidateCodeController extends AbstractFhirController
 		
 		// Validate parameters that are not allowed on the instance level
 		if (parameters.getUrl() != null) {
-			throw FhirExceptions.paramInvalid("Parameter 'url' cannot be specified when the code system ID is set.", "ValidateCodeRequest.url");
+			throw FhirExceptions.paramInvalid("Parameter 'url' cannot be specified when the code system ID is set.", "url");
 		}
 		
 		if (parameters.getCoding() != null) {
-			throw FhirExceptions.paramInvalid("Parameter 'coding' cannot be specified when the code system ID is set.", "ValidateCodeRequest.coding");
+			throw FhirExceptions.paramInvalid("Parameter 'coding' cannot be specified when the code system ID is set.", "Coding");
 		}
 		
 		if (parameters.getCodeableConcept() != null) {
-			throw FhirExceptions.paramInvalid("Parameter 'codeableConcept' cannot be specified when the code system ID is set.", "ValidateCodeRequest.codeableConcept");
+			throw FhirExceptions.paramInvalid("Parameter 'codeableConcept' cannot be specified when the code system ID is set.", "CodeableConcept");
 		}
 		
 		if (parameters.getCodeSystem() != null) {
-			throw FhirExceptions.paramInvalid("Validation against external code systems is not supported", "ValidateCodeRequest.codeSystem");
+			throw FhirExceptions.paramInvalid("Validation against external code systems is not supported", "codeSystem");
 		}
 		
 		// Before execution set the URI to match the path variable
 		parameters.setUrl(codeSystemId);
 		
-		return validateCode(parameters, accept, _format, _pretty);
+		return validateCode(parameters, accept, _format, _pretty, acceptLanguage);
 	}
 
 	private Promise<ResponseEntity<byte[]>> validateCode(
 		final CodeSystemValidateCodeParameters parameters, 
 		final String accept, 
 		final String _format, 
-		final Boolean _pretty
+		final Boolean _pretty,
+		final String acceptLanguage
 	) {
-		
-		if (parameters.getUrl() == null) {
-			throw FhirExceptions.paramInvalid("'url' parameter is required.");
+		if (parameters.getDisplayLanguage() == null || parameters.getDisplayLanguage().getCode() == null) {
+			parameters.setDisplayLanguage(acceptLanguage);
 		}
 		
 		return FhirRequests.codeSystems().prepareValidateCode()
