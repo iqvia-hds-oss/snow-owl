@@ -58,13 +58,15 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 	private String codeBExpression;
 
 	public FhirCodeSystemSubsumesRequest(CodeSystemSubsumptionParameters parameters) {
-		super(parameters.extractSystem(), parameters.extractSystemVersion());
-		this.parameters = parameters;
-		
+		final String system = parameters.extractSystem();
+		final String version = parameters.extractSystemVersion(); 
 		// Note this system value can come from either the specific system parameter or either codings if provided
-		if (Strings.isNullOrEmpty(parameters.extractSystem())) {
-			throw FhirExceptions.paramInvalid("Parameter 'system' is not specified for subsumption testing.");
+		if (Strings.isNullOrEmpty(system)) {
+				throw FhirExceptions.paramInvalid("Parameter 'system' is not specified for subsumption testing.");
 		}
+				
+		super(system, version);
+		this.parameters = parameters;
 		
 		final String codeA = parameters.getCodeA() == null ? null : parameters.getCodeA().getValue();
 		final String codingA = parameters.getCodingA() == null ? null : parameters.getCodingA().getCode();
@@ -152,7 +154,7 @@ final class FhirCodeSystemSubsumesRequest extends FhirCodeSystemOperationRequest
 			return CodeSystemSubsumptionResultParameters.notSubsumed();
 		}
 	}
-
+	
 	private Map<String, Concept> fetchConcepts(ServiceProvider context, CodeSystem codeSystem, String codeAId, String codeBId) {
 		final List<String> conceptIds = List.of(codeAId, codeBId);
 		
