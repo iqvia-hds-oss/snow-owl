@@ -97,6 +97,7 @@ public final class FhirApiHelpers {
 	public static ValidatableResponse deleteCodeSystem(String codeSystemId) {
 		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.header("X-Author", RestExtensions.USER)
+			.queryParam("force", true)
 			.delete(CODESYSTEM_ID, codeSystemId)
 			.then()
 			.statusCode(anyOf(equalTo(200), equalTo(204)));
@@ -115,6 +116,7 @@ public final class FhirApiHelpers {
 	public static ValidatableResponse deleteValueSet(String valueSetId) {
 		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.header("X-Author", RestExtensions.USER)
+			.queryParam("force", true)
 			.delete(VALUESET_ID, valueSetId)
 			.then()
 			.statusCode(anyOf(equalTo(200), equalTo(204)));
@@ -133,6 +135,7 @@ public final class FhirApiHelpers {
 	public static ValidatableResponse deleteConceptMap(String conceptMapId) {
 		return givenAuthenticatedRequest(FHIR_ROOT_CONTEXT)
 			.header("X-Author", RestExtensions.USER)
+			.queryParam("force", true)
 			.delete(CONCEPTMAP_ID, conceptMapId)
 			.then()
 			.statusCode(anyOf(equalTo(200), equalTo(204)));
