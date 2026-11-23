@@ -36,6 +36,9 @@ public class ConceptRestSearch extends ObjectRestSearch {
 	@Parameter(description = "The concept term to match")
 	private String term;
 	
+	@Parameter(description = "The concept term type to match")
+	private String termType;
+	
 	@Parameter(description = "The query expression to match in the target code system's query language")
 	private String query;
 	
@@ -64,6 +67,10 @@ public class ConceptRestSearch extends ObjectRestSearch {
 		return term;
 	}
 	
+	public String getTermType() {
+		return termType;
+	}
+	
 	public String getQuery() {
 		return query;
 	}
@@ -90,6 +97,10 @@ public class ConceptRestSearch extends ObjectRestSearch {
 	
 	public void setTerm(String term) {
 		this.term = term;
+	}
+	
+	public void setTermType(String termType) {
+		this.termType = termType;
 	}
 	
 	public void setQuery(String query) {

@@ -251,6 +251,34 @@ public class SnomedGenericConceptSearchApiTest extends AbstractSnomedApiTest {
 	}
 	
 	@Test
+	public void POST_Concepts_filterByTermType() {
+		final List<String> conceptIds1 = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"term", "Limited HTML"  // this is a synonym
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class)
+			.stream()
+			.map(Concept::getId)
+			.toList();
+		
+		assertThat(conceptIds1).contains("900000000000541001");
+		
+		final List<String> conceptIds2 = assertGenericSearchConceptsWithPost(Json.object(
+				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
+				"term", "Limited HTML",  // this is a synonym
+				"termType", "<900000000000446008 MINUS 900000000000013009"  // Anything that is not synonym
+			)).statusCode(200)
+			.extract()
+			.as(Concepts.class)
+			.stream()
+			.map(Concept::getId)
+			.toList();
+		
+		assertThat(conceptIds2).isEmpty();
+	}
+	
+	@Test
 	public void POST_Concepts_filterByInactive() {
 		final Concepts concepts = assertGenericSearchConceptsWithPost(Json.object(
 				"codeSystem", Json.array(CODESYSTEM_2018_01_31),
