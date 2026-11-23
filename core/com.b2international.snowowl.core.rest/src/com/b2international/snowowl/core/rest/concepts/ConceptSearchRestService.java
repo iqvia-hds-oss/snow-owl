@@ -69,6 +69,7 @@ public class ConceptSearchRestService extends AbstractRestService {
 				.filterByIds(params.getId())
 				.filterByActive(params.getActive())
 				.filterByTerm(params.getTerm())
+				.filterByTermType(params.getTermType())
 				.filterByCodeSystems(params.getCodeSystem())
 				.filterByQuery(params.getQuery())
 				.filterByParents(params.getParent())
