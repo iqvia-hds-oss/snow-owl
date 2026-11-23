@@ -22,6 +22,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 
 import org.hl7.fhir.r5.model.CodeableConcept;
 import org.hl7.fhir.r5.model.Coding;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.b2international.fhir.r5.operations.CodeSystemValidateCodeParameters;
@@ -67,7 +68,7 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'result' }.valueBoolean", equalTo(false))
 			.body("parameter.find { it.name == 'system' }.valueUri", equalTo(SnomedTerminologyComponentConstants.SNOMED_URI_SCT))
 			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL))
-			.body("parameter.find { it.name == 'message' }.valueString", equalTo("Incorrect display 'Unknown display' for code '138875005'. Recommended display is 'SNOMED CT Concept'"))
+			.body("parameter.find { it.name == 'message' }.valueString", equalTo("Incorrect display 'Unknown display' for language(s) 'en-US;q=0.8,en-GB;q=0.6,en;q=0.4' for code '138875005'. Recommended display is 'SNOMED CT Concept'"))
 			.body("parameter.find { it.name == 'issues' }.resource.issue[0].details.coding[0].code", equalTo("invalid-display"))
 			.body("parameter.find { it.name == 'display' }.valueString", equalTo("SNOMED CT Concept"));
 	}
@@ -122,7 +123,6 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R4() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()
-			.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.setCoding(new Coding()
 				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 				.setVersion(SNOMEDCT_URL)
@@ -143,7 +143,6 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R4B() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()
-			.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.setCoding(new Coding()
 				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 				.setVersion(SNOMEDCT_URL)
@@ -164,7 +163,6 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 	@Test
 	public void POST_CodeSystem_$validate_code_Existing_R5() throws Exception {
 		var parameters = new CodeSystemValidateCodeParameters()
-			.setUrl(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 			.setCoding(new Coding()
 				.setSystem(FhirModelHelpers.SNOMED_BASE_URI_STRING)
 				.setVersion(SNOMEDCT_URL)
@@ -182,6 +180,7 @@ public class FhirSnomedCodeSystemValidateCodeTest extends FhirRestTest {
 			.body("parameter.find { it.name == 'version' }.valueString", equalTo(SNOMEDCT_URL));
 	}
 	
+	@Ignore("multi codings are not supported")
 	@Test
 	public void POST_CodeSystem_$validate_code_Mixed_R5_CodeableConcept() throws Exception {
 

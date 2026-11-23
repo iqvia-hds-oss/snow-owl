@@ -37,6 +37,7 @@ import com.b2international.snowowl.fhir.core.FhirModelHelpers;
 import com.b2international.snowowl.fhir.core.R5ObjectFields;
 import com.b2international.snowowl.fhir.core.request.FhirRequests;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 
 /**
  * Abstract base class for FHIR CodeSystem operations that require fetching a CodeSystem resource first.
@@ -93,6 +94,9 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	}
 	
 	private Optional<CodeSystem> fetchByUrlAndVersion(final ServiceProvider context) {
+		if (Strings.isNullOrEmpty(system)) {
+			return Optional.empty();
+		}
 		// Map "system" to "url" (get the most recent version if multiple match, also prefer the "definitive edition" if the flag is set)
 		return fetchCodeSystem(context, rb -> rb
 			.filterByUrl(system)
@@ -104,6 +108,9 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	}
 
 	private Optional<CodeSystem> fetchByIdAndVersion(final ServiceProvider context) {
+		if (Strings.isNullOrEmpty(system)) {
+			return Optional.empty();
+		}
 		// Map "system" to "name" which matches the native resource ID without any post-processing
 		return fetchCodeSystem(context, rb -> rb
 			.filterByName(system)
@@ -122,9 +129,13 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 		final CodeSystem codeSystem = Optional.<CodeSystem>empty()
 			.or(() -> fetchByUrlAndVersion(context))
 			.or(() -> fetchByIdAndVersion(context))
-			.orElseThrow(() -> FhirExceptions.fhirResourceNotResolvable(ResourceType.CodeSystem, FhirModelHelpers.toCanonicalType(system, version)));
+			.orElse(null);
 		
-		return doExecute(context, codeSystem);
+		if (codeSystem == null) {
+			return handleMissingSystem(context, system, version);
+		} else {
+			return doExecute(context, codeSystem);
+		}
 	}
 
 	/**
@@ -261,4 +272,17 @@ public abstract class FhirCodeSystemOperationRequest<R> implements Request<Servi
 	}
 	
 	protected abstract R doExecute(ServiceProvider context, CodeSystem codeSystem);
+	
+	/**
+	 * If the code system could not be found by default we raise an exception.
+	 * However, certain operations should return a Parameters object instead of a standalone OperationOutcome.
+	 * 
+	 * @param context
+	 * @param system
+	 * @param version
+	 * @return
+	 */
+	protected R handleMissingSystem(ServiceProvider context, String system, String version) {
+		throw FhirExceptions.fhirResourceNotResolvable(ResourceType.CodeSystem, FhirModelHelpers.toCanonicalType(system, version));
+	}
 }
