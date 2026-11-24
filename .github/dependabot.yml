@@ -16,6 +16,8 @@ updates:
     ignore:
       - dependency-name: '*'
         update-types: [version-update:semver-major]
+      - dependency-name: "io.netty:*"
+        update-types: [version-update:semver-major, version-update:semver-minor]
     groups:
       spring:
         applies-to: version-updates
@@ -26,9 +28,6 @@ updates:
           - 'org.springframework.security:*'
           - 'org.springframework.boot:*'
           - 'io.micrometer:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       elastic-client:
         applies-to: version-updates
         patterns:
@@ -39,59 +38,36 @@ updates:
         applies-to: version-updates
         patterns:
           - 'org.bouncycastle:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       slf4j:
         applies-to: version-updates
         patterns:
           - 'org.slf4j:*'
           - 'ch.qos.logback:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       io-netty:
         applies-to: version-updates
         patterns:
           - 'io.netty:*'
-        update-types:
-          - 'patch'
       io-swagger-core:
         applies-to: version-updates
         patterns:
           - 'io.swagger.core.v3:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       org-eclipse-jetty:
         applies-to: version-updates
         patterns:
           - 'org.eclipse.jetty*:*'
           - 'jakarta.websocket:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       org-ow2-asm:
         applies-to: version-updates
         patterns:
           - 'org.ow2.asm:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       io-rest-assured:
         applies-to: version-updates
         patterns:
           - 'io.rest-assured:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       net-bytebuddy:
         applies-to: version-updates
         patterns:
           - 'net.bytebuddy:*'
-        update-types:
-          - 'minor'
-          - 'patch'
       com-fasterxml-jackson:
         applies-to: version-updates
         patterns:
@@ -99,9 +75,6 @@ updates:
           - 'org.yaml:*'
           - 'org.codehaus.woodstox:*'
           - 'com.fasterxml.woodstox:*'
-        update-types:
-          - 'minor'
-          - 'patch'
 
   - package-ecosystem: github-actions
     directory: /
