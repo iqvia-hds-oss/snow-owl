@@ -27,9 +27,6 @@ import org.hl7.fhir.r5.model.Bundle.BundleType;
 import org.hl7.fhir.r5.model.ContactPoint.ContactPointSystem;
 import org.hl7.fhir.r5.model.Enumerations.PublicationStatus;
 import org.hl7.fhir.r5.model.Identifier.IdentifierUse;
-import org.hl7.fhir.r5.model.Narrative.NarrativeStatus;
-import org.hl7.fhir.utilities.xhtml.NodeType;
-import org.hl7.fhir.utilities.xhtml.XhtmlNode;
 
 import com.b2international.commons.CompareUtils;
 import com.b2international.commons.StringUtils;
@@ -460,12 +457,6 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		}
 	}
 
-	private Narrative getBlankNarrative() {
-		// We are not generating any narrative text for the resources so return an empty <div> element
-		final XhtmlNode div = new XhtmlNode(NodeType.Element, "div");
-		return new Narrative(NarrativeStatus.EMPTY, div);
-	}
-
 	private String getName(final Map<String, Object> settings, final String defaultValue) {
 		if (settings != null) {
 			String name = (String) settings.get(R5ObjectFields.MetadataResource.NAME);
@@ -601,7 +592,7 @@ public abstract class FhirResourceSearchRequest<T extends MetadataResource> exte
 		// Currently support setting start with the effectiveTime of the resource
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.EFFECTIVE_PERIOD, () -> toEffectivePeriod(resource.getEffectiveTime()), entry::setEffectivePeriod);
 		
-		includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> getBlankNarrative(), entry::setText);
+		// TODO: includeIfFieldSelected(R5ObjectFields.DomainResource.TEXT, () -> getNarrative(), entry::setText)
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.PUBLISHER, () -> getPublisher(resource.getSettings()), entry::setPublisher);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.EXPERIMENTAL, () -> getExperimental(resource.getSettings()), entry::setExperimental);
 		includeIfFieldSelected(R5ObjectFields.MetadataResource.DATE, () -> toDateTimeType(resource.getEffectiveTime()), entry::setDateElement);

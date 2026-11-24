@@ -249,7 +249,9 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("status", equalTo("draft"))
 			.body("content", equalTo("complete"))
 			.body("meta", notNullValue())
-			.body("text", notNullValue())
+			// text will not be populated however
+			.body("text", nullValue())
+			// count is returned because it is needed to calculate "content"
 			.body("count", notNullValue())
 			.body("name", nullValue())
 			.body("concept", nullValue()) 
@@ -283,8 +285,7 @@ public class FhirCodeSystemApiTest extends FhirRestTest {
 			.body("copyright", nullValue())
 			.body("count", notNullValue())
 			.body("caseSignificance", nullValue())
-			.body("effectivePeriod", nullValue())
-			.body("text", nullValue());
+			.body("effectivePeriod", nullValue());
 	}
 	
 	@Test
