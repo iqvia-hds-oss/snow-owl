@@ -69,7 +69,7 @@ public final class ElasticsearchContainer {
 	/**
 	 * The default Elasticsearch image version to run tests against. 
 	 */
-	public static final String ES_DOCKER_VERSION = "8.19.10";
+	public static final String ES_DOCKER_VERSION = "8.19.26";
 	
 	// override wait strategies for specific Elasticsearch versions as the log output may differ and relying on solely on started message arrival might not be enough
 	private static final Map<Predicate<String>, WaitStrategy> WAIT_STRATEGIES = Map.of(
