@@ -96,6 +96,7 @@
 								prometheus-metrics-exposition-formats,
 								prometheus-metrics-exposition-textformats,
 								hibernate-validator,
+								hibernate-accessor,
 								jboss-logging,
 								picocli,
 								jsr305
