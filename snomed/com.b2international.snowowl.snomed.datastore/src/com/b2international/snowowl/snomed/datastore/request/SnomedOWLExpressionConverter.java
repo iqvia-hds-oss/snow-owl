@@ -63,7 +63,7 @@ public final class SnomedOWLExpressionConverter {
 	
 	private static final Pattern DIGIT_PATTERN = Pattern.compile(":(?<id>\\d+)");
 	
-	private static final Set<String> AXIOM_TYPES = Set.of(
+	public static final Set<String> AXIOM_TYPES = Set.of(
 		"SubClassOf", 
 		"EquivalentClasses", 
 		"SubObjectPropertyOf", 
