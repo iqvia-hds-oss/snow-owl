@@ -15,6 +15,8 @@
  */
 package com.b2international.snowowl.core.rest;
 
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.convert.ConversionFailedException;
@@ -25,6 +27,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingPathVariableException;
@@ -143,6 +146,11 @@ public class ControllerExceptionMapper {
 	public ResponseEntity<RestApiError> handle(final HttpMessageNotReadableException ex) {
 		LOG.trace("Exception during processing of a JSON document", ex);
 		return jsonError(HttpStatus.BAD_REQUEST, ApiError.builder("Invalid JSON representation").developerMessage(ex.getMessage()).build());
+	}
+	
+	@ExceptionHandler
+	public ResponseEntity<RestApiError> handle(final HttpMediaTypeNotAcceptableException ex) {
+		return jsonError(HttpStatus.NOT_ACCEPTABLE, ApiError.builder("Not acceptable representation").developerMessage("Supported media types on this endpoint are: " + ex.getSupportedMediaTypes().stream().map(MediaType::toString).collect(Collectors.joining(", "))).build());
 	}
 	
 	@ExceptionHandler
