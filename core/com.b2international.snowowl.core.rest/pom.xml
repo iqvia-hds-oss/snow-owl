@@ -12,13 +12,13 @@
 	<packaging>eclipse-plugin</packaging>
 
 	<properties>
-		<spring.version>7.0.10</spring.version>
-		<spring.security.version>7.1.2</spring.security.version>
-		<springdoc.version>3.2.0</springdoc.version>
+		<spring.version>7.1.0</spring.version>
+		<spring.security.version>7.2.0</spring.security.version>
+		<springdoc.version>3.2.1</springdoc.version>
 		<!-- Ensure that Spring Boot version matches the version supported by SpringDoc -->
-		<spring.boot.version>4.1.2</spring.boot.version>
+		<spring.boot.version>4.2.0</spring.boot.version>
 		<!-- Make sure this version matches the one present in the target-platform for swagger-annotations and models -->
-		<swagger.core.version>2.2.55</swagger.core.version>
+		<swagger.core.version>2.2.56</swagger.core.version>
 		<!-- Node.js version to use for building the API docs site -->
 		<node.version>v22.22.2</node.version>
 		<npm.version>10.9.8</npm.version>
