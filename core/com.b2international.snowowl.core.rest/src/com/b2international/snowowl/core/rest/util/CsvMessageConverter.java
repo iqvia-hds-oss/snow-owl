@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 B2i Healthcare, https://b2ihealthcare.com
+ * Copyright 2011-2026 B2i Healthcare, https://b2ihealthcare.com
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 
 import com.b2international.commons.exceptions.NotImplementedException;
+import com.b2international.snowowl.core.domain.CollectionResource;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
@@ -36,7 +37,7 @@ import com.google.common.base.Charsets;
 /**
  * @since 6.13
  */
-public class CsvMessageConverter extends AbstractHttpMessageConverter<Collection<Object>> {
+public class CsvMessageConverter extends AbstractHttpMessageConverter<Object> {
 	
 	private static final String ATTACHMENT = "attachment";
 	private static final String CONTENT_DISPOSITION = "Content-Disposition";
@@ -47,12 +48,23 @@ public class CsvMessageConverter extends AbstractHttpMessageConverter<Collection
 		super(MEDIA_TYPE);
 	}
 
-	protected boolean supports(Class<?> clazz) {
-		return Collection.class.isAssignableFrom(clazz);
-	}
-
 	@Override
-	protected void writeInternal(Collection<Object> items, HttpOutputMessage output) throws IOException, HttpMessageNotWritableException {
+	protected boolean supports(Class<?> clazz) {
+		return Collection.class.isAssignableFrom(clazz) || CollectionResource.class.isAssignableFrom(clazz);
+	}
+	
+	@Override
+	protected void writeInternal(Object response, HttpOutputMessage output) throws IOException, HttpMessageNotWritableException {
+		
+		final Collection<?> items;
+		if (response instanceof Collection<?>) {
+			items = (Collection<Object>) response;
+		} else if (response instanceof CollectionResource<?>) {
+			items = ((CollectionResource<?>) response).getItems();
+		} else {
+			items = null;
+		}
+		
 		if (!items.isEmpty()) {
 			output.getHeaders().setContentType(MEDIA_TYPE);
 			output.getHeaders().set(CONTENT_DISPOSITION, ATTACHMENT);
@@ -63,7 +75,9 @@ public class CsvMessageConverter extends AbstractHttpMessageConverter<Collection
 				// XXX The mapper is auto closing the writer after the first write out for some reason
 				mapper.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 				
-				final CsvSchema schema = mapper.schemaFor(items.iterator().next().getClass()).withHeader().withColumnSeparator('\t');
+				final CsvSchema schema = mapper.schemaFor(items.iterator().next().getClass())
+						.withHeader()
+						.withColumnSeparator('\t');
 				final ObjectWriter writer = mapper.writer(schema);
 				writer.writeValues(out).writeAll(items);
 			}
@@ -71,7 +85,7 @@ public class CsvMessageConverter extends AbstractHttpMessageConverter<Collection
 	}
 
 	@Override
-	protected Collection<Object> readInternal(Class<? extends Collection<Object>> clazz, HttpInputMessage inputMessage)
+	protected Collection<Object> readInternal(Class<? extends Object> clazz, HttpInputMessage inputMessage)
 			throws IOException, HttpMessageNotReadableException {
 		throw new NotImplementedException();
 	}
