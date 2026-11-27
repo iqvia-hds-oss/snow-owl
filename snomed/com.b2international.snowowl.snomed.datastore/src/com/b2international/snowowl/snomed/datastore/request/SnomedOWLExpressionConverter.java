@@ -71,6 +71,12 @@ public final class SnomedOWLExpressionConverter {
 		"SubAnnotationPropertyOf"
 	);
 	
+	public static final Set<String> AXIOM_TYPES_WITH_NO_RELATIONSHIPS = Set.of(
+		"TransitiveObjectProperty",
+		"ReflexiveObjectProperty",
+		"SubObjectPropertyOf"
+	);
+	
 	private final Supplier<AxiomRelationshipConversionService> conversionService;
 	
 	public SnomedOWLExpressionConverter(BranchContext context) {
