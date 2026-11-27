@@ -46,7 +46,6 @@ public final class OwlAxiomMemberChangeProcessor extends ChangeSetProcessorBase 
 		staging.getNewObjects(SnomedRefSetMemberIndexEntry.class)
 			.filter(member -> OWL_AXIOM.equals(member.getReferenceSetType()))
 			.filter(member -> member.getOwlExpression() != null)
-			.filter(member -> member.isActive())
 			.forEach(member -> {
 				SnomedRefSetMemberIndexEntry.Builder updatedMember = SnomedRefSetMemberIndexEntry.builder(member);
 				
@@ -61,7 +60,7 @@ public final class OwlAxiomMemberChangeProcessor extends ChangeSetProcessorBase 
 			.forEach(memberDiff -> {
 				SnomedRefSetMemberIndexEntry member = (SnomedRefSetMemberIndexEntry) memberDiff.newRevision;
 				
-				if (member.isActive() && OWL_AXIOM.equals(member.getReferenceSetType()) && member.getOwlExpression() != null) {
+				if (OWL_AXIOM.equals(member.getReferenceSetType()) && member.getOwlExpression() != null) {
 					SnomedRefSetMemberIndexEntry.Builder updatedMember = SnomedRefSetMemberIndexEntry.builder(member);
 					SnomedOWLExpressionConverterResult converterResult = converter.toSnomedOWLRelationships(member.getReferencedComponentId(), member.getOwlExpression());
 					updatedMember.classAxiomRelationships(converterResult.getClassAxiomRelationships());
